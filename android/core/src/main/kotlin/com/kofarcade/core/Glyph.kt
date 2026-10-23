@@ -16,8 +16,11 @@ import kotlin.math.sin
 
 data class Pt(val x: Float, val y: Float)
 
-/** The icon for a move: the motion line, its arrowhead and, for charge moves, the hold dot. */
-data class Glyph(val line: List<Pt>, val head: List<Pt>, val hold: Pt?)
+/**
+ * The icon for a move: the motion line, its arrowheads (two for a tapped-twice
+ * direction like ↓↓) and, for charge moves, the hold dot.
+ */
+data class Glyph(val line: List<Pt>, val heads: List<List<Pt>>, val hold: Pt?)
 
 private const val C = 24f // centre
 private const val R = 17f // outer radius
@@ -35,7 +38,11 @@ fun motionPoints(command: String): List<Pt> {
     val parsed = parseCommand(command)
     // A button sequence isn't a stick motion; it's shown as text instead.
     if (parsed.isSequence) return emptyList()
-    val dirs = parsed.parts.map { it.dir }.filter { it != 5 }
+    // A direction repeated in a row (↓↓) is one stroke; motionGlyph adds a
+    // second arrowhead for the extra tap.
+    val dirs = parsed.parts.map { it.dir }.filter { it != 5 }.fold(listOf<Int>()) { acc, d ->
+        if (acc.lastOrNull() == d) acc else acc + d
+    }
     if (dirs.isEmpty()) return emptyList()
     val n = dirs.size
     fun radius(i: Int) = R * (if (n > 3) 1 - 0.42f * i / (n - 1) else 1f)
@@ -89,9 +96,15 @@ fun motionGlyph(command: String): Glyph? {
     val b = pts.last()
     val ang = atan2((b.y - a.y).toDouble(), (b.x - a.x).toDouble())
     val s = 6.0
-    fun wing(off: Double) = Pt(round1(b.x - cos(ang + off) * s), round1(b.y - sin(ang + off) * s))
-    val hold = if (parseCommand(command).parts.firstOrNull()?.charge == true) pts.first() else null
-    return Glyph(pts, listOf(wing(0.55), b, wing(-0.55)), hold)
+    fun head(back: Double): List<Pt> {
+        val tip = Pt(round1(b.x - cos(ang) * back), round1(b.y - sin(ang) * back))
+        fun wing(off: Double) = Pt(round1(tip.x - cos(ang + off) * s), round1(tip.y - sin(ang + off) * s))
+        return listOf(wing(0.55), tip, wing(-0.55))
+    }
+    val parts = parseCommand(command).parts.filter { it.dir != 5 }
+    val repeated = parts.size >= 2 && parts.all { it.dir == parts.first().dir }
+    val hold = if (parts.firstOrNull()?.charge == true) pts.first() else null
+    return Glyph(pts, if (repeated) listOf(head(0.0), head(7.0)) else listOf(head(0.0)), hold)
 }
 
 // ----- Layout helpers -----

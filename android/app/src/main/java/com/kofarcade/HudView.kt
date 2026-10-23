@@ -345,8 +345,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         g.line.forEachIndexed { i, p ->
             if (i == 0) path.moveTo(ox + p.x * k, oy + p.y * k) else path.lineTo(ox + p.x * k, oy + p.y * k)
         }
-        g.head.forEachIndexed { i, p ->
-            if (i == 0) path.moveTo(ox + p.x * k, oy + p.y * k) else path.lineTo(ox + p.x * k, oy + p.y * k)
+        for (head in g.heads) {
+            head.forEachIndexed { i, p ->
+                if (i == 0) path.moveTo(ox + p.x * k, oy + p.y * k) else path.lineTo(ox + p.x * k, oy + p.y * k)
+            }
         }
         g.hold?.let { path.addCircle(ox + it.x * k, oy + it.y * k, 3.4f * k, Path.Direction.CW) }
         return path
