@@ -51,6 +51,8 @@ data class Game(
     val rapid: Key? = null,
     /** The game's name in libretro's thumbnail collection (FBNeo arcade DAT description). */
     val art: String? = null,
+    /** Shows a Block button (hold = back, slide down = low block). */
+    val block: Boolean = false,
 ) {
     /** Face buttons shown: shooters only show the buttons that have a job. */
     val faceButtons: List<Char>
@@ -65,12 +67,12 @@ val GAMES: List<Game> = listOf(
     Game(
         id = "kof97", series = "The King of Fighters", title = "KOF '97", sets = listOf("kof97"),
         art = "The King of Fighters '97 (NGM-2320)",
-        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3,
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3, block = true,
     ),
     Game(
         id = "kof2002", series = "The King of Fighters", title = "KOF 2002", sets = listOf("kof2002"),
         art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
     ),
     // There is no official Neo Geo KOF 2005: "KOF 2005" is the 10th
     // Anniversary hacks of KOF 2002, which play like 2002.
@@ -79,7 +81,7 @@ val GAMES: List<Game> = listOf(
         // The hacks have no art of their own; they are KOF 2002 underneath.
         art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
         sets = listOf("kf2k5uni", "kof10th", "kf10thep"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
     ),
 ) + listOf(
     Triple("mslug", "Metal Slug", "Metal Slug - Super Vehicle-001"),

@@ -224,6 +224,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
+    override fun onBlock(relDir: Int?) = pad.setHold(relDir)
+
     override fun onRapid() {
         game.rapid?.let { pad.setRapid(it, !pad.isRapid(it)) }
         updateHud()
@@ -304,6 +306,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             labelMode = prefs.labelMode,
             stick = prefs.stick,
             haptics = prefs.haptics,
+            block = game.block,
         )
     }
 

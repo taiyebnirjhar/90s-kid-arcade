@@ -71,6 +71,22 @@ class PadTest {
     }
 
     @Test
+    fun blockHoldsBackAndFollowsFacing() {
+        pad.setDir(6) // stick forward
+        pad.setHold(4) // block button: back wins over the stick
+        assertEquals(true, state[Key.LEFT])
+        assertTrue(state[Key.RIGHT] != true)
+        pad.setHold(1) // slid down: low block
+        assertEquals(true, state[Key.DOWN])
+        pad.facingLeft = true
+        pad.setHold(4) // facing left, back is right
+        assertEquals(true, state[Key.RIGHT])
+        pad.setHold(null) // let go: the stick is back in charge
+        assertEquals(true, state[Key.RIGHT])
+        assertTrue(state[Key.DOWN] != true)
+    }
+
+    @Test
     fun aTapDuringAMacroIsQueued() {
         pad.timing = Timing(step = 1, press = 1)
         pad.play("6+A")

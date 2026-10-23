@@ -19,6 +19,7 @@ class Pad(
     var rapidFrames = 2
 
     private var dir = 5
+    private var hold: Int? = null // a held direction from a button (block), facing right
     private val held = mutableSetOf<Key>()
     private val rapid = mutableSetOf<Key>()
     private var macro: MacroPlayer? = null
@@ -35,6 +36,16 @@ class Pad(
 
     fun press(key: Key, down: Boolean) {
         if (down) held += key else held -= key
+        flush()
+    }
+
+    /**
+     * Holds a direction from a button instead of the stick, e.g. the block
+     * button holds back (4) or down-back (1). Written facing right and
+     * mirrored with [facingLeft]; null lets go.
+     */
+    fun setHold(relDir: Int?) {
+        hold = relDir
         flush()
     }
 
@@ -91,13 +102,15 @@ class Pad(
     fun releaseAll() {
         held.clear()
         dir = 5
+        hold = null
         cancel()
     }
 
     // While a macro runs it owns the stick and A-D; coin and start stay live.
     private fun flush() {
         val frame = if (macro != null) current else null
-        val flags = dirFlags(frame?.dir ?: dir)
+        val holdDir = hold?.let { if (facingLeft) mirrorDir(it) else it }
+        val flags = dirFlags(frame?.dir ?: holdDir ?: dir)
         val phase = (clock() / rapidFrames) % 2 == 0L
         val state = mutableMapOf(
             Key.UP to flags.up,

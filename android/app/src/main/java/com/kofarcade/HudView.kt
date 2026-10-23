@@ -46,6 +46,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         fun onFlip()
         fun onSlot(index: Int)
         fun onRapid()
+
+        /** Block button: 4 = block (back), 1 = low block (down-back), null = let go. */
+        fun onBlock(relDir: Int?)
     }
 
     /** A one-tap button on the inner ring. [cmd] null means a toggle (rapid fire). */
@@ -103,6 +106,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val labelMode: LabelMode = LabelMode.SUPERS,
         val stick: StickMode = StickMode.FLOATING,
         val haptics: Boolean = true,
+        val block: Boolean = false,
     )
 
     var state = State()
@@ -114,7 +118,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             if (old.copy(facingLeft = value.facingLeft) == value) invalidate() else refresh()
         }
 
-    private enum class Kind { PAUSE, COIN, FACING, START, SLOT, FACE, SKILL, SYS }
+    private enum class Kind { PAUSE, COIN, FACING, START, SLOT, FACE, SKILL, SYS, BLOCK }
 
     private class El(
         val id: String,
@@ -202,6 +206,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     /** Releases every finger, e.g. when a dialog opens over the controls. */
     fun releaseAll() {
+        if (blockPointer != -1) listener.onBlock(null)
+        blockPointer = -1
+        blockLow = false
         pointerEl.clear()
         pressed.clear()
         stickPointer = -1
@@ -308,6 +315,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                     ?.takeUnless { it.isSequence }?.buttons.orEmpty(),
             )
         }
+        // Block: left of A, where the thumb already is. Slide down for low block.
+        if (st.block) {
+            els += El("block", Kind.BLOCK, placed("block", ax + (-1.85f * s) * mirror, ay + hh, 25 * d * sc), true)
+        }
         val sysR = 22 * d * sc
         arcPositions(st.system.size, 1.72f * s, 104f, 34f).forEachIndexed { i, p ->
             els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
@@ -324,6 +335,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         homeY = home.centerY()
 
         // Buttons moved: let go of anything a finger was holding on the old layout.
+        if (blockPointer != -1) {
+            listener.onBlock(null)
+            blockPointer = -1
+            blockLow = false
+        }
         for (el in pointerEl.values) {
             if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
         }
@@ -372,6 +388,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 Kind.FACE -> drawFace(canvas, el)
                 Kind.SKILL -> drawSkill(canvas, el)
                 Kind.SYS -> drawSys(canvas, el)
+                Kind.BLOCK -> drawBlock(canvas, el)
             }
         }
         if (editing) {
@@ -609,6 +626,19 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         drawSweep(canvas, el)
     }
 
+    private var blockPointer = -1
+    private var blockStartY = 0f
+    private var blockLow = false
+
+    private fun drawBlock(canvas: Canvas, el: El) {
+        val active = blockPointer != -1
+        glass(canvas, el, stroke = if (active) Color.argb(220, 120, 200, 255) else Color.argb(120, 160, 210, 255))
+        if (active) canvas.drawCircle(el.cx, el.cy, el.r, fill.apply { color = Color.argb(70, 120, 200, 255) })
+        val tint = Color.rgb(190, 225, 255)
+        centeredText(canvas, if (active && blockLow) "LOW" else "BLOCK", el.cx, el.cy - el.r * 0.12f, el.r * 0.34f, tint)
+        centeredText(canvas, if (active && blockLow) "↙ held" else "↓ low", el.cx, el.cy + el.r * 0.3f, el.r * 0.26f, withAlpha(tint, 150))
+    }
+
     private fun drawSweep(canvas: Canvas, el: El) {
         val (start, len) = firing[el] ?: return
         val p = min(1f, (frame - start).toFloat() / len.coerceAtLeast(1))
@@ -670,7 +700,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun hit(x: Float, y: Float, only: Kind? = null): El? {
         // Inner elements first so a ring button never steals a tap meant for A-D.
-        val order = listOf(Kind.FACE, Kind.SYS, Kind.SKILL, Kind.PAUSE, Kind.COIN, Kind.FACING, Kind.START, Kind.SLOT)
+        val order = listOf(Kind.FACE, Kind.BLOCK, Kind.SYS, Kind.SKILL, Kind.PAUSE, Kind.COIN, Kind.FACING, Kind.START, Kind.SLOT)
         for (k in order) {
             if (only != null && k != only) continue
             for (el in elements) {
@@ -770,6 +800,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                     haptic()
                 }
             }
+            Kind.BLOCK -> {
+                if (blockPointer != -1) return
+                blockPointer = id
+                blockStartY = y
+                blockLow = false
+                pointerEl[id] = el
+                listener.onBlock(4)
+                haptic()
+            }
             Kind.PAUSE -> listener.onMenu()
             Kind.FACING -> {
                 listener.onFlip()
@@ -795,6 +834,16 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             updateStick(x, y)
             return
         }
+        if (id == blockPointer) {
+            // Slide down past a small threshold for low block, back up for high.
+            val low = y - blockStartY > 18 * d
+            if (low != blockLow) {
+                blockLow = low
+                listener.onBlock(if (low) 1 else 4)
+                haptic()
+            }
+            return
+        }
         val el = pointerEl[id] ?: return
         if (el.kind != Kind.FACE) return
         // Slide between A B C D without lifting.
@@ -816,6 +865,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             lastDir = 5
             resetStick()
             listener.onDir(5)
+            return
+        }
+        if (id == blockPointer) {
+            blockPointer = -1
+            blockLow = false
+            pointerEl.remove(id)
+            listener.onBlock(null)
             return
         }
         val el = pointerEl.remove(id) ?: return
