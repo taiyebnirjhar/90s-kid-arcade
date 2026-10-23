@@ -1,0 +1,74 @@
+# Builds the Android app (APK) on every push that touches it.
+#
+# - Tests the move engine (android/core).
+# - Downloads the FBNeo libretro core for Android from the libretro buildbot.
+# - Builds a debug APK, uploads it as a workflow artifact, and on main
+#   publishes it to the "latest" pre-release so it can be downloaded on a phone.
+name: Android APK
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["android/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test the move engine
+        run: ./gradlew -p core test --no-daemon
+
+      - name: Download the FBNeo core
+        run: |
+          for abi in arm64-v8a armeabi-v7a; do
+            dir=app/src/main/jniLibs/$abi
+            mkdir -p "$dir"
+            curl -fsSL --retry 3 -o /tmp/fbneo.zip \
+              "https://buildbot.libretro.com/nightly/android/latest/$abi/fbneo_libretro_android.so.zip"
+            unzip -o -j /tmp/fbneo.zip -d "$dir"
+            # Android only installs native libraries named lib*.so.
+            mv "$dir/fbneo_libretro_android.so" "$dir/libfbneo_libretro_android.so"
+          done
+          ls -la app/src/main/jniLibs/*
+
+      - name: Build the APK
+        run: |
+          ./gradlew :app:assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk KOF-Arcade.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KOF-Arcade-apk
+          path: android/KOF-Arcade.apk
+
+      - name: Publish to the "latest" release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest KOF-Arcade.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "KOF Arcade (latest build)" \
+            --notes "Built from ${GITHUB_SHA::7}. Download KOF-Arcade.apk on your phone and open it to install."

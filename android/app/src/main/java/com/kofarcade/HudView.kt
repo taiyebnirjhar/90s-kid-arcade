@@ -1,0 +1,703 @@
+package com.kofarcade
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.Typeface
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.View
+import com.kofarcade.core.Key
+import com.kofarcade.core.Layout
+import com.kofarcade.core.Move
+import com.kofarcade.core.angleToDir
+import com.kofarcade.core.arcPositions
+import com.kofarcade.core.motionGlyph
+import com.kofarcade.core.parseCommand
+import kotlin.math.hypot
+import kotlin.math.min
+
+/**
+ * The in-game touch controls, drawn on one view so every finger is tracked
+ * together: an 8-way stick on the left; A B C D with the character's moves on
+ * a ring around them and one-tap system buttons (MAX, roll, ...) on an inner
+ * ring on the right; coin / facing / start along the top; and, for fighters,
+ * the team bar of three portraits on the left.
+ */
+@SuppressLint("ViewConstructor")
+class HudView(context: Context, private val listener: Listener) : View(context) {
+
+    interface Listener {
+        fun onDir(dir: Int)
+        fun onKey(key: Key, down: Boolean)
+
+        /** Plays a command; returns how many frames it takes. */
+        fun onPlay(cmd: String): Int
+        fun onMenu()
+        fun onFlip()
+        fun onSlot(index: Int)
+        fun onRapid()
+    }
+
+    /** A one-tap button on the inner ring. [cmd] null means a toggle (rapid fire). */
+    data class SysButton(val name: String, val sub: String, val cmd: String?, val power: Boolean = false, val on: Boolean = false)
+
+    data class Slot(val name: String?, val active: Boolean)
+
+    /** Everything the HUD shows; set by the game screen, then call [refresh]. */
+    data class State(
+        val layout: Layout = Layout.FIGHTER,
+        val faceButtons: List<Char> = listOf('A', 'B', 'C', 'D'),
+        val labels: Map<Char, String> = emptyMap(),
+        val moves: List<Move> = emptyList(),
+        val system: List<SysButton> = emptyList(),
+        val slots: List<Slot> = emptyList(),
+        val facingLeft: Boolean = false,
+        val size: Float = 1f,
+        val leftHanded: Boolean = false,
+        val showLabels: Boolean = true,
+        val stick: StickMode = StickMode.FLOATING,
+        val haptics: Boolean = true,
+    )
+
+    var state = State()
+        set(value) {
+            val old = field
+            field = value
+            // Flipping sides only changes how things are drawn; anything else
+            // moves buttons around, so lay out again.
+            if (old.copy(facingLeft = value.facingLeft) == value) invalidate() else refresh()
+        }
+
+    private enum class Kind { PAUSE, COIN, FACING, START, SLOT, FACE, SKILL, SYS }
+
+    private class El(
+        val kind: Kind,
+        val rect: RectF,
+        val round: Boolean,
+        val key: Key? = null,
+        val letter: Char? = null,
+        val move: Move? = null,
+        val sys: SysButton? = null,
+        val index: Int = -1,
+        val glyph: Path? = null,
+        val buttons: String = "",
+    ) {
+        val cx get() = rect.centerX()
+        val cy get() = rect.centerY()
+        val r get() = rect.width() / 2
+    }
+
+    private val d = resources.displayMetrics.density
+    private var elements = listOf<El>()
+    private val pressed = mutableSetOf<El>()
+    private val firing = mutableMapOf<El, Pair<Long, Int>>() // element -> start frame, length
+    private var frame = 0L
+
+    // Stick
+    private var stickPointer = -1
+    private var stickCx = 0f
+    private var stickCy = 0f
+    private var knobDx = 0f
+    private var knobDy = 0f
+    private var lastDir = 5
+    private var homeX = 0f
+    private var homeY = 0f
+    private val pointerEl = HashMap<Int, El>()
+
+    // ----- Paints -----
+
+    private val glassFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(118, 14, 16, 28) }
+    private val glassStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f * d
+        color = Color.argb(70, 255, 255, 255)
+    }
+    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    private val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+
+    private val accent = Color.rgb(255, 207, 77)
+    private val superColor = Color.rgb(255, 179, 71)
+    private val keyColors = mapOf(
+        'A' to Color.rgb(255, 90, 95),
+        'B' to Color.rgb(255, 201, 40),
+        'C' to Color.rgb(52, 196, 124),
+        'D' to Color.rgb(74, 157, 240),
+    )
+    private val keyFor = mapOf('A' to Key.A, 'B' to Key.B, 'C' to Key.C, 'D' to Key.D)
+
+    init {
+        isHapticFeedbackEnabled = true
+    }
+
+    fun refresh() {
+        if (width > 0) layoutElements()
+        invalidate()
+    }
+
+    /** Called once per emulated frame, to animate the move sweep. */
+    fun onFrame(frame: Long) {
+        this.frame = frame
+        if (firing.isNotEmpty()) {
+            firing.entries.removeAll { (_, v) -> frame - v.first > v.second + 6 }
+            invalidate()
+        }
+    }
+
+    /** Releases every finger, e.g. when a dialog opens over the controls. */
+    fun releaseAll() {
+        pointerEl.clear()
+        pressed.clear()
+        stickPointer = -1
+        knobDx = 0f
+        knobDy = 0f
+        lastDir = 5
+        resetStick()
+        invalidate()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        layoutElements()
+    }
+
+    // ----- Layout -----
+
+    private fun safeInsets(): Pair<Float, Float> {
+        val cutout = rootWindowInsets?.displayCutout
+        return (cutout?.safeInsetLeft ?: 0).toFloat() to (cutout?.safeInsetRight ?: 0).toFloat()
+    }
+
+    private fun layoutElements() {
+        val st = state
+        val (safeL, safeR) = safeInsets()
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val els = mutableListOf<El>()
+        val sc = st.size
+
+        // Top bar
+        val top = 8 * d
+        els += El(Kind.PAUSE, circle(safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
+        text.textSize = 11 * d
+        val pills = buildList {
+            add(Kind.COIN to "COIN")
+            if (st.layout == Layout.FIGHTER) add(Kind.FACING to "FACING")
+            add(Kind.START to "START")
+        }
+        val pillW = pills.map { (k, t) -> text.measureText(t) + 28 * d + if (k == Kind.FACING) 19 * d else 0f }
+        var x = w / 2 - (pillW.sum() + 8 * d * (pills.size - 1)) / 2
+        pills.forEachIndexed { i, (k, _) ->
+            els += El(
+                k, RectF(x, top + 2 * d, x + pillW[i], top + 32 * d), false,
+                key = when (k) {
+                    Kind.COIN -> Key.COIN
+                    Kind.START -> Key.START
+                    else -> null
+                },
+            )
+            x += pillW[i] + 8 * d
+        }
+
+        // Team bar
+        st.slots.forEachIndexed { i, _ ->
+            val y = 54 * d + i * 46 * d
+            els += El(Kind.SLOT, RectF(safeL + 12 * d, y, safeL + 12 * d + 110 * d, y + 38 * d), false, index = i)
+        }
+
+        // Button cluster: A B C D, moves on an outer ring, system on an inner one.
+        val s = 62 * d * sc
+        val mirror = if (st.leftHanded) -1f else 1f
+        val ax = if (st.leftHanded) safeL + 1.3f * s + 16 * d else w - safeR - 1.3f * s - 16 * d
+        val ay = h - s - 16 * d
+        val faceR = s / 2 * if (st.layout == Layout.SHOOTER) 1.12f else 1f
+        val hh = s / 2 + 5 * d
+        val facePos = mapOf(
+            'C' to (-0.3f * s - 5 * d to -hh),
+            'D' to (0.7f * s + 5 * d to -hh),
+            'A' to (-0.7f * s - 5 * d to hh),
+            'B' to (0.3f * s + 5 * d to hh),
+        )
+        for (c in st.faceButtons) {
+            val (fx, fy) = facePos.getValue(c)
+            els += El(Kind.FACE, circle(ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
+        }
+        val skillR = 28 * d * sc
+        arcPositions(st.moves.size, 3 * s, 72f, 23f).forEachIndexed { i, p ->
+            val m = st.moves[i]
+            val cx = ax + p.x * mirror
+            val cy = ay + p.y
+            els += El(
+                Kind.SKILL, circle(cx, cy, skillR), true, move = m,
+                glyph = glyphPath(m.cmd, cx, cy, skillR * 0.84f),
+                buttons = runCatching { parseCommand(m.cmd).buttons }.getOrDefault(""),
+            )
+        }
+        val sysR = 22 * d * sc
+        arcPositions(st.system.size, 1.72f * s, 104f, 34f).forEachIndexed { i, p ->
+            els += El(Kind.SYS, circle(ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
+        }
+
+        // Stick home
+        homeX = if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc
+        homeY = h - 104 * d * sc
+
+        // Buttons moved: let go of anything a finger was holding on the old layout.
+        for (el in pointerEl.values) {
+            if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
+        }
+        pressed.clear()
+        firing.clear()
+        pointerEl.clear()
+        elements = els
+        if (stickPointer == -1) resetStick()
+    }
+
+    private fun circle(cx: Float, cy: Float, r: Float) = RectF(cx - r, cy - r, cx + r, cy + r)
+
+    private fun glyphPath(cmd: String, cx: Float, cy: Float, half: Float): Path? {
+        val g = motionGlyph(cmd) ?: return null
+        val k = 2 * half / 48f
+        val ox = cx - half
+        val oy = cy - half
+        val path = Path()
+        g.line.forEachIndexed { i, p ->
+            if (i == 0) path.moveTo(ox + p.x * k, oy + p.y * k) else path.lineTo(ox + p.x * k, oy + p.y * k)
+        }
+        g.head.forEachIndexed { i, p ->
+            if (i == 0) path.moveTo(ox + p.x * k, oy + p.y * k) else path.lineTo(ox + p.x * k, oy + p.y * k)
+        }
+        g.hold?.let { path.addCircle(ox + it.x * k, oy + it.y * k, 3.4f * k, Path.Direction.CW) }
+        return path
+    }
+
+    private fun resetStick() {
+        stickCx = homeX
+        stickCy = homeY
+    }
+
+    // ----- Drawing -----
+
+    override fun onDraw(canvas: Canvas) {
+        val st = state
+        drawStick(canvas)
+        for (el in elements) {
+            when (el.kind) {
+                Kind.PAUSE -> drawPause(canvas, el)
+                Kind.COIN, Kind.START, Kind.FACING -> drawPill(canvas, el)
+                Kind.SLOT -> drawSlot(canvas, el, st.slots.getOrNull(el.index))
+                Kind.FACE -> drawFace(canvas, el)
+                Kind.SKILL -> drawSkill(canvas, el)
+                Kind.SYS -> drawSys(canvas, el)
+            }
+        }
+        if (st.slots.isNotEmpty() && st.slots.all { it.name == null }) {
+            text.textSize = 12 * d
+            text.textAlign = Paint.Align.LEFT
+            text.setShadowLayer(4 * d, 0f, 1 * d, Color.BLACK)
+            canvas.drawText("Tap a slot to pick your fighter and get their moves", safeInsets().first + 132 * d, 78 * d, text)
+            text.clearShadowLayer()
+            text.textAlign = Paint.Align.CENTER
+        }
+    }
+
+    private fun glass(canvas: Canvas, el: El, stroke: Int? = null, strokeWidth: Float = 1.5f * d) {
+        if (el.round) {
+            canvas.drawCircle(el.cx, el.cy, el.r, if (el in pressed) pressedFill() else glassFill)
+            ring.color = stroke ?: glassStroke.color
+            ring.strokeWidth = strokeWidth
+            canvas.drawCircle(el.cx, el.cy, el.r - strokeWidth / 2, ring)
+        } else {
+            val rr = el.rect.height() / 2
+            canvas.drawRoundRect(el.rect, rr, rr, if (el in pressed) pressedFill() else glassFill)
+            ring.color = stroke ?: glassStroke.color
+            ring.strokeWidth = strokeWidth
+            canvas.drawRoundRect(el.rect, rr, rr, ring)
+        }
+    }
+
+    private fun pressedFill() = fill.apply { color = Color.argb(90, 255, 255, 255) }
+
+    private fun centeredText(canvas: Canvas, s: String, cx: Float, cy: Float, size: Float, color: Int = Color.WHITE) {
+        text.textSize = size
+        text.color = color
+        canvas.drawText(s, cx, cy - (text.ascent() + text.descent()) / 2, text)
+        text.color = Color.WHITE
+    }
+
+    private fun drawPause(canvas: Canvas, el: El) {
+        glass(canvas, el)
+        fill.color = Color.WHITE
+        val bw = 3.4f * d
+        val bh = 11 * d
+        canvas.drawRoundRect(el.cx - 4.5f * d - bw / 2, el.cy - bh / 2, el.cx - 4.5f * d + bw / 2, el.cy + bh / 2, d, d, fill)
+        canvas.drawRoundRect(el.cx + 4.5f * d - bw / 2, el.cy - bh / 2, el.cx + 4.5f * d + bw / 2, el.cy + bh / 2, d, d, fill)
+    }
+
+    private fun drawPill(canvas: Canvas, el: El) {
+        val facing = el.kind == Kind.FACING
+        glass(canvas, el, stroke = if (facing) Color.argb(150, 255, 207, 77) else null)
+        val label = when (el.kind) {
+            Kind.COIN -> "COIN"
+            Kind.START -> "START"
+            else -> "FACING"
+        }
+        text.letterSpacing = 0.12f
+        if (facing) {
+            // Arrow showing which way your fighter faces.
+            val ax = el.rect.left + 16 * d
+            val dir = if (state.facingLeft) -1f else 1f
+            glyphPaint.color = accent
+            glyphPaint.strokeWidth = 2.2f * d
+            val p = Path().apply {
+                moveTo(ax - 6 * d * dir, el.cy)
+                lineTo(ax + 6 * d * dir, el.cy)
+                moveTo(ax + 2 * d * dir, el.cy - 4 * d)
+                lineTo(ax + 6 * d * dir, el.cy)
+                lineTo(ax + 2 * d * dir, el.cy + 4 * d)
+            }
+            canvas.drawPath(p, glyphPaint)
+            centeredText(canvas, label, el.cx + 9 * d, el.cy, 11 * d, accent)
+        } else {
+            centeredText(canvas, label, el.cx, el.cy, 11 * d)
+        }
+        text.letterSpacing = 0f
+    }
+
+    private fun drawSlot(canvas: Canvas, el: El, slot: Slot?) {
+        val tile = RectF(el.rect.left, el.rect.top, el.rect.left + 38 * d, el.rect.bottom)
+        val name = slot?.name
+        val active = slot?.active == true
+        if (name == null) {
+            canvas.drawRoundRect(tile, 10 * d, 10 * d, glassFill)
+            ring.color = Color.argb(110, 255, 255, 255)
+            ring.strokeWidth = 1.5f * d
+            canvas.drawRoundRect(tile, 10 * d, 10 * d, ring)
+            centeredText(canvas, "+", tile.centerX(), tile.centerY(), 18 * d, Color.argb(190, 255, 255, 255))
+        } else {
+            val hue = nameHue(name)
+            val inset = if (active) 0f else 3 * d
+            val t = RectF(tile.left + inset, tile.top + inset, tile.right - inset, tile.bottom - inset)
+            fill.shader = LinearGradient(
+                t.left, t.top, t.right, t.bottom,
+                Color.HSVToColor(floatArrayOf(hue, 0.7f, if (active) 0.8f else 0.45f)),
+                Color.HSVToColor(floatArrayOf((hue + 30) % 360, 0.65f, if (active) 0.35f else 0.22f)),
+                Shader.TileMode.CLAMP,
+            )
+            canvas.drawRoundRect(t, 10 * d, 10 * d, fill)
+            fill.shader = null
+            ring.color = if (active) accent else Color.argb(76, 255, 255, 255)
+            ring.strokeWidth = (if (active) 2f else 1.5f) * d
+            canvas.drawRoundRect(t, 10 * d, 10 * d, ring)
+            text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
+            centeredText(canvas, initials(name), t.centerX(), t.centerY(), 14 * d)
+            text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        text.textAlign = Paint.Align.LEFT
+        text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
+        text.textSize = 10 * d
+        canvas.drawText(name?.substringBefore(" ") ?: "Pick", tile.right + 6 * d, tile.centerY() + 3.5f * d, text)
+        text.clearShadowLayer()
+        text.textAlign = Paint.Align.CENTER
+    }
+
+    private fun drawFace(canvas: Canvas, el: El) {
+        val c = keyColors.getValue(el.letter!!)
+        val down = el in pressed
+        canvas.drawCircle(el.cx, el.cy, el.r, if (down) fill.apply { color = withAlpha(c, 200) } else glassFill)
+        ring.color = withAlpha(c, 200)
+        ring.strokeWidth = 2.5f * d
+        canvas.drawCircle(el.cx, el.cy, el.r - 1.25f * d, ring)
+        val label = state.labels[el.letter]
+        if (state.layout == Layout.SHOOTER && label != null) {
+            text.letterSpacing = 0.06f
+            centeredText(canvas, label.uppercase(), el.cx, el.cy, 12.5f * d * state.size)
+            text.letterSpacing = 0f
+        } else {
+            centeredText(canvas, el.letter.toString(), el.cx, el.cy - if (label != null && label.length > 1) 5 * d else 0f, 23 * d * state.size)
+            if (label != null && label.length > 1) {
+                centeredText(canvas, label, el.cx, el.cy + 13 * d * state.size, 8.5f * d * state.size, Color.argb(200, 255, 255, 255))
+            }
+        }
+    }
+
+    private fun drawSkill(canvas: Canvas, el: El) {
+        val move = el.move!!
+        val tint = if (move.isSuper) superColor else accent
+        glass(canvas, el, stroke = withAlpha(if (move.isSuper) Color.rgb(255, 120, 60) else accent, 150))
+        if (el in pressed) canvas.drawCircle(el.cx, el.cy, el.r, fill.apply { color = Color.argb(80, 255, 207, 77) })
+        el.glyph?.let { path ->
+            canvas.save()
+            if (state.facingLeft) canvas.scale(-1f, 1f, el.cx, el.cy)
+            glyphPaint.color = tint
+            glyphPaint.strokeWidth = 3.4f * (el.r * 0.84f * 2 / 48f)
+            canvas.drawPath(path, glyphPaint)
+            canvas.restore()
+        }
+        // Chips for the buttons the move ends on, top-left.
+        val chipR = 8.5f * d * state.size
+        el.buttons.forEachIndexed { i, b ->
+            val cx = el.rect.left + chipR - 4 * d + i * (chipR * 2 - 5 * d)
+            val cy = el.rect.top + chipR - 3 * d
+            canvas.drawCircle(cx, cy, chipR, fill.apply { color = keyColors.getValue(b) })
+            ring.color = Color.argb(215, 10, 10, 20)
+            ring.strokeWidth = 1.5f * d
+            canvas.drawCircle(cx, cy, chipR, ring)
+            centeredText(canvas, b.toString(), cx, cy, 9 * d * state.size, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
+        }
+        if (state.showLabels) {
+            text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
+            text.textSize = 9 * d * state.size
+            val label = ellipsize(move.shortName, el.r * 2.7f)
+            canvas.drawText(label, el.cx, el.rect.bottom + 11 * d * state.size, text)
+            text.clearShadowLayer()
+        }
+        drawSweep(canvas, el)
+    }
+
+    private fun drawSys(canvas: Canvas, el: El) {
+        val sys = el.sys!!
+        val stroke = when {
+            sys.power -> Color.argb(205, 255, 207, 77)
+            sys.on -> Color.argb(230, 52, 196, 124)
+            else -> null
+        }
+        glass(canvas, el, stroke = stroke)
+        val tint = when {
+            sys.power -> accent
+            sys.on -> Color.rgb(127, 240, 180)
+            else -> Color.WHITE
+        }
+        centeredText(canvas, sys.name, el.cx, el.cy - 4.5f * d * state.size, 9.5f * d * state.size, tint)
+        centeredText(canvas, sys.sub, el.cx, el.cy + 6.5f * d * state.size, 8 * d * state.size, withAlpha(tint, 150))
+        drawSweep(canvas, el)
+    }
+
+    private fun drawSweep(canvas: Canvas, el: El) {
+        val (start, len) = firing[el] ?: return
+        val p = min(1f, (frame - start).toFloat() / len.coerceAtLeast(1))
+        ring.color = accent
+        ring.strokeWidth = 3 * d
+        val r = el.r + 4 * d
+        canvas.drawArc(el.cx - r, el.cy - r, el.cx + r, el.cy + r, -90f, 360f * p, false, ring)
+    }
+
+    private fun drawStick(canvas: Canvas) {
+        val st = state
+        if (st.stick == StickMode.HIDDEN) return
+        val active = stickPointer != -1
+        val alpha = when {
+            active -> 1f
+            st.stick == StickMode.FIXED -> 0.8f
+            else -> 0.35f
+        }
+        val r = 64 * d * st.size
+        fill.color = Color.argb((115 * alpha).toInt(), 14, 16, 28)
+        canvas.drawCircle(stickCx, stickCy, r, fill)
+        ring.color = Color.argb((70 * alpha).toInt(), 255, 255, 255)
+        ring.strokeWidth = 1.5f * d
+        canvas.drawCircle(stickCx, stickCy, r, ring)
+        // ‹ › hints either side, like KOF Arena.
+        glyphPaint.color = Color.argb((190 * alpha).toInt(), 255, 255, 255)
+        glyphPaint.strokeWidth = 3 * d
+        val cx = r * 1.12f
+        val ch = 6 * d * st.size
+        canvas.drawPath(Path().apply {
+            moveTo(stickCx - cx + ch / 2, stickCy - ch)
+            lineTo(stickCx - cx - ch / 2, stickCy)
+            lineTo(stickCx - cx + ch / 2, stickCy + ch)
+            moveTo(stickCx + cx - ch / 2, stickCy - ch)
+            lineTo(stickCx + cx + ch / 2, stickCy)
+            lineTo(stickCx + cx - ch / 2, stickCy + ch)
+        }, glyphPaint)
+        fill.color = Color.argb((225 * alpha).toInt(), 225, 226, 236)
+        canvas.drawCircle(stickCx + knobDx, stickCy + knobDy, r * 0.42f, fill)
+    }
+
+    private fun ellipsize(s: String, maxWidth: Float): String {
+        if (text.measureText(s) <= maxWidth) return s
+        var t = s
+        while (t.length > 1 && text.measureText("$t…") > maxWidth) t = t.dropLast(1)
+        return "$t…"
+    }
+
+    private fun withAlpha(c: Int, a: Int) = Color.argb(a, Color.red(c), Color.green(c), Color.blue(c))
+
+    // ----- Touch -----
+
+    private fun hit(x: Float, y: Float, only: Kind? = null): El? {
+        // Inner elements first so a ring button never steals a tap meant for A-D.
+        val order = listOf(Kind.FACE, Kind.SYS, Kind.SKILL, Kind.PAUSE, Kind.COIN, Kind.FACING, Kind.START, Kind.SLOT)
+        for (k in order) {
+            if (only != null && k != only) continue
+            for (el in elements) {
+                if (el.kind != k) continue
+                val inside = if (el.round) {
+                    hypot(x - el.cx, y - el.cy) <= el.r * 1.08f
+                } else {
+                    RectF(el.rect).apply { inset(-6 * d, -6 * d) }.contains(x, y)
+                }
+                if (inside) return el
+            }
+        }
+        return null
+    }
+
+    private fun inStickZone(x: Float, y: Float): Boolean {
+        val side = if (state.leftHanded) x > width * 0.58f else x < width * 0.42f
+        return side && y > height * 0.2f
+    }
+
+    private fun haptic(strong: Boolean = false) {
+        if (!state.haptics) return
+        performHapticFeedback(if (strong) HapticFeedbackConstants.VIRTUAL_KEY else HapticFeedbackConstants.KEYBOARD_TAP)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                val i = e.actionIndex
+                down(e.getPointerId(i), e.getX(i), e.getY(i))
+            }
+            MotionEvent.ACTION_MOVE -> for (i in 0 until e.pointerCount) move(e.getPointerId(i), e.getX(i), e.getY(i))
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> up(e.getPointerId(e.actionIndex))
+            MotionEvent.ACTION_CANCEL -> {
+                for (id in pointerEl.keys.toList()) up(id)
+                if (stickPointer != -1) up(stickPointer)
+            }
+        }
+        invalidate()
+        return true
+    }
+
+    private fun down(id: Int, x: Float, y: Float) {
+        val el = hit(x, y)
+        if (el == null) {
+            if (stickPointer == -1 && inStickZone(x, y)) startStick(id, x, y)
+            return
+        }
+        when (el.kind) {
+            Kind.FACE, Kind.COIN, Kind.START -> {
+                pointerEl[id] = el
+                pressed += el
+                listener.onKey(el.key!!, true)
+                haptic()
+            }
+            Kind.SKILL -> fire(id, el, el.move!!.cmd)
+            Kind.SYS -> {
+                val cmd = el.sys!!.cmd
+                if (cmd != null) fire(id, el, cmd) else {
+                    listener.onRapid()
+                    haptic()
+                }
+            }
+            Kind.PAUSE -> listener.onMenu()
+            Kind.FACING -> {
+                listener.onFlip()
+                haptic()
+            }
+            Kind.SLOT -> {
+                listener.onSlot(el.index)
+                haptic()
+            }
+        }
+    }
+
+    private fun fire(id: Int, el: El, cmd: String) {
+        val frames = listener.onPlay(cmd)
+        pointerEl[id] = el
+        pressed += el
+        firing[el] = frame to frames
+        haptic(strong = true)
+    }
+
+    private fun move(id: Int, x: Float, y: Float) {
+        if (id == stickPointer) {
+            updateStick(x, y)
+            return
+        }
+        val el = pointerEl[id] ?: return
+        if (el.kind != Kind.FACE) return
+        // Slide between A B C D without lifting.
+        val next = hit(x, y, Kind.FACE) ?: return
+        if (next == el) return
+        listener.onKey(el.key!!, false)
+        pressed -= el
+        pointerEl[id] = next
+        pressed += next
+        listener.onKey(next.key!!, true)
+        haptic()
+    }
+
+    private fun up(id: Int) {
+        if (id == stickPointer) {
+            stickPointer = -1
+            knobDx = 0f
+            knobDy = 0f
+            lastDir = 5
+            resetStick()
+            listener.onDir(5)
+            return
+        }
+        val el = pointerEl.remove(id) ?: return
+        pressed -= el
+        if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
+    }
+
+    private fun stickRadius() = 64 * d * state.size
+
+    private fun startStick(id: Int, x: Float, y: Float) {
+        stickPointer = id
+        // Fixed: a touch near the drawn stick uses its centre; anywhere else
+        // (and always when floating) the stick jumps under the thumb.
+        if (state.stick == StickMode.FIXED && hypot(x - homeX, y - homeY) < stickRadius() * 1.5f) {
+            stickCx = homeX
+            stickCy = homeY
+        } else {
+            stickCx = x
+            stickCy = y
+        }
+        updateStick(x, y)
+    }
+
+    private fun updateStick(x: Float, y: Float) {
+        var dx = x - stickCx
+        var dy = y - stickCy
+        val dist = hypot(dx, dy)
+        // The centre follows a thumb that drifts too far, so you never end up
+        // pushing against the edge.
+        val follow = stickRadius() * 1.4f
+        if (dist > follow) {
+            stickCx += dx * (dist - follow) / dist
+            stickCy += dy * (dist - follow) / dist
+            dx = x - stickCx
+            dy = y - stickCy
+        }
+        val r = stickRadius()
+        val k = if (hypot(dx, dy) > r) r / hypot(dx, dy) else 1f
+        knobDx = dx * k
+        knobDy = dy * k
+        val dir = angleToDir(dx, dy, 14 * d)
+        if (dir != lastDir) {
+            lastDir = dir
+            if (dir != 5) haptic()
+            listener.onDir(dir)
+        }
+    }
+}

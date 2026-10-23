@@ -1,0 +1,7 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+# FBNeo core, downloaded by CI (see .github/workflows/android.yml)
+app/src/main/jniLibs/
