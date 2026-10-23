@@ -81,7 +81,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private lateinit var root: FrameLayout
     private lateinit var pad: Pad
     private var roster: Roster? = null
-    private var detectSpec: DetectSpec? = null
+    private var ramMap: DetectSpec? = null
     private lateinit var detectInfo: TextView
 
     private var frame = 0L
@@ -113,7 +113,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         prefs = Prefs(this)
         prefs.lastGame = game.id
         roster = game.roster?.let(::loadRoster)
-        if (game.layout == Layout.FIGHTER) detectSpec = detectSpec(game.roster)
+        if (game.layout == Layout.FIGHTER) ramMap = detectSpec(game.roster)
         val roms = RomStore(this)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -177,7 +177,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
             }
         }
-        detectSpec?.let(::startDetection)
+        ramMap?.let(::startDetection)
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
         }
@@ -260,7 +260,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // ----- Fighter detection -----
 
-    val canDetect: Boolean get() = detectSpec != null
+    val canDetect: Boolean get() = ramMap != null
 
     /**
      * Reads the game's RAM a few times a second, off the main thread (a read
