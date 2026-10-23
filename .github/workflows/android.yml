@@ -31,6 +31,11 @@ jobs:
           # LibretroDroid's native code pulls in oboe and libretro-common.
           submodules: recursive
 
+      # oboe ships sample apps with their own Gradle wrappers, one of which
+      # fails setup-gradle's wrapper check. Only its library is built here.
+      - name: Drop oboe's sample apps
+        run: rm -rf libretrodroid/src/main/cpp/oboe/apps libretrodroid/src/main/cpp/oboe/samples libretrodroid/src/main/cpp/oboe/tests
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

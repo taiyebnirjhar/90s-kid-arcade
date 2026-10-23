@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -329,8 +331,12 @@ class MainActivity : ComponentActivity() {
                             .background(Palette.gold)
                             .padding(horizontal = 22.dp, vertical = 10.dp),
                     ) {
+                        if (action == "Play") {
+                            PlayIcon(Modifier.size(12.dp))
+                            Spacer(Modifier.width(10.dp))
+                        }
                         Text(
-                            if (action == "Play") "▶  PLAY" else action.uppercase(),
+                            action.uppercase(),
                             color = Color(0xFF1D1400),
                             fontWeight = FontWeight.Black,
                             fontSize = 14.sp,
@@ -374,29 +380,35 @@ class MainActivity : ComponentActivity() {
                     Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f)),
                 ),
             )
-            Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-                Text(
-                    game.title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontStyle = FontStyle.Italic,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                game.subtitle?.let { Text(it, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp) }
+            // Title and play button share a row, so the button is centred on the title.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(12.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        game.title,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontStyle = FontStyle.Italic,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    game.subtitle?.let { Text(it, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp) }
+                }
+                if (ready) {
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Palette.gold),
+                    ) { PlayIcon(Modifier.size(12.dp)) }
+                }
             }
-            if (ready) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(10.dp)
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(Palette.gold),
-                ) { Text("▶", color = Color(0xFF1D1400), fontSize = 13.sp) }
-            } else {
+            if (!ready) {
                 Text(
                     "ADD ROM",
                     color = Color.White,
@@ -456,5 +468,26 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+}
+
+/**
+ * A drawn play triangle. The "▶" character sits off-centre in most fonts.
+ * This one leans slightly right of its box, so it looks centred in a circle.
+ */
+@Composable
+private fun PlayIcon(modifier: Modifier = Modifier, color: Color = Color(0xFF1D1400)) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        drawPath(
+            Path().apply {
+                moveTo(w * 0.12f, 0f)
+                lineTo(w * 1.02f, h / 2)
+                lineTo(w * 0.12f, h)
+                close()
+            },
+            color,
+        )
     }
 }
