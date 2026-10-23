@@ -11,6 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -219,7 +220,7 @@ class MainActivity : ComponentActivity() {
                 .clip(RoundedCornerShape(14.dp))
                 .background(if (ready) Palette.panel else Palette.red.copy(alpha = 0.08f))
                 .border(1.dp, if (ready) Palette.line else Palette.red.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                .combinedClickable(onClick = onClick)
+                .clickable(onClick = onClick)
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
