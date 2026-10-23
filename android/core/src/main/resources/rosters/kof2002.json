@@ -12,7 +12,8 @@
   "https://dreamcancel.com/wiki/The_King_of_Fighters_2002",
   "https://dreamcancel.com/wiki/Whip_02",
   "https://snk.fandom.com/wiki/MAX2",
-  "https://en.wikipedia.org/wiki/The_King_of_Fighters_2002"
+  "https://en.wikipedia.org/wiki/The_King_of_Fighters_2002",
+  "User-verified HSDM button sequences (GameFAQs: Jin_Sakazaki's KOF 2002 HSDM FAQ, A_Large_Trout's KOF 2002 Move List; Dream Cancel; SuperCombo)"
  ],
  "characters": [
   {
@@ -1011,6 +1012,12 @@
    "team": "Women Fighters",
    "moves": [
     {
+     "name": "Shiranui-ryuu: Kyuubi no Kitsune",
+     "cmd": "D,B,C,C,8",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Chou Hissatsu Shinobi Bachi",
      "cmd": "2141236+B",
      "type": "dm",
@@ -1064,8 +1071,7 @@
      "type": "special",
      "note": "P: A or C; in air"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Shiranui-ryuu: Kubi no Kitsune [hsdm]: _D_B_C_C_8"
+   ]
   },
   {
    "id": "yuri",
@@ -1128,6 +1134,18 @@
    "team": "Women Fighters",
    "moves": [
     {
+     "name": "Key of Victory",
+     "cmd": "6,B,C,6,C",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat. Hero Mode only (ABC switches mode)."
+    },
+    {
+     "name": "Disposition Frog",
+     "cmd": "AC,BD,ABC",
+     "type": "dm",
+     "note": "SDM in Normal Mode; switches May Lee to Hero Mode on hit."
+    },
+    {
      "name": "Shinjuu Kyaku",
      "cmd": "214214+B",
      "type": "dm",
@@ -1182,7 +1200,7 @@
      "note": "Hero Mode; P: A or C; close range"
     }
    ],
-   "note": "Two modes: Standard and Hero; mode noted per move. Not encodable in numpad cmd (command.dat notation): Disposition Frog [sdm]: _A_+_C_B_+_D_A_+_B_+_C | Key of Victory [hsdm]: _6_B_C_6_C"
+   "note": "Two modes: Standard and Hero; mode noted per move."
   },
   {
    "id": "kim",
@@ -1257,6 +1275,12 @@
    "team": "Korea Justice",
    "moves": [
     {
+     "name": "Tekkyuu Dai Sekai",
+     "cmd": "B,A,3,C,A",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Tekkyuu Dai Bousou",
      "cmd": "2363214+A",
      "type": "dm",
@@ -1304,8 +1328,7 @@
      "type": "special",
      "note": "K: B or D; reverse jump/high/mid/Specials"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Tekkyuu Dai Sekai [hsdm]: _B_A_3_C_A"
+   ]
   },
   {
    "id": "choi",
@@ -1435,6 +1458,12 @@
    "team": "'96 (Iori)",
    "moves": [
     {
+     "name": "Ecstasy 816",
+     "cmd": "6,D,C,B,6",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Heaven's Gate",
      "cmd": "2141236+B",
      "type": "dm",
@@ -1494,8 +1523,7 @@
      "type": "special",
      "note": "P: A or C"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Ecstasy 816 [hsdm]: _6_D_C_B_6"
+   ]
   },
   {
    "id": "vice",
@@ -2054,6 +2082,12 @@
    "team": "'99 (K')",
    "moves": [
     {
+     "name": "Arc Enemy",
+     "cmd": "6,B,C,6,C",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Bunker Buster",
      "cmd": "2363214+A",
      "type": "dm",
@@ -2111,14 +2145,19 @@
      "type": "special",
      "note": "K: B or D"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Arc Enemy [hsdm]: _6_B_C_6_C"
+   ]
   },
   {
    "id": "whip",
    "name": "Whip",
    "team": "'99 (K')",
    "moves": [
+    {
+     "name": "Super Black Hawk",
+     "cmd": "4,B,C,4,C",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
     {
      "name": "Sonic Slaughter \"Code: KW\"",
      "cmd": "2141236+A",
@@ -2173,8 +2212,7 @@
      "type": "special",
      "note": "P: A or C; in air"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Super Black Hawk [hsdm]: _4_B_C_4_C"
+   ]
   },
   {
    "id": "vanessa",
@@ -2411,6 +2449,12 @@
    "team": "2001 (K9999)",
    "moves": [
     {
+     "name": "Freeze Completion",
+     "cmd": "AC,BD,ABC",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Diamond Edge",
      "cmd": "236236+A",
      "type": "dm",
@@ -2452,8 +2496,7 @@
      "type": "special",
      "note": "K: B or D"
     }
-   ],
-   "note": "Not encodable in numpad cmd (command.dat notation): Freeze Completion [hsdm]: _A_+_C_B_+_D_A_+_B_+_C"
+   ]
   },
   {
    "id": "k9999",
@@ -2566,6 +2609,12 @@
    "team": "Awakened Orochi (hidden)",
    "moves": [
     {
+     "name": "Armageddon",
+     "cmd": "B,D,A,ABC",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
      "name": "Ankoku Jigoku Gokuraku Otoshi",
      "cmd": "6321463214+A",
      "type": "dm",
@@ -2614,13 +2663,19 @@
      "note": "K: B or D"
     }
    ],
-   "note": "Hidden: on character select hold Start on Yashiro and press a button (command.dat). Not encodable in numpad cmd (command.dat notation): Armageddon [hsdm]: _B_D_A_A_+_B_+_C"
+   "note": "Hidden: on character select hold Start on Yashiro and press a button (command.dat)."
   },
   {
    "id": "oshermie",
    "name": "Orochi Shermie",
    "team": "Awakened Orochi (hidden)",
    "moves": [
+    {
+     "name": "Unmei no Ya",
+     "cmd": "B,A,4,A,A",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat. The last button can be any of A-D; it sets the distance."
+    },
     {
      "name": "Ankoku Raikou Ken",
      "cmd": "236236+A",
@@ -2670,13 +2725,19 @@
      "note": "K: B or D; in air"
     }
    ],
-   "note": "Hidden: on character select hold Start on Shermie and press a button (command.dat). Not encodable in numpad cmd (command.dat notation): Unmei no Ya [hsdm]: _B_A_4_A_P / _K"
+   "note": "Hidden: on character select hold Start on Shermie and press a button (command.dat)."
   },
   {
    "id": "ochris",
    "name": "Orochi Chris",
    "team": "Awakened Orochi (hidden)",
    "moves": [
+    {
+     "name": "Sanagi o Yaburi, Chou wa Mau",
+     "cmd": "D,C,2,C,D",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
     {
      "name": "Ankoku Orochinagi",
      "cmd": "2141236+A",
@@ -2714,7 +2775,7 @@
      "note": "K: B or D; close range"
     }
    ],
-   "note": "Hidden: on character select hold Start on Chris and press a button (command.dat). Not encodable in numpad cmd (command.dat notation): Sanagi o Yaburi, Chou wa mau [hsdm]: _D_C_2_C_D"
+   "note": "Hidden: on character select hold Start on Chris and press a button (command.dat)."
   },
   {
    "id": "kusanagi",

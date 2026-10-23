@@ -11,6 +11,8 @@ package com.kofarcade.core
 //
 // After the directions come the buttons to press together: "236236+AC".
 // "[4]6+A" is a charge motion: hold back, then forward + A.
+// Commas make a sequence of separate inputs, for KOF 2002's button-sequence
+// supers: "D,B,C,C,8" is Mai's Kyuubi no Kitsune (D, B, C, C, up).
 //
 // compile() turns a command into a per-frame timeline the pad plays back one
 // emulated frame at a time, mirrored when your fighter faces left.
@@ -19,7 +21,21 @@ const val BUTTONS = "ABCD"
 
 data class Part(val dir: Int, val charge: Boolean)
 
-data class Command(val parts: List<Part>, val buttons: String)
+/** One input: directions, then buttons pressed together. */
+data class Step(val parts: List<Part>, val buttons: String)
+
+/** A parsed command: usually one [Step]; a comma-separated sequence has several. */
+data class Command(val steps: List<Step>) {
+    constructor(parts: List<Part>, buttons: String) : this(listOf(Step(parts, buttons)))
+
+    val isSequence: Boolean get() = steps.size > 1
+
+    /** Directions of a single-step command (all steps' directions for a sequence). */
+    val parts: List<Part> get() = steps.flatMap { it.parts }
+
+    /** The buttons the command ends on. */
+    val buttons: String get() = steps.last().buttons
+}
 
 /** One emulated frame of a macro: the stick direction and buttons held. */
 data class Frame(val dir: Int, val buttons: String)
@@ -28,6 +44,7 @@ data class Timing(
     val step: Int = 2, // frames each direction is held
     val charge: Int = 50, // frames a [charge] direction is held
     val press: Int = 4, // frames the buttons are held
+    val gap: Int = 2, // neutral frames between the inputs of a sequence
 )
 
 class CommandException(message: String) : IllegalArgumentException(message)
@@ -36,10 +53,18 @@ private val MIRROR = mapOf(1 to 3, 3 to 1, 4 to 6, 6 to 4, 7 to 9, 9 to 7, 2 to 
 
 fun mirrorDir(dir: Int): Int = MIRROR[dir] ?: 5
 
-/** Parses "2141236+AC". Throws [CommandException] with a readable message on bad input. */
+/** Parses "2141236+AC" or "D,B,C,C,8". Throws [CommandException] with a readable message on bad input. */
 fun parseCommand(command: String): Command {
-    val src = command.uppercase().filterNot { it.isWhitespace() || it in ",~>" }
+    val src = command.uppercase().filterNot { it.isWhitespace() || it == '~' }
     if (src.isEmpty()) throw CommandException("Empty command")
+    val steps = src.split(',', '>').map { segment ->
+        if (segment.isEmpty()) throw CommandException("Empty input between commas")
+        parseStep(segment)
+    }
+    return Command(steps)
+}
+
+private fun parseStep(src: String): Step {
     val parts = mutableListOf<Part>()
     var i = 0
     while (i < src.length) {
@@ -65,24 +90,28 @@ fun parseCommand(command: String): Command {
     }
     val buttons = BUTTONS.filter { it in rest }
     if (parts.isEmpty() && buttons.isEmpty()) throw CommandException("Command has no inputs")
-    return Command(parts, buttons)
+    return Step(parts, buttons)
 }
 
 fun isValidCommand(command: String): Boolean = runCatching { parseCommand(command) }.isSuccess
 
 /** The frame-by-frame timeline for [command]. The last frame is always neutral. */
 fun compile(command: String, facingLeft: Boolean = false, timing: Timing = Timing()): List<Frame> {
-    val (parts, buttons) = parseCommand(command)
+    val steps = parseCommand(command).steps
     val map = { d: Int -> if (facingLeft) mirrorDir(d) else d }
     val frames = mutableListOf<Frame>()
-    for ((dir, charge) in parts) {
-        repeat(if (charge) timing.charge else timing.step) { frames += Frame(map(dir), "") }
-    }
-    if (buttons.isNotEmpty()) {
-        // Keep holding the final direction while the buttons go down: the games
-        // read the button on the frame the motion completes.
-        val last = parts.lastOrNull()?.let { map(it.dir) } ?: 5
-        repeat(timing.press) { frames += Frame(last, buttons) }
+    steps.forEachIndexed { i, (parts, buttons) ->
+        for ((dir, charge) in parts) {
+            repeat(if (charge) timing.charge else timing.step) { frames += Frame(map(dir), "") }
+        }
+        if (buttons.isNotEmpty()) {
+            // Keep holding the final direction while the buttons go down: the
+            // games read the button on the frame the motion completes.
+            val last = parts.lastOrNull()?.let { map(it.dir) } ?: 5
+            repeat(timing.press) { frames += Frame(last, buttons) }
+        }
+        // Let go between the inputs of a sequence, so "C,C" is two presses.
+        if (i < steps.lastIndex) repeat(timing.gap) { frames += Frame(5, "") }
     }
     frames += Frame(5, "")
     return frames
@@ -90,11 +119,14 @@ fun compile(command: String, facingLeft: Boolean = false, timing: Timing = Timin
 
 private val ARROWS = mapOf(1 to "↙", 2 to "↓", 3 to "↘", 4 to "←", 5 to "•", 6 to "→", 7 to "↖", 8 to "↑", 9 to "↗")
 
-/** "2141236+AC" -> "↓↙←↙↓↘→ AC", for labels and the editor. */
+/** "2141236+AC" -> "↓↙←↙↓↘→ AC", "D,B,C,C,8" -> "D B C C ↑", for labels and the editor. */
 fun toArrows(command: String): String = try {
-    val (parts, buttons) = parseCommand(command)
-    val dirs = parts.joinToString("") { if (it.charge) "[${ARROWS[it.dir]}]" else ARROWS[it.dir]!! }
-    listOf(dirs, buttons).filter { it.isNotEmpty() }.joinToString(" ")
+    val parsed = parseCommand(command)
+    parsed.steps.joinToString(" ") { (parts, buttons) ->
+        val dirs = parts.joinToString("") { if (it.charge) "[${ARROWS[it.dir]}]" else ARROWS[it.dir]!! }
+        // In a sequence each input is one token ("→D"); otherwise "↓↘→ A".
+        if (parsed.isSequence || dirs.isEmpty() || buttons.isEmpty()) dirs + buttons else "$dirs $buttons"
+    }
 } catch (e: CommandException) {
     command
 }

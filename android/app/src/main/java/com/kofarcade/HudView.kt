@@ -18,8 +18,10 @@ import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
 import com.kofarcade.core.angleToDir
 import com.kofarcade.core.arcPositions
+import com.kofarcade.core.mirrorDir
 import com.kofarcade.core.motionGlyph
 import com.kofarcade.core.parseCommand
+import com.kofarcade.core.toArrows
 import kotlin.math.hypot
 import kotlin.math.min
 
@@ -245,7 +247,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             els += El(
                 Kind.SKILL, circle(cx, cy, skillR), true, move = m,
                 glyph = glyphPath(m.cmd, cx, cy, skillR * 0.84f),
-                buttons = runCatching { parseCommand(m.cmd).buttons }.getOrDefault(""),
+                // Sequences show their inputs as text, so no separate button chips.
+                buttons = runCatching { parseCommand(m.cmd) }.getOrNull()
+                    ?.takeUnless { it.isSequence }?.buttons.orEmpty(),
             )
         }
         val sysR = 22 * d * sc
@@ -441,13 +445,27 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val tint = if (move.isSuper) superColor else accent
         glass(canvas, el, stroke = withAlpha(if (move.isSuper) Color.rgb(255, 120, 60) else accent, 150))
         if (el in pressed) canvas.drawCircle(el.cx, el.cy, el.r, fill.apply { color = Color.argb(80, 255, 207, 77) })
-        el.glyph?.let { path ->
+        val glyph = el.glyph
+        if (glyph != null) {
             canvas.save()
             if (state.facingLeft) canvas.scale(-1f, 1f, el.cx, el.cy)
             glyphPaint.color = tint
             glyphPaint.strokeWidth = 3.4f * (el.r * 0.84f * 2 / 48f)
-            canvas.drawPath(path, glyphPaint)
+            canvas.drawPath(glyph, glyphPaint)
             canvas.restore()
+        } else {
+            // A button sequence ("D B C C ↑"): its inputs, on two lines if long.
+            val tokens = toArrows(mirrored(move.cmd)).split(" ")
+            val lines = if (tokens.size > 3) {
+                listOf(tokens.take((tokens.size + 1) / 2), tokens.drop((tokens.size + 1) / 2))
+            } else {
+                listOf(tokens)
+            }
+            val size = 10.5f * d * state.size
+            lines.forEachIndexed { i, line ->
+                val dy = (i - (lines.size - 1) / 2f) * size * 1.15f
+                centeredText(canvas, line.joinToString(" "), el.cx, el.cy + dy, size, tint)
+            }
         }
         // Chips for the buttons the move ends on, top-left.
         val chipR = 8.5f * d * state.size
@@ -527,6 +545,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }, glyphPaint)
         fill.color = Color.argb((225 * alpha).toInt(), 225, 226, 236)
         canvas.drawCircle(stickCx + knobDx, stickCy + knobDy, r * 0.42f, fill)
+    }
+
+    // Sequences are drawn as text, so mirror their forward/back by hand.
+    private fun mirrored(cmd: String) = if (state.facingLeft) {
+        cmd.map { ch -> if (ch in '1'..'9') ('0' + mirrorDir(ch - '0')) else ch }.joinToString("")
+    } else {
+        cmd
     }
 
     private fun ellipsize(s: String, maxWidth: Float): String {

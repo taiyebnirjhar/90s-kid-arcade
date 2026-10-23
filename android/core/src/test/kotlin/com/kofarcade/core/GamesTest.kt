@@ -29,7 +29,7 @@ class GamesTest {
             assertTrue(roster.characters.size > 30, name)
             for (c in roster.characters) for (m in c.moves) {
                 assertTrue(isValidCommand(m.cmd), "${c.name}: ${m.name} ${m.cmd}")
-                assertNotNull(motionGlyph(m.cmd), "${c.name}: ${m.name} has no motion")
+                if (!parseCommand(m.cmd).isSequence) assertNotNull(motionGlyph(m.cmd), "${c.name}: ${m.name} has no motion")
             }
         }
         for (g in GAMES) for (m in g.moves + g.system + listOfNotNull(g.power)) {

@@ -67,9 +67,24 @@ class MacroTest {
     }
 
     @Test
+    fun sequencesPressEachInputSeparately() {
+        val cmd = parseCommand("D, B, C, C, 8")
+        assertTrue(cmd.isSequence)
+        assertEquals(listOf("D", "B", "C", "C", ""), cmd.steps.map { it.buttons })
+        val f = compile("C,C", timing = Timing(press = 2, gap = 1))
+        // Released between the two presses, so the game sees C twice.
+        assertEquals(listOf("C", "C", "", "C", "C", ""), f.map { it.buttons })
+        // Sequences mirror too: forward becomes back.
+        assertEquals(4, compile("6,B", facingLeft = true, timing = Timing(step = 1))[0].dir)
+        assertFailsWith<CommandException> { parseCommand("A,,B") }
+    }
+
+    @Test
     fun arrowLabels() {
         assertEquals("↓↙←↙↓↘→ A", toArrows("2141236+A"))
         assertEquals("[←]→ B", toArrows("[4]6+B"))
+        assertEquals("D B C C ↑", toArrows("D,B,C,C,8"))
+        assertEquals("→ D C B →", toArrows("6,D,C,B,6"))
     }
 
     @Test
@@ -99,6 +114,7 @@ class MacroTest {
         assertTrue(end.x < 41f && end.y == 24f)
         assertEquals(2, motionPoints("[4]6+A").size)
         assertNull(motionGlyph("CD"))
+        assertNull(motionGlyph("D,B,C,C,8"))
         assertNotNull(motionGlyph("[4]6+A")?.hold)
     }
 }

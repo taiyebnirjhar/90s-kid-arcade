@@ -32,7 +32,10 @@ private fun round1(v: Double) = (v * 10).roundToInt() / 10f
  * 180° turn (charge back, then forward) cuts straight through the middle.
  */
 fun motionPoints(command: String): List<Pt> {
-    val dirs = parseCommand(command).parts.map { it.dir }.filter { it != 5 }
+    val parsed = parseCommand(command)
+    // A button sequence isn't a stick motion; it's shown as text instead.
+    if (parsed.isSequence) return emptyList()
+    val dirs = parsed.parts.map { it.dir }.filter { it != 5 }
     if (dirs.isEmpty()) return emptyList()
     val n = dirs.size
     fun radius(i: Int) = R * (if (n > 3) 1 - 0.42f * i / (n - 1) else 1f)

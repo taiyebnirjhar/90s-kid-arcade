@@ -1,96 +1,71 @@
 # KOF Arcade
 
-A mobile emulator for a handful of famous Neo Geo games, with touch controls
+An Android app for a handful of famous Neo Geo games, with touch controls
 built for each one: one-tap specials and supers for every King of Fighters
 character, big Shoot / Jump / Bomb buttons and rapid fire for Metal Slug.
 
-Runs in the phone's browser and installs to the home screen as a full-screen
-app. Emulation is [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS)
-running the [FBNeo](https://github.com/finalburnneo/FBNeo) arcade core.
+| Game | ROM set (zip) |
+| --- | --- |
+| The King of Fighters '97 | `kof97` |
+| The King of Fighters 2002 | `kof2002` |
+| "KOF 2005" (10th Anniversary hacks of 2002) | `kf2k5uni`, `kof10th` or `kf10thep` |
+| Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` |
+| Sengoku 3 | `sengoku3` |
 
-## Games
+Every game also needs the Neo Geo BIOS, `neogeo.zip`. No ROMs or BIOS are
+included: use dumps of games you own.
 
-| Game | ROM set (zip) | Layout |
-| --- | --- | --- |
-| The King of Fighters '97 | `kof97` | Fighter: stick, A B C D, MAX (A+B+C), character moves |
-| The King of Fighters 2002 | `kof2002` | Fighter: MAX is B+C |
-| "KOF 2005" (10th Anniversary hacks of 2002) | `kf2k5uni`, `kof10th` or `kf10thep` | Fighter, 2002 move lists |
-| Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` | Shoot, Jump, Bomb, rapid fire; Slug Attack (D) on 4 and 5; Slide on 5 |
-| Sengoku 3 | `sengoku3` | Weapon, Punch, Jump, Throw, plus the shared special inputs |
+## Install
 
-Every game also needs the Neo Geo BIOS, `neogeo.zip`.
+Each push to `main` builds the app and publishes it to the
+[latest release](../../releases/tag/latest). On your phone, download
+`KOF-Arcade.apk` from there and open it (allow installing from your browser
+when Android asks). New builds install over the old one and keep your ROMs
+and settings.
 
 ## Playing
 
-1. Open the app. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
-2. Tap a game. The first time, it asks for that game's zip. A differently
-   named file is fine: it is stored under the name the emulator expects.
+1. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
+2. Tap a game. The first time it asks for that game's zip; any file name is
+   fine. Files are copied into the app's private storage and never leave
+   the phone. Long-press a game to remove its ROM.
 3. **COIN**, then **START**.
 
-ROMs are kept in the browser's storage on your phone. Nothing is uploaded.
-Long-press a game card to remove its ROM.
+**KOF:** pick your three fighters in the team bar (top left) — tap a slot,
+or a team name to fill all three — and tap whoever is fighting this round.
+The move ring around A B C D shows only that fighter's desperation moves and
+specials, each drawn as its stick motion; one tap plays the whole input,
+frame-exact. **MAX** is one tap (A+B+C in '97, B+C in 2002), as are Roll and
+Blowback. Moves are written for a fighter facing right: when you cross
+sides, tap **FACING** and they mirror. Pause → *Edit <name>'s moves* to
+change any move.
 
-**For your own copy of the app:** zips placed in a `roms/` folder next to
-`index.html` are used directly, without adding them on the phone. `roms/` is
-git-ignored so it never ends up in the repository. Don't do this on a public
-host: anyone with the link could download the files.
+**Metal Slug:** Shoot, Jump and Bomb; **Rapid** auto-fires while you hold
+Shoot. Slug Attack on 4 and 5, Slide on 5.
 
-### Fighters (KOF)
+**Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
 
-- **Team bar (top left):** tap a slot and pick a fighter, or tap a team name
-  to fill all three. During the match tap whoever is fighting this round:
-  the move buttons switch to that character.
-- **Move ring:** that character's desperation moves and specials, each drawn
-  as its stick motion. Desperation moves have an orange ring. One tap plays
-  the whole input, frame-exact.
-- **MAX:** one tap for the power-up (A+B+C in '97, B+C in 2002).
-- **Roll / Blowback:** A+B and C+D.
-- **Facing:** moves are written for a fighter facing right. When you cross
-  sides, tap it and every move mirrors.
-- **❚❚ → Edit <name>'s moves:** change or add moves (numpad notation, e.g.
-  `2363214+A`), with ▶ to try one.
+Pause → **Controls**: stick style (floating, fixed or hidden), size,
+opacity, move names, vibration, left-handed layout, move timing.
 
-The move lists (`data/rosters/`) come from the MAME `command.dat` move-list
-file. Mash moves ("tap A rapidly") are left out because one tap can't do
-them.
+## Project
 
-### Metal Slug
+- `android/core` — plain Kotlin: the move engine (numpad commands, played
+  back one emulated frame at a time), motion icons, the game list and the
+  KOF '97 / 2002 move lists (from MAME's `command.dat`). Tested without the
+  Android SDK: `cd android/core && gradle test`.
+- `android/app` — the Android app: [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)
+  running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
+  native touch HUD, and Compose screens.
+- `.github/workflows/android.yml` — downloads the FBNeo core from the
+  libretro buildbot and builds the APK.
+- `web/` — the earlier browser version (EmulatorJS), kept for reference.
 
-Shoot, Jump and Bomb are bigger buttons. **Rapid** turns on auto-fire while
-you hold Shoot.
-
-### Controls for every game
-
-❚❚ → **Controls**: stick style (floating, fixed or hidden), size, opacity,
-move names, vibration, left-handed layout, and move timing.
-
-Keyboard: arrows/WASD, J K U I = A B C D, 1–6 = move buttons, F = flip
-facing, Enter = start, Backspace = coin.
-
-## How it works
-
-- `js/games.js` lists the games and their layouts.
-- `js/macro.js` turns a command into a per-frame timeline (2 frames per
-  direction, buttons held 4), mirrored when facing left.
-- `js/input.js` plays it against the emulator's frame counter, one step per
-  emulated frame, never skipping one; it also runs rapid fire.
-- `js/glyph.js` draws each move's stick motion as an icon.
-- Inputs reach FBNeo through EmulatorJS's `simulateInput` (A, B, C, D on
-  RetroPad B, A, Y, X). The BIOS is written next to the game in the
-  emulator's file system, where FBNeo looks for it.
-
-## Running it
-
-A static site with no build step.
-
-```sh
-npm install        # EmulatorJS + FBNeo core, for offline/self-hosting
-npm run vendor     # copies them into vendor/; without it the EmulatorJS CDN is used
-npm start          # http://localhost:8080
-npm test
-```
+Build locally with Android Studio, or: download the FBNeo core into
+`android/app/src/main/jniLibs/<abi>/libfbneo_libretro_android.so` (see the
+workflow), then `cd android && ./gradlew :app:assembleDebug`.
 
 ## License
 
-GPL-3.0-or-later, as EmulatorJS. FBNeo has its own non-commercial license.
-No game or BIOS files are included.
+GPL-3.0-or-later (LibretroDroid is GPL-3.0). FBNeo has its own
+non-commercial license.
