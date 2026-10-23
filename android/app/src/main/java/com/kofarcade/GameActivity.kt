@@ -1,12 +1,17 @@
 package com.kofarcade
 
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
@@ -18,15 +23,22 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.kofarcade.core.Character
+import com.kofarcade.core.DetectSpec
+import com.kofarcade.core.Detection
 import com.kofarcade.core.Game
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
 import com.kofarcade.core.Pad
+import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.detect
+import com.kofarcade.core.detectSpec
 import com.kofarcade.core.gameById
 import com.kofarcade.core.loadRoster
 import com.kofarcade.core.parseCommand
@@ -57,6 +69,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         const val EXTRA_SET = "set"
         private const val MAX_MOVES = 6
         private const val CORE = "libfbneo_libretro_android.so"
+        private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
+        private const val DETECT_MS = 250L
     }
 
     private lateinit var game: Game
@@ -67,6 +81,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private lateinit var root: FrameLayout
     private lateinit var pad: Pad
     private var roster: Roster? = null
+    private var detectSpec: DetectSpec? = null
+    private lateinit var detectInfo: TextView
 
     private var frame = 0L
     private var paused = false
@@ -97,6 +113,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         prefs = Prefs(this)
         prefs.lastGame = game.id
         roster = game.roster?.let(::loadRoster)
+        if (game.layout == Layout.FIGHTER) detectSpec = detectSpec(game.roster)
         val roms = RomStore(this)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -121,12 +138,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         pad = Pad(send = ::sendKey, clock = { frame })
         hud = HudView(this, this)
 
+        detectInfo = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(170, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
+            typeface = Typeface.MONOSPACE
+            setPadding(12, 6, 12, 6)
+            visibility = View.GONE
+        }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
         setContentView(
             root.apply {
                 addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER))
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                addView(detectInfo, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
                 // Full width so the layout editor's bar can centre itself; it
                 // takes no space (and no touches) when nothing is shown.
                 addView(dialogs, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
@@ -151,6 +177,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
             }
         }
+        detectSpec?.let(::startDetection)
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
         }
@@ -229,6 +256,66 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     override fun onRapid() {
         game.rapid?.let { pad.setRapid(it, !pad.isRapid(it)) }
         updateHud()
+    }
+
+    // ----- Fighter detection -----
+
+    val canDetect: Boolean get() = detectSpec != null
+
+    /**
+     * Reads the game's RAM a few times a second, off the main thread (a read
+     * waits for the emulator to finish its frame), while the game is on screen.
+     */
+    private fun startDetection(spec: DetectSpec) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(DETECT_MS)
+                    if (paused || frame == 0L || !(prefs.autoDetect || prefs.detectInfo)) {
+                        detectInfo.visibility = View.GONE
+                        continue
+                    }
+                    val bytes = withContext(Dispatchers.Default) {
+                        LibretroDroid.readMemory(SYSTEM_RAM, Ram.START - 0x100000, Ram.LENGTH)
+                    } ?: continue
+                    onDetected(detect(spec, Ram(Ram.START, bytes)))
+                }
+            }
+        }
+    }
+
+    private fun onDetected(d: Detection) {
+        if (prefs.autoDetect && d.inRound) {
+            var changed = false
+            // Only in a round: on the select screen the picks are still changing.
+            if (d.teamKnown && d.team.size == game.team && d.team != team()) {
+                prefs.setTeam(game.id, d.team)
+                changed = true
+            }
+            val slot = d.activeSlot
+            if (slot != null && slot != prefs.active(game.id)) {
+                prefs.setActive(game.id, slot)
+                changed = true
+            }
+            if (d.facingLeft != pad.facingLeft) {
+                pad.facingLeft = d.facingLeft
+                changed = true
+            }
+            if (changed) updateHud()
+        }
+        detectInfo.visibility = if (prefs.detectInfo) View.VISIBLE else View.GONE
+        if (prefs.detectInfo) {
+            fun hex(v: Int) = "%02X".format(v)
+            fun name(id: String?) = roster?.character(id)?.name ?: "?"
+            detectInfo.text = buildString {
+                append(if (d.inRound) "ROUND" else "no round")
+                append("   team ")
+                append(d.teamRaw.zip(d.team).joinToString("  ") { (raw, id) -> "${hex(raw)} ${name(id)}" })
+                append("\non screen ${hex(d.activeRaw)} ${d.active?.let(::name) ?: "(not in team)"}")
+                append("   facing ${if (d.facingLeft) "←" else "→"}   x ${d.x} vs ${d.otherX}")
+                if (!prefs.autoDetect) append("   (auto off)")
+            }
+        }
     }
 
     // ----- Team and moves -----

@@ -14,7 +14,13 @@ class Pad(
     private val send: (Key, Boolean) -> Unit,
     private val clock: () -> Long,
 ) {
+    /** Turning round re-sends a held direction (block), so it stays "back". */
     var facingLeft = false
+        set(v) {
+            if (field == v) return
+            field = v
+            flush()
+        }
     var timing = Timing()
     var rapidFrames = 2
 

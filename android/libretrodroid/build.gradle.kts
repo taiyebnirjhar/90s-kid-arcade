@@ -1,7 +1,7 @@
 // LibretroDroid 0.14.0 (GPL-3, github.com/Swordfish90/LibretroDroid), vendored
 // so the app can read the emulated game's RAM: LibretroDroid.readMemory, used
 // to detect the fighters on screen. Other changes: the serialize wrappers no
-// longer leak their buffer.
+// longer leak their buffer, and headers include <functional> for newer NDKs.
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")

@@ -115,6 +115,16 @@ class Prefs(context: Context) {
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
+    /** KOF: fill the team, the active fighter and their facing from the game's RAM. */
+    var autoDetect: Boolean
+        get() = sp.getBoolean("autoDetect", true)
+        set(v) = sp.edit().putBoolean("autoDetect", v).apply()
+
+    /** Shows what detection reads, to check it (and map unknown fighters) on a phone. */
+    var detectInfo: Boolean
+        get() = sp.getBoolean("detectInfo", false)
+        set(v) = sp.edit().putBoolean("detectInfo", v).apply()
+
     var screen: ScreenMode
         get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.SLIGHT)
         set(v) = sp.edit().putString("screen", v.name).apply()
