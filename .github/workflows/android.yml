@@ -54,12 +54,12 @@ jobs:
       - name: Build the APK
         run: |
           ./gradlew :app:assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk KOF-Arcade.apk
+          cp app/build/outputs/apk/debug/app-debug.apk 90s-Kid-Arcade.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: KOF-Arcade-apk
-          path: android/KOF-Arcade.apk
+          name: 90s-Kid-Arcade-apk
+          path: android/90s-Kid-Arcade.apk
 
       - name: Publish to the "latest" release
         if: github.ref == 'refs/heads/main'
@@ -67,8 +67,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest KOF-Arcade.apk \
+          gh release create latest 90s-Kid-Arcade.apk \
             --latest \
             --target "$GITHUB_SHA" \
-            --title "KOF Arcade (latest build)" \
-            --notes "Built from ${GITHUB_SHA::7}. Download KOF-Arcade.apk on your phone and open it to install."
+            --title "90s Kid Arcade (latest build)" \
+            --notes "Built from ${GITHUB_SHA::7}. Download 90s-Kid-Arcade.apk on your phone and open it to install."

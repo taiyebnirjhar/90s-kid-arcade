@@ -1,4 +1,4 @@
-# KOF Arcade
+# 90s Kid Arcade
 
 An Android app for a handful of famous Neo Geo games, with touch controls
 built for each one: one-tap specials and supers for every King of Fighters
@@ -19,7 +19,7 @@ included: use dumps of games you own.
 
 Each push to `main` builds the app and publishes it as the
 [latest release](../../releases/latest) (the **Releases** box on the repo page). On your phone, download
-`KOF-Arcade.apk` from there and open it (allow installing from your browser
+`90s-Kid-Arcade.apk` from there and open it (allow installing from your browser
 when Android asks). New builds install over the old one and keep your ROMs
 and settings.
 
