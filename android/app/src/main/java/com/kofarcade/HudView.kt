@@ -100,7 +100,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val facingLeft: Boolean = false,
         val size: Float = 1f,
         val leftHanded: Boolean = false,
-        val showLabels: Boolean = true,
+        val labelMode: LabelMode = LabelMode.SUPERS,
         val stick: StickMode = StickMode.FLOATING,
         val haptics: Boolean = true,
     )
@@ -153,11 +153,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     // ----- Paints -----
 
-    private val glassFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(118, 14, 16, 28) }
+    private val glassFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(92, 12, 14, 24) }
     private val glassStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.5f * d
-        color = Color.argb(70, 255, 255, 255)
+        strokeWidth = 1.2f * d
+        color = Color.argb(56, 255, 255, 255)
     }
     private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -251,17 +251,19 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         // Top bar
         val top = 8 * d
         els += El("pause", Kind.PAUSE, placed("pause", safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
-        text.textSize = 11 * d
+        text.textSize = 10 * d
         val pills = buildList {
             add(Kind.COIN to "COIN")
             if (st.layout == Layout.FIGHTER) add(Kind.FACING to "FACING")
             add(Kind.START to "START")
         }
-        val pillW = pills.map { (k, t) -> text.measureText(t) + 28 * d + if (k == Kind.FACING) 19 * d else 0f }
+        text.letterSpacing = 0.12f
+        val pillW = pills.map { (k, t) -> text.measureText(t) + 24 * d + if (k == Kind.FACING) 19 * d else 0f }
+        text.letterSpacing = 0f
         var x = w / 2 - (pillW.sum() + 8 * d * (pills.size - 1)) / 2
         pills.forEachIndexed { i, (k, _) ->
             els += El(
-                "top", k, placed("top", RectF(x, top + 2 * d, x + pillW[i], top + 32 * d)), false,
+                "top", k, placed("top", RectF(x, top + 4 * d, x + pillW[i], top + 30 * d)), false,
                 key = when (k) {
                     Kind.COIN -> Key.COIN
                     Kind.START -> Key.START
@@ -273,8 +275,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
         // Team bar
         st.slots.forEachIndexed { i, _ ->
-            val y = 54 * d + i * 46 * d
-            els += El("team", Kind.SLOT, placed("team", RectF(safeL + 12 * d, y, safeL + 12 * d + 110 * d, y + 38 * d)), false, index = i)
+            val y = 54 * d + i * 40 * d
+            els += El("team", Kind.SLOT, placed("team", RectF(safeL + 12 * d, y, safeL + 12 * d + 96 * d, y + 34 * d)), false, index = i)
         }
 
         // Button cluster: A B C D, moves on an outer ring, system on an inner one.
@@ -294,7 +296,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             val (fx, fy) = facePos.getValue(c)
             els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
         }
-        val skillR = 28 * d * sc
+        val skillR = 26 * d * sc
         arcPositions(st.moves.size, 3 * s, 72f, 23f).forEachIndexed { i, p ->
             val m = st.moves[i]
             val rect = placed("move:$i", ax + p.x * mirror, ay + p.y, skillR)
@@ -465,15 +467,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 lineTo(ax + 2 * d * dir, el.cy + 4 * d)
             }
             canvas.drawPath(p, glyphPaint)
-            centeredText(canvas, label, el.cx + 9 * d, el.cy, 11 * d, accent)
+            centeredText(canvas, label, el.cx + 9 * d, el.cy, 10 * d, accent)
         } else {
-            centeredText(canvas, label, el.cx, el.cy, 11 * d)
+            centeredText(canvas, label, el.cx, el.cy, 10 * d)
         }
         text.letterSpacing = 0f
     }
 
     private fun drawSlot(canvas: Canvas, el: El, slot: Slot?) {
-        val tile = RectF(el.rect.left, el.rect.top, el.rect.left + 38 * d, el.rect.bottom)
+        val tile = RectF(el.rect.left, el.rect.top, el.rect.left + 34 * d, el.rect.bottom)
         val name = slot?.name
         val active = slot?.active == true
         if (name == null) {
@@ -498,15 +500,20 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.strokeWidth = (if (active) 2f else 1.5f) * d
             canvas.drawRoundRect(t, 10 * d, 10 * d, ring)
             text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
-            centeredText(canvas, initials(name), t.centerX(), t.centerY(), 14 * d)
+            centeredText(canvas, initials(name), t.centerX(), t.centerY(), 12.5f * d)
             text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
-        text.textAlign = Paint.Align.LEFT
-        text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
-        text.textSize = 10 * d
-        canvas.drawText(name?.substringBefore(" ") ?: "Pick", tile.right + 6 * d, tile.centerY() + 3.5f * d, text)
-        text.clearShadowLayer()
-        text.textAlign = Paint.Align.CENTER
+        // Only the fighter in play (or an empty slot) gets a name, to keep the corner quiet.
+        if (active || name == null) {
+            text.textAlign = Paint.Align.LEFT
+            text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
+            text.textSize = 10 * d
+            text.color = if (active) accent else Color.argb(200, 255, 255, 255)
+            canvas.drawText(name?.substringBefore(" ") ?: "Pick", tile.right + 6 * d, tile.centerY() + 3.5f * d, text)
+            text.color = Color.WHITE
+            text.clearShadowLayer()
+            text.textAlign = Paint.Align.CENTER
+        }
     }
 
     private fun drawFace(canvas: Canvas, el: El) {
@@ -567,7 +574,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             canvas.drawCircle(cx, cy, chipR, ring)
             centeredText(canvas, b.toString(), cx, cy, el.r * 0.32f, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
         }
-        if (state.showLabels) {
+        val showLabel = when (state.labelMode) {
+            LabelMode.ALL -> true
+            LabelMode.SUPERS -> move.isSuper
+            LabelMode.OFF -> false
+        }
+        if (showLabel) {
             text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
             text.textSize = el.r * 0.32f
             val label = ellipsize(move.shortName, el.r * 2.7f)

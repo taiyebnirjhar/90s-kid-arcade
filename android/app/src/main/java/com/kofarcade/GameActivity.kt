@@ -301,7 +301,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             facingLeft = pad.facingLeft,
             size = prefs.size,
             leftHanded = prefs.leftHanded,
-            showLabels = prefs.labels,
+            labelMode = prefs.labelMode,
             stick = prefs.stick,
             haptics = prefs.haptics,
         )
