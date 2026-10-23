@@ -94,6 +94,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         game = g
         set = s
         prefs = Prefs(this)
+        prefs.lastGame = game.id
         roster = game.roster?.let(::loadRoster)
         val roms = RomStore(this)
 

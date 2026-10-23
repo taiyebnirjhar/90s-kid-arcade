@@ -3,7 +3,7 @@
 # - Tests the move engine (android/core).
 # - Downloads the FBNeo libretro core for Android from the libretro buildbot.
 # - Builds a debug APK, uploads it as a workflow artifact, and on main
-#   publishes it to the "latest" pre-release so it can be downloaded on a phone.
+#   publishes it as the "latest" release so it can be downloaded on a phone.
 name: Android APK
 
 on:
@@ -68,7 +68,7 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
           gh release create latest KOF-Arcade.apk \
-            --prerelease \
+            --latest \
             --target "$GITHUB_SHA" \
             --title "KOF Arcade (latest build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download KOF-Arcade.apk on your phone and open it to install."

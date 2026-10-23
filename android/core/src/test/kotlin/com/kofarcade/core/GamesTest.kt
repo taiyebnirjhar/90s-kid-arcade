@@ -46,4 +46,17 @@ class GamesTest {
     fun shortNames() {
         assertEquals("Orochinagi", Move("Ura 108 Shiki: Orochinagi", "2141236+A").shortName)
     }
+
+    @Test
+    fun artUrlsMatchLibretroThumbnailNames() {
+        assertEquals(
+            "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/" +
+                "The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png",
+            artUrl(gameById("kof97")!!, Art.TITLE),
+        )
+        // "/" in a name becomes "_".
+        assertTrue(artUrl(gameById("mslug2")!!, Art.SNAP)!!.contains("Super%20Vehicle-001_II"))
+        assertTrue(artUrl(gameById("sengoku3")!!, Art.TITLE)!!.contains("Sengoku%203%20_%20Sengoku"))
+        for (g in GAMES) assertNotNull(g.art, g.id)
+    }
 }

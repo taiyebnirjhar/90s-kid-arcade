@@ -17,8 +17,8 @@ included: use dumps of games you own.
 
 ## Install
 
-Each push to `main` builds the app and publishes it to the
-[latest release](../../releases/tag/latest). On your phone, download
+Each push to `main` builds the app and publishes it as the
+[latest release](../../releases/latest) (the **Releases** box on the repo page). On your phone, download
 `KOF-Arcade.apk` from there and open it (allow installing from your browser
 when Android asks). New builds install over the old one and keep your ROMs
 and settings.
@@ -59,7 +59,6 @@ opacity, move names, vibration, left-handed layout, move timing.
   native touch HUD, and Compose screens.
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
-- `web/` — the earlier browser version (EmulatorJS), kept for reference.
 
 Build locally with Android Studio, or: download the FBNeo core into
 `android/app/src/main/jniLibs/<abi>/libfbneo_libretro_android.so` (see the
