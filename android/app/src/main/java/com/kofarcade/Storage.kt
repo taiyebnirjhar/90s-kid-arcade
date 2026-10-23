@@ -64,9 +64,16 @@ enum class LabelMode(val label: String) {
     OFF("None"),
 }
 
-enum class ScreenMode(val label: String) {
-    FULL("Full screen (stretched)"),
-    ORIGINAL("Original 4:3"),
+/**
+ * How wide the game picture is. Neo Geo games are 4:3; anything wider
+ * stretches them, so the in-between widths trade a small gap at the sides for
+ * fighters that keep their shape. [aspect] null = the whole screen.
+ */
+enum class ScreenMode(val label: String, val aspect: Float?) {
+    ORIGINAL("Original 4:3 (no stretch)", 4f / 3f),
+    SLIGHT("Slightly wide (small gaps)", 3f / 2f),
+    WIDE("Wide 16:9", 16f / 9f),
+    FULL("Full screen (most stretch)", null),
 }
 
 /** Settings, teams and custom move lists. */
@@ -109,7 +116,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
     var screen: ScreenMode
-        get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.FULL)
+        get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.SLIGHT)
         set(v) = sp.edit().putString("screen", v.name).apply()
 
     /** Your control layout for a kind of game (fighter / shooter / brawler) and hand. */

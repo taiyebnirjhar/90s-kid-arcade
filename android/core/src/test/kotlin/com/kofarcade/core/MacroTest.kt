@@ -115,6 +115,11 @@ class MacroTest {
         assertEquals(2, motionPoints("[4]6+A").size)
         assertNull(motionGlyph("CD"))
         assertNull(motionGlyph("D,B,C,C,8"))
+        // ↓↓ (Sengoku 3's specials) is a straight down arrow with two heads.
+        val tap2 = motionGlyph("22+A")!!
+        assertEquals(2, tap2.heads.size)
+        assertTrue(tap2.line.last().y > tap2.line.first().y)
+        assertEquals(1, motionGlyph("236+A")!!.heads.size)
         assertNotNull(motionGlyph("[4]6+A")?.hold)
     }
 }
