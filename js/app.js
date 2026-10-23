@@ -1,5 +1,6 @@
 import { Pad } from "./input.js";
 import { parse, toArrows } from "./macro.js";
+import { motionIcon } from "./glyph.js";
 import { mountStick, mountButtons, mountHoldButton, mountKeyboard, arcPositions } from "./controls.js";
 import { CHARACTERS, GENERIC, gameTitle, systemMoves } from "./moves.js";
 import { putRom, listRoms, getRom, deleteRom, loadSettings, saveSettings } from "./store.js";
@@ -19,6 +20,7 @@ const settings = loadSettings({
   haptics: true,
   leftHanded: false,
   stick: "floating", // floating | fixed | hidden
+  labels: true,
   moves: {}, // per game set: [{ name, cmd }]
 });
 
@@ -36,6 +38,7 @@ function applyLook() {
   document.body.classList.toggle("left-handed", settings.leftHanded);
   document.body.classList.toggle("stick-fixed", settings.stick === "fixed");
   document.body.classList.toggle("stick-hidden", settings.stick === "hidden");
+  document.body.classList.toggle("no-labels", !settings.labels);
   layoutButtons();
 }
 
@@ -152,33 +155,48 @@ function onGameStart() {
 
 // ---------- In-game HUD ----------
 
-const BUTTON_COLORS = { A: "var(--red)", B: "var(--yellow)", C: "var(--green)", D: "var(--blue)" };
+const KEY_COLORS = { A: "#ff5a5f", B: "#ffc928", C: "#34c47c", D: "#4a9df0" };
 
-// Round skill button: the move's name, and a badge with the button(s) it
-// ends on, coloured like that button.
-function moveButton(move, extra = "") {
+// Move button: the stick motion drawn as an icon, coloured chips for the
+// button(s) it ends on, and the move's name underneath.
+function moveButton(move) {
   const b = document.createElement("button");
-  b.className = `skill ${extra}`.trim();
+  b.className = "skill glass";
   b.dataset.cmd = move.cmd;
-  b.title = `${move.name}: ${toArrows(move.cmd)}`;
-  b.innerHTML = `<b></b><span class="badge"></span>`;
+  b.setAttribute("aria-label", `${move.name}: ${toArrows(move.cmd)}`);
+  const { buttons } = parse(move.cmd);
+  b.append(motionIcon(move.cmd));
+  const keys = document.createElement("span");
+  keys.className = "keys";
+  for (const k of buttons) {
+    const i = document.createElement("i");
+    i.dataset.k = k;
+    i.textContent = k;
+    i.style.setProperty("--c", KEY_COLORS[k]);
+    keys.append(i);
+  }
+  const label = document.createElement("span");
+  label.className = "label";
+  label.textContent = move.name;
+  b.append(keys, label);
+  return b;
+}
+
+// System move (roll, blowback, MAX): name plus its buttons, no icon.
+function systemButton(move) {
+  const b = document.createElement("button");
+  b.className = `sys glass${move.name === "MAX" ? " max" : ""}`;
+  b.dataset.cmd = move.cmd;
+  b.setAttribute("aria-label", `${move.name}: ${move.cmd}`);
+  b.innerHTML = "<b></b><small></small>";
   b.querySelector("b").textContent = move.name;
-  let buttons = "";
-  try {
-    buttons = parse(move.cmd).buttons;
-  } catch {}
-  const badge = b.querySelector(".badge");
-  badge.textContent = buttons;
-  badge.hidden = !buttons || extra.includes("sys");
-  badge.style.setProperty("--c", buttons.length === 1 ? BUTTON_COLORS[buttons] : "var(--gold-deep)");
+  b.querySelector("small").textContent = move.name === "MAX" ? move.cmd : move.cmd.split("").join("+");
   return b;
 }
 
 function renderMoves() {
-  $("#moves").replaceChildren(...movesFor(currentSet).map((m) => moveButton(m)));
-  $("#system").replaceChildren(
-    ...systemMoves(currentSet).map((m) => moveButton(m, m.name === "MAX" ? "sys max" : "sys")),
-  );
+  $("#moves").replaceChildren(...movesFor(currentSet).map(moveButton));
+  $("#system").replaceChildren(...systemMoves(currentSet).map(systemButton));
   layoutButtons();
 }
 
@@ -198,9 +216,9 @@ function layoutButtons() {
   put($(".btn.a"), { x: -0.7 * S - 5, y: h });
   put($(".btn.b"), { x: 0.3 * S + 5, y: h });
   const moves = [...document.querySelectorAll("#moves .skill")];
-  arcPositions(moves.length, { radius: 2.75 * S, from: 78, step: 22 }).forEach((p, i) => put(moves[i], p));
-  const sys = [...document.querySelectorAll("#system .skill")];
-  arcPositions(sys.length, { radius: 1.78 * S, from: 100, step: 34 }).forEach((p, i) => put(sys[i], p));
+  arcPositions(moves.length, { radius: 3 * S, from: 72, step: 23 }).forEach((p, i) => put(moves[i], p));
+  const sys = [...document.querySelectorAll("#system .sys")];
+  arcPositions(sys.length, { radius: 1.72 * S, from: 104, step: 34 }).forEach((p, i) => put(sys[i], p));
 }
 
 // Sweep a ring round the button for as long as its motion takes to play.
@@ -216,7 +234,6 @@ function showFiring(el, frames) {
 
 function updateFacing() {
   const left = pad?.facingLeft;
-  $("#flip").textContent = left ? "◀ Facing" : "Facing ▶";
   $("#flip").title = left ? "Your fighter faces left. Tap when sides swap." : "Your fighter faces right. Tap when sides swap.";
   $("#flip").classList.toggle("left", !!left);
   document.body.classList.toggle("facing-left", !!left);
@@ -298,6 +315,7 @@ function openSettings() {
   $("#opacity").value = settings.opacity;
   $("#haptics").checked = settings.haptics;
   $("#lefty").checked = settings.leftHanded;
+  $("#labels").checked = settings.labels;
   $("#stick-mode").value = settings.stick;
   $("#settings-game").textContent = currentSet ? gameTitle(currentSet) : "";
   renderDraft();
@@ -396,6 +414,7 @@ dialog.addEventListener("close", () => {
   settings.opacity = Number($("#opacity").value);
   settings.haptics = $("#haptics").checked;
   settings.leftHanded = $("#lefty").checked;
+  settings.labels = $("#labels").checked;
   settings.stick = $("#stick-mode").value;
   saveSettings(settings);
   applyLook();

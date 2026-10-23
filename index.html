@@ -49,28 +49,33 @@
 
     <div id="hud" hidden>
       <nav class="top">
-        <button id="pause" class="round" aria-label="Menu">❚❚</button>
+        <button id="pause" class="round glass" aria-label="Menu">
+          <svg viewBox="0 0 14 14"><rect x="2" y="1.5" width="3.4" height="11" rx="1"/><rect x="8.6" y="1.5" width="3.4" height="11" rx="1"/></svg>
+        </button>
         <div class="center">
-          <button id="coin" class="pill">COIN</button>
-          <button id="flip" class="pill facing"></button>
-          <button id="start" class="pill">START</button>
+          <button id="coin" class="pill glass">COIN</button>
+          <button id="flip" class="pill glass facing" aria-label="Flip facing">
+            <svg viewBox="0 0 14 14"><path d="M1.5 7h10M8 3.2 11.8 7 8 10.8"/></svg><span>FACING</span>
+          </button>
+          <button id="start" class="pill glass">START</button>
         </div>
       </nav>
 
       <div id="stick-zone">
         <div class="stick-home"></div>
         <div class="stick-base">
-          <span class="chev l">‹</span><span class="chev r">›</span>
+          <svg class="chev l" viewBox="0 0 10 16"><path d="M8 2 2 8l6 6"/></svg>
+          <svg class="chev r" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6"/></svg>
           <div class="stick-knob"></div>
         </div>
       </div>
 
       <div id="buttons">
         <div id="cluster">
-          <button data-key="A" class="btn a">A</button>
-          <button data-key="B" class="btn b">B</button>
-          <button data-key="C" class="btn c">C</button>
-          <button data-key="D" class="btn d">D</button>
+          <button data-key="A" class="btn glass a">A</button>
+          <button data-key="B" class="btn glass b">B</button>
+          <button data-key="C" class="btn glass c">C</button>
+          <button data-key="D" class="btn glass d">D</button>
           <div id="system"></div>
           <div id="moves"></div>
         </div>
@@ -117,6 +122,7 @@
       </label>
       <label class="row">Control size <input id="size" type="range" min="0.7" max="1.4" step="0.05"></label>
       <label class="row">Opacity <input id="opacity" type="range" min="0.3" max="1" step="0.05"></label>
+      <label class="row check"><input id="labels" type="checkbox"> Show move names</label>
       <label class="row check"><input id="haptics" type="checkbox"> Vibrate on press</label>
       <label class="row check"><input id="lefty" type="checkbox"> Buttons on the left</label>
 

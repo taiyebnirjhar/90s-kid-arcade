@@ -21,7 +21,7 @@ running the [FBNeo](https://github.com/finalburnneo/FBNeo) arcade core in WebAss
 | --- | --- |
 | Stick (left side) | Floating: put your thumb down anywhere and it moves under it. Can be set to Fixed or Hidden |
 | A B C D | Normal buttons in an MVS-style stagger. Slide a finger between them for chains |
-| Round gold buttons | Your moves, on a ring around A B C D. One tap does the whole motion and button, frame-exact. The badge shows the button it ends on, and a ring sweeps round while it plays |
+| Round move buttons | Your moves, on a ring around A B C D. Each shows its stick motion drawn as an icon (mirrored when you flip sides) and chips for the button it ends on. One tap does the whole move, frame-exact, and a ring sweeps round while it plays |
 | Roll / Blowback / MAX | AB, CD and the game's MAX/power-up input, on the inner ring |
 | Facing | Moves are written for a fighter facing right. When you cross sides, tap it and every move mirrors |
 | ❚❚ | Pause menu: save state, load state, controls & moves, quit |

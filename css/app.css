@@ -111,21 +111,35 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
 .ejs_menu_bar_hidden { display: none !important; }
 
 #hud {
-  --btn: calc(62px * var(--pad-scale));
-  --skill: calc(54px * var(--pad-scale));
+  --btn: calc(64px * var(--pad-scale));
+  --skill: calc(56px * var(--pad-scale));
   --sys: calc(44px * var(--pad-scale));
+  --glass: rgba(14, 16, 28, 0.46);
+  --glass-hi: rgba(255, 255, 255, 0.26);
+  --ink: #fff;
+  --accent: #ffcf4d;
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 #hud > * { pointer-events: auto; }
 
+/* One glass look for everything on top of the game. */
+.glass {
+  background: var(--glass);
+  border: 1.5px solid var(--glass-hi);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 14px rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+}
+
 .top {
   position: absolute;
-  top: 8px;
-  left: calc(10px + var(--safe-l));
-  right: calc(10px + var(--safe-r));
-  height: 36px;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  left: calc(12px + var(--safe-l));
+  right: calc(12px + var(--safe-r));
+  height: 34px;
   pointer-events: none;
 }
 .top > * { pointer-events: auto; }
@@ -133,35 +147,37 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
   position: absolute;
   top: 0;
   left: 50%;
-  white-space: nowrap;
   translate: -50% 0;
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  white-space: nowrap;
   opacity: var(--pad-opacity);
 }
 .round {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 1.5px solid #ffffff45;
-  background: #0a0a14b0;
-  font-size: 11px;
-  letter-spacing: -1px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   opacity: var(--pad-opacity);
 }
+.round svg { width: 14px; height: 14px; fill: currentColor; }
 .pill {
   height: 30px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: 15px;
-  border: 1.5px solid #ffffff40;
-  background: #0a0a14b0;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.pill.down, .round:active { background: #ffffff40; }
-.facing { min-width: 92px; border-color: var(--gold); color: var(--gold); }
-.facing.left { background: #e8b21a33; }
+.pill svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: rotate 0.15s; }
+.pill.down, .round:active { background: rgba(255, 255, 255, 0.28); }
+.facing { color: var(--accent); border-color: rgba(255, 207, 77, 0.6); }
+.facing.left svg { rotate: 180deg; }
 
 /* ----- Stick ----- */
 
@@ -175,8 +191,8 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
 }
 .stick-home {
   position: absolute;
-  left: calc(110px * var(--pad-scale) + var(--safe-l));
-  bottom: calc(100px * var(--pad-scale) + var(--safe-b));
+  left: calc(112px * var(--pad-scale) + var(--safe-l));
+  bottom: calc(104px * var(--pad-scale) + var(--safe-b));
   width: 2px;
   height: 2px;
   translate: -1px 1px;
@@ -185,41 +201,46 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(124px * var(--pad-scale));
-  height: calc(124px * var(--pad-scale));
-  margin: calc(-62px * var(--pad-scale)) 0 0 calc(-62px * var(--pad-scale));
+  width: calc(128px * var(--pad-scale));
+  height: calc(128px * var(--pad-scale));
+  margin: calc(-64px * var(--pad-scale)) 0 0 calc(-64px * var(--pad-scale));
   border-radius: 50%;
-  border: 2px solid #ffffff38;
-  background: radial-gradient(circle, #ffffff0a 0 55%, #ffffff1c 56% 100%);
-  box-shadow: 0 0 0 1px #0004, inset 0 0 22px #0006;
+  border: 1.5px solid var(--glass-hi);
+  background: radial-gradient(circle, rgba(14, 16, 28, 0.15) 0 40%, rgba(14, 16, 28, 0.45) 70%);
+  box-shadow: inset 0 0 0 10px rgba(255, 255, 255, 0.03), 0 4px 14px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   opacity: 0;
-  transition: opacity 0.12s;
+  transition: opacity 0.15s;
 }
 .chev {
   position: absolute;
-  font-size: calc(26px * var(--pad-scale));
-  line-height: 1;
-  color: #ffffffa0;
-  left: 50%;
   top: 50%;
-  translate: -50% -55%;
+  width: calc(10px * var(--pad-scale));
+  height: calc(16px * var(--pad-scale));
+  translate: -50% -50%;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.chev.l { left: -14%; }
-.chev.r { left: 114%; }
+.chev.l { left: -12%; }
+.chev.r { left: 112%; }
 .stick-knob {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 44%;
-  height: 44%;
-  margin: -22% 0 0 -22%;
+  width: 42%;
+  height: 42%;
+  margin: -21% 0 0 -21%;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 30%, #ffffffe0, #c9c9d6 55%, #8d8da0);
-  box-shadow: 0 3px 10px #000a, inset 0 -3px 6px #0003;
+  background: radial-gradient(circle at 40% 32%, rgba(255, 255, 255, 0.95), rgba(214, 216, 230, 0.85) 60%, rgba(150, 152, 170, 0.85));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
 }
 /* At rest the stick waits at its home spot: faint when floating, clear when fixed. */
-.stick-base { opacity: calc(var(--pad-opacity) * 0.3); }
-body.stick-fixed .stick-base { opacity: calc(var(--pad-opacity) * 0.75); }
+.stick-base { opacity: calc(var(--pad-opacity) * 0.35); }
+body.stick-fixed .stick-base { opacity: calc(var(--pad-opacity) * 0.8); }
 #stick-zone.active .stick-base { opacity: var(--pad-opacity); }
 body.stick-hidden .stick-base { opacity: 0 !important; }
 
@@ -235,8 +256,8 @@ body.stick-hidden .stick-base { opacity: 0 !important; }
 }
 #cluster {
   position: absolute;
-  right: calc(var(--btn) * 1.3 + 14px + var(--safe-r));
-  bottom: calc(var(--btn) + 14px + var(--safe-b));
+  right: calc(var(--btn) * 1.3 + 16px + var(--safe-r));
+  bottom: calc(var(--btn) + 16px + var(--safe-b));
   width: 0;
   height: 0;
   opacity: var(--pad-opacity);
@@ -246,98 +267,120 @@ body.stick-hidden .stick-base { opacity: 0 !important; }
   position: absolute;
   translate: -50% -50%;
   touch-action: none;
+  border-radius: 50%;
+  padding: 0;
+  transition: scale 0.06s, background-color 0.06s;
 }
+#cluster button.down, #moves button.down, #system button.down { scale: 0.92; }
+
 .btn {
   width: var(--btn);
   height: var(--btn);
-  border-radius: 50%;
-  border: 3px solid var(--c);
-  background: radial-gradient(circle at 50% 35%, #2a2a3cdd, #0b0b14ee 70%);
-  color: var(--c);
-  font-weight: 900;
-  font-size: calc(24px * var(--pad-scale));
-  box-shadow: 0 3px 10px #000b, inset 0 0 12px color-mix(in srgb, var(--c) 30%, transparent);
-  transition: background 0.05s;
+  font-weight: 800;
+  font-size: calc(23px * var(--pad-scale));
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 75%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--c) 35%, transparent),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
-.btn.a { --c: var(--red); }
-.btn.b { --c: var(--yellow); }
-.btn.c { --c: var(--green); }
-.btn.d { --c: var(--blue); }
-.btn.down { background: var(--c); color: #fff; scale: 0.94; }
-.btn.b.down { color: #3a2c00; }
+.btn.a { --c: #ff5a5f; }
+.btn.b { --c: #ffc928; }
+.btn.c { --c: #34c47c; }
+.btn.d { --c: #4a9df0; }
+.btn.down { background: color-mix(in srgb, var(--c) 78%, transparent); }
 
 .skill {
   width: var(--skill);
   height: var(--skill);
-  border-radius: 50%;
-  border: 2px solid #f2c53d;
-  background: radial-gradient(circle at 50% 30%, #3a2e12f0, #120e05f2 72%);
-  color: #ffe8a3;
-  padding: 0 4px;
+  border-color: rgba(255, 207, 77, 0.55);
   display: grid;
   place-items: center;
-  box-shadow: 0 3px 10px #000b, inset 0 0 10px #f2c53d40;
 }
-.skill b {
-  font-size: calc(9.5px * var(--pad-scale));
-  line-height: 1.05;
-  font-weight: 800;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  text-align: center;
+.glyph {
+  width: 84%;
+  height: 84%;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(255, 190, 40, 0.45));
 }
-.skill .badge {
+.glyph .hold { fill: var(--accent); stroke: none; }
+/* Moves are drawn facing right; flip the drawings with the fighter. */
+body.facing-left .glyph { scale: -1 1; }
+/* Chips sit top-left, away from the name of the next button up the ring. */
+.skill .keys {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
-  min-width: calc(20px * var(--pad-scale));
-  height: calc(20px * var(--pad-scale));
-  padding: 0 3px;
-  border-radius: 10px;
-  border: 1.5px solid #0009;
-  background: var(--c, #888);
+  left: -4px;
+  top: -3px;
+  display: flex;
+}
+.skill .keys i {
+  width: calc(17px * var(--pad-scale));
+  height: calc(17px * var(--pad-scale));
+  margin-right: -5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(10, 10, 20, 0.85);
+  background: var(--c);
   color: #fff;
-  font-size: calc(10px * var(--pad-scale));
-  font-weight: 900;
+  font: 800 calc(9px * var(--pad-scale)) / 1 system-ui, sans-serif;
+  font-style: normal;
   display: grid;
   place-items: center;
-  text-shadow: 0 1px 1px #0008;
 }
-.skill.sys {
+.skill .keys i[data-k="B"] { color: #3a2c00; }
+.skill .label {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  translate: -50% 0;
+  max-width: calc(var(--skill) * 1.35);
+  font-size: calc(9px * var(--pad-scale));
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
+  pointer-events: none;
+}
+body.left-handed .skill .keys { left: auto; right: -4px; }
+body.no-labels .skill .label { display: none; }
+.skill.down { background: rgba(255, 207, 77, 0.35); }
+
+.sys {
   width: var(--sys);
   height: var(--sys);
-  border-color: #ffffff60;
-  background: radial-gradient(circle at 50% 30%, #2a2a3ce8, #0b0b14f0 72%);
-  color: var(--text);
-  box-shadow: 0 3px 8px #000b;
+  display: grid;
+  place-content: center;
+  line-height: 1.05;
 }
-.skill.sys.max {
-  border-color: #f2c53d;
-  color: #ffd75a;
-  background: radial-gradient(circle at 50% 30%, #5a4410f0, #1b1404f2 72%);
-}
-.skill.sys b { font-size: calc(9px * var(--pad-scale)); hyphens: manual; }
-.skill.down { scale: 0.92; filter: brightness(1.5); }
+.sys b { font-size: calc(9px * var(--pad-scale)); font-weight: 800; letter-spacing: 0.04em; }
+.sys small { font-size: calc(8px * var(--pad-scale)); opacity: 0.6; font-weight: 700; }
+.sys.max { border-color: rgba(255, 207, 77, 0.8); color: var(--accent); box-shadow: inset 0 0 14px rgba(255, 190, 40, 0.35), 0 4px 14px rgba(0, 0, 0, 0.45); }
+.sys.down { background: rgba(255, 255, 255, 0.3); }
+
 /* Ring that sweeps around a move button while its motion plays. */
 .skill.firing::after {
   content: "";
   position: absolute;
   inset: -5px;
   border-radius: 50%;
-  background: conic-gradient(#ffd75a calc(var(--p, 0) * 1%), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 62%, #000 64%);
-  mask: radial-gradient(circle, transparent 62%, #000 64%);
+  background: conic-gradient(var(--accent) calc(var(--p, 0) * 1%), transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent 64%, #000 66%);
+  mask: radial-gradient(circle, transparent 64%, #000 66%);
   animation: sweep var(--dur, 200ms) linear forwards;
 }
 @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
 @keyframes sweep { to { --p: 100; } }
 
 body.left-handed #stick-zone { left: auto; right: 0; }
-body.left-handed .stick-home { left: auto; right: calc(110px * var(--pad-scale) + var(--safe-r)); }
+body.left-handed .stick-home { left: auto; right: calc(112px * var(--pad-scale) + var(--safe-r)); }
 body.left-handed #buttons { right: auto; left: 0; }
-body.left-handed #cluster { right: auto; left: calc(var(--btn) * 1.3 + 14px + var(--safe-l)); }
+body.left-handed #cluster { right: auto; left: calc(var(--btn) * 1.3 + 16px + var(--safe-l)); }
 
 #toast {
   position: absolute;
@@ -357,9 +400,8 @@ body.left-handed #cluster { right: auto; left: calc(var(--btn) * 1.3 + 14px + va
   #stick-zone { width: 34%; height: calc(100% - 100vw * 224 / 304 - 64px); }
   .stick-home { left: calc(84px * var(--pad-scale) + var(--safe-l)); bottom: calc(290px * var(--pad-scale) + var(--safe-b)); }
   #cluster { bottom: calc(var(--btn) + 40px + var(--safe-b)); }
-  .top .center { gap: 4px; }
-  .pill { padding: 0 9px; }
-  .facing { min-width: 0; }
+  .top .center { gap: 6px; }
+  .pill { padding: 0 11px; }
 }
 
 /* ----- Pause menu ----- */

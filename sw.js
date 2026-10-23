@@ -1,10 +1,10 @@
 // Offline support: the app shell is cached on install; everything else
 // (EmulatorJS scripts and the FBNeo core) is cached the first time it loads,
 // so after one online session the app works in airplane mode.
-const CACHE = "kof-arcade-v1";
+const CACHE = "kof-arcade-v2";
 const SHELL = [
   "./", "index.html", "css/app.css", "manifest.webmanifest", "icons/icon.svg",
-  "js/app.js", "js/controls.js", "js/input.js", "js/macro.js", "js/moves.js", "js/store.js",
+  "js/app.js", "js/controls.js", "js/glyph.js", "js/input.js", "js/macro.js", "js/moves.js", "js/store.js",
 ];
 
 self.addEventListener("install", (e) => {

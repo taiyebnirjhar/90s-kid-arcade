@@ -94,3 +94,19 @@ test("arc positions start at `from` and step round counter-clockwise", () => {
   ]);
   assert.deepEqual(arcPositions(0, { radius: 100, from: 0, step: 10 }), []);
 });
+
+test("motion icons trace the stick path", async () => {
+  const { motionPoints, motionPath } = await import("../js/glyph.js");
+  // QCF starts straight down and ends straight forward (right).
+  const qcf = motionPoints("236+A");
+  assert.deepEqual(qcf[0], { x: 24, y: 41 });
+  assert.deepEqual(qcf.at(-1), { x: 41, y: 24 });
+  // A double motion spirals inwards, so it ends closer to the centre.
+  const end = motionPoints("236236+A").at(-1);
+  assert.ok(end.x < 41 && end.y === 24);
+  // Charge back, forward cuts straight across.
+  assert.equal(motionPoints("[4]6+A").length, 2);
+  // Button-only commands have no drawing.
+  assert.deepEqual(motionPath("CD"), { line: "", head: "", start: null });
+  for (const m of [...GENERIC, ...Object.values(CHARACTERS).flat()]) assert.ok(motionPath(m.cmd).line, m.name);
+});
