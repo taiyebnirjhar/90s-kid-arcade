@@ -13,7 +13,8 @@
   "https://dreamcancel.com/wiki/Whip_02",
   "https://snk.fandom.com/wiki/MAX2",
   "https://en.wikipedia.org/wiki/The_King_of_Fighters_2002",
-  "User-verified HSDM button sequences (GameFAQs: Jin_Sakazaki's KOF 2002 HSDM FAQ, A_Large_Trout's KOF 2002 Move List; Dream Cancel; SuperCombo)"
+  "User-verified HSDM button sequences (GameFAQs: Jin_Sakazaki's KOF 2002 HSDM FAQ, A_Large_Trout's KOF 2002 Move List; Dream Cancel; SuperCombo)",
+  "Cross-checked against https://github.com/Fighters/the-king-of-fighters-2002 (independent fan move lists)"
  ],
  "characters": [
   {
@@ -307,9 +308,9 @@
     },
     {
      "name": "Zan'ei Ryuusei Ken",
-     "cmd": "2141236+A",
+     "cmd": "21416+A",
      "type": "dm",
-     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     },
     {
      "name": "Chou Reppa Dan",
@@ -455,9 +456,9 @@
     },
     {
      "name": "Ryuuko Ranbu: Destroy",
-     "cmd": "236+C",
+     "cmd": "236+C,A",
      "type": "dm",
-     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); command.dat lists '236 + C, A'"
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); command.dat lists '236 + C, A' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     },
     {
      "name": "Ko'oh Ken",
@@ -1251,9 +1252,9 @@
     },
     {
      "name": "Sankuu Kyaku",
-     "cmd": "214+A",
+     "cmd": "214+A,9+B,2+B",
      "type": "special",
-     "note": "then 9+K, 2+K; P = A or C"
+     "note": "then 9+K, 2+K; P = A or C Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     },
     {
      "name": "Haki Kyaku",
@@ -1318,9 +1319,9 @@
     },
     {
      "name": "Dai Hakai Nage",
-     "cmd": "632146+A",
+     "cmd": "632146+C",
      "type": "special",
-     "note": "P: A or C; close range"
+     "note": "P: A or C; close range Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     },
     {
      "name": "Tekkyuu Taiko Uchi",
@@ -1506,7 +1507,7 @@
      "note": "P: A or C"
     },
     {
-     "name": "Decide",
+     "name": "Deicide",
      "cmd": "41236+B",
      "type": "special",
      "note": "K: B or D"
@@ -1585,16 +1586,16 @@
      "note": "P: A or C; close range"
     },
     {
-     "name": "Decide",
+     "name": "Deicide",
      "cmd": "41236+B",
      "type": "special",
      "note": "K: B or D"
     },
     {
      "name": "Gore Fest",
-     "cmd": "632146+A",
+     "cmd": "632146+C",
      "type": "special",
-     "note": "P: A or C; close range"
+     "note": "P: A or C; close range Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     }
    ]
   },
@@ -1709,6 +1710,18 @@
      "cmd": "1236982+BD",
      "type": "hsdm",
      "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; close range"
+    },
+    {
+     "name": "M. Dynamite Swing",
+     "cmd": "A,A,6,B,C",
+     "type": "dm",
+     "note": "DM: button sequence. Listed by MAME command.dat and the Fighters move lists."
+    },
+    {
+     "name": "M. Dynamite Swing (MAX)",
+     "cmd": "A,A,4,B,C",
+     "type": "dm",
+     "note": "SDM: MAX mode + 1 stock. Listed by MAME command.dat and the Fighters move lists."
     },
     {
      "name": "M. Splash Rose",
@@ -2022,9 +2035,9 @@
    "moves": [
     {
      "name": "Crimson Star Road",
-     "cmd": "214+C",
+     "cmd": "214+C,A",
      "type": "hsdm",
-     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; command.dat lists '214 + C, A'"
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; command.dat lists '214 + C, A' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     },
     {
      "name": "Heat Drive",
@@ -2437,9 +2450,9 @@
     },
     {
      "name": "Bird of Paradise",
-     "cmd": "22+A",
+     "cmd": "22+A,C",
      "type": "special",
-     "note": "command.dat lists '22 + A, C'"
+     "note": "command.dat lists '22 + A, C' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
     }
    ]
   },

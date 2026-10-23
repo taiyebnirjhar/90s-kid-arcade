@@ -11,7 +11,8 @@
   "https://strategywiki.org/wiki/The_King_of_Fighters_'97/Moves",
   "https://wiki.supercombo.gg/w/The_King_of_Fighters_'97/Leona",
   "https://en.wikipedia.org/wiki/The_King_of_Fighters_%2797",
-  "https://www.giantbomb.com/games/3030-4124/"
+  "https://www.giantbomb.com/games/3030-4124/",
+  "Cross-checked against https://github.com/Fighters/the-king-of-fighters-97 (independent fan move lists)"
  ],
  "characters": [
   {
@@ -212,9 +213,9 @@
    "moves": [
     {
      "name": "Power Geyser",
-     "cmd": "2141236+A",
+     "cmd": "21416+A",
      "type": "dm",
-     "note": "A or C; SDM: same input during MAX (Extra mode: MAX gauge + flashing life)"
+     "note": "A or C; SDM: same input during MAX (Extra mode: MAX gauge + flashing life) Motion: qcb, db, f. Checked against the Fighters/the-king-of-fighters-97 move lists on GitHub."
     },
     {
      "name": "High Angle Geyser",
@@ -1050,9 +1051,9 @@
    "moves": [
     {
      "name": "Hou'ou Kyaku",
-     "cmd": "2141236+B",
+     "cmd": "21416+B",
      "type": "dm",
-     "note": "B or D; can also be done in the air; SDM: same input during MAX (Extra mode: MAX gauge + flashing life)"
+     "note": "B or D; can also be done in the air; SDM: same input during MAX (Extra mode: MAX gauge + flashing life) Motion: qcb, db, f. Checked against the Fighters/the-king-of-fighters-97 move lists on GitHub."
     },
     {
      "name": "Hou'ou Tenbu Kyaku",
