@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
@@ -37,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.roundToInt
 
 /** Dialogs that can sit over the game. The game pauses while one is open. */
 sealed interface GameDialog {
@@ -70,6 +73,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     var dialog by mutableStateOf<GameDialog?>(null)
         private set
+
+    /** Layout editor state, shown in the bar along the top. */
+    var editing by mutableStateOf(false)
+        private set
+    var editSelected by mutableStateOf<String?>(null)
+        private set
+    var editScale by mutableFloatStateOf(1f)
+        private set
+    private var editBackup: Map<String, HudView.Tweak> = emptyMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,9 +124,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             FrameLayout(this).apply {
                 addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-                addView(dialogs, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
+                // Full width so the layout editor's bar can centre itself; it
+                // takes no space (and no touches) when nothing is shown.
+                addView(dialogs, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
             },
         )
+        hud.onSelect = { id ->
+            editSelected = id
+            editScale = id?.let { hud.tweaks[it]?.scale } ?: 1f
+        }
+        // Full screen: render into a 4:3 surface and let the display stretch it
+        // over the whole screen, instead of drawing black bars beside it.
+        retroView.addOnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
+            if (r - l != oldR - oldL || b - t != oldB - oldT) applyScreen()
+        }
         applyPrefs()
 
         // One tick per emulated frame drives the macros and rapid fire.
@@ -130,14 +153,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
         }
-        onBackPressedDispatcher.addCallback(this) { show(GameDialog.Pause) }
+        onBackPressedDispatcher.addCallback(this) { if (editing) finishEditing(save = false) else show(GameDialog.Pause) }
     }
 
     override fun onResume() {
         super.onResume()
         // The emulator resumes itself with the activity; keep it paused if a
         // dialog is still open.
-        if (dialog != null) {
+        if (dialog != null || editing) {
             paused = false
             window.decorView.post { pauseEmulation() }
         }
@@ -283,7 +306,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         )
     }
 
+    private fun applyScreen() {
+        val h = retroView.height
+        if (h == 0) return
+        if (prefs.screen == ScreenMode.FULL) {
+            retroView.holder.setFixedSize((h * 4f / 3f).roundToInt(), h)
+        } else {
+            retroView.holder.setSizeFromLayout()
+        }
+    }
+
+    // Layouts are saved per kind of game and per hand.
+    private fun layoutKey() = "${game.layout.name}.${if (prefs.leftHanded) "L" else "R"}"
+
     fun applyPrefs() {
+        hud.tweaks = prefs.tweaks(layoutKey())
+        applyScreen()
         pad.timing = Timing(step = prefs.stepFrames, press = prefs.pressFrames)
         hud.alpha = prefs.opacity
         updateHud()
@@ -301,6 +339,34 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** Closes the open dialog and resumes, then runs [after] once the game is running. */
+    // ----- Layout editor -----
+
+    fun startEditing() {
+        dialog = null
+        editBackup = hud.tweaks
+        editing = true
+        hud.editing = true
+    }
+
+    fun setEditScale(v: Float) {
+        val id = editSelected ?: return
+        editScale = v
+        hud.setScale(id, v)
+    }
+
+    fun resetLayout() {
+        hud.tweaks = emptyMap()
+        editScale = 1f
+    }
+
+    fun finishEditing(save: Boolean) {
+        if (save) prefs.setTweaks(layoutKey(), hud.tweaks) else hud.tweaks = editBackup
+        editing = false
+        editSelected = null
+        hud.editing = false
+        resumeEmulation()
+    }
+
     fun close(after: (suspend () -> Unit)? = null) {
         dialog = null
         resumeEmulation()

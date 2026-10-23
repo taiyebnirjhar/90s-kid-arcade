@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -52,6 +53,42 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     data class Slot(val name: String?, val active: Boolean)
 
+    /** Your change to one control's spot: offset in dp from its default, and size. */
+    data class Tweak(val dx: Float = 0f, val dy: Float = 0f, val scale: Float = 1f)
+
+    /**
+     * Per-control layout changes, keyed by control id ("stick", "face:A",
+     * "move:0", "sys:1", "team", "top", "pause"). Set from saved settings.
+     */
+    var tweaks: Map<String, Tweak> = emptyMap()
+        set(value) {
+            field = value
+            refresh()
+        }
+
+    /** Layout editor: drag controls to move them, pick one to resize it. */
+    var editing = false
+        set(value) {
+            field = value
+            selected = null
+            releaseAll()
+            refresh()
+        }
+
+    /** The control picked in the editor, or null. */
+    var selected: String? = null
+        private set
+
+    /** Told when the editor's selection changes, so the size slider can follow. */
+    var onSelect: ((String?) -> Unit)? = null
+
+    fun setScale(id: String, scale: Float) {
+        tweaks = tweaks + (id to (tweaks[id] ?: Tweak()).copy(scale = scale))
+    }
+
+    /** Whether a control can be resized (groups of pills only move). */
+    fun resizable(id: String?) = id != null && id != "top" && id != "team"
+
     /** Everything the HUD shows; set by the game screen, then call [refresh]. */
     data class State(
         val layout: Layout = Layout.FIGHTER,
@@ -80,6 +117,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private enum class Kind { PAUSE, COIN, FACING, START, SLOT, FACE, SKILL, SYS }
 
     private class El(
+        val id: String,
         val kind: Kind,
         val rect: RectF,
         val round: Boolean,
@@ -185,6 +223,23 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         return (cutout?.safeInsetLeft ?: 0).toFloat() to (cutout?.safeInsetRight ?: 0).toFloat()
     }
 
+    private fun tweak(id: String) = tweaks[id] ?: Tweak()
+
+    // A round control at its default spot, moved / resized by your layout and
+    // kept on screen.
+    private fun placed(id: String, cx: Float, cy: Float, r: Float): RectF {
+        val t = tweak(id)
+        val rr = r * t.scale
+        val x = (cx + t.dx * d).let { if (width > 2 * rr) it.coerceIn(rr, width - rr) else it }
+        val y = (cy + t.dy * d).let { if (height > 2 * rr) it.coerceIn(rr, height - rr) else it }
+        return circle(x, y, rr)
+    }
+
+    private fun placed(id: String, rect: RectF): RectF {
+        val t = tweak(id)
+        return RectF(rect).apply { offset(t.dx * d, t.dy * d) }
+    }
+
     private fun layoutElements() {
         val st = state
         val (safeL, safeR) = safeInsets()
@@ -195,7 +250,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
         // Top bar
         val top = 8 * d
-        els += El(Kind.PAUSE, circle(safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
+        els += El("pause", Kind.PAUSE, placed("pause", safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
         text.textSize = 11 * d
         val pills = buildList {
             add(Kind.COIN to "COIN")
@@ -206,7 +261,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         var x = w / 2 - (pillW.sum() + 8 * d * (pills.size - 1)) / 2
         pills.forEachIndexed { i, (k, _) ->
             els += El(
-                k, RectF(x, top + 2 * d, x + pillW[i], top + 32 * d), false,
+                "top", k, placed("top", RectF(x, top + 2 * d, x + pillW[i], top + 32 * d)), false,
                 key = when (k) {
                     Kind.COIN -> Key.COIN
                     Kind.START -> Key.START
@@ -219,7 +274,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         // Team bar
         st.slots.forEachIndexed { i, _ ->
             val y = 54 * d + i * 46 * d
-            els += El(Kind.SLOT, RectF(safeL + 12 * d, y, safeL + 12 * d + 110 * d, y + 38 * d), false, index = i)
+            els += El("team", Kind.SLOT, placed("team", RectF(safeL + 12 * d, y, safeL + 12 * d + 110 * d, y + 38 * d)), false, index = i)
         }
 
         // Button cluster: A B C D, moves on an outer ring, system on an inner one.
@@ -237,16 +292,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         )
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
-            els += El(Kind.FACE, circle(ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
+            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
         }
         val skillR = 28 * d * sc
         arcPositions(st.moves.size, 3 * s, 72f, 23f).forEachIndexed { i, p ->
             val m = st.moves[i]
-            val cx = ax + p.x * mirror
-            val cy = ay + p.y
+            val rect = placed("move:$i", ax + p.x * mirror, ay + p.y, skillR)
             els += El(
-                Kind.SKILL, circle(cx, cy, skillR), true, move = m,
-                glyph = glyphPath(m.cmd, cx, cy, skillR * 0.84f),
+                "move:$i", Kind.SKILL, rect, true, move = m,
+                glyph = glyphPath(m.cmd, rect.centerX(), rect.centerY(), rect.width() / 2 * 0.84f),
                 // Sequences show their inputs as text, so no separate button chips.
                 buttons = runCatching { parseCommand(m.cmd) }.getOrNull()
                     ?.takeUnless { it.isSequence }?.buttons.orEmpty(),
@@ -254,12 +308,18 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
         val sysR = 22 * d * sc
         arcPositions(st.system.size, 1.72f * s, 104f, 34f).forEachIndexed { i, p ->
-            els += El(Kind.SYS, circle(ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
+            els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
         }
 
         // Stick home
-        homeX = if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc
-        homeY = h - 104 * d * sc
+        val home = placed(
+            "stick",
+            if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc,
+            h - 104 * d * sc,
+            64 * d * sc,
+        )
+        homeX = home.centerX()
+        homeY = home.centerY()
 
         // Buttons moved: let go of anything a finger was holding on the old layout.
         for (el in pointerEl.values) {
@@ -310,6 +370,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 Kind.SYS -> drawSys(canvas, el)
             }
         }
+        if (editing) {
+            drawEditor(canvas)
+            return
+        }
         if (st.slots.isNotEmpty() && st.slots.all { it.name == null }) {
             text.textSize = 12 * d
             text.textAlign = Paint.Align.LEFT
@@ -318,6 +382,31 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             text.clearShadowLayer()
             text.textAlign = Paint.Align.CENTER
         }
+    }
+
+    private val dashed = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f * d
+        pathEffect = DashPathEffect(floatArrayOf(6 * d, 5 * d), 0f)
+    }
+
+    // Outlines every control (gold for the picked one) and a hint line.
+    private fun drawEditor(canvas: Canvas) {
+        fill.color = Color.argb(70, 0, 0, 0)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fill)
+        val outlines = elements.groupBy { it.id }.map { (id, els) ->
+            id to RectF(els.first().rect).apply { els.forEach { union(it.rect) } }
+        } + ("stick" to circle(homeX, homeY, stickRadius()))
+        for ((id, r) in outlines) {
+            val sel = id == selected
+            dashed.color = if (sel) accent else Color.argb(150, 255, 255, 255)
+            dashed.strokeWidth = (if (sel) 2.5f else 1.5f) * d
+            val pad = 4 * d
+            canvas.drawRoundRect(r.left - pad, r.top - pad, r.right + pad, r.bottom + pad, 12 * d, 12 * d, dashed)
+        }
+        text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
+        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, height - 18 * d, 12 * d)
+        text.clearShadowLayer()
     }
 
     private fun glass(canvas: Canvas, el: El, stroke: Int? = null, strokeWidth: Float = 1.5f * d) {
@@ -430,12 +519,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val label = state.labels[el.letter]
         if (state.layout == Layout.SHOOTER && label != null) {
             text.letterSpacing = 0.06f
-            centeredText(canvas, label.uppercase(), el.cx, el.cy, 12.5f * d * state.size)
+            centeredText(canvas, label.uppercase(), el.cx, el.cy, el.r * 0.36f)
             text.letterSpacing = 0f
         } else {
-            centeredText(canvas, el.letter.toString(), el.cx, el.cy - if (label != null && label.length > 1) 5 * d else 0f, 23 * d * state.size)
+            centeredText(canvas, el.letter.toString(), el.cx, el.cy - if (label != null && label.length > 1) el.r * 0.16f else 0f, el.r * 0.74f)
             if (label != null && label.length > 1) {
-                centeredText(canvas, label, el.cx, el.cy + 13 * d * state.size, 8.5f * d * state.size, Color.argb(200, 255, 255, 255))
+                centeredText(canvas, label, el.cx, el.cy + el.r * 0.42f, el.r * 0.27f, Color.argb(200, 255, 255, 255))
             }
         }
     }
@@ -461,14 +550,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             } else {
                 listOf(tokens)
             }
-            val size = 10.5f * d * state.size
+            val size = el.r * 0.375f
             lines.forEachIndexed { i, line ->
                 val dy = (i - (lines.size - 1) / 2f) * size * 1.15f
                 centeredText(canvas, line.joinToString(" "), el.cx, el.cy + dy, size, tint)
             }
         }
         // Chips for the buttons the move ends on, top-left.
-        val chipR = 8.5f * d * state.size
+        val chipR = el.r * 0.3f
         el.buttons.forEachIndexed { i, b ->
             val cx = el.rect.left + chipR - 4 * d + i * (chipR * 2 - 5 * d)
             val cy = el.rect.top + chipR - 3 * d
@@ -476,13 +565,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.color = Color.argb(215, 10, 10, 20)
             ring.strokeWidth = 1.5f * d
             canvas.drawCircle(cx, cy, chipR, ring)
-            centeredText(canvas, b.toString(), cx, cy, 9 * d * state.size, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
+            centeredText(canvas, b.toString(), cx, cy, el.r * 0.32f, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
         }
         if (state.showLabels) {
             text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
-            text.textSize = 9 * d * state.size
+            text.textSize = el.r * 0.32f
             val label = ellipsize(move.shortName, el.r * 2.7f)
-            canvas.drawText(label, el.cx, el.rect.bottom + 11 * d * state.size, text)
+            canvas.drawText(label, el.cx, el.rect.bottom + el.r * 0.39f, text)
             text.clearShadowLayer()
         }
         drawSweep(canvas, el)
@@ -501,8 +590,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             sys.on -> Color.rgb(127, 240, 180)
             else -> Color.WHITE
         }
-        centeredText(canvas, sys.name, el.cx, el.cy - 4.5f * d * state.size, 9.5f * d * state.size, tint)
-        centeredText(canvas, sys.sub, el.cx, el.cy + 6.5f * d * state.size, 8 * d * state.size, withAlpha(tint, 150))
+        centeredText(canvas, sys.name, el.cx, el.cy - el.r * 0.2f, el.r * 0.43f, tint)
+        centeredText(canvas, sys.sub, el.cx, el.cy + el.r * 0.3f, el.r * 0.36f, withAlpha(tint, 150))
         drawSweep(canvas, el)
     }
 
@@ -517,14 +606,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun drawStick(canvas: Canvas) {
         val st = state
-        if (st.stick == StickMode.HIDDEN) return
+        if (st.stick == StickMode.HIDDEN && !editing) return
         val active = stickPointer != -1
         val alpha = when {
-            active -> 1f
+            active || editing -> 1f
             st.stick == StickMode.FIXED -> 0.8f
             else -> 0.35f
         }
-        val r = 64 * d * st.size
+        val r = stickRadius()
         fill.color = Color.argb((115 * alpha).toInt(), 14, 16, 28)
         canvas.drawCircle(stickCx, stickCy, r, fill)
         ring.color = Color.argb((70 * alpha).toInt(), 255, 255, 255)
@@ -534,7 +623,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         glyphPaint.color = Color.argb((190 * alpha).toInt(), 255, 255, 255)
         glyphPaint.strokeWidth = 3 * d
         val cx = r * 1.12f
-        val ch = 6 * d * st.size
+        val ch = r * 0.094f
         canvas.drawPath(Path().apply {
             moveTo(stickCx - cx + ch / 2, stickCy - ch)
             lineTo(stickCx - cx - ch / 2, stickCy)
@@ -573,7 +662,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             for (el in elements) {
                 if (el.kind != k) continue
                 val inside = if (el.round) {
-                    hypot(x - el.cx, y - el.cy) <= el.r * 1.08f
+                    hypot(x - el.cx, y - el.cy) <= el.r * if (el.kind == Kind.FACE) 1.15f else 1.08f
                 } else {
                     RectF(el.rect).apply { inset(-6 * d, -6 * d) }.contains(x, y)
                 }
@@ -593,8 +682,43 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         performHapticFeedback(if (strong) HapticFeedbackConstants.VIRTUAL_KEY else HapticFeedbackConstants.KEYBOARD_TAP)
     }
 
+    private var dragId: String? = null
+    private var dragX = 0f
+    private var dragY = 0f
+    private var dragStart = Tweak()
+
+    // Which control is under a finger in the editor (the stick included).
+    private fun editHit(x: Float, y: Float): String? {
+        hit(x, y)?.let { return it.id }
+        return if (hypot(x - homeX, y - homeY) <= stickRadius()) "stick" else null
+    }
+
+    private fun editTouch(e: MotionEvent) {
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                dragId = editHit(e.x, e.y)
+                dragX = e.x
+                dragY = e.y
+                dragStart = dragId?.let(::tweak) ?: Tweak()
+                selected = dragId
+                onSelect?.invoke(selected)
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val id = dragId ?: return
+                val t = dragStart.copy(dx = dragStart.dx + (e.x - dragX) / d, dy = dragStart.dy + (e.y - dragY) / d)
+                tweaks = tweaks + (id to t)
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dragId = null
+        }
+        invalidate()
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(e: MotionEvent): Boolean {
+        if (editing) {
+            editTouch(e)
+            return true
+        }
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val i = e.actionIndex
@@ -685,7 +809,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
     }
 
-    private fun stickRadius() = 64 * d * state.size
+    private fun stickRadius() = 64 * d * state.size * tweak("stick").scale
 
     private fun startStick(id: Int, x: Float, y: Float) {
         stickPointer = id

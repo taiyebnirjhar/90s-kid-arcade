@@ -59,6 +59,7 @@ import com.kofarcade.core.toArrows
 
 @Composable
 fun GameDialogs(game: GameActivity) {
+    if (game.editing) EditBar(game)
     when (val d = game.dialog) {
         null -> Unit
         GameDialog.Pause -> PauseMenu(game)
@@ -128,6 +129,7 @@ private fun PauseMenu(game: GameActivity) {
         MenuButton("Save state") { game.saveState() }
         MenuButton("Load state") { game.loadState() }
         if (c != null) MenuButton("Edit ${c.name}'s moves") { game.show(GameDialog.Editor(c)) }
+        MenuButton("Customize layout") { game.startEditing() }
         MenuButton("Controls") { game.show(GameDialog.Controls) }
         MenuButton("Quit to game list", danger = true) { game.finish() }
     }
@@ -309,10 +311,22 @@ private fun ControlsSettings(game: GameActivity) {
     var haptics by remember { mutableStateOf(p.haptics) }
     var lefty by remember { mutableStateOf(p.leftHanded) }
     var step by remember { mutableIntStateOf(p.stepFrames) }
+    var screen by remember { mutableStateOf(p.screen) }
     var press by remember { mutableIntStateOf(p.pressFrames) }
 
     Sheet(onDismiss = { game.close() }, width = 480) {
         Title("Controls")
+        Text("Screen", color = Palette.text, fontWeight = FontWeight.SemiBold)
+        ScreenMode.entries.forEach { mode ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { screen = mode },
+            ) {
+                RadioButton(selected = screen == mode, onClick = { screen = mode })
+                Text(mode.label, color = Palette.text, fontSize = 14.sp)
+            }
+        }
+        Spacer(Modifier.size(6.dp))
         Text("Stick", color = Palette.text, fontWeight = FontWeight.SemiBold)
         StickMode.entries.forEach { mode ->
             Row(
@@ -336,6 +350,7 @@ private fun ControlsSettings(game: GameActivity) {
             TextButton(onClick = { game.close() }) { Text("Cancel") }
             Button(
                 onClick = {
+                    p.screen = screen
                     p.stick = stick
                     p.size = size
                     p.opacity = opacity
@@ -376,5 +391,55 @@ private fun Stepper(label: String, value: Int, range: IntRange, onChange: (Int) 
         TextButton(onClick = { if (value > range.first) onChange(value - 1) }) { Text("−", fontSize = 18.sp) }
         Text("$value", color = Palette.text, modifier = Modifier.width(28.dp), textAlign = TextAlign.Center)
         TextButton(onClick = { if (value < range.last) onChange(value + 1) }) { Text("+", fontSize = 18.sp) }
+    }
+}
+
+// ----- Layout editor bar -----
+
+/** Friendly names for the editor: "face:A" -> "A button", "move:0" -> "Move 1". */
+private fun controlName(id: String): String = when {
+    id == "stick" -> "Stick"
+    id == "pause" -> "Pause button"
+    id == "top" -> "Coin / Facing / Start"
+    id == "team" -> "Team bar"
+    id.startsWith("face:") -> "${id.removePrefix("face:")} button"
+    id.startsWith("move:") -> "Move ${id.removePrefix("move:").toInt() + 1}"
+    id.startsWith("sys:") -> "Quick button ${id.removePrefix("sys:").toInt() + 1}"
+    else -> id
+}
+
+@Composable
+private fun EditBar(game: GameActivity) {
+    Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Palette.panel.copy(alpha = 0.95f),
+            border = BorderStroke(1.dp, Palette.line),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            ) {
+                val id = game.editSelected
+                Text(
+                    id?.let(::controlName) ?: "Pick a control",
+                    color = if (id != null) Palette.gold else Palette.muted,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    modifier = Modifier.width(150.dp),
+                )
+                Text("Size", color = Palette.muted, fontSize = 12.sp)
+                Slider(
+                    value = game.editScale,
+                    onValueChange = { game.setEditScale(it) },
+                    valueRange = 0.6f..1.8f,
+                    enabled = id != null && id != "top" && id != "team",
+                    modifier = Modifier.width(170.dp),
+                )
+                TextButton(onClick = { game.resetLayout() }) { Text("Reset all") }
+                TextButton(onClick = { game.finishEditing(save = false) }) { Text("Cancel") }
+                Button(onClick = { game.finishEditing(save = true) }) { Text("Save") }
+            }
+        }
     }
 }

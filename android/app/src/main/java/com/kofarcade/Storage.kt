@@ -58,6 +58,11 @@ enum class StickMode(val label: String) {
     HIDDEN("Hidden: works, not drawn"),
 }
 
+enum class ScreenMode(val label: String) {
+    FULL("Full screen (stretched)"),
+    ORIGINAL("Original 4:3"),
+}
+
 /** Settings, teams and custom move lists. */
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
@@ -93,6 +98,28 @@ class Prefs(context: Context) {
     var pressFrames: Int
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
+
+    var screen: ScreenMode
+        get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.FULL)
+        set(v) = sp.edit().putString("screen", v.name).apply()
+
+    /** Your control layout for a kind of game (fighter / shooter / brawler) and hand. */
+    fun tweaks(key: String): Map<String, HudView.Tweak> {
+        val raw = sp.getString("layout.$key", null) ?: return emptyMap()
+        return runCatching {
+            val o = JSONObject(raw)
+            o.keys().asSequence().associateWith { id ->
+                val a = o.getJSONArray(id)
+                HudView.Tweak(a.getDouble(0).toFloat(), a.getDouble(1).toFloat(), a.getDouble(2).toFloat())
+            }
+        }.getOrDefault(emptyMap())
+    }
+
+    fun setTweaks(key: String, tweaks: Map<String, HudView.Tweak>) {
+        val o = JSONObject()
+        tweaks.forEach { (id, t) -> o.put(id, JSONArray().put(t.dx.toDouble()).put(t.dy.toDouble()).put(t.scale.toDouble())) }
+        sp.edit().putString("layout.$key", o.toString()).apply()
+    }
 
     /** Character ids in each team slot for a game ("" = empty). */
     fun team(gameId: String, size: Int): List<String?> {
