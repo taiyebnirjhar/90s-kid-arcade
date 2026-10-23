@@ -64,6 +64,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private lateinit var prefs: Prefs
     private lateinit var retroView: GLRetroView
     private lateinit var hud: HudView
+    private lateinit var root: FrameLayout
     private lateinit var pad: Pad
     private var roster: Roster? = null
 
@@ -121,9 +122,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         hud = HudView(this, this)
 
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
+        root = FrameLayout(this)
         setContentView(
-            FrameLayout(this).apply {
-                addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            root.apply {
+                addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER))
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
                 // Full width so the layout editor's bar can centre itself; it
                 // takes no space (and no touches) when nothing is shown.
@@ -134,9 +136,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             editSelected = id
             editScale = id?.let { hud.tweaks[it]?.scale } ?: 1f
         }
-        // Full screen: render into a 4:3 surface and let the display stretch it
-        // over the whole screen, instead of drawing black bars beside it.
-        retroView.addOnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
+        root.addOnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
             if (r - l != oldR - oldL || b - t != oldB - oldT) applyScreen()
         }
         applyPrefs()
@@ -307,14 +307,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         )
     }
 
+    // The game renders into a 4:3 surface; the view it sits in is as wide as
+    // the chosen screen mode, and the display stretches the surface to fill it.
     private fun applyScreen() {
-        val h = retroView.height
-        if (h == 0) return
-        if (prefs.screen == ScreenMode.FULL) {
-            retroView.holder.setFixedSize((h * 4f / 3f).roundToInt(), h)
-        } else {
-            retroView.holder.setSizeFromLayout()
+        val w = root.width
+        val h = root.height
+        if (w == 0 || h == 0) return
+        val aspect = prefs.screen.aspect
+        val viewW = if (aspect == null) w else minOf(w, (h * aspect).roundToInt())
+        val lp = retroView.layoutParams as FrameLayout.LayoutParams
+        if (lp.width != viewW) {
+            lp.width = viewW
+            retroView.layoutParams = lp
         }
+        retroView.holder.setFixedSize((h * 4f / 3f).roundToInt(), h)
     }
 
     // Layouts are saved per kind of game and per hand.
