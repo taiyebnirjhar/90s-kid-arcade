@@ -1,0 +1,6 @@
+[submodule "android/libretrodroid/src/main/cpp/oboe"]
+	path = android/libretrodroid/src/main/cpp/oboe
+	url = https://github.com/google/oboe
+[submodule "android/libretrodroid/src/main/cpp/libretro/libretro-common"]
+	path = android/libretrodroid/src/main/cpp/libretro/libretro-common
+	url = https://github.com/libretro/libretro-common

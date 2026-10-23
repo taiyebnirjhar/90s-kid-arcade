@@ -57,7 +57,7 @@ android {
 
 dependencies {
     implementation("com.kofarcade:core:1.0")
-    implementation("com.github.Swordfish90:LibretroDroid:0.14.0")
+    implementation(project(":libretrodroid"))
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")

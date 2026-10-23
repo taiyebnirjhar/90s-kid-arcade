@@ -441,6 +441,8 @@ private fun ControlsSettings(game: GameActivity) {
     var step by remember { mutableIntStateOf(p.stepFrames) }
     var screen by remember { mutableStateOf(p.screen) }
     var press by remember { mutableIntStateOf(p.pressFrames) }
+    var auto by remember { mutableStateOf(p.autoDetect) }
+    var info by remember { mutableStateOf(p.detectInfo) }
 
     Sheet(onDismiss = { game.close() }, width = 480) {
         Title("Controls")
@@ -480,6 +482,10 @@ private fun ControlsSettings(game: GameActivity) {
         }
         Toggle("Vibrate on press", haptics) { haptics = it }
         Toggle("Buttons on the left", lefty) { lefty = it }
+        if (game.canDetect) {
+            Toggle("Detect fighters automatically", auto) { auto = it }
+            Toggle("Show detection readout", info) { info = it }
+        }
         Spacer(Modifier.size(8.dp))
         Text("Move timing", color = Palette.text, fontWeight = FontWeight.SemiBold)
         Stepper("Frames per direction", step, 1..6) { step = it }
@@ -497,6 +503,8 @@ private fun ControlsSettings(game: GameActivity) {
                     p.leftHanded = lefty
                     p.stepFrames = step
                     p.pressFrames = press
+                    p.autoDetect = auto
+                    p.detectInfo = info
                     game.applyPrefs()
                     game.close()
                 },
