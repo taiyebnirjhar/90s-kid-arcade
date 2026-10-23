@@ -33,7 +33,7 @@ export function systemMoves(fileName) {
   const set = String(fileName).toLowerCase();
   const moves = [
     { name: "Roll", cmd: "AB" },
-    { name: "Blowback", cmd: "CD" },
+    { name: "Blow\u00adback", cmd: "CD" },
   ];
   if (/kof9[4-6]/.test(set)) {
     moves[0] = { name: "Dodge", cmd: "AB" };

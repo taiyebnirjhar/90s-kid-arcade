@@ -34,11 +34,11 @@
     <details class="help">
       <summary>How the controls work</summary>
       <ul>
-        <li><b>Left half:</b> put your thumb anywhere, the stick appears under it.</li>
+        <li><b>Left side:</b> put your thumb anywhere, the stick appears under it. ❚❚ → Controls lets you fix it in place or hide it.</li>
         <li><b>A B C D:</b> hold, or slide between them for combos.</li>
-        <li><b>Gold buttons:</b> one tap does the whole move, e.g. Iori's Ya Otome.</li>
+        <li><b>Round move buttons</b> around A B C D: one tap does the whole move, e.g. Iori's Ya Otome. The small badge shows which button it ends on.</li>
         <li><b>Facing:</b> moves are written for P1 on the left. When your fighter swaps sides, tap the facing pill at the top.</li>
-        <li><b>⚙:</b> pick a character's moves or write your own (numpad notation like <code>2363214+A</code>).</li>
+        <li><b>❚❚ → Controls &amp; moves:</b> pick a character's moves or write your own (numpad notation like <code>2363214+A</code>).</li>
         <li><b>Keyboard:</b> arrows/WASD, J K U I = A B C D, 1–6 moves, F flip, Enter start, Backspace coin.</li>
       </ul>
     </details>
@@ -49,33 +49,46 @@
 
     <div id="hud" hidden>
       <nav class="top">
-        <button id="exit" aria-label="Quit">✕</button>
-        <button id="coin" class="pill">COIN</button>
-        <button id="flip" class="pill facing"></button>
-        <button id="start" class="pill">START</button>
-        <button id="save" class="pill small" aria-label="Save state">Save</button>
-        <button id="load" class="pill small" aria-label="Load state">Load</button>
-        <button id="open-settings" aria-label="Settings">⚙</button>
+        <button id="pause" class="round" aria-label="Menu">❚❚</button>
+        <div class="center">
+          <button id="coin" class="pill">COIN</button>
+          <button id="flip" class="pill facing"></button>
+          <button id="start" class="pill">START</button>
+        </div>
       </nav>
 
       <div id="stick-zone">
-        <div class="stick-base"><div class="stick-knob"></div></div>
-        <span class="stick-hint">Stick</span>
+        <div class="stick-home"></div>
+        <div class="stick-base">
+          <span class="chev l">‹</span><span class="chev r">›</span>
+          <div class="stick-knob"></div>
+        </div>
       </div>
 
       <div id="buttons">
-        <div id="moves" class="moves"></div>
-        <div id="system" class="system"></div>
-        <div class="face">
-          <button data-key="C" class="btn c">C</button>
-          <button data-key="D" class="btn d">D</button>
+        <div id="cluster">
           <button data-key="A" class="btn a">A</button>
           <button data-key="B" class="btn b">B</button>
+          <button data-key="C" class="btn c">C</button>
+          <button data-key="D" class="btn d">D</button>
+          <div id="system"></div>
+          <div id="moves"></div>
         </div>
       </div>
     </div>
     <div id="toast" hidden></div>
   </section>
+
+  <dialog id="menu" class="sheet">
+    <form method="dialog">
+      <h2 id="menu-title">Paused</h2>
+      <button value="resume" class="primary">Resume</button>
+      <button value="save">Save state</button>
+      <button value="load">Load state</button>
+      <button value="settings">Controls &amp; moves</button>
+      <button value="quit" class="danger">Quit to game list</button>
+    </form>
+  </dialog>
 
   <dialog id="settings">
     <form method="dialog">
@@ -95,6 +108,13 @@
       <h2>Feel</h2>
       <label class="row">Frames per direction <input id="step" type="number" min="1" max="6"></label>
       <label class="row">Frames button held <input id="press" type="number" min="1" max="12"></label>
+      <label class="row">Stick
+        <select id="stick-mode">
+          <option value="floating">Floating: appears under your thumb</option>
+          <option value="fixed">Fixed: always shown</option>
+          <option value="hidden">Hidden: works, not drawn</option>
+        </select>
+      </label>
       <label class="row">Control size <input id="size" type="range" min="0.7" max="1.4" step="0.05"></label>
       <label class="row">Opacity <input id="opacity" type="range" min="0.3" max="1" step="0.05"></label>
       <label class="row check"><input id="haptics" type="checkbox"> Vibrate on press</label>

@@ -1,6 +1,6 @@
 import { Pad } from "./input.js";
 import { parse, toArrows } from "./macro.js";
-import { mountStick, mountButtons, mountHoldButton, mountKeyboard } from "./controls.js";
+import { mountStick, mountButtons, mountHoldButton, mountKeyboard, arcPositions } from "./controls.js";
 import { CHARACTERS, GENERIC, gameTitle, systemMoves } from "./moves.js";
 import { putRom, listRoms, getRom, deleteRom, loadSettings, saveSettings } from "./store.js";
 
@@ -18,6 +18,7 @@ const settings = loadSettings({
   opacity: 0.8,
   haptics: true,
   leftHanded: false,
+  stick: "floating", // floating | fixed | hidden
   moves: {}, // per game set: [{ name, cmd }]
 });
 
@@ -33,6 +34,9 @@ function applyLook() {
   root.style.setProperty("--pad-scale", settings.size);
   root.style.setProperty("--pad-opacity", settings.opacity);
   document.body.classList.toggle("left-handed", settings.leftHanded);
+  document.body.classList.toggle("stick-fixed", settings.stick === "fixed");
+  document.body.classList.toggle("stick-hidden", settings.stick === "hidden");
+  layoutButtons();
 }
 
 // ---------- Library ----------
@@ -143,23 +147,71 @@ function onGameStart() {
   $("#hud").hidden = false;
   renderMoves();
   updateFacing();
+  stick.rest();
 }
 
 // ---------- In-game HUD ----------
 
-function moveButton(move, cls) {
+const BUTTON_COLORS = { A: "var(--red)", B: "var(--yellow)", C: "var(--green)", D: "var(--blue)" };
+
+// Round skill button: the move's name, and a badge with the button(s) it
+// ends on, coloured like that button.
+function moveButton(move, extra = "") {
   const b = document.createElement("button");
-  b.className = cls;
+  b.className = `skill ${extra}`.trim();
   b.dataset.cmd = move.cmd;
-  b.innerHTML = `<b></b><small></small>`;
+  b.title = `${move.name}: ${toArrows(move.cmd)}`;
+  b.innerHTML = `<b></b><span class="badge"></span>`;
   b.querySelector("b").textContent = move.name;
-  b.querySelector("small").textContent = toArrows(move.cmd);
+  let buttons = "";
+  try {
+    buttons = parse(move.cmd).buttons;
+  } catch {}
+  const badge = b.querySelector(".badge");
+  badge.textContent = buttons;
+  badge.hidden = !buttons || extra.includes("sys");
+  badge.style.setProperty("--c", buttons.length === 1 ? BUTTON_COLORS[buttons] : "var(--gold-deep)");
   return b;
 }
 
 function renderMoves() {
-  $("#moves").replaceChildren(...movesFor(currentSet).map((m) => moveButton(m, "move")));
-  $("#system").replaceChildren(...systemMoves(currentSet).map((m) => moveButton(m, "sys")));
+  $("#moves").replaceChildren(...movesFor(currentSet).map((m) => moveButton(m)));
+  $("#system").replaceChildren(
+    ...systemMoves(currentSet).map((m) => moveButton(m, m.name === "MAX" ? "sys max" : "sys")),
+  );
+  layoutButtons();
+}
+
+// A B C D sit in a staggered 2x2 like an MVS panel. Moves go on an outer
+// ring around them and the system moves (roll, blowback, MAX) on an inner
+// one, both sweeping from above the buttons round to the thumb side.
+function layoutButtons() {
+  const S = 62 * settings.size;
+  const mirror = settings.leftHanded ? -1 : 1;
+  const put = (el, { x, y }) => {
+    el.style.left = `${x * mirror}px`;
+    el.style.top = `${y}px`;
+  };
+  const h = S / 2 + 5;
+  put($(".btn.c"), { x: -0.3 * S - 5, y: -h });
+  put($(".btn.d"), { x: 0.7 * S + 5, y: -h });
+  put($(".btn.a"), { x: -0.7 * S - 5, y: h });
+  put($(".btn.b"), { x: 0.3 * S + 5, y: h });
+  const moves = [...document.querySelectorAll("#moves .skill")];
+  arcPositions(moves.length, { radius: 2.75 * S, from: 78, step: 22 }).forEach((p, i) => put(moves[i], p));
+  const sys = [...document.querySelectorAll("#system .skill")];
+  arcPositions(sys.length, { radius: 1.78 * S, from: 100, step: 34 }).forEach((p, i) => put(sys[i], p));
+}
+
+// Sweep a ring round the button for as long as its motion takes to play.
+function showFiring(el, frames) {
+  if (!el.classList.contains("skill") || !frames) return;
+  el.classList.remove("firing");
+  void el.offsetWidth;
+  el.style.setProperty("--dur", `${Math.round(frames * 16.7)}ms`);
+  el.classList.add("firing");
+  clearTimeout(el.firingTimer);
+  el.firingTimer = setTimeout(() => el.classList.remove("firing"), frames * 16.7 + 120);
 }
 
 function updateFacing() {
@@ -178,22 +230,44 @@ function flip() {
 
 const haptics = () => settings.haptics;
 const fakePad = { setDir: (d) => pad?.setDir(d), press: (k, v) => pad?.press(k, v), play: (c) => pad?.play(c) };
-mountStick($("#stick-zone"), fakePad, { haptics });
-mountButtons($("#buttons"), fakePad, { haptics });
-mountKeyboard(fakePad, { macros: () => [...document.querySelectorAll("#moves .move")], flip });
+const stick = mountStick($("#stick-zone"), fakePad, { haptics, mode: () => settings.stick });
+mountButtons($("#buttons"), fakePad, { haptics, onMacro: showFiring });
+mountKeyboard(fakePad, { macros: () => [...document.querySelectorAll("#moves .skill")], flip });
 mountHoldButton($("#coin"), () => pad?.press("coin", true), () => pad?.press("coin", false));
 mountHoldButton($("#start"), () => pad?.press("start", true), () => pad?.press("start", false));
 $("#flip").addEventListener("click", flip);
-$("#save").addEventListener("click", () => {
-  window.EJS_emulator?.gameManager.quickSave(1);
-  toast("State saved");
+window.addEventListener("resize", () => {
+  layoutButtons();
+  stick.rest();
 });
-$("#load").addEventListener("click", () => {
-  window.EJS_emulator?.gameManager.quickLoad(1);
-  toast("State loaded");
+
+// Pause menu.
+const menu = $("#menu");
+$("#pause").addEventListener("click", () => {
+  pad?.releaseAll();
+  window.EJS_emulator?.pause?.();
+  $("#menu-title").textContent = currentSet ? gameTitle(currentSet) : "Paused";
+  menu.showModal();
 });
-$("#exit").addEventListener("click", () => {
-  if (confirm("Quit to the game list? Unsaved progress is lost.")) location.reload();
+menu.addEventListener("close", () => {
+  const gm = window.EJS_emulator?.gameManager;
+  switch (menu.returnValue) {
+    case "save":
+      gm?.quickSave(1);
+      toast("State saved");
+      break;
+    case "load":
+      gm?.quickLoad(1);
+      toast("State loaded");
+      break;
+    case "settings":
+      openSettings();
+      return;
+    case "quit":
+      if (confirm("Quit to the game list? Unsaved progress is lost.")) location.reload();
+      break;
+  }
+  window.EJS_emulator?.play?.();
 });
 // Losing focus (notification, app switch) must not leave a direction stuck.
 document.addEventListener("visibilitychange", () => pad?.releaseAll());
@@ -224,6 +298,7 @@ function openSettings() {
   $("#opacity").value = settings.opacity;
   $("#haptics").checked = settings.haptics;
   $("#lefty").checked = settings.leftHanded;
+  $("#stick-mode").value = settings.stick;
   $("#settings-game").textContent = currentSet ? gameTitle(currentSet) : "";
   renderDraft();
   pad?.releaseAll();
@@ -275,7 +350,11 @@ function renderDraft() {
       }
       dialog.close("test");
       window.EJS_emulator?.play?.();
-      setTimeout(() => pad?.play(cmd.value), 150);
+      setTimeout(() => {
+        const frames = pad?.play(cmd.value);
+        const el = [...document.querySelectorAll("#moves .skill")][i];
+        if (el) showFiring(el, frames);
+      }, 150);
     });
     list.append(row);
   });
@@ -296,7 +375,6 @@ $("#reset-moves").addEventListener("click", () => {
   draft = GENERIC.map((m) => ({ ...m }));
   renderDraft();
 });
-$("#open-settings").addEventListener("click", openSettings);
 
 dialog.addEventListener("close", () => {
   if (dialog.returnValue === "cancel") {
@@ -318,8 +396,10 @@ dialog.addEventListener("close", () => {
   settings.opacity = Number($("#opacity").value);
   settings.haptics = $("#haptics").checked;
   settings.leftHanded = $("#lefty").checked;
+  settings.stick = $("#stick-mode").value;
   saveSettings(settings);
   applyLook();
+  stick.rest();
   if (pad) pad.timing = { step: settings.stepFrames, press: settings.pressFrames };
   if (currentSet) renderMoves();
   if (dialog.returnValue !== "test") window.EJS_emulator?.play?.();

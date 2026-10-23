@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parse, compile, toArrows, MacroPlayer } from "../js/macro.js";
-import { angleToDir } from "../js/controls.js";
+import { angleToDir, arcPositions } from "../js/controls.js";
 import { CHARACTERS, GENERIC, systemMoves } from "../js/moves.js";
 
 const dirs = (frames) => frames.map((f) => f.dir);
@@ -84,4 +84,13 @@ test("every built-in move parses", () => {
 test("system moves per game", () => {
   assert.equal(systemMoves("kf2k2mp").find((m) => m.name === "MAX").cmd, "BC");
   assert.equal(systemMoves("kof97").find((m) => m.name === "MAX").cmd, "ABC");
+});
+
+test("arc positions start at `from` and step round counter-clockwise", () => {
+  assert.deepEqual(arcPositions(3, { radius: 100, from: 90, step: 90 }), [
+    { x: 0, y: -100 }, // straight up
+    { x: -100, y: 0 }, // left
+    { x: 0, y: 100 }, // down
+  ]);
+  assert.deepEqual(arcPositions(0, { radius: 100, from: 0, step: 10 }), []);
 });

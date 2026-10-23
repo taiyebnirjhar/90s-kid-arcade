@@ -40,14 +40,16 @@ export class Pad {
   }
 
   // Play a command. A tap while another macro runs is queued (once), so
-  // mashing a super button doesn't garble the motion.
+  // mashing a super button doesn't garble the motion. Returns the number of
+  // frames the command takes.
   play(command) {
     const frames = compile(command, { facingLeft: this.facingLeft, timing: this.timing });
     if (this.macro) {
       this.queue = [frames];
-      return;
+    } else {
+      this.start(frames);
     }
-    this.start(frames);
+    return frames.length;
   }
 
   start(frames) {

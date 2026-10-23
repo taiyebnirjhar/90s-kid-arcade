@@ -19,13 +19,16 @@ running the [FBNeo](https://github.com/finalburnneo/FBNeo) arcade core in WebAss
 
 | Control | What it does |
 | --- | --- |
-| Left half of the screen | Floating stick: put your thumb down anywhere and it appears under it |
-| A B C D | Normal buttons. Slide a finger between them for chains |
-| Gold buttons | One tap does the whole motion and button, frame-exact |
-| Roll / Blowback / MAX | AB, CD and the game's MAX/power-up input in one tap |
-| Facing pill | Gold moves are written for a fighter facing right. When you cross sides, tap it and every move mirrors |
-| ⚙ | Pick a character's move list or write your own; adjust timing, size, opacity, vibration, left-handed layout |
-| Save / Load | Quick save state, slot 1 |
+| Stick (left side) | Floating: put your thumb down anywhere and it moves under it. Can be set to Fixed or Hidden |
+| A B C D | Normal buttons in an MVS-style stagger. Slide a finger between them for chains |
+| Round gold buttons | Your moves, on a ring around A B C D. One tap does the whole motion and button, frame-exact. The badge shows the button it ends on, and a ring sweeps round while it plays |
+| Roll / Blowback / MAX | AB, CD and the game's MAX/power-up input, on the inner ring |
+| Facing | Moves are written for a fighter facing right. When you cross sides, tap it and every move mirrors |
+| ❚❚ | Pause menu: save state, load state, controls & moves, quit |
+
+Under ❚❚ → Controls & moves you can load a character's move list or write
+your own, and set the stick style, timing, control size, opacity, vibration
+and a left-handed layout.
 
 Keyboard (tablet with a keyboard, or desktop): arrows/WASD, J K U I = A B C D,
 1–6 = gold buttons, F = flip facing, Enter = start, Backspace = coin.

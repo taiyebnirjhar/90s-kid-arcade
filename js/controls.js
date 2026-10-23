@@ -1,5 +1,5 @@
-// Touch overlay: a floating 8-way stick on the left, A B C D plus one-tap
-// move buttons on the right. Every finger is tracked on its own so you can
+// Touch overlay: an 8-way stick on the left, A B C D with one-tap move
+// buttons arranged around them on the right. Every finger is tracked on its own so you can
 // hold a direction and press buttons, or slide a finger across buttons.
 
 const DEADZONE = 14; // px from the stick centre before a direction counts
@@ -18,7 +18,14 @@ function vibrate(ms) {
   } catch {}
 }
 
-export function mountStick(zone, pad, { haptics }) {
+// Stick modes (settings):
+//   floating - appears under the thumb, anywhere in the left zone
+//   fixed    - always drawn at its home spot; a touch near it uses that
+//              centre, a touch further away pulls it under the thumb
+//   hidden   - floating, but nothing is drawn
+// In every mode the centre follows a thumb that drifts too far, so a long
+// round of play never leaves you pushing against the edge.
+export function mountStick(zone, pad, { haptics, mode }) {
   const base = zone.querySelector(".stick-base");
   const knob = zone.querySelector(".stick-knob");
   let id = null;
@@ -26,18 +33,33 @@ export function mountStick(zone, pad, { haptics }) {
   let cy = 0;
   let lastDir = 5;
 
+  const radius = () => base.offsetWidth / 2 || 60;
+  const home = () => {
+    const r = zone.querySelector(".stick-home").getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
   const place = (x, y) => {
-    base.style.transform = `translate(${x}px, ${y}px)`;
+    const rect = zone.getBoundingClientRect();
+    base.style.transform = `translate(${x - rect.left}px, ${y - rect.top}px)`;
   };
   const moveKnob = (dx, dy) => {
-    const r = base.offsetWidth / 2;
+    const r = radius();
     const d = Math.hypot(dx, dy);
     const k = d > r ? r / d : 1;
     knob.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
   };
   const update = (e) => {
-    const dx = e.clientX - cx;
-    const dy = e.clientY - cy;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const d = Math.hypot(dx, dy);
+    const follow = radius() * 1.4;
+    if (d > follow) {
+      cx += (dx * (d - follow)) / d;
+      cy += (dy * (d - follow)) / d;
+      place(cx, cy);
+      dx = e.clientX - cx;
+      dy = e.clientY - cy;
+    }
     moveKnob(dx, dy);
     const dir = angleToDir(dx, dy);
     if (dir !== lastDir) {
@@ -46,12 +68,17 @@ export function mountStick(zone, pad, { haptics }) {
       pad.setDir(dir);
     }
   };
+  const rest = () => {
+    const h = home();
+    place(h.x, h.y);
+  };
   const end = (e) => {
     if (e.pointerId !== id) return;
     id = null;
     lastDir = 5;
     zone.classList.remove("active");
     moveKnob(0, 0);
+    rest();
     pad.setDir(5);
   };
 
@@ -60,10 +87,16 @@ export function mountStick(zone, pad, { haptics }) {
     e.preventDefault();
     id = e.pointerId;
     zone.setPointerCapture(id);
-    const rect = zone.getBoundingClientRect();
     cx = e.clientX;
     cy = e.clientY;
-    place(cx - rect.left, cy - rect.top);
+    if (mode() === "fixed") {
+      const h = home();
+      if (Math.hypot(cx - h.x, cy - h.y) < radius() * 1.5) {
+        cx = h.x;
+        cy = h.y;
+      }
+    }
+    place(cx, cy);
     zone.classList.add("active");
     update(e);
   });
@@ -72,6 +105,19 @@ export function mountStick(zone, pad, { haptics }) {
   });
   zone.addEventListener("pointerup", end);
   zone.addEventListener("pointercancel", end);
+  return { rest };
+}
+
+// Centres for `count` buttons placed along an arc around a point, starting
+// at angle `from` and `step` degrees apart (0 = right, 90 = up). Returns
+// [{x, y}] offsets from the arc centre, y pointing down like the screen.
+export function arcPositions(count, { radius, from, step }) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const a = ((from + step * i) * Math.PI) / 180;
+    out.push({ x: Math.round(Math.cos(a) * radius) || 0, y: Math.round(-Math.sin(a) * radius) || 0 });
+  }
+  return out;
 }
 
 // Buttons: elements with data-key (A-D) are held while touched; elements with
@@ -88,8 +134,7 @@ export function mountButtons(zone, pad, { haptics, onMacro }) {
     el.classList.add("down");
     if (haptics()) vibrate(el.dataset.cmd ? 12 : 6);
     if (el.dataset.cmd) {
-      pad.play(el.dataset.cmd);
-      onMacro?.(el);
+      onMacro?.(el, pad.play(el.dataset.cmd));
     } else {
       pad.press(el.dataset.key, true);
     }
