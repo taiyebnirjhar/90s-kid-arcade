@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kof-arcade"
+rootProject.name = "90s-kid-arcade"
 
 include(":app")
 

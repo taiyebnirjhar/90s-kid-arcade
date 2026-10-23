@@ -58,6 +58,12 @@ enum class StickMode(val label: String) {
     HIDDEN("Hidden: works, not drawn"),
 }
 
+enum class LabelMode(val label: String) {
+    SUPERS("Supers only"),
+    ALL("All moves"),
+    OFF("None"),
+}
+
 enum class ScreenMode(val label: String) {
     FULL("Full screen (stretched)"),
     ORIGINAL("Original 4:3"),
@@ -65,6 +71,8 @@ enum class ScreenMode(val label: String) {
 
 /** Settings, teams and custom move lists. */
 class Prefs(context: Context) {
+    // Keeps its original file name (from when the app was "KOF Arcade") so
+    // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
     var stick: StickMode
@@ -87,9 +95,10 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("leftHanded", false)
         set(v) = sp.edit().putBoolean("leftHanded", v).apply()
 
-    var labels: Boolean
-        get() = sp.getBoolean("labels", true)
-        set(v) = sp.edit().putBoolean("labels", v).apply()
+    /** Which move buttons show their name; supers only keeps the ring quiet. */
+    var labelMode: LabelMode
+        get() = runCatching { LabelMode.valueOf(sp.getString("labelMode", null)!!) }.getOrDefault(LabelMode.SUPERS)
+        set(v) = sp.edit().putString("labelMode", v.name).apply()
 
     var stepFrames: Int
         get() = sp.getInt("stepFrames", 2)

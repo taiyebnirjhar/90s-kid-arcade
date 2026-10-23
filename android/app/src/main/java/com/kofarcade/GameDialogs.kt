@@ -4,6 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,18 +107,40 @@ private fun Title(text: String, sub: String? = null) {
     }
 }
 
+// ----- Full-screen overlays (pause menu, fighter select) -----
+
+/**
+ * A full-screen layer over the dimmed game, like a console game's menus,
+ * instead of a small dialog box. [dismissOnTap] closes it when you tap the
+ * empty space around the content.
+ */
 @Composable
-private fun MenuButton(text: String, primary: Boolean = false, danger: Boolean = false, onClick: () -> Unit) {
-    if (primary) {
-        Button(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            Text(text, fontWeight = FontWeight.Bold)
-        }
-    } else {
-        OutlinedButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            border = BorderStroke(1.dp, Palette.line),
-        ) { Text(text, color = if (danger) Palette.red else Palette.text) }
+private fun Overlay(onDismiss: () -> Unit, dismissOnTap: Boolean = true, content: @Composable () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to Color.Black.copy(alpha = 0.88f),
+                        1f to Color.Black.copy(alpha = 0.6f),
+                    ),
+                )
+                .then(
+                    if (dismissOnTap) {
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onDismiss,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) { content() }
     }
 }
 
@@ -123,37 +149,108 @@ private fun MenuButton(text: String, primary: Boolean = false, danger: Boolean =
 @Composable
 private fun PauseMenu(game: GameActivity) {
     val c = game.activeCharacter()
-    Sheet(onDismiss = { game.close() }, width = 340) {
-        Title(game.gameTitle)
-        MenuButton("Resume", primary = true) { game.close() }
-        MenuButton("Save state") { game.saveState() }
-        MenuButton("Load state") { game.loadState() }
-        if (c != null) MenuButton("Edit ${c.name}'s moves") { game.show(GameDialog.Editor(c)) }
-        MenuButton("Customize layout") { game.startEditing() }
-        MenuButton("Controls") { game.show(GameDialog.Controls) }
-        MenuButton("Quit to game list", danger = true) { game.finish() }
+    Overlay(onDismiss = { game.close() }) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                Text(
+                    game.gameTitle,
+                    color = Color.White,
+                    fontSize = 46.sp,
+                    fontWeight = FontWeight.Black,
+                    fontStyle = FontStyle.Italic,
+                )
+                if (c != null) {
+                    Spacer(Modifier.size(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Portrait(c.name, size = 34)
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text("FIGHTING", color = Palette.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+                            Text(c.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.width(300.dp).verticalScroll(rememberScrollState()),
+            ) {
+                BigButton("Resume", primary = true) { game.close() }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BigButton("Save state", Modifier.weight(1f)) { game.saveState() }
+                    BigButton("Load state", Modifier.weight(1f)) { game.loadState() }
+                }
+                if (c != null) BigButton("Edit ${c.name.substringBefore(" ")}'s moves") { game.show(GameDialog.Editor(c)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BigButton("Layout", Modifier.weight(1f)) { game.startEditing() }
+                    BigButton("Controls", Modifier.weight(1f)) { game.show(GameDialog.Controls) }
+                }
+                BigButton("Quit to game list", danger = true) { game.finish() }
+            }
+        }
     }
 }
 
-// ----- Fighter picker -----
+@Composable
+private fun BigButton(
+    text: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    primary: Boolean = false,
+    danger: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .height(50.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (primary) Palette.gold else Color.White.copy(alpha = 0.07f))
+            .border(1.dp, if (primary) Palette.gold else Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+    ) {
+        Text(
+            if (primary) text.uppercase() else text,
+            color = when {
+                primary -> Color(0xFF1D1400)
+                danger -> Palette.red
+                else -> Color.White
+            },
+            fontWeight = if (primary) FontWeight.Black else FontWeight.SemiBold,
+            letterSpacing = if (primary) 1.5.sp else 0.sp,
+            fontSize = 15.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+// ----- Fighter select -----
 
 @Composable
-fun Portrait(name: String?, size: Int = 38) {
+fun Portrait(name: String?, size: Int = 38, selected: Boolean = false) {
     val hue = name?.let(::nameHue) ?: 0f
+    val shape = RoundedCornerShape((size * 0.24f).dp)
     Box(
         Modifier
             .size(size.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(shape)
             .background(
                 if (name == null) {
-                    Brush.linearGradient(listOf(Palette.bg, Palette.bg))
+                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.06f), Color.White.copy(alpha = 0.06f)))
                 } else {
                     Brush.linearGradient(
-                        listOf(Color.hsv(hue, 0.7f, 0.8f), Color.hsv((hue + 30) % 360, 0.65f, 0.35f)),
+                        listOf(Color.hsv(hue, 0.7f, 0.82f), Color.hsv((hue + 30) % 360, 0.65f, 0.32f)),
                     )
                 },
             )
-            .border(1.5.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(10.dp)),
+            .border(
+                if (selected) 2.5.dp else 1.dp,
+                if (selected) Palette.gold else Color.White.copy(alpha = 0.25f),
+                shape,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -161,70 +258,101 @@ fun Portrait(name: String?, size: Int = 38) {
             color = Color.White,
             fontWeight = FontWeight.Black,
             fontStyle = FontStyle.Italic,
-            fontSize = (size * 0.37f).sp,
+            fontSize = (size * 0.36f).sp,
         )
     }
 }
 
+/**
+ * The arcade-style select screen: your team's slots along the top (tap one to
+ * pick for it), then every fighter by team. Tap a team's name to take the
+ * whole team.
+ */
 @Composable
 private fun RosterPicker(game: GameActivity, slot: Int) {
     val roster = game.rosterOrNull ?: return
-    Dialog(onDismissRequest = { game.close() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = Palette.panel,
-            border = BorderStroke(1.dp, Palette.line),
-            modifier = Modifier.widthIn(max = 720.dp).padding(16.dp),
-        ) {
-            Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Title("Pick fighter", "slot ${slot + 1}")
-                    }
-                    TextButton(onClick = { game.close() }) { Text("✕", color = Palette.muted, fontSize = 18.sp) }
+    var picking by remember { mutableIntStateOf(slot) }
+    val team = game.team()
+    Overlay(onDismiss = { game.close() }, dismissOnTap = false) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("SELECT FIGHTER", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                    Text(
+                        "Tap a fighter for slot ${picking + 1}, or a team name for all ${game.teamSize}",
+                        color = Palette.muted,
+                        fontSize = 12.sp,
+                    )
                 }
-                Text("Tap a team name to fill all ${game.teamSize} slots.", color = Palette.muted, fontSize = 13.sp)
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(92.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.heightIn(max = 600.dp).padding(bottom = 14.dp),
-                ) {
-                    for ((team, members) in roster.teams) {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            Text(
-                                team.uppercase(),
-                                color = Palette.gold,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 12.sp,
-                                letterSpacing = 1.2.sp,
-                                modifier = Modifier
-                                    .padding(top = 12.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable {
-                                        game.pickTeam(members.map { it.id })
-                                        game.close()
-                                    }
-                                    .padding(vertical = 4.dp, horizontal = 2.dp),
-                            )
+                // Your team: the slot you're picking for is outlined in gold.
+                team.forEachIndexed { i, id ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { picking = i }
+                            .padding(4.dp),
+                    ) {
+                        Portrait(roster.character(id)?.name, size = 40, selected = i == picking)
+                        Text("${i + 1}", color = if (i == picking) Palette.gold else Palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable { game.close() },
+                ) { Text("✕", color = Color.White, fontSize = 16.sp) }
+            }
+            Spacer(Modifier.height(8.dp))
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(84.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                for ((teamName, members) in roster.teams) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(top = 10.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    game.pickTeam(members.map { it.id })
+                                    game.close()
+                                }
+                                .padding(vertical = 4.dp, horizontal = 2.dp),
+                        ) {
+                            Text(teamName.uppercase(), color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.5.sp)
+                            Text("  ·  take team", color = Palette.gold, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
-                        items(members, key = { it.id }) { c ->
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Palette.bg)
-                                    .border(1.dp, Palette.line, RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        game.pickCharacter(slot, c.id)
-                                        game.close()
-                                    }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
-                            ) {
-                                Portrait(c.name)
-                                Spacer(Modifier.size(4.dp))
-                                Text(c.name, fontSize = 11.sp, color = Palette.text, textAlign = TextAlign.Center, lineHeight = 13.sp)
-                            }
+                    }
+                    items(members, key = { it.id }) { c ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    game.pickCharacter(picking, c.id)
+                                    game.close()
+                                }
+                                .padding(vertical = 6.dp),
+                        ) {
+                            Portrait(c.name, size = 60, selected = team.getOrNull(picking) == c.id)
+                            Spacer(Modifier.size(5.dp))
+                            Text(
+                                c.name,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 13.sp,
+                                maxLines = 2,
+                            )
                         }
                     }
                 }
@@ -307,7 +435,7 @@ private fun ControlsSettings(game: GameActivity) {
     var stick by remember { mutableStateOf(p.stick) }
     var size by remember { mutableFloatStateOf(p.size) }
     var opacity by remember { mutableFloatStateOf(p.opacity) }
-    var labels by remember { mutableStateOf(p.labels) }
+    var labelMode by remember { mutableStateOf(p.labelMode) }
     var haptics by remember { mutableStateOf(p.haptics) }
     var lefty by remember { mutableStateOf(p.leftHanded) }
     var step by remember { mutableIntStateOf(p.stepFrames) }
@@ -339,7 +467,17 @@ private fun ControlsSettings(game: GameActivity) {
         }
         Labeled("Control size") { Slider(value = size, onValueChange = { size = it }, valueRange = 0.7f..1.4f) }
         Labeled("Opacity") { Slider(value = opacity, onValueChange = { opacity = it }, valueRange = 0.3f..1f) }
-        Toggle("Show move names", labels) { labels = it }
+        Spacer(Modifier.size(6.dp))
+        Text("Move names", color = Palette.text, fontWeight = FontWeight.SemiBold)
+        LabelMode.entries.forEach { mode ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { labelMode = mode },
+            ) {
+                RadioButton(selected = labelMode == mode, onClick = { labelMode = mode })
+                Text(mode.label, color = Palette.text, fontSize = 14.sp)
+            }
+        }
         Toggle("Vibrate on press", haptics) { haptics = it }
         Toggle("Buttons on the left", lefty) { lefty = it }
         Spacer(Modifier.size(8.dp))
@@ -354,7 +492,7 @@ private fun ControlsSettings(game: GameActivity) {
                     p.stick = stick
                     p.size = size
                     p.opacity = opacity
-                    p.labels = labels
+                    p.labelMode = labelMode
                     p.haptics = haptics
                     p.leftHanded = lefty
                     p.stepFrames = step
