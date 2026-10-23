@@ -26,6 +26,30 @@ export class Pad {
     this.sent = {};
     this.queue = [];
     this.raf = 0;
+    this.rapid = new Set(); // keys that auto-fire while held
+    this.rapidRaf = 0;
+  }
+
+  // Auto-fire: while a rapid key is held it toggles every `rapidFrames`
+  // emulated frames (Metal Slug's shoot button).
+  setRapid(key, on) {
+    if (on) this.rapid.add(key);
+    else this.rapid.delete(key);
+    this.flush();
+  }
+
+  rapidLoop() {
+    if (this.rapidRaf) return;
+    const step = () => {
+      this.rapidRaf = 0;
+      if (![...this.rapid].some((k) => this.held.has(k))) {
+        this.flush();
+        return;
+      }
+      this.flush();
+      this.rapidRaf = requestAnimationFrame(step);
+    };
+    this.rapidRaf = requestAnimationFrame(step);
   }
 
   setDir(dir) {
@@ -37,6 +61,7 @@ export class Pad {
     if (down) this.held.add(key);
     else this.held.delete(key);
     this.flush();
+    if (down && this.rapid.has(key)) this.rapidLoop();
   }
 
   // Play a command. A tap while another macro runs is queued (once), so
@@ -93,8 +118,10 @@ export class Pad {
     const state = {};
     const dir = frame ? frame.dir : this.dir;
     Object.assign(state, dirFlags(dir));
+    const phase = Math.floor(this.clock() / (this.rapidFrames || 2)) % 2 === 0;
     for (const b of ["A", "B", "C", "D"]) {
-      state[b] = frame ? frame.buttons.includes(b) : this.held.has(b);
+      if (frame) state[b] = frame.buttons.includes(b);
+      else state[b] = this.held.has(b) && (!this.rapid.has(b) || phase);
     }
     state.coin = this.held.has("coin");
     state.start = this.held.has("start");

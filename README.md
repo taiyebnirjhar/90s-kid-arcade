@@ -1,103 +1,96 @@
 # KOF Arcade
 
-A mobile web emulator made only for the Neo Geo King of Fighters games
-('94 to 2003, 2002 Magic Plus, 10th Anniversary / 2005 Unique).
-It replaces the usual emulator clutter with arcade-style touch controls and
-**one-tap buttons for specials, supers and hidden supers.**
+A mobile emulator for a handful of famous Neo Geo games, with touch controls
+built for each one: one-tap specials and supers for every King of Fighters
+character, big Shoot / Jump / Bomb buttons and rapid fire for Metal Slug.
 
-It runs in the phone's browser and can be installed to the home screen as a
-full-screen app. Emulation is done by [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS)
-running the [FBNeo](https://github.com/finalburnneo/FBNeo) arcade core in WebAssembly.
+Runs in the phone's browser and installs to the home screen as a full-screen
+app. Emulation is [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS)
+running the [FBNeo](https://github.com/finalburnneo/FBNeo) arcade core.
+
+## Games
+
+| Game | ROM set (zip) | Layout |
+| --- | --- | --- |
+| The King of Fighters '97 | `kof97` | Fighter: stick, A B C D, MAX (A+B+C), character moves |
+| The King of Fighters 2002 | `kof2002` | Fighter: MAX is B+C |
+| "KOF 2005" (10th Anniversary hacks of 2002) | `kf2k5uni`, `kof10th` or `kf10thep` | Fighter, 2002 move lists |
+| Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` | Shoot, Jump, Bomb, rapid fire; Slug Attack (D) on 4 and 5; Slide on 5 |
+| Sengoku 3 | `sengoku3` | Weapon, Punch, Jump, Throw, plus the shared special inputs |
+
+Every game also needs the Neo Geo BIOS, `neogeo.zip`.
 
 ## Playing
 
-1. Open the app and tap **Add ROM sets**. Pick your game zips (`kof97.zip`,
-   `kof2002.zip`, `kf2k2mp.zip`, …) and the Neo Geo BIOS `neogeo.zip`. You only
-   do this once: the files stay in the browser's storage on your phone.
-2. Tap a game. Hold the phone sideways.
+1. Open the app. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
+2. Tap a game. The first time, it asks for that game's zip. A differently
+   named file is fine: it is stored under the name the emulator expects.
 3. **COIN**, then **START**.
 
-| Control | What it does |
-| --- | --- |
-| Stick (left side) | Floating: put your thumb down anywhere and it moves under it. Can be set to Fixed or Hidden |
-| A B C D | Normal buttons in an MVS-style stagger. Slide a finger between them for chains |
-| Round move buttons | Your moves, on a ring around A B C D. Each shows its stick motion drawn as an icon (mirrored when you flip sides) and chips for the button it ends on. One tap does the whole move, frame-exact, and a ring sweeps round while it plays |
-| Roll / Blowback / MAX | AB, CD and the game's MAX/power-up input, on the inner ring |
-| Facing | Moves are written for a fighter facing right. When you cross sides, tap it and every move mirrors |
-| ❚❚ | Pause menu: save state, load state, controls & moves, quit |
+ROMs are kept in the browser's storage on your phone. Nothing is uploaded.
+Long-press a game card to remove its ROM.
 
-Under ❚❚ → Controls & moves you can load a character's move list or write
-your own, and set the stick style, timing, control size, opacity, vibration
-and a left-handed layout.
+**For your own copy of the app:** zips placed in a `roms/` folder next to
+`index.html` are used directly, without adding them on the phone. `roms/` is
+git-ignored so it never ends up in the repository. Don't do this on a public
+host: anyone with the link could download the files.
 
-Keyboard (tablet with a keyboard, or desktop): arrows/WASD, J K U I = A B C D,
-1–6 = gold buttons, F = flip facing, Enter = start, Backspace = coin.
+### Fighters (KOF)
 
-## Writing your own moves
+- **Team bar (top left):** tap a slot and pick a fighter, or tap a team name
+  to fill all three. During the match tap whoever is fighting this round:
+  the move buttons switch to that character.
+- **Move ring:** that character's desperation moves and specials, each drawn
+  as its stick motion. Desperation moves have an orange ring. One tap plays
+  the whole input, frame-exact.
+- **MAX:** one tap for the power-up (A+B+C in '97, B+C in 2002).
+- **Roll / Blowback:** A+B and C+D.
+- **Facing:** moves are written for a fighter facing right. When you cross
+  sides, tap it and every move mirrors.
+- **❚❚ → Edit <name>'s moves:** change or add moves (numpad notation, e.g.
+  `2363214+A`), with ▶ to try one.
 
-Moves use numpad notation, written as if your fighter faces right:
+The move lists (`data/rosters/`) come from the MAME `command.dat` move-list
+file. Mash moves ("tap A rapidly") are left out because one tap can't do
+them.
 
-```
-7 8 9     236        quarter circle forward   ↓↘→
-4 5 6     214        quarter circle back      ↓↙←
-1 2 3     623        dragon punch             →↓↘
-          63214      half circle back         →↘↓↙←
-          2363214+A  Iori's Ya Otome          ↓↘→↘↓↙← A
-          2141236+A  Kyo's Orochinagi         ↓↙←↙↓↘→ A
-          [2]8+A     charge down, up + A
-          BC         2002 MAX activation
-```
+### Metal Slug
 
-Up to six gold buttons per game. The ▶ button next to a move in the editor
-fires it right away so you can check it in training.
+Shoot, Jump and Bomb are bigger buttons. **Rapid** turns on auto-fire while
+you hold Shoot.
 
-Starter lists are included for Kyo, Iori, Terry, Ryo, Robert, Mai and K'.
-They are the common commands from '97/'98/2002, so check them against the
-game's own command list (and edit A↔C or B↔D for the other strength).
+### Controls for every game
+
+❚❚ → **Controls**: stick style (floating, fixed or hidden), size, opacity,
+move names, vibration, left-handed layout, and move timing.
+
+Keyboard: arrows/WASD, J K U I = A B C D, 1–6 = move buttons, F = flip
+facing, Enter = start, Backspace = coin.
 
 ## How it works
 
-- `js/macro.js` parses a command into a per-frame timeline: each direction is
-  held 2 frames, then the buttons 4 frames, then everything is released
-  (tunable in ⚙). Facing left swaps 4↔6, 1↔3, 7↔9.
-- `js/input.js` plays the timeline against the emulator's own frame counter,
-  one step per emulated frame and never skipping one, so a slow phone frame
-  can't drop a direction from the motion. While a move plays it owns the stick
-  and buttons; your finger's input comes back the frame it ends.
-- Inputs go to FBNeo through EmulatorJS's `simulateInput`, using FBNeo's
-  default Neo Geo layout (A, B, C, D on RetroPad B, A, Y, X).
-- The BIOS is written into the emulator's file system next to the game, which
-  is where FBNeo looks for `neogeo.zip`.
+- `js/games.js` lists the games and their layouts.
+- `js/macro.js` turns a command into a per-frame timeline (2 frames per
+  direction, buttons held 4), mirrored when facing left.
+- `js/input.js` plays it against the emulator's frame counter, one step per
+  emulated frame, never skipping one; it also runs rapid fire.
+- `js/glyph.js` draws each move's stick motion as an icon.
+- Inputs reach FBNeo through EmulatorJS's `simulateInput` (A, B, C, D on
+  RetroPad B, A, Y, X). The BIOS is written next to the game in the
+  emulator's file system, where FBNeo looks for it.
 
-## Running it yourself
+## Running it
 
-It is a static site: no build step.
+A static site with no build step.
 
 ```sh
-npm install        # EmulatorJS + FBNeo core (optional, for offline/self-hosting)
-npm run vendor     # copies them into vendor/ ; without this the EmulatorJS CDN is used
+npm install        # EmulatorJS + FBNeo core, for offline/self-hosting
+npm run vendor     # copies them into vendor/; without it the EmulatorJS CDN is used
 npm start          # http://localhost:8080
-npm test           # unit tests for the motion engine and input layer
+npm test
 ```
-
-To play on a phone, host the folder on any HTTPS static host (GitHub Pages,
-Netlify, Cloudflare Pages), open it, and use "Add to Home screen". After the
-first game load the service worker caches everything for offline play.
-
-## ROMs
-
-No game or BIOS files are included or downloaded by this app. Use dumps of
-games you own. FBNeo is strict about ROM sets: it needs sets that match its
-current version (the error screen lists what is missing).
-
-## Ideas for later
-
-- Auto facing: read each fighter's X position from game RAM so the facing
-  pill flips by itself.
-- Android/iOS app wrapper (Capacitor or a Trusted Web Activity) for store
-  installs and lower input latency.
-- Two-player over Bluetooth controllers or EmulatorJS netplay.
 
 ## License
 
-GPL-3.0-or-later, same as EmulatorJS. FBNeo has its own non-commercial license.
+GPL-3.0-or-later, as EmulatorJS. FBNeo has its own non-commercial license.
+No game or BIOS files are included.

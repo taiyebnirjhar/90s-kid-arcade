@@ -15,33 +15,19 @@
   <section id="library">
     <header>
       <h1>KOF <span>Arcade</span></h1>
-      <p>Neo Geo fighters with one-tap supers.</p>
+      <p>Neo Geo classics, made for touch.</p>
     </header>
 
-    <label class="add">
-      <input id="add-files" type="file" accept=".zip,application/zip" multiple>
-      <span>＋ Add ROM sets</span>
-    </label>
-    <p id="bios-status" class="bios"></p>
+    <button id="bios" class="bios-card">
+      <span class="dot"></span>
+      <span class="text"><strong>Neo Geo BIOS</strong><small></small></span>
+      <span class="state"></span>
+    </button>
 
-    <ul id="game-list"></ul>
-    <div id="empty" class="empty">
-      <p>Add your game zips (for example <code>kof97.zip</code>, <code>kof2002.zip</code>,
-        <code>kf2k2mp.zip</code>) and the Neo Geo BIOS <code>neogeo.zip</code>. Pick them all at once.</p>
-      <p>Files stay on this device. Only use ROMs you own.</p>
-    </div>
+    <div id="catalog"></div>
 
-    <details class="help">
-      <summary>How the controls work</summary>
-      <ul>
-        <li><b>Left side:</b> put your thumb anywhere, the stick appears under it. ❚❚ → Controls lets you fix it in place or hide it.</li>
-        <li><b>A B C D:</b> hold, or slide between them for combos.</li>
-        <li><b>Round move buttons</b> around A B C D: one tap does the whole move, e.g. Iori's Ya Otome. The small badge shows which button it ends on.</li>
-        <li><b>Facing:</b> moves are written for P1 on the left. When your fighter swaps sides, tap the facing pill at the top.</li>
-        <li><b>❚❚ → Controls &amp; moves:</b> pick a character's moves or write your own (numpad notation like <code>2363214+A</code>).</li>
-        <li><b>Keyboard:</b> arrows/WASD, J K U I = A B C D, 1–6 moves, F flip, Enter start, Backspace coin.</li>
-      </ul>
-    </details>
+    <p class="fine">ROMs stay on this device and are never uploaded. Use dumps of games you own.</p>
+    <input id="pick" type="file" accept=".zip,application/zip" hidden>
   </section>
 
   <section id="play" hidden>
@@ -61,6 +47,8 @@
         </div>
       </nav>
 
+      <div id="team" class="team" hidden></div>
+
       <div id="stick-zone">
         <div class="stick-home"></div>
         <div class="stick-base">
@@ -72,14 +60,16 @@
 
       <div id="buttons">
         <div id="cluster">
-          <button data-key="A" class="btn glass a">A</button>
-          <button data-key="B" class="btn glass b">B</button>
-          <button data-key="C" class="btn glass c">C</button>
-          <button data-key="D" class="btn glass d">D</button>
+          <button data-key="A" class="btn glass a"><b>A</b><small></small></button>
+          <button data-key="B" class="btn glass b"><b>B</b><small></small></button>
+          <button data-key="C" class="btn glass c"><b>C</b><small></small></button>
+          <button data-key="D" class="btn glass d"><b>D</b><small></small></button>
           <div id="system"></div>
           <div id="moves"></div>
         </div>
       </div>
+
+      <p id="pick-hint" class="pick-hint" hidden>Tap a slot to pick your fighter and get their moves</p>
     </div>
     <div id="toast" hidden></div>
   </section>
@@ -90,29 +80,43 @@
       <button value="resume" class="primary">Resume</button>
       <button value="save">Save state</button>
       <button value="load">Load state</button>
-      <button value="settings">Controls &amp; moves</button>
+      <button value="settings">Controls</button>
       <button value="quit" class="danger">Quit to game list</button>
+    </form>
+  </dialog>
+
+  <dialog id="roster" class="roster">
+    <form method="dialog">
+      <header>
+        <h2>Pick fighter <small id="roster-slot"></small></h2>
+        <button value="cancel" class="x" aria-label="Close">✕</button>
+      </header>
+      <p class="hint">Tap a team name to fill all three slots.</p>
+      <div id="roster-grid"></div>
+    </form>
+  </dialog>
+
+  <dialog id="moves-editor">
+    <form method="dialog">
+      <h2>Moves <small id="editor-who"></small></h2>
+      <p class="hint">Numpad notation, written facing right: 2 down, 4 back, 6 forward, 8 up.
+        <code>236</code> = ↓↘→, <code>63214</code> = →↘↓↙←, <code>[4]6</code> = charge back, forward.
+        Buttons go after <code>+</code>. Up to six moves sit on the ring.</p>
+      <ol id="move-editor"></ol>
+      <div class="actions">
+        <button type="button" id="add-move">＋ Add move</button>
+        <button type="button" id="reset-moves">Reset to default</button>
+      </div>
+      <div class="actions end">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="save" class="primary">Save</button>
+      </div>
     </form>
   </dialog>
 
   <dialog id="settings">
     <form method="dialog">
-      <h2>Moves <small id="settings-game"></small></h2>
-      <label class="row">Load a move list
-        <select id="character"></select>
-      </label>
-      <p class="hint">Numpad notation, written facing right: 2 down, 4 back, 6 forward, 8 up.
-        <code>236</code> = ↓↘→, <code>63214</code> = →↘↓↙←, <code>[4]6</code> = charge back, forward.
-        Buttons go after <code>+</code>.</p>
-      <ol id="move-editor"></ol>
-      <div class="actions">
-        <button type="button" id="add-move">＋ Add move</button>
-        <button type="button" id="reset-moves">Reset</button>
-      </div>
-
-      <h2>Feel</h2>
-      <label class="row">Frames per direction <input id="step" type="number" min="1" max="6"></label>
-      <label class="row">Frames button held <input id="press" type="number" min="1" max="12"></label>
+      <h2>Controls</h2>
       <label class="row">Stick
         <select id="stick-mode">
           <option value="floating">Floating: appears under your thumb</option>
@@ -125,7 +129,9 @@
       <label class="row check"><input id="labels" type="checkbox"> Show move names</label>
       <label class="row check"><input id="haptics" type="checkbox"> Vibrate on press</label>
       <label class="row check"><input id="lefty" type="checkbox"> Buttons on the left</label>
-
+      <h2>Move timing</h2>
+      <label class="row">Frames per direction <input id="step" type="number" min="1" max="6"></label>
+      <label class="row">Frames button held <input id="press" type="number" min="1" max="12"></label>
       <div class="actions end">
         <button value="cancel" formnovalidate>Cancel</button>
         <button value="save" class="primary">Save</button>

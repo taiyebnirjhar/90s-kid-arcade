@@ -35,7 +35,7 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
 /* ---------- Library ---------- */
 
 #library {
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 28px 16px 48px;
 }
@@ -47,48 +47,77 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 4px; font-size: 0
   font-style: italic;
 }
 #library header h1 span { color: var(--gold); }
-#library header p { margin: 4px 0 22px; color: var(--muted); }
+#library header p { margin: 4px 0 20px; color: var(--muted); }
 
-.add {
-  display: block;
-  position: relative;
-  text-align: center;
-  padding: 16px;
+.bios-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
   border-radius: 14px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: #1a1200;
-  font-weight: 800;
-  font-size: 17px;
-}
-.add input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.bios { margin: 10px 2px 18px; color: var(--red); font-size: 14px; }
-.bios.ok { color: var(--green); }
-
-#game-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-#game-list li { display: flex; gap: 8px; }
-.game {
-  flex: 1;
+  border: 1px solid #e5484d66;
+  background: #e5484d14;
   text-align: left;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  display: grid;
 }
-.game strong { font-size: 16px; }
-.game span { color: var(--muted); font-size: 13px; }
-.game:disabled { opacity: 0.5; }
-.remove {
-  width: 48px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: transparent;
+.bios-card .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); flex: none; }
+.bios-card .text { flex: 1; display: grid; }
+.bios-card small { color: var(--muted); }
+.bios-card .state {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #1d1400;
+  font-weight: 800;
+  font-size: 13px;
+}
+.bios-card.ok { border-color: var(--line); background: var(--panel); }
+.bios-card.ok .dot { background: var(--green); }
+.bios-card.ok .state { background: transparent; color: var(--green); font-size: 16px; }
+
+#catalog h2 {
+  margin: 26px 2px 10px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--muted);
 }
-.empty { color: var(--muted); font-size: 14px; }
-.help { margin-top: 26px; color: var(--muted); font-size: 14px; }
-.help summary { color: var(--text); font-weight: 600; cursor: pointer; }
-.help ul { padding-left: 18px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.card {
+  position: relative;
+  min-height: 96px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--tint, #e8b21a22), transparent 60%),
+    var(--panel);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.card.fighter { --tint: #e5484d30; }
+.card.shooter { --tint: #30a46c30; }
+.card.brawler { --tint: #3e8ed030; }
+.card strong { font-size: 17px; font-weight: 800; font-style: italic; letter-spacing: 0.01em; }
+.card small { color: var(--muted); font-size: 12px; }
+.card .state {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.card.ready .state { background: var(--gold); border-color: var(--gold); color: #1d1400; }
+.fine { margin-top: 28px; color: var(--muted); font-size: 13px; }
 
 /* ---------- Play screen ---------- */
 
@@ -381,6 +410,116 @@ body.left-handed #stick-zone { left: auto; right: 0; }
 body.left-handed .stick-home { left: auto; right: calc(112px * var(--pad-scale) + var(--safe-r)); }
 body.left-handed #buttons { right: auto; left: 0; }
 body.left-handed #cluster { right: auto; left: calc(var(--btn) * 1.3 + 16px + var(--safe-l)); }
+
+/* ----- Face button labels (Metal Slug "Shoot", Sengoku notes) ----- */
+
+.btn { display: grid; place-content: center; line-height: 1; }
+.btn small {
+  font-size: calc(8.5px * var(--pad-scale));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+.btn small:empty { display: none; }
+.btn.word b { font-size: calc(13px * var(--pad-scale)); letter-spacing: 0.06em; text-transform: uppercase; }
+body[data-layout="shooter"] .btn { --btn-size: 1.12; width: calc(var(--btn) * 1.12); height: calc(var(--btn) * 1.12); }
+.sys.on { border-color: rgba(52, 196, 124, 0.9); color: #7ff0b4; box-shadow: inset 0 0 14px rgba(52, 196, 124, 0.45), 0 4px 14px rgba(0, 0, 0, 0.45); }
+/* Desperation moves get a hotter ring than plain specials. */
+.skill.super { border-color: rgba(255, 120, 60, 0.75); }
+.skill.super .glyph { stroke: #ffb347; filter: drop-shadow(0 0 4px rgba(255, 110, 40, 0.6)); }
+
+/* ----- Team bar: the three fighters, like the portraits in KOF Arena ----- */
+
+/* Above the stick zone, which covers the left side of the screen. */
+.team {
+  z-index: 2;
+  position: absolute;
+  top: calc(52px + env(safe-area-inset-top, 0px));
+  left: calc(12px + var(--safe-l));
+  display: grid;
+  gap: 8px;
+  opacity: var(--pad-opacity);
+}
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+}
+.slot small {
+  font-size: 10px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.portrait {
+  --h: 40;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 14px;
+  font-style: italic;
+  color: #fff;
+  background: linear-gradient(145deg, hsl(var(--h) 65% 48%), hsl(calc(var(--h) + 30) 60% 24%));
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.portrait.empty { background: var(--glass); color: rgba(255, 255, 255, 0.7); font-style: normal; border-style: dashed; }
+.slot:not(.active) .portrait { filter: saturate(0.4) brightness(0.75); scale: 0.86; }
+.slot.active .portrait { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 207, 77, 0.35), 0 3px 10px rgba(0, 0, 0, 0.45); }
+.pick-hint {
+  position: absolute;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  left: calc(112px + var(--safe-l));
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* ----- Roster picker ----- */
+
+dialog.roster { width: min(680px, calc(100vw - 24px)); }
+.roster header { display: flex; justify-content: space-between; align-items: center; }
+.roster header h2 { margin: 0; }
+.roster .x { border: 0; background: none; font-size: 18px; color: var(--muted); padding: 4px 8px; }
+.team-name {
+  display: block;
+  margin: 14px 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.members { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.member {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.member small { font-size: 11px; text-align: center; line-height: 1.2; }
 
 #toast {
   position: absolute;

@@ -77,3 +77,14 @@ test("facing left mirrors macros", () => {
   runFrames(1);
   assert.equal(state[RETROPAD.left], 1);
 });
+
+test("rapid fire toggles a held key every two frames", () => {
+  const { pad, log, runFrames } = setup();
+  pad.setRapid("A", true);
+  log.length = 0;
+  pad.press("A", true); // frame 0: phase on
+  runFrames(6);
+  pad.press("A", false);
+  const seq = log.filter(([i]) => i === RETROPAD.A).map(([, v]) => v);
+  assert.deepEqual(seq, [1, 0, 1, 0]);
+});

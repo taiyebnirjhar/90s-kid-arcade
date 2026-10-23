@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parse, compile, toArrows, MacroPlayer } from "../js/macro.js";
 import { angleToDir, arcPositions } from "../js/controls.js";
-import { CHARACTERS, GENERIC, systemMoves } from "../js/moves.js";
+import { GAMES, gameForFile } from "../js/games.js";
+import { readFileSync, readdirSync } from "node:fs";
 
 const dirs = (frames) => frames.map((f) => f.dir);
 
@@ -76,14 +77,26 @@ test("stick angle maps to numpad directions", () => {
   assert.equal(angleToDir(30, -30), 9);
 });
 
+const ROSTERS = readdirSync(new URL("../data/rosters/", import.meta.url)).map((f) =>
+  JSON.parse(readFileSync(new URL(`../data/rosters/${f}`, import.meta.url))),
+);
+const ALL_MOVES = [
+  ...GAMES.flatMap((g) => [...(g.moves || []), ...(g.system || []), ...(g.power ? [g.power] : [])]),
+  ...ROSTERS.flatMap((r) => r.characters.flatMap((c) => c.moves)),
+];
+
 test("every built-in move parses", () => {
-  const all = [...GENERIC, ...Object.values(CHARACTERS).flat(), ...systemMoves("kof2002"), ...systemMoves("kof97")];
-  for (const m of all) assert.doesNotThrow(() => parse(m.cmd), m.name);
+  assert.ok(ALL_MOVES.length > 0);
+  for (const m of ALL_MOVES) assert.doesNotThrow(() => parse(m.cmd), m.name);
 });
 
-test("system moves per game", () => {
-  assert.equal(systemMoves("kf2k2mp").find((m) => m.name === "MAX").cmd, "BC");
-  assert.equal(systemMoves("kof97").find((m) => m.name === "MAX").cmd, "ABC");
+test("games are found by ROM file name", () => {
+  assert.equal(gameForFile("KOF97.zip").id, "kof97");
+  assert.equal(gameForFile("kf2k5uni.zip").id, "kof2005");
+  assert.equal(gameForFile("mslugx.zip").power, undefined);
+  assert.equal(gameForFile("kof2002.zip").power.cmd, "BC");
+  assert.equal(gameForFile("kof97.zip").power.cmd, "ABC");
+  assert.equal(gameForFile("random.zip"), undefined);
 });
 
 test("arc positions start at `from` and step round counter-clockwise", () => {
@@ -108,5 +121,5 @@ test("motion icons trace the stick path", async () => {
   assert.equal(motionPoints("[4]6+A").length, 2);
   // Button-only commands have no drawing.
   assert.deepEqual(motionPath("CD"), { line: "", head: "", start: null });
-  for (const m of [...GENERIC, ...Object.values(CHARACTERS).flat()]) assert.ok(motionPath(m.cmd).line, m.name);
+  for (const m of ALL_MOVES) if (/^\[?\d/.test(m.cmd)) assert.ok(motionPath(m.cmd).line, m.name);
 });
