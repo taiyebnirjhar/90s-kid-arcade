@@ -348,7 +348,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         hud.editing = true
     }
 
-    fun setEditScale(v: Float) {
+    fun changeEditScale(v: Float) {
         val id = editSelected ?: return
         editScale = v
         hud.setScale(id, v)

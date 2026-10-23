@@ -431,7 +431,7 @@ private fun EditBar(game: GameActivity) {
                 Text("Size", color = Palette.muted, fontSize = 12.sp)
                 Slider(
                     value = game.editScale,
-                    onValueChange = { game.setEditScale(it) },
+                    onValueChange = { game.changeEditScale(it) },
                     valueRange = 0.6f..1.8f,
                     enabled = id != null && id != "top" && id != "team",
                     modifier = Modifier.width(170.dp),
