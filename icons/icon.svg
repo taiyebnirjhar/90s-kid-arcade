@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0b0b12"/>
+  <circle cx="176" cy="300" r="70" fill="#e5484d"/>
+  <circle cx="336" cy="300" r="70" fill="#f5c518"/>
+  <circle cx="216" cy="160" r="54" fill="#30a46c"/>
+  <circle cx="356" cy="160" r="54" fill="#3e8ed0"/>
+  <text x="256" y="450" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="84" font-weight="900" font-style="italic" fill="#e8b21a">KOF</text>
+</svg>

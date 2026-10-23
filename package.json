@@ -1,0 +1,17 @@
+{
+  "name": "kof-arcade",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobile web emulator for Neo Geo King of Fighters games with one-tap super buttons.",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@emulatorjs/core-fbneo": "4.2.3",
+    "@emulatorjs/emulatorjs": "4.2.3"
+  }
+}

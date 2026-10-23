@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>KOF Arcade</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <section id="library">
+    <header>
+      <h1>KOF <span>Arcade</span></h1>
+      <p>Neo Geo fighters with one-tap supers.</p>
+    </header>
+
+    <label class="add">
+      <input id="add-files" type="file" accept=".zip,application/zip" multiple>
+      <span>＋ Add ROM sets</span>
+    </label>
+    <p id="bios-status" class="bios"></p>
+
+    <ul id="game-list"></ul>
+    <div id="empty" class="empty">
+      <p>Add your game zips (for example <code>kof97.zip</code>, <code>kof2002.zip</code>,
+        <code>kf2k2mp.zip</code>) and the Neo Geo BIOS <code>neogeo.zip</code>. Pick them all at once.</p>
+      <p>Files stay on this device. Only use ROMs you own.</p>
+    </div>
+
+    <details class="help">
+      <summary>How the controls work</summary>
+      <ul>
+        <li><b>Left half:</b> put your thumb anywhere, the stick appears under it.</li>
+        <li><b>A B C D:</b> hold, or slide between them for combos.</li>
+        <li><b>Gold buttons:</b> one tap does the whole move, e.g. Iori's Ya Otome.</li>
+        <li><b>Facing:</b> moves are written for P1 on the left. When your fighter swaps sides, tap the facing pill at the top.</li>
+        <li><b>⚙:</b> pick a character's moves or write your own (numpad notation like <code>2363214+A</code>).</li>
+        <li><b>Keyboard:</b> arrows/WASD, J K U I = A B C D, 1–6 moves, F flip, Enter start, Backspace coin.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="play" hidden>
+    <div id="screen"><div id="game"></div></div>
+
+    <div id="hud" hidden>
+      <nav class="top">
+        <button id="exit" aria-label="Quit">✕</button>
+        <button id="coin" class="pill">COIN</button>
+        <button id="flip" class="pill facing"></button>
+        <button id="start" class="pill">START</button>
+        <button id="save" class="pill small" aria-label="Save state">Save</button>
+        <button id="load" class="pill small" aria-label="Load state">Load</button>
+        <button id="open-settings" aria-label="Settings">⚙</button>
+      </nav>
+
+      <div id="stick-zone">
+        <div class="stick-base"><div class="stick-knob"></div></div>
+        <span class="stick-hint">Stick</span>
+      </div>
+
+      <div id="buttons">
+        <div id="moves" class="moves"></div>
+        <div id="system" class="system"></div>
+        <div class="face">
+          <button data-key="C" class="btn c">C</button>
+          <button data-key="D" class="btn d">D</button>
+          <button data-key="A" class="btn a">A</button>
+          <button data-key="B" class="btn b">B</button>
+        </div>
+      </div>
+    </div>
+    <div id="toast" hidden></div>
+  </section>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Moves <small id="settings-game"></small></h2>
+      <label class="row">Load a move list
+        <select id="character"></select>
+      </label>
+      <p class="hint">Numpad notation, written facing right: 2 down, 4 back, 6 forward, 8 up.
+        <code>236</code> = ↓↘→, <code>63214</code> = →↘↓↙←, <code>[4]6</code> = charge back, forward.
+        Buttons go after <code>+</code>.</p>
+      <ol id="move-editor"></ol>
+      <div class="actions">
+        <button type="button" id="add-move">＋ Add move</button>
+        <button type="button" id="reset-moves">Reset</button>
+      </div>
+
+      <h2>Feel</h2>
+      <label class="row">Frames per direction <input id="step" type="number" min="1" max="6"></label>
+      <label class="row">Frames button held <input id="press" type="number" min="1" max="12"></label>
+      <label class="row">Control size <input id="size" type="range" min="0.7" max="1.4" step="0.05"></label>
+      <label class="row">Opacity <input id="opacity" type="range" min="0.3" max="1" step="0.05"></label>
+      <label class="row check"><input id="haptics" type="checkbox"> Vibrate on press</label>
+      <label class="row check"><input id="lefty" type="checkbox"> Buttons on the left</label>
+
+      <div class="actions end">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="save" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
