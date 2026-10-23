@@ -121,6 +121,11 @@ class Prefs(context: Context) {
         sp.edit().putString("layout.$key", o.toString()).apply()
     }
 
+    /** The game you played last, for the home screen's Continue banner. */
+    var lastGame: String?
+        get() = sp.getString("lastGame", null)
+        set(v) = sp.edit().putString("lastGame", v).apply()
+
     /** Character ids in each team slot for a game ("" = empty). */
     fun team(gameId: String, size: Int): List<String?> {
         val ids = sp.getString("team.$gameId", "")!!.split(",")

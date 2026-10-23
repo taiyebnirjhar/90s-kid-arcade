@@ -67,4 +67,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
+
+    // Game pictures from libretro's thumbnail collection, cached on the phone.
+    implementation("io.coil-kt:coil-compose:2.7.0")
 }
