@@ -71,6 +71,8 @@ enum class ScreenMode(val label: String) {
 
 /** Settings, teams and custom move lists. */
 class Prefs(context: Context) {
+    // Keeps its original file name (from when the app was "KOF Arcade") so
+    // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
     var stick: StickMode
