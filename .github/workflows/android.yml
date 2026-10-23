@@ -27,6 +27,9 @@ jobs:
         working-directory: android
     steps:
       - uses: actions/checkout@v4
+        with:
+          # LibretroDroid's native code pulls in oboe and libretro-common.
+          submodules: recursive
 
       - uses: actions/setup-java@v4
         with:
