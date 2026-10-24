@@ -105,18 +105,6 @@
      "note": ""
     },
     {
-     "name": "Zankuu Hadou Ken",
-     "cmd": "236+A",
-     "type": "special",
-     "note": "in air"
-    },
-    {
-     "name": "Shakunetsu Hadou Ken",
-     "cmd": "63214+A",
-     "type": "special",
-     "note": ""
-    },
-    {
      "name": "Gou Shouryuu Ken",
      "cmd": "623+A",
      "type": "special",
@@ -127,6 +115,18 @@
      "cmd": "214+D",
      "type": "special",
      "note": "also in air"
+    },
+    {
+     "name": "Shakunetsu Hadou Ken",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zankuu Hadou Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "in air"
     },
     {
      "name": "Hyakki Shuu",
@@ -308,9 +308,9 @@
    "moves": [
     {
      "name": "Gigas Breaker",
-     "cmd": "6321478963214789+A",
+     "cmd": "66,63214789632147+A",
      "type": "dm",
-     "note": "Super Art I; close"
+     "note": "Super Art I; close; dashes in first"
     },
     {
      "name": "Megaton Press",

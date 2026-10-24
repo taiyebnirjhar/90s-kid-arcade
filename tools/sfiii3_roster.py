@@ -6,6 +6,7 @@ Buttons as the app lays them out (PadMap.CAPCOM_6): A B C = LP MP HP,
 D E F = LK MK HK. A move that takes any punch or kick is written with the
 light one. Super Arts are "dm" with "Super Art I/II/III" in the note: only
 the one picked before the fight works, and the app shows just that one.
+The ring holds six moves, so each list starts with what matters most.
 Run once: python3 tools/sfiii3_roster.py
 """
 import json
@@ -23,9 +24,9 @@ def sa(n, name, cmd, note=""):
     return (name, cmd, "dm", SA[n] + ("; " + note if note else "") if n else note)
 
 
-# 360 from facing right: forward round to up; 720 twice.
+# 360 from facing right: forward round to up (the button lands in the
+# jump's first frames, which a throw cancels).
 C360 = "63214789"
-C720 = C360 + C360
 
 CHARACTERS = [
     ("alex", "Alex", [
@@ -45,10 +46,10 @@ CHARACTERS = [
         sa(3, "Messatsu Gou Rasen", "236236+" + LK, "also in air"),
         sa(0, "Shun Goku Satsu", "A,A,6,D,C", "full gauge"),
         sp("Gou Hadou Ken", "236+" + LP),
-        sp("Zankuu Hadou Ken", "236+" + LP, "in air"),
-        sp("Shakunetsu Hadou Ken", "63214+" + LP),
         sp("Gou Shouryuu Ken", "623+" + LP),
         sp("Tatsumaki Zankuu Kyaku", "214+" + LK, "also in air"),
+        sp("Shakunetsu Hadou Ken", "63214+" + LP),
+        sp("Zankuu Hadou Ken", "236+" + LP, "in air"),
         sp("Hyakki Shuu", "623+" + LK),
         sp("Ashura Senkuu", "623+AB", "421+AB goes back"),
     ]),
@@ -82,7 +83,9 @@ CHARACTERS = [
         sp("Spin Scythe", "214+" + LK),
     ]),
     ("hugo", "Hugo", [
-        sa(1, "Gigas Breaker", C720 + "+" + LP, "close"),
+        # A 720 has to pass up twice and the first one jumps; a dash first
+        # hides it (checked: the super comes out; it grabs when in reach).
+        sa(1, "Gigas Breaker", "66,63214789632147+" + LP, "close; dashes in first"),
         sa(2, "Megaton Press", "236236+" + LK),
         sa(3, "Hammer Frenzy", "236236+" + LP),
         sp("Giant Palm Bomber", "214+" + LP),
