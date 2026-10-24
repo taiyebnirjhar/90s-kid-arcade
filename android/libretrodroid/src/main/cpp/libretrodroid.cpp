@@ -677,8 +677,6 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
     }
 }
 
-} //namespace libretrodroid
-
 void LibretroDroid::setNetplay(bool enabled) {
     std::lock_guard<std::mutex> lock(netMutex);
     netplay = enabled;
@@ -750,3 +748,5 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
         }
     }
 }
+
+} //namespace libretrodroid
