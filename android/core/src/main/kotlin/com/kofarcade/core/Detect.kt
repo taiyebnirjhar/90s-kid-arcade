@@ -8,7 +8,8 @@ package com.kofarcade.core
 // community keeps (sources in docs/kof-ram.md). KOF '97 and 2002 share one
 // player layout: P1 at 0x108100, P2 0x200 later, X at +0x18, facing in bit 0
 // of +0x31, character ID in the byte at +0x71. The 2005 hacks are KOF 2002
-// underneath and use its addresses.
+// underneath and use its addresses and IDs. Checked by running kof97 and
+// kf2k5uni in FBNeo (tools/emu.py; results at the top of docs/kof-ram.md).
 
 /**
  * A window of 68000 RAM as FBNeo stores it: 16-bit words in host (little
