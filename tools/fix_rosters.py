@@ -167,5 +167,10 @@ print('ok 2002/2005')
 # Magic Plus differs from 2002.
 mp = json.loads(json.dumps(r))
 mp['game'] = 'kf2k2mp2'
+# No input brings these out in Magic Plus II: their 2002 inputs do something
+# else, and a scan of every common motion never showed their 2002 animation.
+for cid, name in (('benimaru', 'Benimaru Collider'), ('shermie', 'F-Captured'), ('kula', 'Freeze Completion')):
+    c = char(mp, cid)
+    c['moves'] = [m for m in c['moves'] if m['name'] != name]
 save('kof2002mp', mp)
 print('ok magic plus')

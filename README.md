@@ -97,7 +97,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 ## Move lists
 
 `android/core/src/main/resources/rosters/` has one list per game: `kof97`,
-`kof97plus`, `kof2002` and `kof2005`. Magic Plus uses the 2002 list.
+`kof97plus`, `kof2002`, `kof2002mp` (Magic Plus) and `kof2005`.
 
 - **Sources.** '97 and 2002 come from MAME's `command.dat`, cross-checked
   against StrategyWiki, SuperCombo and SNK Fandom. 2005 Unique has no

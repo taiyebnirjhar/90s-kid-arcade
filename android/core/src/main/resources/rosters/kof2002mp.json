@@ -128,12 +128,6 @@
      "cmd": "236+B",
      "type": "special",
      "note": "K: B or D"
-    },
-    {
-     "name": "Benimaru Collider",
-     "cmd": "632146+A",
-     "type": "special",
-     "note": "P: A or C; close range"
     }
    ]
   },
@@ -1949,12 +1943,6 @@
      "note": "P: A or C; close range"
     },
     {
-     "name": "F-Captured",
-     "cmd": "632146+A",
-     "type": "special",
-     "note": "P: A or C; reverse high/mid"
-    },
-    {
      "name": "Diamond Bust",
      "cmd": "41236+B",
      "type": "special",
@@ -2480,12 +2468,6 @@
    "name": "Kula Diamond",
    "team": "2001 (K9999)",
    "moves": [
-    {
-     "name": "Freeze Completion",
-     "cmd": "AC,BD,ABC",
-     "type": "hsdm",
-     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
-    },
     {
      "name": "Diamond Edge",
      "cmd": "236236+A",
