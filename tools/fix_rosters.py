@@ -134,13 +134,13 @@ HIDDEN = {
     'chin': ('Suisou Enbu', '2626+BD'), 'mature': ('Ecstasy 816', '2626+BD'),
     'shermie': ('Inazuma Leg Lariat', '2626+BD'), 'maxima': ('Arc Enemy', '26+AC'),
     'seth': ('Sigure-Rangiku', '6426+AC'), 'ramon': ('Hypnotic Tiger', '2426+AC'),
-    'rugal': ('Kaiser Phoenix', '426426+AC'), 'chang': ('Tekkyuu Dai Sekai', '214214+A'),
+    'rugal': ('Kaiser Phoenix', '426426+AC'),
     'choi': ('Shakushi', '2626+AC'), 'whip': ('Super Black Hawk', '4+AC'),
 }
 for cid, (name, cmd) in HIDDEN.items():
     m = move(char(f, cid), name)
     m['cmd'] = cmd
-    extra = {'chang': ' (any button)', 'choi': ' (in the air)', 'andy': ', then B+C+D for the extra hit'}.get(cid, '')
+    extra = {'choi': ' (in the air)', 'andy': ', then B+C+D for the extra hit'}.get(cid, '')
     m['note'] = 'HSDM: MAX mode + 1 power stock; 2005 input' + extra
 # Regular moves on new inputs (identified by their 2002 animation).
 redo('terry', 'Rising Tackle', '623+A', 'P: A or C; ' + NEW + ' ([2]8)')
@@ -154,7 +154,9 @@ redo('k9999', 'Tsuki...', '6321463214+A', 'DM: 1 power stock; P: A or C; ' + NEW
 # every common motion), so they're left out rather than guessed.
 for cid, name in (('k9999', 'Temee mo oucchimae!!'), ('k9999', 'Chikara ga...katte ni...uwaaaa!!'),
                   ('mary', 'M. Typhoon'), ('mary', 'M. Dynamite Swing'), ('mary', 'M. Dynamite Swing (MAX)'),
-                  ('vice', 'Overkill'), ('daimon', 'Fu Rin Ka Zan')):
+                  ('vice', 'Overkill'), ('daimon', 'Fu Rin Ka Zan'),
+                  # 214214 + any button (ddooo.com) only starts his wind-up, as 2002's does; the super never follows.
+                  ('chang', 'Tekkyuu Dai Sekai')):
     c = char(f, cid)
     c['moves'] = [m for m in c['moves'] if m['name'] != name]
 save('kof2005', f)

@@ -1280,12 +1280,6 @@
    "team": "Korea Justice",
    "moves": [
     {
-     "name": "Tekkyuu Dai Sekai",
-     "cmd": "214214+A",
-     "type": "hsdm",
-     "note": "HSDM: MAX mode + 1 power stock; 2005 input (any button)"
-    },
-    {
      "name": "Tekkyuu Dai Bousou",
      "cmd": "2363214+A",
      "type": "dm",
