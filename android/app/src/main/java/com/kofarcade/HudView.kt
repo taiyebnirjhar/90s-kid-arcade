@@ -111,6 +111,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val moves: List<Move> = emptyList(),
         val system: List<SysButton> = emptyList(),
         val slots: List<Slot> = emptyList(),
+        /** The FACING button; not needed while the game's RAM says which way you face. */
+        val facingButton: Boolean = true,
         val facingLeft: Boolean = false,
         val size: Float = 1f,
         val leftHanded: Boolean = false,
@@ -274,7 +276,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         text.textSize = 10 * d
         val pills = buildList {
             add(Kind.COIN to "COIN")
-            if (st.layout == Layout.FIGHTER) add(Kind.FACING to "FACING")
+            if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to "FACING")
             add(Kind.START to "START")
         }
         text.letterSpacing = 0.12f
