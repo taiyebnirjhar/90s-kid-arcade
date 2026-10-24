@@ -25,9 +25,20 @@ data class Move(
     /** Desperation moves (DM, SDM, HSDM) get a hotter look than plain specials. */
     val isSuper: Boolean get() = type != "special"
 
+    /**
+     * Only comes out while jumping (its note says "in air"; "also in air"
+     * moves work on the ground too): the button jumps first if needed.
+     */
+    val airOnly: Boolean
+        get() = note.split(';').any { part ->
+            AIR.containsMatchIn(part) && "also" !in part && "ground" !in part
+        }
+
     /** "Ura 108 Shiki: Orochinagi" -> "Orochinagi": the part people call it. */
     val shortName: String get() = name.substringAfterLast(": ")
 }
+
+private val AIR = Regex("""\bin (the )?air\b""", RegexOption.IGNORE_CASE)
 
 /**
  * A supported game.

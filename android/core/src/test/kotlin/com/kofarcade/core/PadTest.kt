@@ -22,6 +22,24 @@ class PadTest {
     }
 
     @Test
+    fun airMovesJumpFirstFromTheGround() {
+        pad.timing = Timing(step = 1, press = 1)
+        log.clear()
+        pad.play("236+A", jumpFirst = true)
+        runFrames(12)
+        assertEquals(listOf("up1", "up0", "down1", "right1", "down0", "a1", "right0", "a0"), log)
+    }
+
+    @Test
+    fun airOnlyComesFromTheNote() {
+        assertTrue(Move("V-Slasher", "2363214+A", "dm", "P: A or C; in air").airOnly)
+        assertTrue(Move("Air", "236+B", note = "B or D; in the air").airOnly)
+        assertEquals(false, Move("Psycho Sword", "623+A", note = "also in air").airOnly)
+        assertEquals(false, Move("Bit", "463214+A", note = "can also be done in the air").airOnly)
+        assertEquals(false, Move("Gen'ei Kyaku", "214+B", note = "on the ground (in the air 214+B is Hien Ryuujin Kyaku)").airOnly)
+    }
+
+    @Test
     fun onlyChangesAreSent() {
         pad.setDir(6)
         pad.setDir(6)

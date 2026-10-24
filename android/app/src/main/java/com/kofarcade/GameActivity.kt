@@ -323,7 +323,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
 
-    override fun onPlay(cmd: String): Int = pad.play(cmd)
+    override fun onPlay(cmd: String): Int {
+        val air = activeCharacter()?.let(::movesFor)?.firstOrNull { it.cmd == cmd }?.airOnly == true
+        return pad.play(cmd, jumpFirst = air && onGround())
+    }
+
+    /** KOF: the fighter's height above the floor (the word at +0x20) is 0 when standing. */
+    private fun onGround(): Boolean {
+        if (ramMap == null) return true
+        val addr = 0x108120 + 0x200 * localPlayer
+        val b = LibretroDroid.readMemory(SYSTEM_RAM, addr - 0x100000, 2) ?: return true
+        return b[0].toInt() == 0 && b[1].toInt() == 0
+    }
 
     override fun onMenu() = show(GameDialog.Pause)
 
