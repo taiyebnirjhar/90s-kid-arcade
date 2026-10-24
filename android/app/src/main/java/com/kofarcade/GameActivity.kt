@@ -117,6 +117,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var lastSumFrame = -1L
     private var desyncShown = false
     private var lastWait = 0L
+    // Two players: the game waits while either menu is open.
+    private var localPaused = false
+    private var remotePaused = false
+    private var restarting = false
+    // The state both phones started from, kept for rematches.
+    private var netStartState: ByteArray? = null
     private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
@@ -356,10 +362,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             try {
                 withContext(Dispatchers.IO) {
                     if (link.isHost) {
-                        link.sendState(retroView.serializeState())
+                        val state = retroView.serializeState()
+                        netStartState = state
+                        link.sendState(state)
                         link.awaitReady()
                     } else {
                         val state = link.receiveState()
+                        netStartState = state
                         check(retroView.unserializeState(state)) { "Couldn't load the host's game" }
                         link.sendReady()
                     }
@@ -383,6 +392,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
 
                 override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
+
+                override fun onPartnerPaused(paused: Boolean) = runOnUiThread {
+                    remotePaused = paused
+                    applyNetFreeze()
+                }
+
+                override fun onRematch() = runOnUiThread {
+                    Toast.makeText(this@GameActivity, "${link.peerName} started a rematch", Toast.LENGTH_SHORT).show()
+                    restartNet()
+                }
             })
             netStarted = true
             netStatus.visibility = View.GONE
@@ -393,7 +412,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // need next, one macro step per frame, and send them.
     private fun onNetFrame() {
         val link = link ?: return
-        if (!netStarted) return
+        if (!netStarted || restarting || localPaused || remotePaused) return
         val emulated = LibretroDroid.getNetFrame()
         val (start, masks) = link.sample(emulated) {
             padFrame++
@@ -423,6 +442,51 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         if (waiting != (netStatus.visibility == View.VISIBLE)) {
             netStatus.text = "Waiting for ${link.peerName}…"
             netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+        }
+    }
+
+    // The game runs only while neither player has the menu open.
+    private fun applyNetFreeze() {
+        LibretroDroid.setFrozen(restarting || localPaused || remotePaused)
+        if (remotePaused && !localPaused) {
+            netStatus.text = "${link?.peerName} paused the game"
+            netStatus.visibility = View.VISIBLE
+        } else if (netStarted) {
+            netStatus.visibility = View.GONE
+        }
+        stalledFrames = 0
+    }
+
+    private fun sendNet(action: (Link) -> Unit) {
+        val l = link ?: return
+        lifecycleScope.launch(Dispatchers.IO) { action(l) }
+    }
+
+    /** Pause menu: restart the game on both phones, from the start state they shared. */
+    fun rematch() {
+        sendNet { it.sendRematch() }
+        close()
+        restartNet()
+    }
+
+    private fun restartNet() {
+        val link = link ?: return
+        val state = netStartState ?: return
+        if (restarting) return
+        restarting = true
+        applyNetFreeze()
+        hud.releaseAll()
+        pad.releaseAll()
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                link.restart { LibretroDroid.setNetplay(true, link.localPlayer, MAX_ROLLBACK) }
+                retroView.unserializeState(state)
+            }
+            lastSumFrame = -1
+            lastNetFrame = -1
+            desyncShown = false
+            restarting = false
+            applyNetFreeze()
         }
     }
 
@@ -673,9 +737,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun pauseEmulation() {
         if (link != null) {
-            // The game can't stop for one player; just let go of the buttons.
+            // Both phones wait while either menu is open.
             hud.releaseAll()
             pad.releaseAll()
+            if (!localPaused) {
+                localPaused = true
+                sendNet { it.sendPause(true) }
+                applyNetFreeze()
+            }
             return
         }
         if (paused) return
@@ -689,7 +758,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun resumeEmulation() {
-        if (link != null || !paused) return
+        if (link != null) {
+            if (localPaused) {
+                localPaused = false
+                sendNet { it.sendPause(false) }
+                applyNetFreeze()
+            }
+            return
+        }
+        if (!paused) return
         paused = false
         LibretroDroid.setFrozen(false)
         LibretroDroid.resume()

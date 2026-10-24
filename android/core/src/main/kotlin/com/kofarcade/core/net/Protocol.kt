@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
 // and leaving; UDP carries the inputs (small, frequent, and resent until
 // acknowledged, so a lost packet costs nothing).
 
-const val PROTOCOL = 2
+const val PROTOCOL = 3
 const val TCP_PORT = 7845
 const val BEACON_PORT = 7846
 
@@ -58,6 +58,9 @@ internal object Msg {
     const val STATE: Byte = 3
     const val READY: Byte = 4
     const val BYE: Byte = 5
+    const val PAUSE: Byte = 6
+    const val RESUME: Byte = 7
+    const val REMATCH: Byte = 8
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {
@@ -96,10 +99,12 @@ data class InputPacket(
     val sumFrame: Int = -1,
     val sum: Long = 0,
     val advantage: Int = 0,
+    /** Which game of the session (each rematch starts the next); others' packets are ignored. */
+    val epoch: Int = 0,
 ) {
     fun encode(): ByteArray {
-        val b = ByteBuffer.allocate(4 + 1 + 4 * 4 + 1 + 1 + masks.size * 2 + 8)
-        b.putInt(MAGIC).put(VERSION).putInt(session).putInt(ack).putInt(start).putInt(sumFrame)
+        val b = ByteBuffer.allocate(4 + 1 + 4 * 4 + 1 + 1 + 1 + masks.size * 2 + 8)
+        b.putInt(MAGIC).put(VERSION).putInt(session).put(epoch.toByte()).putInt(ack).putInt(start).putInt(sumFrame)
         b.put(advantage.coerceIn(-127, 127).toByte())
         b.put(masks.size.toByte())
         masks.forEach { b.putShort(it.toShort()) }
@@ -109,7 +114,7 @@ data class InputPacket(
 
     companion object {
         private const val MAGIC = 0x39304B41 // "90KA"
-        private const val VERSION: Byte = 2
+        private const val VERSION: Byte = 3
         const val MAX_MASKS = 120
 
         fun decode(data: ByteArray, length: Int = data.size): InputPacket? = try {
@@ -118,13 +123,14 @@ data class InputPacket(
                 null
             } else {
                 val session = b.int
+                val epoch = b.get().toInt() and 0xFF
                 val ack = b.int
                 val start = b.int
                 val sumFrame = b.int
                 val advantage = b.get().toInt()
                 val n = b.get().toInt() and 0xFF
                 val masks = IntArray(n) { b.short.toInt() and 0xFFFF }
-                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage)
+                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage, epoch)
             }
         } catch (e: RuntimeException) {
             null
@@ -133,7 +139,7 @@ data class InputPacket(
 
     override fun equals(other: Any?) = other is InputPacket && session == other.session && ack == other.ack &&
         start == other.start && masks.contentEquals(other.masks) && sumFrame == other.sumFrame && sum == other.sum &&
-        advantage == other.advantage
+        advantage == other.advantage && epoch == other.epoch
 
     override fun hashCode() = start * 31 + masks.contentHashCode()
 }
