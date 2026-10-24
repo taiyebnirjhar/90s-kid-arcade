@@ -161,3 +161,11 @@ for cid, name in (('k9999', 'Temee mo oucchimae!!'), ('k9999', 'Chikara ga...kat
     c['moves'] = [m for m in c['moves'] if m['name'] != name]
 save('kof2005', f)
 print('ok 2002/2005')
+
+# ----- KOF 2002 Magic Plus (kf2k2mp, kf2k2mpl, kf2k2mp2) -----
+# The 2002 list, checked in kf2k2mp2 (Magic Plus II). Changes below are where
+# Magic Plus differs from 2002.
+mp = json.loads(json.dumps(r))
+mp['game'] = 'kf2k2mp2'
+save('kof2002mp', mp)
+print('ok magic plus')

@@ -87,7 +87,7 @@ val GAMES: List<Game> = listOf(
         id = "kof2002mp", series = "The King of Fighters", title = "KOF 2002", subtitle = "Magic Plus",
         art = "The King of Fighters 2002 Magic Plus (bootleg, set 1)",
         sets = listOf("kf2k2mp", "kf2k2mpl", "kf2k2mp2"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true,
     ),
     // There is no official Neo Geo KOF 2005: "KOF 2005" is the 10th
     // Anniversary hacks of KOF 2002. Its move list is 2002's with the inputs
