@@ -451,96 +451,93 @@ private fun MoveEditor(game: GameActivity, character: Character) {
 @Composable
 private fun ControlsSettings(game: GameActivity) {
     val p = game.settings
-    var stick by remember { mutableStateOf(p.stick) }
-    var size by remember { mutableFloatStateOf(p.size) }
-    var opacity by remember { mutableFloatStateOf(p.opacity) }
-    var labelMode by remember { mutableStateOf(p.labelMode) }
-    var haptics by remember { mutableStateOf(p.haptics) }
-    var lefty by remember { mutableStateOf(p.leftHanded) }
-    var step by remember { mutableIntStateOf(p.stepFrames) }
-    var screen by remember { mutableStateOf(p.screen) }
-    var press by remember { mutableIntStateOf(p.pressFrames) }
+    var look by remember { mutableStateOf(p.look()) }
     var auto by remember { mutableStateOf(p.autoDetect) }
     var info by remember { mutableStateOf(p.detectInfo) }
 
     // Every change shows on the game right away; Save keeps it, Cancel puts
     // back what was saved.
-    val look = Look(screen, stick, size, opacity, labelMode, haptics, lefty, step, press)
     LaunchedEffect(look) { game.preview(look) }
     fun cancel() {
         game.applyPrefs()
         game.close()
     }
 
-    Sheet(onDismiss = ::cancel, width = 400, side = true) {
-        Title("Controls")
-        Text("Changes show on the game as you make them.", color = Palette.muted, fontSize = 13.sp)
-        Spacer(Modifier.size(8.dp))
-        Text("Screen", color = Palette.text, fontWeight = FontWeight.SemiBold)
-        ScreenMode.entries.forEach { mode ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { screen = mode },
-            ) {
-                RadioButton(selected = screen == mode, onClick = { screen = mode })
-                Text(mode.label, color = Palette.text, fontSize = 14.sp)
-            }
-        }
-        Spacer(Modifier.size(6.dp))
-        Text("Stick", color = Palette.text, fontWeight = FontWeight.SemiBold)
-        StickMode.entries.forEach { mode ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { stick = mode },
-            ) {
-                RadioButton(selected = stick == mode, onClick = { stick = mode })
-                Text(mode.label, color = Palette.text, fontSize = 14.sp)
-            }
-        }
-        Labeled("Control size") { Slider(value = size, onValueChange = { size = it }, valueRange = 0.7f..1.4f) }
-        Labeled("Opacity") { Slider(value = opacity, onValueChange = { opacity = it }, valueRange = 0.3f..1f) }
-        Spacer(Modifier.size(6.dp))
-        Text("Move names", color = Palette.text, fontWeight = FontWeight.SemiBold)
-        LabelMode.entries.forEach { mode ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { labelMode = mode },
-            ) {
-                RadioButton(selected = labelMode == mode, onClick = { labelMode = mode })
-                Text(mode.label, color = Palette.text, fontSize = 14.sp)
-            }
-        }
-        Toggle("Vibrate on press", haptics) { haptics = it }
-        Toggle("Buttons on the left", lefty) { lefty = it }
-        if (game.canDetect) {
-            Toggle("Detect fighters automatically", auto) { auto = it }
-            Toggle("Show detection readout", info) { info = it }
-        }
-        Spacer(Modifier.size(8.dp))
-        Text("Move timing", color = Palette.text, fontWeight = FontWeight.SemiBold)
-        Stepper("Frames per direction", step, 1..6) { step = it }
-        Stepper("Frames button held", press, 1..12) { press = it }
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) {
-            TextButton(onClick = ::cancel) { Text("Cancel") }
-            Button(
-                onClick = {
-                    p.screen = screen
-                    p.stick = stick
-                    p.size = size
-                    p.opacity = opacity
-                    p.labelMode = labelMode
-                    p.haptics = haptics
-                    p.leftHanded = lefty
-                    p.stepFrames = step
-                    p.pressFrames = press
-                    p.autoDetect = auto
-                    p.detectInfo = info
-                    game.applyPrefs()
-                    game.close()
-                },
-                colors = ButtonDefaults.buttonColors(),
-            ) { Text("Save") }
-        }
+    Sheet(onDismiss = ::cancel, width = 420, side = true) {
+        ControlsPanel(
+            look = look,
+            onLook = { look = it },
+            canDetect = game.canDetect,
+            autoDetect = auto,
+            onAutoDetect = { auto = it },
+            detectInfo = info,
+            onDetectInfo = { info = it },
+            onCancel = ::cancel,
+            onSave = {
+                p.screen = look.screen
+                p.stick = look.stick
+                p.size = look.size
+                p.opacity = look.opacity
+                p.labelMode = look.labelMode
+                p.haptics = look.haptics
+                p.leftHanded = look.leftHanded
+                p.stepFrames = look.stepFrames
+                p.pressFrames = look.pressFrames
+                p.autoDetect = auto
+                p.detectInfo = info
+                game.applyPrefs()
+                game.close()
+            },
+        )
+    }
+}
+
+/** The Controls panel's contents, from plain data (so it can be previewed). */
+@Composable
+fun ControlsPanel(
+    look: Look,
+    onLook: (Look) -> Unit,
+    canDetect: Boolean,
+    autoDetect: Boolean,
+    onAutoDetect: (Boolean) -> Unit,
+    detectInfo: Boolean,
+    onDetectInfo: (Boolean) -> Unit,
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+) {
+    Kicker("Changes show as you make them")
+    Text("Controls", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+
+    SectionLabel("Screen")
+    ChoiceChips(ScreenMode.entries, look.screen, { it.short }) { onLook(look.copy(screen = it)) }
+    Text(look.screen.label, color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+
+    SectionLabel("Stick")
+    ChoiceChips(StickMode.entries, look.stick, { it.short }) { onLook(look.copy(stick = it)) }
+    Text(look.stick.label, color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+
+    SectionLabel("Buttons")
+    SliderRow("Size", look.size, 0.7f..1.4f, "${(look.size * 100).toInt()}%") { onLook(look.copy(size = it)) }
+    SliderRow("Opacity", look.opacity, 0.3f..1f, "${(look.opacity * 100).toInt()}%") { onLook(look.copy(opacity = it)) }
+    Text("Move names", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp, bottom = 8.dp))
+    ChoiceChips(LabelMode.entries, look.labelMode, { it.label }) { onLook(look.copy(labelMode = it)) }
+    Spacer(Modifier.size(6.dp))
+    SwitchRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
+    SwitchRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
+
+    if (canDetect) {
+        SectionLabel("Fighters")
+        SwitchRow("Detect automatically", autoDetect, onAutoDetect, sub = "Team, fighter and facing from the game")
+        SwitchRow("Show detection readout", detectInfo, onDetectInfo, sub = "For checking it works")
+    }
+
+    SectionLabel("Move timing")
+    StepperRow("Frames per direction", look.stepFrames, 1..6, { onLook(look.copy(stepFrames = it)) }, sub = "Raise if specials don't come out")
+    StepperRow("Frames button held", look.pressFrames, 1..12, { onLook(look.copy(pressFrames = it)) })
+
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
+        GhostButton("Cancel", onCancel, Modifier.weight(1f))
+        GoldButton("Save", onSave, Modifier.weight(1f))
     }
 }
 

@@ -3,29 +3,22 @@ package com.kofarcade
 import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -37,16 +30,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.kofarcade.core.BIOS
-import com.kofarcade.core.Game
 import com.kofarcade.core.GAMES
+import com.kofarcade.core.Game
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.net.Beacon
 import com.kofarcade.core.net.BeaconListener
@@ -82,6 +75,14 @@ private sealed interface TwoPlayer {
 /** What a found host looks like in the Join list. */
 private data class FoundHost(val beacon: Beacon, val address: InetAddress)
 
+/** A game in the pick list. */
+data class GameChoice(val title: String, val subtitle: String)
+
+/** A hosted game found on the network. */
+data class HostChoice(val title: String, val hostName: String, val have: Boolean)
+
+private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
+
 /**
  * 2 PLAYERS: one phone hosts a game, the other joins it, on the same Wi-Fi or
  * on the host's hotspot. Then both open the game, the host as player 1.
@@ -100,60 +101,30 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
         }
         onDispose { runCatching { lock.release() } }
     }
+    val back = { if (screen == TwoPlayer.Menu) onClose() else screen = TwoPlayer.Menu }
+    BackHandler(onBack = back)
 
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
-            Modifier.fillMaxSize().background(Palette.bg).systemBarsPadding().padding(20.dp).verticalScroll(rememberScrollState()),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("2 PLAYERS", color = Palette.gold, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Spacer(Modifier.weight(1f))
-                if (screen != TwoPlayer.Menu) TextButton(onClick = { screen = TwoPlayer.Menu }) { Text("Back") }
-                TextButton(onClick = onClose) { Text("Close") }
-            }
-            Spacer(Modifier.height(8.dp))
-            when (val s = screen) {
-                TwoPlayer.Menu -> {
-                    Text(
-                        "Play together on two phones: both on the same Wi-Fi, or one phone's hotspot with the other " +
-                            "connected to it. One hosts (player 1), the other joins (player 2). Both need the same game " +
-                            "and Neo Geo BIOS; the library has them.",
-                        color = Palette.muted,
-                        fontSize = 14.sp,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = { screen = TwoPlayer.PickGame }, modifier = Modifier.fillMaxWidth()) { Text("Host a game") }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(onClick = { screen = TwoPlayer.Join }, modifier = Modifier.fillMaxWidth()) { Text("Join a game") }
-                }
-                TwoPlayer.PickGame -> PickGame(roms, onLibrary) { game, set -> screen = TwoPlayer.Hosting(game, set) }
-                is TwoPlayer.Hosting -> Hosting(roms, s.game, s.set) { onStart(s.game, s.set) }
-                TwoPlayer.Join -> Joining(roms, onLibrary) { game, set -> onStart(game, set) }
-            }
+    when (val s = screen) {
+        TwoPlayer.Menu -> TwoPlayerMenu(onHost = { screen = TwoPlayer.PickGame }, onJoin = { screen = TwoPlayer.Join }, onBack = back)
+        TwoPlayer.PickGame -> {
+            val ready = remember { GAMES.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
+            PickGameScreen(
+                games = ready.map { (g, set) -> GameChoice(g.title, g.subtitle ?: g.series) },
+                ready = roms.has(BIOS) && ready.isNotEmpty(),
+                onPick = { i -> ready[i].let { (g, set) -> screen = TwoPlayer.Hosting(g, set) } },
+                onLibrary = onLibrary,
+                onBack = back,
+            )
         }
-    }
-}
-
-private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
-
-@Composable
-private fun PickGame(roms: RomStore, onLibrary: () -> Unit, onPick: (Game, String) -> Unit) {
-    val ready = remember { GAMES.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
-    Text("Pick the game to host:", color = Palette.text, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    if (!roms.has(BIOS) || ready.isEmpty()) {
-        Text("Add the Neo Geo BIOS and a game first.", color = Palette.muted)
-        TextButton(onClick = onLibrary) { Text("Open the library") }
-        return
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ready.forEach { (game, set) -> Choice(game.title, game.subtitle ?: set) { onPick(game, set) } }
+        is TwoPlayer.Hosting -> Hosting(roms, s.game, s.set, back) { onStart(s.game, s.set) }
+        TwoPlayer.Join -> Joining(roms, onLibrary, back) { game, set -> onStart(game, set) }
     }
 }
 
 @Composable
-private fun Hosting(roms: RomStore, game: Game, set: String, onConnected: () -> Unit) {
-    var status by remember { mutableStateOf("Waiting for player 2…") }
+private fun Hosting(roms: RomStore, game: Game, set: String, onBack: () -> Unit, onConnected: () -> Unit) {
+    var status by remember { mutableStateOf("Waiting for player 2") }
+    var failed by remember { mutableStateOf(false) }
     var request by remember { mutableStateOf<Hello?>(null) }
     var decision by remember { mutableStateOf<CompletableDeferred<String?>?>(null) }
     val addresses = remember { localAddresses() }
@@ -182,11 +153,14 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onConnected: () -> 
                     link.close()
                 } else {
                     Netplay.link = link
-                    status = "Starting…"
+                    status = "Starting the game"
                     main.launch { onConnected() }
                 }
             } catch (e: Exception) {
-                if (!left) status = "Hosting stopped: ${e.message}"
+                if (!left) {
+                    failed = true
+                    status = "Hosting stopped: ${e.message}"
+                }
             }
         }, "net-host")
         thread.isDaemon = true
@@ -199,40 +173,24 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onConnected: () -> 
         }
     }
 
-    Text(game.title, color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(6.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        CircularProgressIndicator(Modifier.width(18.dp).height(18.dp), strokeWidth = 2.dp)
-        Spacer(Modifier.width(10.dp))
-        Text(status, color = Palette.muted)
-    }
-    Spacer(Modifier.height(12.dp))
-    Text(
-        "On the other phone: 2 PLAYERS → Join a game. It should find this phone by itself; if not, type this " +
-            "address there: ${addresses.joinToString(" or ").ifEmpty { "(not on a network)" }}",
-        color = Palette.muted,
-        fontSize = 13.sp,
+    HostingScreen(
+        title = game.title,
+        status = status,
+        failed = failed,
+        addresses = addresses,
+        requestName = request?.name,
+        onAccept = { decision?.complete(null) },
+        onDecline = { decision?.complete("The host said no") },
+        onBack = onBack,
     )
-    request?.let { hello ->
-        Spacer(Modifier.height(16.dp))
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.panel)
-                .border(1.dp, Palette.gold, RoundedCornerShape(14.dp)).padding(14.dp),
-        ) {
-            Text("${hello.name} wants to join", color = Palette.text, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 10.dp)) {
-                Button(onClick = { decision?.complete(null) }) { Text("Accept") }
-                OutlinedButton(onClick = { decision?.complete("The host said no") }) { Text("Decline") }
-            }
-        }
-    }
 }
 
 @Composable
-private fun Joining(roms: RomStore, onLibrary: () -> Unit, onJoined: (Game, String) -> Unit) {
+private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
     val hosts = remember { mutableStateListOf<FoundHost>() }
     var address by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
+    var needsGame by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -252,8 +210,10 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onJoined: (Game, Stri
     fun connect(found: FoundHost) {
         val set = found.beacon.set
         val game = gameForSet(set)
+        needsGame = false
         if (game == null || !roms.has("$set.zip")) {
-            status = "You need ${found.beacon.title} ($set.zip) on this phone first. Get it from the library."
+            needsGame = true
+            status = "You need ${found.beacon.title} on this phone first."
             return
         }
         busy = true
@@ -276,69 +236,209 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onJoined: (Game, Stri
         }
     }
 
-    Text("Games on this network:", color = Palette.text, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    if (hosts.isEmpty()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(Modifier.width(18.dp).height(18.dp), strokeWidth = 2.dp)
-            Spacer(Modifier.width(10.dp))
-            Text("Looking… (the other phone: 2 PLAYERS → Host a game)", color = Palette.muted, fontSize = 13.sp)
-        }
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        hosts.forEach { h ->
-            val have = roms.has("${h.beacon.set}.zip")
-            Choice(h.beacon.title, "${h.beacon.name}" + if (have) "" else " · you don't have this game", enabled = !busy) { connect(h) }
-        }
-    }
-    Spacer(Modifier.height(16.dp))
-    Text("Or type the address shown on the host:", color = Palette.muted, fontSize = 13.sp)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = address,
-            onValueChange = { address = it },
-            singleLine = true,
-            placeholder = { Text("192.168.43.1") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.width(8.dp))
-        Button(
-            onClick = {
-                busy = true
-                status = "Looking for $address…"
-                scope.launch {
-                    try {
-                        val found = withContext(Dispatchers.IO) {
-                            val ip = InetAddress.getByName(address.trim())
-                            FoundHost(probe(ip, TCP_PORT), ip)
-                        }
-                        busy = false
-                        connect(found)
-                    } catch (e: Exception) {
-                        status = "No game found at $address: ${e.message}"
-                        busy = false
+    JoinScreen(
+        hosts = hosts.map { HostChoice(it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip")) },
+        address = address,
+        onAddress = { address = it },
+        status = status,
+        needsGame = needsGame,
+        busy = busy,
+        onJoinHost = { i -> hosts.getOrNull(i)?.let(::connect) },
+        onJoinAddress = {
+            busy = true
+            status = "Looking for $address…"
+            scope.launch {
+                try {
+                    val found = withContext(Dispatchers.IO) {
+                        val ip = InetAddress.getByName(address.trim())
+                        FoundHost(probe(ip, TCP_PORT), ip)
                     }
+                    busy = false
+                    connect(found)
+                } catch (e: Exception) {
+                    status = "No game found at $address: ${e.message}"
+                    busy = false
                 }
-            },
-            enabled = !busy && address.isNotBlank(),
-        ) { Text("Join") }
-    }
-    status?.let {
+            }
+        },
+        onLibrary = onLibrary,
+        onBack = onBack,
+    )
+}
+
+// ----- The pages, from plain data (so they can be previewed) -----
+
+@Composable
+fun TwoPlayerMenu(onHost: () -> Unit, onJoin: () -> Unit, onBack: () -> Unit) {
+    ArcadeScreen(title = "2 Players", kicker = "Two phones, one game", onBack = onBack) {
+        Text(
+            "Both phones on the same Wi-Fi, or one phone's hotspot with the other connected to it. " +
+                "Both need the same game and BIOS: get them from the library on each phone.",
+            color = Palette.muted,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+        )
+        Spacer(Modifier.height(18.dp))
+        BigChoice("Host a game", "You're player 1. Pick the game; your partner joins it.", badge = "1P", gold = true, onClick = onHost)
         Spacer(Modifier.height(12.dp))
-        Text(it, color = Palette.text, fontSize = 14.sp)
-        if ("library" in it) TextButton(onClick = onLibrary) { Text("Open the library") }
+        BigChoice("Join a game", "You're player 2. Find the game your partner is hosting.", badge = "2P", onClick = onJoin)
     }
 }
 
 @Composable
-private fun Choice(title: String, subtitle: String, enabled: Boolean = true, onClick: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.panel)
-            .border(1.dp, Palette.line, RoundedCornerShape(14.dp))
-            .clickable(enabled = enabled, onClick = onClick).padding(14.dp),
-    ) {
-        Text(title, color = Palette.text, fontWeight = FontWeight.SemiBold)
-        Text(subtitle, color = Palette.muted, fontSize = 12.sp)
+private fun BigChoice(title: String, sub: String, badge: String, gold: Boolean = false, onClick: () -> Unit) {
+    Panel(highlight = gold, onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
+                    .background(if (gold) Palette.gold else Palette.bg)
+                    .border(1.dp, if (gold) Palette.gold else Palette.line, RoundedCornerShape(16.dp)),
+            ) {
+                Text(badge, color = if (gold) OnGold else Palette.gold, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, color = Palette.text, fontSize = 19.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Text(sub, color = Palette.muted, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun PickGameScreen(games: List<GameChoice>, ready: Boolean, onPick: (Int) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit) {
+    ArcadeScreen(title = "Host a game", kicker = "Step 1 · pick the game", onBack = onBack) {
+        if (!ready) {
+            Panel {
+                Text("Add the Neo Geo BIOS and a game first.", color = Palette.text, fontSize = 15.sp)
+                Spacer(Modifier.height(12.dp))
+                GoldButton("Open the library", onLibrary)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                games.forEachIndexed { i, g ->
+                    Panel(onClick = { onPick(i) }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(g.title, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                                Text(g.subtitle, color = Palette.muted, fontSize = 13.sp)
+                            }
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(34.dp).clip(CircleShape).background(Palette.gold)) {
+                                PlayIcon(Modifier.size(12.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HostingScreen(
+    title: String,
+    status: String,
+    failed: Boolean,
+    addresses: List<String>,
+    requestName: String?,
+    onAccept: () -> Unit,
+    onDecline: () -> Unit,
+    onBack: () -> Unit,
+) {
+    ArcadeScreen(title = title, kicker = "Hosting · you're player 1", onBack = onBack) {
+        Panel(highlight = requestName != null) {
+            if (requestName != null) {
+                Kicker("Player 2 is here")
+                Spacer(Modifier.height(6.dp))
+                Text("$requestName wants to join", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    GoldButton("Accept", onAccept, Modifier.weight(1f))
+                    GhostButton("Decline", onDecline, Modifier.weight(1f))
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot(if (failed) Palette.red else Palette.gold)
+                    Spacer(Modifier.width(10.dp))
+                    Text(status, color = if (failed) Palette.red else Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "On the other phone: 2 Players → Join a game. It finds this phone by itself.",
+                    color = Palette.muted,
+                    fontSize = 14.sp,
+                )
+            }
+        }
+        SectionLabel("If it doesn't find you")
+        Panel {
+            Text("Type this address on the other phone:", color = Palette.muted, fontSize = 13.sp)
+            Spacer(Modifier.height(8.dp))
+            if (addresses.isEmpty()) {
+                Text("Not on a network. Turn on Wi-Fi or your hotspot.", color = Palette.red, fontSize = 15.sp)
+            } else {
+                addresses.forEach { Text(it, color = Palette.gold, fontSize = 24.sp, fontWeight = FontWeight.Black) }
+            }
+        }
+    }
+}
+
+@Composable
+fun JoinScreen(
+    hosts: List<HostChoice>,
+    address: String,
+    onAddress: (String) -> Unit,
+    status: String?,
+    needsGame: Boolean,
+    busy: Boolean,
+    onJoinHost: (Int) -> Unit,
+    onJoinAddress: () -> Unit,
+    onLibrary: () -> Unit,
+    onBack: () -> Unit,
+) {
+    ArcadeScreen(title = "Join a game", kicker = "You're player 2", onBack = onBack) {
+        status?.let {
+            Panel(highlight = !needsGame) {
+                Text(it, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                if (needsGame) {
+                    Spacer(Modifier.height(12.dp))
+                    GoldButton("Open the library", onLibrary)
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+        }
+        SectionLabel("Games on this network")
+        if (hosts.isEmpty()) {
+            Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot()
+                    Spacer(Modifier.width(10.dp))
+                    Text("Looking for games…", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text("On the other phone: 2 Players → Host a game.", color = Palette.muted, fontSize = 13.sp)
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            hosts.forEachIndexed { i, h ->
+                Panel(onClick = if (busy) null else ({ onJoinHost(i) })) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(h.title, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                            Text("Hosted by ${h.hostName}", color = Palette.muted, fontSize = 13.sp)
+                        }
+                        if (h.have) Tag("Join", Palette.gold, filled = true) else Tag("Need game", Palette.red)
+                    }
+                }
+            }
+        }
+        SectionLabel("Or join by address")
+        Panel {
+            ArcadeField(address, onAddress, "Address shown on the host", placeholder = "192.168.43.1", keyboardType = KeyboardType.Uri)
+            Spacer(Modifier.height(12.dp))
+            GoldButton("Join", onJoinAddress, Modifier.fillMaxWidth(), enabled = !busy && address.isNotBlank())
+        }
+        Spacer(Modifier.height(24.dp))
     }
 }

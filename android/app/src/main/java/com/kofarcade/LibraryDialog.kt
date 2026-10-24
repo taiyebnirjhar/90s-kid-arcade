@@ -1,28 +1,19 @@
 package com.kofarcade
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,11 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.kofarcade.core.RomCheck
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.setName
@@ -48,14 +36,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** One library file as the page shows it. */
+data class LibraryRowUi(val file: String, val title: String, val detail: String, val state: RowState)
+
+sealed interface RowState {
+    data object Idle : RowState
+    data object OnPhone : RowState
+    data class Downloading(val fraction: Float) : RowState
+    data class Done(val message: String, val ok: Boolean) : RowState
+}
+
+/** Everything the library page shows. */
+data class LibraryUi(
+    val askKey: Boolean,
+    val loading: Boolean = false,
+    val error: String? = null,
+    val rows: List<LibraryRowUi> = emptyList(),
+    val busy: Boolean = false,
+)
+
 /** One library file's download: bytes so far, then what the check found. */
 private data class Download(val done: Long = 0, val result: String? = null, val ok: Boolean = false)
 
 /**
  * Your private ROM library: asks for the key once (the address is built
- * in, see [Library.DEFAULT_URL], and can be changed), then lists
- * its zips with a Download button each. Every download is checked like an
- * import, so a broken zip says what's missing instead of failing in the game.
+ * in, see [Library.DEFAULT_URL], and can be changed), then lists its zips
+ * with a button each. Every download is checked like an import, so a broken
+ * zip says what's missing instead of failing in the game.
  */
 @Composable
 fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: () -> Unit) {
@@ -65,6 +72,9 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
     var loading by remember { mutableStateOf(false) }
     val downloads = remember { mutableStateMapOf<String, Download>() }
     var busy by remember { mutableStateOf(false) }
+    var key by remember { mutableStateOf(prefs.libraryKey.orEmpty()) }
+    var url by remember { mutableStateOf(prefs.libraryUrl) }
+    var showUrl by remember { mutableStateOf(prefs.libraryUrl != Library.DEFAULT_URL) }
     val scope = rememberCoroutineScope()
 
     fun library() = Library(prefs.libraryUrl, prefs.libraryKey.orEmpty())
@@ -85,8 +95,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         }
     }
 
-    fun installed(entry: Library.Entry): Boolean =
-        prefs.librarySet(entry.name)?.let { roms.has("$it.zip") } == true
+    fun installed(entry: Library.Entry): Boolean = prefs.librarySet(entry.name)?.let { roms.has("$it.zip") } == true
 
     suspend fun download(entry: Library.Entry) {
         downloads[entry.name] = Download()
@@ -109,176 +118,170 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         }
     }
 
+    fun downloadAll(picked: List<Library.Entry>) {
+        busy = true
+        scope.launch {
+            // The BIOS first, so the games can be played as soon as they land.
+            picked.sortedBy { if (setName(it.name).startsWith("neogeo")) 0 else 1 }.forEach { download(it) }
+            busy = false
+        }
+    }
+
     LaunchedEffect(Unit) { if (!editing) load() }
+    BackHandler { if (!busy) onClose() }
 
-    Dialog(onDismissRequest = { if (!busy) onClose() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxSize().background(Palette.bg).systemBarsPadding().padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("My library", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Spacer(Modifier.weight(1f))
-                if (!editing) TextButton(onClick = { editing = true }) { Text("Change key") }
-                TextButton(onClick = onClose, enabled = !busy) { Text("Close") }
-            }
-            if (editing) {
-                var url by remember { mutableStateOf(prefs.libraryUrl) }
-                var key by remember { mutableStateOf(prefs.libraryKey.orEmpty()) }
-                var showUrl by remember { mutableStateOf(prefs.libraryUrl != Library.DEFAULT_URL) }
-                Text(
-                    "Enter the library key to download your games. It stays on this phone.",
-                    color = Palette.muted,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(vertical = 10.dp),
-                )
-                OutlinedTextField(
-                    value = key,
-                    onValueChange = { key = it },
-                    label = { Text("Key") },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (showUrl) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = { url = it },
-                        label = { Text("Library address") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    TextButton(onClick = { showUrl = true }) { Text("Use another library") }
-                }
-                error?.let { Text(it, color = Palette.red, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp)) }
-                Button(
-                    onClick = {
-                        prefs.libraryUrl = url.trim()
-                        prefs.libraryKey = key.trim()
-                        editing = false
-                        load()
-                    },
-                    enabled = url.isNotBlank() && key.isNotBlank(),
-                    modifier = Modifier.padding(top = 14.dp),
-                ) { Text("Connect") }
-            } else {
-                LibraryList(
-                    loading, error, entries, downloads, busy, prefs, ::installed,
-                    onRetry = { load() },
-                    onDownload = { picked ->
-                        busy = true
-                        scope.launch {
-                            // The BIOS first, so the games can be played as soon as they land.
-                            picked.sortedBy { if (setName(it.name).startsWith("neogeo")) 0 else 1 }.forEach { download(it) }
-                            busy = false
-                        }
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LibraryList(
-    loading: Boolean,
-    error: String?,
-    entries: List<Library.Entry>?,
-    downloads: Map<String, Download>,
-    busy: Boolean,
-    prefs: Prefs,
-    installed: (Library.Entry) -> Boolean,
-    onRetry: () -> Unit,
-    onDownload: (List<Library.Entry>) -> Unit,
-) {
-    when {
-        loading -> Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        error != null -> Column {
-            Text(error, color = Palette.red, fontSize = 14.sp, modifier = Modifier.padding(vertical = 12.dp))
-            Button(onClick = onRetry) { Text("Try again") }
-        }
-        entries.isNullOrEmpty() -> Text(
-            "The library is empty. Upload zips to your R2 bucket, then reopen this.",
-            color = Palette.muted,
-            modifier = Modifier.padding(vertical = 12.dp),
+    val rows = entries.orEmpty().map { e ->
+        val set = prefs.librarySet(e.name)
+        val title = set?.let { if (it == "neogeo") "Neo Geo BIOS" else gameForSet(it)?.title }
+        val d = downloads[e.name]
+        LibraryRowUi(
+            file = e.name,
+            title = title ?: e.name.removeSuffix(".zip"),
+            detail = (if (title != null) e.name + " · " else "") + "%.1f MB".format(e.size / 1_048_576.0),
+            state = when {
+                d != null && d.result == null -> RowState.Downloading(if (e.size > 0) d.done.toFloat() / e.size else 0f)
+                d?.result != null -> RowState.Done(d.result, d.ok)
+                installed(e) -> RowState.OnPhone
+                else -> RowState.Idle
+            },
         )
-        else -> Column {
-            val list = entries.orEmpty()
-            // Recounted as downloads finish.
-            val finished = downloads.values.count { it.result != null }
-            val missing = remember(list, finished) { list.filterNot(installed) }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-                Text(
-                    "${list.size} files, ${list.size - missing.size} on this phone",
-                    color = Palette.muted,
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.weight(1f))
-                if (missing.isNotEmpty()) {
-                    Button(onClick = { onDownload(missing) }, enabled = !busy) { Text("Download all") }
+    }
+    LibraryScreen(
+        ui = LibraryUi(askKey = editing, loading = loading, error = error, rows = rows, busy = busy),
+        key = key,
+        onKey = { key = it },
+        url = url,
+        onUrl = { url = it },
+        showUrl = showUrl,
+        onShowUrl = { showUrl = true },
+        onConnect = {
+            prefs.libraryUrl = url.trim()
+            prefs.libraryKey = key.trim()
+            editing = false
+            load()
+        },
+        onChangeKey = { editing = true },
+        onRetry = ::load,
+        onDownload = { file -> entries?.find { it.name == file }?.let { downloadAll(listOf(it)) } },
+        onDownloadAll = { downloadAll(entries.orEmpty().filterNot(::installed)) },
+        onBack = { if (!busy) onClose() },
+    )
+}
+
+/** The library page itself, from plain data (so it can be previewed). */
+@Composable
+fun LibraryScreen(
+    ui: LibraryUi,
+    key: String,
+    onKey: (String) -> Unit,
+    url: String,
+    onUrl: (String) -> Unit,
+    showUrl: Boolean,
+    onShowUrl: () -> Unit,
+    onConnect: () -> Unit,
+    onChangeKey: () -> Unit,
+    onRetry: () -> Unit,
+    onDownload: (String) -> Unit,
+    onDownloadAll: () -> Unit,
+    onBack: () -> Unit,
+) {
+    ArcadeScreen(
+        title = "My Library",
+        kicker = "Your games, one tap away",
+        onBack = onBack,
+        actions = { if (!ui.askKey) GhostButton("Key", onChangeKey) },
+    ) {
+        when {
+            ui.askKey -> Panel {
+                Kicker("Unlock your library")
+                Spacer(Modifier.height(6.dp))
+                Text("Enter your library key to download your games. It stays on this phone.", color = Palette.muted, fontSize = 14.sp)
+                Spacer(Modifier.height(16.dp))
+                ArcadeField(key, onKey, "Key", password = true, placeholder = "••••••••")
+                if (showUrl) {
+                    Spacer(Modifier.height(12.dp))
+                    ArcadeField(url, onUrl, "Library address", keyboardType = KeyboardType.Uri)
+                }
+                ui.error?.let {
+                    Spacer(Modifier.height(10.dp))
+                    Text(it, color = Palette.red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.height(18.dp))
+                GoldButton("Unlock", onConnect, Modifier.fillMaxWidth(), enabled = key.isNotBlank() && url.isNotBlank())
+                if (!showUrl) {
+                    Text(
+                        "Use another library",
+                        color = Palette.muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onShowUrl).padding(8.dp),
+                    )
                 }
             }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(list, key = { it.name }) { entry ->
-                    LibraryRow(entry, installed(entry), downloads[entry.name], prefs.librarySet(entry.name), busy) {
-                        onDownload(listOf(entry))
+            ui.loading -> Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot()
+                    Spacer(Modifier.width(10.dp))
+                    Text("Opening your library…", color = Palette.text, fontSize = 15.sp)
+                }
+            }
+            ui.error != null -> Panel {
+                Kicker("Can't reach the library", Palette.red)
+                Spacer(Modifier.height(6.dp))
+                Text(ui.error, color = Palette.muted, fontSize = 14.sp)
+                Spacer(Modifier.height(14.dp))
+                GoldButton("Try again", onRetry)
+            }
+            ui.rows.isEmpty() -> Panel {
+                Text("The library is empty. Upload zips to your R2 bucket, then open this again.", color = Palette.muted)
+            }
+            else -> {
+                val waiting = ui.rows.count { it.state == RowState.Idle }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.weight(1f)) {
+                        Text("${ui.rows.size} games and files", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(if (waiting == 0) "All on this phone" else "$waiting not on this phone yet", color = Palette.muted, fontSize = 13.sp)
                     }
+                    if (waiting > 0) GoldButton("Get all", onDownloadAll, enabled = !ui.busy)
+                }
+                Spacer(Modifier.height(14.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ui.rows.forEach { row -> LibraryRow(row, ui.busy) { onDownload(row.file) } }
                 }
             }
         }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun LibraryRow(
-    entry: Library.Entry,
-    installed: Boolean,
-    download: Download?,
-    set: String?,
-    busy: Boolean,
-    onDownload: () -> Unit,
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Palette.panel)
-            .border(1.dp, Palette.line, RoundedCornerShape(14.dp))
-            .padding(14.dp),
-    ) {
+private fun LibraryRow(row: LibraryRowUi, busy: Boolean, onDownload: () -> Unit) {
+    Panel(highlight = row.state is RowState.Downloading) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                val title = set?.let { if (it == "neogeo") "Neo Geo BIOS" else gameForSet(it)?.title }
-                Text(title ?: entry.name, color = Palette.text, fontWeight = FontWeight.SemiBold)
-                Text(
-                    (if (title != null) entry.name + " · " else "") + "%.1f MB".format(entry.size / 1_048_576.0),
-                    color = Palette.muted,
-                    fontSize = 12.sp,
-                )
+                Text(row.title, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(row.detail, color = Palette.muted, fontSize = 12.sp)
             }
             Spacer(Modifier.width(10.dp))
-            val downloading = download != null && download.result == null
-            when {
-                downloading -> Text(
-                    if (entry.size > 0) "${download!!.done * 100 / entry.size}%" else "…",
-                    color = Palette.gold,
-                    fontWeight = FontWeight.Bold,
-                )
-                installed -> Text("On phone", color = Palette.green, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                else -> Button(onClick = onDownload, enabled = !busy) { Text("Download") }
+            when (val s = row.state) {
+                RowState.Idle -> GoldButton("Get", onDownload, enabled = !busy)
+                RowState.OnPhone -> Tag("On phone", Palette.green)
+                is RowState.Downloading -> Text("${(s.fraction * 100).toInt()}%", color = Palette.gold, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                is RowState.Done -> if (s.ok) Tag("Ready", Palette.green) else Tag("Problem", Palette.red)
             }
         }
-        if (download != null && download.result == null && entry.size > 0) {
-            LinearProgressIndicator(
-                progress = { (download.done.toFloat() / entry.size).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            )
-        }
-        download?.result?.let {
-            Text(it, color = if (download.ok) Palette.green else Palette.red, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+        when (val s = row.state) {
+            is RowState.Downloading -> {
+                Spacer(Modifier.height(12.dp))
+                ProgressBar(s.fraction)
+            }
+            is RowState.Done -> {
+                Spacer(Modifier.height(10.dp))
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background((if (s.ok) Palette.green else Palette.red).copy(alpha = 0.1f)).padding(12.dp),
+                ) { Text(s.message, color = if (s.ok) Palette.green else Palette.text, fontSize = 13.sp) }
+            }
+            else -> Unit
         }
     }
 }
