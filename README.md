@@ -2,7 +2,7 @@
 
 An Android app for a handful of famous Neo Geo games, with touch controls
 built for each one: one-tap specials and supers for every King of Fighters
-character, big Shoot / Jump / Bomb buttons and rapid fire for Metal Slug.
+character, and big Shoot / Jump / Bomb buttons for Metal Slug.
 
 | Game | ROM set (zip) |
 | --- | --- |
@@ -46,8 +46,7 @@ Blowback. Moves are written for a fighter facing right: when you cross
 sides, tap **FACING** and they mirror. Pause → *Edit <name>'s moves* to
 change any move.
 
-**Metal Slug:** Shoot, Jump and Bomb; **Rapid** auto-fires while you hold
-Shoot. Slug Attack on 4 and 5, Slide on 5.
+**Metal Slug:** Shoot, Jump and Bomb. Slug Attack on 4 and 5, Slide on 5.
 
 **Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
 
