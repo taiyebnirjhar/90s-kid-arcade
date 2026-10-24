@@ -141,17 +141,18 @@ fun GoldButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
             .height(46.dp)
-            .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(50))
-            .background(Palette.gold)
+            // Disabled: a quiet grey pill, not a dimmed (muddy) gold one.
+            .background(if (enabled) Palette.gold else Palette.line)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 22.dp),
     ) {
+        val ink = if (enabled) OnGold else Palette.muted
         if (play) {
-            PlayIcon(Modifier.size(12.dp))
+            PlayIcon(Modifier.size(12.dp), ink)
             Spacer(Modifier.width(10.dp))
         }
-        Text(text.uppercase(), color = OnGold, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.sp)
     }
 }
 
