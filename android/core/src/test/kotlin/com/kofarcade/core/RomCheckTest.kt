@@ -2,6 +2,8 @@ package com.kofarcade.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -72,6 +74,30 @@ class RomCheckTest {
         assertEquals(null, installedSet(sengoku, listOf("kof97")))
         val kof2005 = GAMES.first { it.id == "kof2005" }
         assertEquals("kof10thd", installedSet(kof2005, listOf("kof10thd")))
+    }
+
+    @Test
+    fun hacksWithTheirOwnCardAreNotTheOriginal() {
+        // kof97pls is a version of kof97, but '97 Plus has its own card.
+        assertEquals("kof97plus", gameForSet("kof97pls")?.id)
+        assertEquals("kof2002mp", gameForSet("kf2k2mp2")?.id)
+        assertEquals("kof97", gameForSet("kof97h")?.id)
+        val kof97 = GAMES.first { it.id == "kof97" }
+        assertEquals(null, installedSet(kof97, listOf("kof97pls")))
+        assertEquals("kof97h", installedSet(kof97, listOf("kof97h", "kof97pls")))
+        assertEquals("kof97pls", installedSet(GAMES.first { it.id == "kof97plus" }, listOf("kof97", "kof97pls")))
+    }
+
+    @Test
+    fun cadillacsAndDinosaursNeedsNoBios() {
+        val check = checkRom(items(set("dino").files))
+        assertIs<RomCheck.Game>(check)
+        assertEquals("dino", check.set.name)
+        val dino = assertNotNull(gameForSet("dino"))
+        assertEquals("Cadillacs and Dinosaurs", dino.fullTitle)
+        assertFalse(dino.neoGeo)
+        assertEquals(listOf('A', 'B'), dino.faceButtons)
+        assertEquals("KOF 2002 Magic Plus", GAMES.first { it.id == "kof2002mp" }.fullTitle)
     }
 
     @Test

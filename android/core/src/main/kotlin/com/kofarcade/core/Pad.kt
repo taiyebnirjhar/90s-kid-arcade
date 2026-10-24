@@ -96,8 +96,11 @@ class Pad(
      * mashing a super button doesn't garble the motion. Returns the number of
      * frames the command takes.
      */
-    fun play(command: String): Int {
-        val frames = compile(command, facingLeft, timing)
+    fun play(command: String, jumpFirst: Boolean = false): Int {
+        // Air moves from the ground: up for 4 frames, a short pause, then the
+        // motion while rising (V-Slasher comes out this way in KOF 2002).
+        val jump = if (jumpFirst) List(4) { Frame(8, "") } + List(2) { Frame(5, "") } else emptyList()
+        val frames = jump + compile(command, facingLeft, timing)
         if (macro != null) queued = frames else start(frames)
         return frames.size
     }

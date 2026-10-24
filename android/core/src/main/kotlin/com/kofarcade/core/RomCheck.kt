@@ -37,9 +37,12 @@ val romSets: List<RomSet> get() = romDb.sets
 
 fun romSet(name: String): RomSet? = romDb.sets.find { it.name == name }
 
-/** The game a set (any version) belongs to. */
-fun gameForSet(name: String): Game? = romSet(name)?.let { set -> GAMES.find { set.base in it.sets } }
-    ?: GAMES.find { name in it.sets }
+/**
+ * The game a set (any version) belongs to. A game that lists the set itself
+ * wins: '97 Plus (kof97pls) is a version of kof97, but has its own card.
+ */
+fun gameForSet(name: String): Game? = GAMES.find { name in it.sets }
+    ?: romSet(name)?.let { set -> GAMES.find { set.base in it.sets } }
 
 /** A file inside a zip: what the zip's directory says about it. */
 data class ZipItem(val name: String, val size: Long, val crc: Long)
@@ -131,7 +134,7 @@ fun describe(file: RomFile): String {
  */
 fun installedSet(game: Game, zips: Collection<String>): String? =
     game.sets.firstOrNull { it in zips }
-        ?: zips.sorted().firstOrNull { name -> romSet(name)?.base?.let { it in game.sets } == true }
+        ?: zips.sorted().firstOrNull { name -> romSet(name) != null && gameForSet(name) == game }
 
 /**
  * One number for a zip's contents, for checking that two phones have the

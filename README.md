@@ -1,6 +1,7 @@
 # 90s Kid Arcade
 
-An Android app for a handful of famous Neo Geo games, with touch controls
+An Android app for a handful of famous arcade games (Neo Geo, and Capcom's
+Cadillacs and Dinosaurs), with touch controls
 built for each one: one-tap specials and supers for every King of Fighters
 character, and big Shoot / Jump / Bomb buttons with rapid fire for Metal Slug.
 
@@ -13,9 +14,10 @@ character, and big Shoot / Jump / Bomb buttons with rapid fire for Metal Slug.
 | "KOF 2005" (10th Anniversary hacks of 2002) | `kf2k5uni`, `kof10th` or `kf10thep` |
 | Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` |
 | Sengoku 3 | `sengoku3` |
+| Cadillacs and Dinosaurs ("Mostofa", Capcom CPS-1) | `dino` |
 
-Every game also needs the Neo Geo BIOS, `neogeo.zip`. No ROMs or BIOS are
-included: use dumps of games you own.
+The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; Cadillacs and
+Dinosaurs doesn't. No ROMs or BIOS are included: use dumps of games you own.
 
 File names don't matter. The app checks each zip against the files and CRCs
 FBNeo expects (`romsets.json`, made from FBNeo's driver by `tools/romsets.py`),
@@ -58,6 +60,10 @@ Button-mash specials (Joe's Bakuretsu Ken) play as five quick taps.
 fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
 
 **Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
+
+**Cadillacs and Dinosaurs:** Attack and Jump; **Special** is both at once
+(the spinning attack). Run with the Run button or by pushing the stick to the
+edge.
 
 Pause → **Controls**: stick style (floating, fixed or hidden), size,
 opacity, move names, vibration, left-handed layout, move timing.
@@ -142,7 +148,7 @@ change the secret to lock out a lost phone.
   running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
   native touch HUD, and Compose screens.
 - `server/worker.js` — the ROM library Worker.
-- `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo driver.
+- `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo and CPS-1 drivers.
 - `tools/emu.py`, `tools/movetest.py` — a headless FBNeo front end, and the
   move tester built on it (bring your own core and ROMs).
 - `docs/kof-ram.md` — the KOF RAM map fighter detection reads.
