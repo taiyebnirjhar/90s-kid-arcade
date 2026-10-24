@@ -198,7 +198,8 @@ class UiSnapshots {
                     Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
                         ControlsPanel(
                             Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4),
-                            {}, true, true, {}, false, {}, {}, {},
+                            onLook = {}, canDetect = true, canRapid = true, autoDetect = true, onAutoDetect = {},
+                            detectInfo = false, onDetectInfo = {}, onCancel = {}, onSave = {},
                         )
                     }
                 }

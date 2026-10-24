@@ -77,9 +77,10 @@ data class Look(
     val leftHanded: Boolean,
     val stepFrames: Int,
     val pressFrames: Int,
+    val rapidFire: Boolean = true,
 )
 
-fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames)
+fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
@@ -533,6 +534,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val canDetect: Boolean get() = ramMap != null
 
+    val hasRapidFire: Boolean get() = game.rapid != null
+
     /**
      * Reads the game's RAM a few times a second, off the main thread (a read
      * waits for the emulator to finish its frame), while the game is on screen.
@@ -641,10 +644,6 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             game.power?.let { add(HudView.SysButton(it.name, it.cmd, it.cmd, power = true)) }
             game.system.forEach { add(HudView.SysButton(it.name, subLabel(it.cmd), it.cmd)) }
             if (game.run) add(HudView.SysButton("Run", "hold", null, hold = true))
-            game.rapid?.let {
-                val on = pad.isRapid(it)
-                add(HudView.SysButton("Rapid", if (on) "ON" else "OFF", null, on = on))
-            }
         }
         val active = prefs.active(game.id)
         // With detection on, the game says who's fighting and which way they
@@ -707,6 +706,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         hud.tweaks = prefs.tweaks(layoutKey())
         applyScreen()
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
+        game.rapid?.let { pad.setRapid(it, l.rapidFire) }
         hud.alpha = l.opacity
         updateHud()
     }

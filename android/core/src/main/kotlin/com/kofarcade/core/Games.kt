@@ -8,7 +8,7 @@ enum class Layout {
     /** Stick, A B C D, power button, character move ring, team bar. */
     FIGHTER,
 
-    /** Stick and big labelled buttons. */
+    /** Stick and big labelled buttons; holding Shoot keeps firing. */
     SHOOTER,
 
     /** Stick and four labelled buttons, shared special moves. */
@@ -114,6 +114,10 @@ val GAMES: List<Game> = listOf(
         // 4 and 5 add D: the "Metal Slug Attack" while in a vehicle.
         labels = mapOf('A' to "Shoot", 'B' to "Jump", 'C' to "Bomb") +
             (if (hasSlugAttack) mapOf('D' to "Slug Attack") else emptyMap()),
+        // Holding Shoot toggles it every 2 frames: in Metal Slug X that fires
+        // 20 shots in 2 seconds, where a held button fires once and toggling
+        // every frame fires none (tools/emu.py).
+        rapid = Key.A,
         // Metal Slug 5's slide: down + jump.
         system = if (set == "mslug5") listOf(Move("Slide", "2+B")) else emptyList(),
     )

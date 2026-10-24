@@ -2,12 +2,14 @@
 
 An Android app for a handful of famous Neo Geo games, with touch controls
 built for each one: one-tap specials and supers for every King of Fighters
-character, and big Shoot / Jump / Bomb buttons for Metal Slug.
+character, and big Shoot / Jump / Bomb buttons with rapid fire for Metal Slug.
 
 | Game | ROM set (zip) |
 | --- | --- |
 | The King of Fighters '97 | `kof97` |
+| The King of Fighters '97 Plus (Orochi playable) | `kof97pls` |
 | The King of Fighters 2002 | `kof2002` |
+| The King of Fighters 2002 Magic Plus | `kf2k2mp`, `kf2k2mpl` or `kf2k2mp2` |
 | "KOF 2005" (10th Anniversary hacks of 2002) | `kf2k5uni`, `kof10th` or `kf10thep` |
 | Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` |
 | Sengoku 3 | `sengoku3` |
@@ -37,16 +39,23 @@ and settings.
    Long-press a game to remove its ROM.
 3. **COIN**, then **START**.
 
-**KOF:** pick your three fighters in the team bar (top left) — tap a slot,
-or a team name to fill all three — and tap whoever is fighting this round.
-The move ring around A B C D shows only that fighter's desperation moves and
-specials, each drawn as its stick motion; one tap plays the whole input,
-frame-exact. **MAX** is one tap (A+B+C in '97, B+C in 2002), as are Roll and
-Blowback. Moves are written for a fighter facing right: when you cross
-sides, tap **FACING** and they mirror. Pause → *Edit <name>'s moves* to
-change any move.
+**KOF:** the app reads the game's memory to see who you picked, who is
+fighting and which way they face, so the move ring always matches your
+fighter (turn this off in Controls to pick by hand). The ring around
+A B C D shows that fighter's desperation moves and specials, each drawn as
+its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
+tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback. Pause →
+*Edit <name>'s moves* to change any move.
 
-**Metal Slug:** Shoot, Jump and Bomb. Slug Attack on 4 and 5, Slide on 5.
+Every move in the lists was checked in the real games (see
+[Move lists](#move-lists)), and the buttons play inputs the way a real stick
+moves: rolling through the diagonals (214214), tapping a direction twice
+(22), only passing through up mid-motion so the fighter doesn't jump
+(Mary's 1236982), and pressing "~" inputs back to back (K''s 214+C~A).
+Button-mash specials (Joe's Bakuretsu Ken) play as five quick taps.
+
+**Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
+fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
 
 **Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
 
@@ -64,6 +73,11 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Both phones run the game, exchanging only button states over UDP.
 - Your own presses take effect after one frame. The partner's input is
   guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi.
+  On a slower connection (a hotspot, a far router) each phone raises its
+  own input delay to 2-3 frames so the partner guesses less, and drops back
+  to 1 when the connection allows.
+- Wi-Fi stays awake during a game (a low-latency Wi-Fi lock): phones
+  otherwise let the radio nap between packets, which shows up as hiccups.
   When a guess was wrong, the phone loads the state from that frame and
   replays to now in a few milliseconds, silently. You see the corrected
   game, not a delay.
@@ -73,10 +87,36 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   game opens. Without that, the Neo Geo clock, which starts from each
   phone's time, would differ.
 - A RAM checksum of confirmed frames every 2 seconds catches drift.
+- The pause menu pauses both phones; **Rematch** restarts both from the
+  same start.
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run.
 - Native side: `android/libretrodroid` (LibretroDroid::setNetplay).
   Protocol and tests: `android/core/.../net`.
+
+## Move lists
+
+`android/core/src/main/resources/rosters/` has one list per game: `kof97`,
+`kof97plus`, `kof2002` and `kof2005`. Magic Plus uses the 2002 list.
+
+- **Sources.** '97 and 2002 come from MAME's `command.dat`, cross-checked
+  against StrategyWiki, SuperCombo and SNK Fandom. 2005 Unique has no
+  `command.dat` entry: its list is 2002's with the inputs the hack changed,
+  from Chinese move lists written for it (ddooo.com, kofcn.org).
+- **Checked in the games.** Each move was played in FBNeo exactly as the
+  app plays it, and counted as working only if the fighter really did it:
+  a super has to use power or flash the screen, a special has to start an
+  animation no normal attack or simpler listed move makes. Where the
+  sources and the game disagreed, the game won. For example, Benimaru's
+  Elec-Trigger in '97 only comes out as 632146 632146, and in 2005 Terry's
+  Rising Tackle is 623+A.
+- **2005's changed moves** were found by their animation: the same
+  animation as the 2002 move, under the new input.
+- Moves left out on purpose: inputs no source or test could bring out in
+  that game.
+
+`tools/fix_rosters.py` holds every change with the reason, and
+`tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
 
 ## Your ROM library (optional)
 
@@ -96,13 +136,16 @@ change the secret to lock out a lost phone.
 
 - `android/core` — plain Kotlin: the move engine (numpad commands, played
   back one emulated frame at a time), motion icons, the game list and the
-  KOF '97 / 2002 move lists (from MAME's `command.dat`). Tested without the
+  KOF move lists (see [Move lists](#move-lists)). Tested without the
   Android SDK: `cd android/core && gradle test`.
 - `android/app` — the Android app: [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)
   running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
   native touch HUD, and Compose screens.
 - `server/worker.js` — the ROM library Worker.
 - `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo driver.
+- `tools/emu.py`, `tools/movetest.py` — a headless FBNeo front end, and the
+  move tester built on it (bring your own core and ROMs).
+- `docs/kof-ram.md` — the KOF RAM map fighter detection reads.
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
 
