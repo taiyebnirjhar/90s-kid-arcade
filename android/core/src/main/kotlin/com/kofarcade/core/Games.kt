@@ -3,6 +3,22 @@ package com.kofarcade.core
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+/**
+ * RetroPad button ids (0 B, 1 Y, 8 A, 9 X, 10 L, 11 R) for A-F, as FBNeo's
+ * libretro core lays out each arcade board. Checked by pressing each one in
+ * the games (tools/emu.py).
+ */
+enum class PadMap(private val ids: IntArray) {
+    /** Neo Geo A B C D (and the CPS-1 games, whose two buttons are A and B). */
+    NEO_GEO(intArrayOf(0, 8, 1, 9, -1, -1)),
+
+    /** Capcom six buttons: LP MP HP on Y X L, LK MK HK on B A R (Street Fighter III 3rd Strike). */
+    CAPCOM_6(intArrayOf(1, 9, 10, 0, 8, 11));
+
+    /** The RetroPad id for button [index] (0 = A ... 5 = F), or -1 if the game has none. */
+    fun id(index: Int): Int = ids[index]
+}
+
 /** How a game's controls are laid out. */
 enum class Layout {
     /** Stick, A B C D, power button, character move ring, team bar. */
@@ -70,13 +86,19 @@ data class Game(
     val neoGeo: Boolean = true,
     /** How many can play at once, as on the arcade cabinet: one phone each. */
     val players: Int = 2,
+    /** Which emulator button each of A-F is (FBNeo's layout for the board). */
+    val pad: PadMap = PadMap.NEO_GEO,
 ) {
     /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
     val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
 
     /** Face buttons shown: only the labelled ones, unless it's a fighter (A B C D all have jobs). */
     val faceButtons: List<Char>
-        get() = if (layout != Layout.FIGHTER && labels.isNotEmpty()) BUTTONS.filter { it in labels }.toList() else BUTTONS.toList()
+        get() = if (labels.isNotEmpty() && (layout != Layout.FIGHTER || pad == PadMap.CAPCOM_6)) {
+            BUTTONS.filter { it in labels }.toList()
+        } else {
+            BUTTONS.take(4).toList()
+        }
 }
 
 const val BIOS = "neogeo.zip"

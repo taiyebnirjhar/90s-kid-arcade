@@ -198,8 +198,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         'B' to Color.rgb(255, 201, 40),
         'C' to Color.rgb(52, 196, 124),
         'D' to Color.rgb(74, 157, 240),
+        'E' to Color.rgb(176, 112, 240),
+        'F' to Color.rgb(255, 140, 50),
     )
-    private val keyFor = mapOf('A' to Key.A, 'B' to Key.B, 'C' to Key.C, 'D' to Key.D)
+    private val keyFor = mapOf('A' to Key.A, 'B' to Key.B, 'C' to Key.C, 'D' to Key.D, 'E' to Key.E, 'F' to Key.F)
+
+    /** A button's name as the game calls it ("LP"), or its letter. */
+    private fun buttonName(c: Char): String = state.labels[c]?.takeIf { it.length <= 2 } ?: c.toString()
 
     init {
         isHapticFeedbackEnabled = true
@@ -308,12 +313,21 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val ay = h - s - 16 * d
         val faceR = s / 2 * if (st.layout == Layout.SHOOTER) 1.12f else 1f
         val hh = s / 2 + 5 * d
-        val facePos = mapOf(
-            'C' to (-0.3f * s - 5 * d to -hh),
-            'D' to (0.7f * s + 5 * d to -hh),
-            'A' to (-0.7f * s - 5 * d to hh),
-            'B' to (0.3f * s + 5 * d to hh),
-        )
+        val facePos = if (st.faceButtons.size == 6) {
+            // Capcom's arcade layout: punches on top, kicks below, light to heavy.
+            val sx = 0.98f * s
+            mapOf(
+                'A' to (-1.2f * sx to -hh), 'B' to (-0.2f * sx to -hh * 1.12f), 'C' to (0.8f * sx to -hh * 1.12f),
+                'D' to (-1.0f * sx to hh), 'E' to (0f to hh * 0.88f), 'F' to (1.0f * sx to hh * 0.88f),
+            )
+        } else {
+            mapOf(
+                'C' to (-0.3f * s - 5 * d to -hh),
+                'D' to (0.7f * s + 5 * d to -hh),
+                'A' to (-0.7f * s - 5 * d to hh),
+                'B' to (0.3f * s + 5 * d to hh),
+            )
+        }
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
             els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
@@ -558,7 +572,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         ring.strokeWidth = 2.5f * d
         canvas.drawCircle(el.cx, el.cy, el.r - 1.25f * d, ring)
         val label = state.labels[el.letter]
-        if (state.layout == Layout.SHOOTER && label != null) {
+        if (label != null && label.length <= 2) {
+            // A short name ("LP") is the button's name.
+            centeredText(canvas, label, el.cx, el.cy, el.r * 0.56f)
+        } else if (state.layout == Layout.SHOOTER && label != null) {
             text.letterSpacing = 0.06f
             centeredText(canvas, label.uppercase(), el.cx, el.cy, el.r * 0.36f)
             text.letterSpacing = 0f
@@ -585,7 +602,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             canvas.restore()
         } else {
             // A button sequence ("D B C C ↑"): its inputs, on two lines if long.
-            val tokens = toArrows(mirrored(move.cmd)).split(" ")
+            val tokens = toArrows(mirrored(move.cmd)).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
             val lines = if (tokens.size > 3) {
                 listOf(tokens.take((tokens.size + 1) / 2), tokens.drop((tokens.size + 1) / 2))
             } else {
@@ -606,7 +623,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.color = Color.argb(215, 10, 10, 20)
             ring.strokeWidth = 1.5f * d
             canvas.drawCircle(cx, cy, chipR, ring)
-            centeredText(canvas, b.toString(), cx, cy, el.r * 0.32f, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
+            val name = buttonName(b)
+            centeredText(canvas, name, cx, cy, el.r * if (name.length > 1) 0.22f else 0.32f, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
         }
         val showLabel = when (state.labelMode) {
             LabelMode.ALL -> true

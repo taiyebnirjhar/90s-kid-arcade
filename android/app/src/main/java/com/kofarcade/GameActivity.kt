@@ -31,6 +31,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.kofarcade.core.Character
 import com.kofarcade.core.DetectSpec
 import com.kofarcade.core.Detection
+import com.kofarcade.core.FACE_KEYS
 import com.kofarcade.core.Game
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
@@ -278,32 +279,32 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // ----- Input -----
 
-    // FBNeo's default Neo Geo layout puts A on RetroPad B, B on A, C on Y and D on X.
-    private fun keyCode(key: Key) = when (key) {
-        Key.A -> KeyEvent.KEYCODE_BUTTON_B
-        Key.B -> KeyEvent.KEYCODE_BUTTON_A
-        Key.C -> KeyEvent.KEYCODE_BUTTON_Y
-        Key.D -> KeyEvent.KEYCODE_BUTTON_X
-        Key.COIN -> KeyEvent.KEYCODE_BUTTON_SELECT
-        Key.START -> KeyEvent.KEYCODE_BUTTON_START
+    // The Android key for each RetroPad button id (LibretroDroid maps them back).
+    private fun keyCode(key: Key) = when (retroId(key)) {
+        0 -> KeyEvent.KEYCODE_BUTTON_B
+        1 -> KeyEvent.KEYCODE_BUTTON_Y
+        2 -> KeyEvent.KEYCODE_BUTTON_SELECT
+        3 -> KeyEvent.KEYCODE_BUTTON_START
+        8 -> KeyEvent.KEYCODE_BUTTON_A
+        9 -> KeyEvent.KEYCODE_BUTTON_X
+        10 -> KeyEvent.KEYCODE_BUTTON_L1
+        11 -> KeyEvent.KEYCODE_BUTTON_R1
         else -> error("not a button: $key")
     }
 
-    // RetroPad button ids, for two-player masks (FBNeo maps Neo Geo A-D like keyCode()).
+    // RetroPad button ids: the game's layout for A-F (Game.pad), then coin, start and the stick.
     private fun retroId(key: Key) = when (key) {
-        Key.A -> 0 // B
-        Key.C -> 1 // Y
         Key.COIN -> 2 // SELECT
         Key.START -> 3
         Key.UP -> 4
         Key.DOWN -> 5
         Key.LEFT -> 6
         Key.RIGHT -> 7
-        Key.B -> 8 // A
-        Key.D -> 9 // X
+        else -> game.pad.id(FACE_KEYS.indexOf(key))
     }
 
     private fun sendKey(key: Key, down: Boolean) {
+        if (retroId(key) < 0) return // a button this game doesn't have
         if (link != null) {
             val bit = 1 shl retroId(key)
             localMask = if (down) localMask or bit else localMask and bit.inv()
