@@ -538,7 +538,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         link?.let {
             it.close()
             if (Netplay.link === it) Netplay.link = null
-            LibretroDroid.setNetplay(false, 0, 0)
+            LibretroDroid.setNetplay(false, 0, 2, 0)
         }
     }
 
