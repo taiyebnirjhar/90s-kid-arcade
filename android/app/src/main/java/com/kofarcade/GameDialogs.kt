@@ -372,9 +372,16 @@ fun RosterContent(
                 ) {
                     Portrait(c?.name, size = 38, selected = on)
                     Spacer(Modifier.width(8.dp))
-                    Column(Modifier.width(74.dp)) {
+                    Column(Modifier.width(92.dp)) {
                         Text("SLOT ${i + 1}", color = if (on) Palette.gold else Palette.muted, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                        Text(c?.name ?: "Empty", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(
+                            c?.name ?: "Empty",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
