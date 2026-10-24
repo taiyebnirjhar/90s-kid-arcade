@@ -44,6 +44,7 @@ import com.kofarcade.core.net.Link
 import com.kofarcade.core.net.LinkListener
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
+import com.kofarcade.core.fighterBase
 import com.kofarcade.core.gameById
 import com.kofarcade.core.loadRoster
 import com.kofarcade.core.parseCommand
@@ -332,9 +333,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** The fighter is on the floor (detection's grounded word is 0; KOF: their height). */
     private fun onGround(): Boolean {
         val spec = ramMap ?: return true
-        val addr = spec.player + spec.playerStride * localPlayer + spec.grounded
-        val ram = readRam(spec, listOf((addr and 3.inv()) to 4)) ?: return true
-        return ram.word(addr) == 0
+        val ram = readRam(spec, spec.windows) ?: return true
+        return ram.word(fighterBase(spec, ram, localPlayer) + spec.grounded) == 0
     }
 
     /** Reads [windows] of the game's RAM (start, length: CPU addresses), or null if the core can't. */

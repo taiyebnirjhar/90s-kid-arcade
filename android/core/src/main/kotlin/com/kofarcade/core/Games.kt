@@ -222,6 +222,18 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Throw", "AD"), Move("Overhead", "BE")),
     neoGeo = false,
     pad = PadMap.CAPCOM_6,
+) + Game(
+    // Capcom CPS-2, 1998: no BIOS, but each version's zip carries its .key.
+    // Two-character teams: HP+HK tags, MP+MK calls the Special Partner.
+    // Six buttons as in Street Fighter III (checked in mvsc, tools/emu.py).
+    id = "mvsc", series = "Marvel vs Capcom", title = "Marvel vs Capcom",
+    sets = listOf("mvsc", "mvscu", "mvscur1", "mvscj", "mvscjr1", "mvsca", "mvscar1", "mvscb", "mvsch", "mvscr1"),
+    art = "Marvel Vs. Capcom: Clash of Super Heroes (Europe 980123)",
+    layout = Layout.FIGHTER, roster = "mvsc", team = 2, block = true,
+    labels = mapOf('A' to "LP", 'B' to "MP", 'C' to "HP", 'D' to "LK", 'E' to "MK", 'F' to "HK"),
+    system = listOf(Move("Tag", "CF"), Move("Partner", "BE")),
+    neoGeo = false,
+    pad = PadMap.CAPCOM_6,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

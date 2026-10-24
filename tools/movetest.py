@@ -133,6 +133,8 @@ def play(e, frames, watch, n_after=70):
 SF3_P1 = 0x02068C6C
 SF3_GAUGE = 0x020695B5  # max at -2
 SF3_STOCK = 0x020695BF  # max at -2
+# Marvel vs Capcom: P1's Hyper Combo levels (FBNeo cheat file).
+MVC_LEVEL = 0xFF3274
 
 
 class Game:
@@ -141,7 +143,8 @@ class Game:
         self.kof97 = g.startswith('kof97')
         self.dd = g == 'doubledr'
         self.sf3 = g.startswith('sfiii')
-        self.buttons = 'ABCDEF' if self.sf3 else 'ABCD'
+        self.mvc = g.startswith('mvsc')
+        self.buttons = 'ABCDEF' if self.sf3 or self.mvc else 'ABCD'
         GAME[0] = self
         self.stock = 0x1082E3
         self.xs = (0x108118, 0x108318)
@@ -149,6 +152,10 @@ class Game:
             # Double Dragon: the sprite frame (each move has its own frames).
             self.xs = (0x100430, 0x100530)
             ACT[0] = lambda e: word(e, 0x10042E)
+        elif self.mvc:
+            # Marvel vs Capcom: the animation at +0x60 of the point fighter's block.
+            self.xs = (0xFF300C, 0xFF340C)
+            ACT[0] = lambda e: word(e, 0xFF3060)
         elif self.sf3:
             # 3rd Strike: the animation at +0x202 of the fighter block (training scripts).
             self.xs = (SF3_P1 + 0x64, SF3_P1 + 0x498 + 0x64)
@@ -160,6 +167,8 @@ class Game:
         """Power a super used: KOF's stock; Double Dragon's CHARGE spent, or a transformation."""
         if self.sf3:
             return before - min(e.byte(SF3_STOCK), before)
+        if self.mvc:
+            return before - min(e.byte(MVC_LEVEL), before)
         if self.dd:
             # CHARGE goes out when the move ends, a few seconds in.
             for _ in range(450):
@@ -172,9 +181,14 @@ class Game:
     def before(self, e):
         if self.sf3:
             return e.byte(SF3_STOCK)
+        if self.mvc:
+            return e.byte(MVC_LEVEL)
         return (e.byte(0x10042A) & 1, e.byte(0x100445)) if self.dd else e.byte(self.stock)
 
     def power(self, e, maxmode=False, lowlife=False):
+        if self.mvc:
+            poke(e, MVC_LEVEL, 3)
+            return
         if self.sf3:
             # A full Super Art gauge: its size and stock count are kept beside it.
             poke(e, SF3_GAUGE, e.byte(SF3_GAUGE - 2))
@@ -242,7 +256,7 @@ def baseline(e, states, game):
                 for d in seq: fr += [(d, '')] * 2
                 fr += [(seq[-1], '')] * 15 + [(seq[-1], b)] * 4
                 seen.update(play(e, fr, None, 40))
-        for b in ('AB', 'CD', 'BC', 'ABC', 'AC', 'BD') + (('AD', 'BE', 'CF', 'DE') if game.sf3 else ()):
+        for b in ('AB', 'CD', 'BC', 'ABC', 'AC', 'BD') + (('AD', 'BE', 'CF', 'DE') if game.sf3 or game.mvc else ()):
             e.load(st); game.power(e)
             seen.update(play(e, [(5, b)] * 4, None, 50))
     return seen
@@ -289,7 +303,7 @@ SWAP6 = str.maketrans('ABCDEF', 'CBAFED')
 
 def variant(cmd):
     """The other-strength version: A<->C, B<->D (six buttons: light <-> heavy)."""
-    return cmd.translate(SWAP6 if GAME[0] and GAME[0].sf3 else SWAP)
+    return cmd.translate(SWAP6 if GAME[0] and (GAME[0].sf3 or GAME[0].mvc) else SWAP)
 
 def test_char(e, game, base, ch):
     far, close = setup_states(e, base)
