@@ -529,7 +529,7 @@ class MainActivity : ComponentActivity() {
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
             )
-            val url = artUrl(game, kind)
+            val url = artUrl(game, kind, remember(game, refresh) { roms.setFor(game) })
             if (url != null) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),

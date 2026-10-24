@@ -465,6 +465,11 @@ void LibretroDroid::step() {
 
     LOGD("Stepping into retro_run()");
 
+    if (frozen) {
+        if (video) video->renderFrame();
+        return;
+    }
+
     unsigned frames = 1;
     if (fpsSync) {
         unsigned requestedFrames = fpsSync->advanceFrames();

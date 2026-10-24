@@ -126,6 +126,8 @@ public class LibretroDroid {
 
     // Two-player lockstep: see LibretroDroid::setNetplay in libretrodroid.h.
     public static native void setNetplay(boolean enabled);
+    // Paused, but still drawing the last frame (see LibretroDroid::setFrozen).
+    public static native void setFrozen(boolean frozen);
     public static native boolean pushNetInput(int frame, int p1, int p2);
     public static native int getNetFrame();
     public static native long[] getNetSum();

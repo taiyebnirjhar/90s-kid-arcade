@@ -65,6 +65,21 @@ sealed interface GameDialog {
     data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
 }
 
+/** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
+data class Look(
+    val screen: ScreenMode,
+    val stick: StickMode,
+    val size: Float,
+    val opacity: Float,
+    val labelMode: LabelMode,
+    val haptics: Boolean,
+    val leftHanded: Boolean,
+    val stepFrames: Int,
+    val pressFrames: Int,
+)
+
+fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames)
+
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
     companion object {
@@ -139,6 +154,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Before the emulator starts: in two-player mode no frame runs until
         // both phones' inputs for it are in.
         LibretroDroid.setNetplay(link != null)
+        // The emulator is one object for the whole app: a game left frozen
+        // (quit from the menu) mustn't start the next one frozen.
+        LibretroDroid.setFrozen(false)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -542,11 +560,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             system = system,
             slots = slots,
             facingLeft = pad.facingLeft,
-            size = prefs.size,
-            leftHanded = prefs.leftHanded,
-            labelMode = prefs.labelMode,
-            stick = prefs.stick,
-            haptics = prefs.haptics,
+            size = look.size,
+            leftHanded = look.leftHanded,
+            labelMode = look.labelMode,
+            stick = look.stick,
+            haptics = look.haptics,
             block = game.block,
             run = game.run,
         )
@@ -558,7 +576,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val w = root.width
         val h = root.height
         if (w == 0 || h == 0) return
-        val aspect = prefs.screen.aspect
+        val aspect = look.screen.aspect
         val viewW = if (aspect == null) w else minOf(w, (h * aspect).roundToInt())
         val lp = retroView.layoutParams as FrameLayout.LayoutParams
         if (lp.width != viewW) {
@@ -569,13 +587,23 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     // Layouts are saved per kind of game and per hand.
-    private fun layoutKey() = "${game.layout.name}.${if (prefs.leftHanded) "L" else "R"}"
+    private fun layoutKey() = "${game.layout.name}.${if (look.leftHanded) "L" else "R"}"
 
-    fun applyPrefs() {
+    /** What's on screen now: the saved settings, or a preview from Controls. */
+    private var look: Look = Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4)
+
+    /** Applies the saved settings. */
+    fun applyPrefs() = applyLook(prefs.look())
+
+    /** Shows [preview] on the game without saving it (Controls, as you change things). */
+    fun preview(preview: Look) = applyLook(preview)
+
+    private fun applyLook(l: Look) {
+        look = l
         hud.tweaks = prefs.tweaks(layoutKey())
         applyScreen()
-        pad.timing = Timing(step = prefs.stepFrames, press = prefs.pressFrames)
-        hud.alpha = prefs.opacity
+        pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
+        hud.alpha = l.opacity
         updateHud()
     }
 
@@ -641,15 +669,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         paused = true
         hud.releaseAll()
         pad.releaseAll()
-        retroView.onPause()
+        // Frozen rather than stopped, so the picture still redraws: Controls
+        // shows screen-size changes live while the game waits.
         LibretroDroid.pause()
+        LibretroDroid.setFrozen(true)
     }
 
     private fun resumeEmulation() {
         if (link != null || !paused) return
         paused = false
+        LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
-        retroView.onResume()
     }
 
     private val stateFile get() = File(File(filesDir, "states").apply { mkdirs() }, "$set.state")

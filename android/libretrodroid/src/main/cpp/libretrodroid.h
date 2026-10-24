@@ -30,6 +30,7 @@
 #include <memory>
 #include <optional>
 #include <deque>
+#include <atomic>
 #include <array>
 
 #include "log.h"
@@ -85,6 +86,10 @@ public:
     // its inputs for both players have been pushed, and those replace the
     // touch input for ports 0 and 1.
     void setNetplay(bool enabled);
+
+    // Frozen: no game frames run, but the last one is still drawn, so the
+    // picture follows size changes while the game is paused (90s Kid Arcade).
+    void setFrozen(bool value) { frozen = value; }
     bool pushNetInput(int32_t frame, int32_t p1, int32_t p2);
     int32_t getNetFrame();
     // The latest state checksum: {frame, sum}, frame -1 if none yet.
@@ -195,6 +200,7 @@ private:
 
     std::mutex coreLock;
 
+    std::atomic<bool> frozen{false};
     std::mutex netMutex;
     bool netplay = false;
     std::deque<std::array<int32_t, 3>> netQueue;

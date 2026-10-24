@@ -55,6 +55,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.window.DialogProperties
 import com.kofarcade.core.Character
 import com.kofarcade.core.Move
@@ -83,16 +87,27 @@ fun GameDialogs(game: GameActivity) {
 private fun Sheet(
     onDismiss: () -> Unit,
     width: Int = 360,
+    /** Docked at the right edge with the game undimmed, for settings you watch take effect. */
+    side: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = Palette.panel,
-            border = BorderStroke(1.dp, Palette.line),
-            modifier = Modifier.widthIn(max = width.dp).padding(16.dp),
+        if (side) {
+            val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+            SideEffect { window?.setDimAmount(0f) }
+        }
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = if (side) Alignment.CenterEnd else Alignment.Center,
         ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) { content() }
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = Palette.panel.copy(alpha = if (side) 0.94f else 1f),
+                border = BorderStroke(1.dp, Palette.line),
+                modifier = Modifier.widthIn(max = width.dp).padding(16.dp),
+            ) {
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) { content() }
+            }
         }
     }
 }
@@ -447,8 +462,19 @@ private fun ControlsSettings(game: GameActivity) {
     var auto by remember { mutableStateOf(p.autoDetect) }
     var info by remember { mutableStateOf(p.detectInfo) }
 
-    Sheet(onDismiss = { game.close() }, width = 480) {
+    // Every change shows on the game right away; Save keeps it, Cancel puts
+    // back what was saved.
+    val look = Look(screen, stick, size, opacity, labelMode, haptics, lefty, step, press)
+    LaunchedEffect(look) { game.preview(look) }
+    fun cancel() {
+        game.applyPrefs()
+        game.close()
+    }
+
+    Sheet(onDismiss = ::cancel, width = 400, side = true) {
         Title("Controls")
+        Text("Changes show on the game as you make them.", color = Palette.muted, fontSize = 13.sp)
+        Spacer(Modifier.size(8.dp))
         Text("Screen", color = Palette.text, fontWeight = FontWeight.SemiBold)
         ScreenMode.entries.forEach { mode ->
             Row(
@@ -494,7 +520,7 @@ private fun ControlsSettings(game: GameActivity) {
         Stepper("Frames per direction", step, 1..6) { step = it }
         Stepper("Frames button held", press, 1..12) { press = it }
         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) {
-            TextButton(onClick = { game.close() }) { Text("Cancel") }
+            TextButton(onClick = ::cancel) { Text("Cancel") }
             Button(
                 onClick = {
                     p.screen = screen

@@ -220,6 +220,14 @@ JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getMemoryS
     return (jint) LibretroDroid::getInstance().getMemorySize(id);
 }
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setFrozen(
+    JNIEnv* env,
+    jclass obj,
+    jboolean frozen
+) {
+    LibretroDroid::getInstance().setFrozen(frozen);
+}
+
 JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setNetplay(
     JNIEnv* env,
     jclass obj,

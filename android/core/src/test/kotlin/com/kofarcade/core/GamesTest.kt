@@ -59,4 +59,13 @@ class GamesTest {
         assertTrue(artUrl(gameById("sengoku3")!!, Art.TITLE)!!.contains("Sengoku%203%20_%20Sengoku"))
         for (g in GAMES) assertNotNull(g.art, g.id)
     }
+
+    @Test
+    fun kof2005ShowsTheVersionYouHave() {
+        val g = gameById("kof2005")!!
+        assertTrue("2005%20Unique" in artUrl(g, Art.TITLE)!!)
+        assertTrue("Extra%20Plus" in artUrl(g, Art.TITLE, "kf10thep")!!)
+        // Versions outside the game's list keep the game's own picture.
+        assertEquals(artUrl(g, Art.TITLE), artUrl(g, Art.TITLE, "kof10thd"))
+    }
 }

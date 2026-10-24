@@ -80,8 +80,9 @@ val GAMES: List<Game> = listOf(
     // Anniversary hacks of KOF 2002, which play like 2002.
     Game(
         id = "kof2005", series = "The King of Fighters", title = "KOF 2005", subtitle = "10th Anniversary",
-        // The hacks have no art of their own; they are KOF 2002 underneath.
-        art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
+        // Each hack has its own title screen; the card shows the one you
+        // have (artUrl), this one until then.
+        art = "The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002)",
         sets = listOf("kf2k5uni", "kof10th", "kf10thep"),
         layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
     ),
@@ -122,8 +123,10 @@ enum class Art(val folder: String) { TITLE("Named_Titles"), SNAP("Named_Snaps"),
  * set RetroArch and Lemuroid use). Characters libretro can't use in file
  * names become "_"; the rest is URL-encoded.
  */
-fun artUrl(game: Game, kind: Art): String? {
-    val name = game.art ?: return null
+fun artUrl(game: Game, kind: Art, set: String? = null): String? {
+    // A version listed in the game's sets has its own picture, under the
+    // name FBNeo gives it (the thumbnails are named after FBNeo's list).
+    val name = set?.takeIf { it in game.sets }?.let { romSet(it)?.title } ?: game.art ?: return null
     val file = name.map { if (it in "&*/:`<>?\\|\"") '_' else it }.joinToString("")
     val encoded = java.net.URLEncoder.encode("$file.png", "UTF-8").replace("+", "%20")
     return "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/${kind.folder}/$encoded"
