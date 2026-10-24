@@ -107,10 +107,11 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
     when (val s = screen) {
         TwoPlayer.Menu -> TwoPlayerMenu(onHost = { screen = TwoPlayer.PickGame }, onJoin = { screen = TwoPlayer.Join }, onBack = back)
         TwoPlayer.PickGame -> {
-            val ready = remember { GAMES.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
+            val hasBios = remember { roms.has(BIOS) }
+            val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
             PickGameScreen(
                 games = ready.map { (g, set) -> GameChoice(g.title, g.subtitle ?: g.series) },
-                ready = roms.has(BIOS) && ready.isNotEmpty(),
+                ready = ready.isNotEmpty(),
                 onPick = { i -> ready[i].let { (g, set) -> screen = TwoPlayer.Hosting(g, set) } },
                 onLibrary = onLibrary,
                 onBack = back,
@@ -137,9 +138,9 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onBack: () -> Unit,
         val thread = Thread({
             try {
                 val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
-                val bios = roms.fingerprint(BIOS) ?: error("Can't read the BIOS")
-                val h = NetHost(playerName(), set, game.title, rom, bios).also { host = it }
-                beacon = BeaconSender(Beacon(PROTOCOL, playerName(), set, game.title, rom, h.port))
+                val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
+                val h = NetHost(playerName(), set, game.fullTitle, rom, bios).also { host = it }
+                beacon = BeaconSender(Beacon(PROTOCOL, playerName(), set, game.fullTitle, rom, h.port))
                 val link = h.accept { hello ->
                     // Ask on screen; the network thread waits for the tap.
                     val answer = CompletableDeferred<String?>()
@@ -174,7 +175,7 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onBack: () -> Unit,
     }
 
     HostingScreen(
-        title = game.title,
+        title = game.fullTitle,
         status = status,
         failed = failed,
         addresses = addresses,
@@ -222,7 +223,7 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
             try {
                 val link = withContext(Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
-                    val bios = roms.fingerprint(BIOS) ?: error("Can't read the BIOS")
+                    val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
                     join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios)
                 }
                 Netplay.link = link
@@ -311,7 +312,7 @@ fun PickGameScreen(games: List<GameChoice>, ready: Boolean, onPick: (Int) -> Uni
     ArcadeScreen(title = "Host a game", kicker = "Step 1 · pick the game", onBack = onBack) {
         if (!ready) {
             Panel {
-                Text("Add the Neo Geo BIOS and a game first.", color = Palette.text, fontSize = 15.sp)
+                Text("Add a game first (Neo Geo games also need the BIOS).", color = Palette.text, fontSize = 15.sp)
                 Spacer(Modifier.height(12.dp))
                 GoldButton("Open the library", onLibrary)
             }

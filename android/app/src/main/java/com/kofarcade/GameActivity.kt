@@ -270,7 +270,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun errorMessage(code: Int) = when (code) {
         GLRetroView.ERROR_LOAD_LIBRARY -> "The FBNeo emulator core is missing from this build."
         GLRetroView.ERROR_LOAD_GAME ->
-            "FBNeo couldn't load $set.zip. Check it's the right ROM set for FBNeo, and that neogeo.zip is added."
+            "FBNeo couldn't load $set.zip. Check it's the right ROM set for FBNeo" +
+                if (game.neoGeo) ", and that neogeo.zip is added." else "."
         GLRetroView.ERROR_GL_NOT_COMPATIBLE -> "This phone's graphics aren't supported."
         else -> "Something went wrong running the game (error $code)."
     }
@@ -713,7 +714,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val settings: Prefs get() = prefs
 
-    val gameTitle: String get() = game.title
+    val gameTitle: String get() = game.fullTitle
 
     // ----- Dialogs, pause, save states -----
 

@@ -1,5 +1,5 @@
 {
- "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp",
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, src/burn/drv/capcom/d_cps1.cpp",
  "bios": [
   {
    "name": "sp-s3.sp1",
@@ -27,6 +27,2472 @@
   }
  ],
  "sets": [
+  {
+   "name": "dino",
+   "parent": null,
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (World 930201)",
+   "files": [
+    {
+     "name": "cde_23a.8f",
+     "size": 524288,
+     "crc": "8f4e585e",
+     "optional": false
+    },
+    {
+     "name": "cde_22a.7f",
+     "size": 524288,
+     "crc": "9278aa12",
+     "optional": false
+    },
+    {
+     "name": "cde_21a.6f",
+     "size": 524288,
+     "crc": "66d23de2",
+     "optional": false
+    },
+    {
+     "name": "cd-1m.3a",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd-3m.5a",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd-2m.4a",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd-4m.6a",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd-5m.7a",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd-7m.9a",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd-6m.8a",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd-8m.10a",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "cd63b.1a",
+     "size": 279,
+     "crc": "ef72e902",
+     "optional": true
+    },
+    {
+     "name": "iob1.12d",
+     "size": 279,
+     "crc": "3abc0700",
+     "optional": true
+    },
+    {
+     "name": "bprg1.11d",
+     "size": 279,
+     "crc": "31793da7",
+     "optional": true
+    },
+    {
+     "name": "ioc1.ic1",
+     "size": 260,
+     "crc": "a399772d",
+     "optional": true
+    },
+    {
+     "name": "d7l1.7l",
+     "size": 279,
+     "crc": "27b7410d",
+     "optional": true
+    },
+    {
+     "name": "d8l1.8l",
+     "size": 279,
+     "crc": "539fc7da",
+     "optional": true
+    },
+    {
+     "name": "d9k2.9k",
+     "size": 279,
+     "crc": "cd85a156",
+     "optional": true
+    },
+    {
+     "name": "d10f1.10f",
+     "size": 279,
+     "crc": "6619c494",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dino1v3",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (1v3, Hack)",
+   "files": [
+    {
+     "name": "cd1v3_23a.8f",
+     "size": 524288,
+     "crc": "1bf35c82",
+     "optional": false
+    },
+    {
+     "name": "cde_22a.7f",
+     "size": 524288,
+     "crc": "9278aa12",
+     "optional": false
+    },
+    {
+     "name": "cde_21a.6f",
+     "size": 524288,
+     "crc": "66d23de2",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dino3j",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs: Kyouryuu Shin Seiki (Three Prohibitions, Hack)",
+   "files": [
+    {
+     "name": "cd3j_23a.8f",
+     "size": 524288,
+     "crc": "bdd3df8f",
+     "optional": false
+    },
+    {
+     "name": "cd3j_22a.7f",
+     "size": 524288,
+     "crc": "ec4095bd",
+     "optional": false
+    },
+    {
+     "name": "cd3j_21a.6f",
+     "size": 524288,
+     "crc": "6c325068",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoa",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Asia TW 930223)",
+   "files": [
+    {
+     "name": "cdt_23.8f",
+     "size": 524288,
+     "crc": "f477f7a0",
+     "optional": false
+    },
+    {
+     "name": "cdt_22.7f",
+     "size": 524288,
+     "crc": "1e534ca5",
+     "optional": false
+    },
+    {
+     "name": "cdt_21.6f",
+     "size": 524288,
+     "crc": "74b04329",
+     "optional": false
+    },
+    {
+     "name": "cd-1m.3a",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd-3m.5a",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd-2m.4a",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd-4m.6a",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd-5m.7a",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd-7m.9a",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd-6m.8a",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd-8m.10a",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "cd63b.1a",
+     "size": 279,
+     "crc": "ef72e902",
+     "optional": true
+    },
+    {
+     "name": "iob1.12d",
+     "size": 279,
+     "crc": "3abc0700",
+     "optional": true
+    },
+    {
+     "name": "bprg1.11d",
+     "size": 279,
+     "crc": "31793da7",
+     "optional": true
+    },
+    {
+     "name": "ioc1.ic1",
+     "size": 260,
+     "crc": "a399772d",
+     "optional": true
+    },
+    {
+     "name": "d7l1.7l",
+     "size": 279,
+     "crc": "27b7410d",
+     "optional": true
+    },
+    {
+     "name": "d8l1.8l",
+     "size": 279,
+     "crc": "539fc7da",
+     "optional": true
+    },
+    {
+     "name": "d9k2.9k",
+     "size": 279,
+     "crc": "cd85a156",
+     "optional": true
+    },
+    {
+     "name": "d10f1.10f",
+     "size": 279,
+     "crc": "6619c494",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinods",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (God of War, Hack)",
+   "files": [
+    {
+     "name": "cdds_23a.8f",
+     "size": 524288,
+     "crc": "3c5c564d",
+     "optional": false
+    },
+    {
+     "name": "cdds_22a.7f",
+     "size": 524288,
+     "crc": "b0a03ae3",
+     "optional": false
+    },
+    {
+     "name": "cdds_21a.6f",
+     "size": 1048576,
+     "crc": "463dbeed",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinodw",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Warriors, Hack)",
+   "files": [
+    {
+     "name": "cddw_23a.8f",
+     "size": 524288,
+     "crc": "899ddad8",
+     "optional": false
+    },
+    {
+     "name": "cddw_22a.7f",
+     "size": 524288,
+     "crc": "0c6d3004",
+     "optional": false
+    },
+    {
+     "name": "cddw_21a.6f",
+     "size": 524288,
+     "crc": "50378c32",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoeh",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (hack, World 930201)",
+   "files": [
+    {
+     "name": "dinoeh.23",
+     "size": 524288,
+     "crc": "a6b88364",
+     "optional": false
+    },
+    {
+     "name": "cde_22a.rom",
+     "size": 524288,
+     "crc": "9278aa12",
+     "optional": false
+    },
+    {
+     "name": "dinoeh.21",
+     "size": 524288,
+     "crc": "b89a0548",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx01.rom",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx03.rom",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx02.rom",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx04.rom",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx05.rom",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx07.rom",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx06.rom",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx08.rom",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.rom",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd_q1.rom",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd_q2.rom",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd_q3.rom",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd_q4.rom",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinofw",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Framework 2022 Series, Hack)",
+   "files": [
+    {
+     "name": "cdfw_23a.8f",
+     "size": 524288,
+     "crc": "3b327fc4",
+     "optional": false
+    },
+    {
+     "name": "cdfw_22a.7f",
+     "size": 524288,
+     "crc": "11df0cfb",
+     "optional": false
+    },
+    {
+     "name": "cdfw_21a.6f",
+     "size": 524288,
+     "crc": "42bae64d",
+     "optional": false
+    },
+    {
+     "name": "cdfw_23a.dif",
+     "size": 524288,
+     "crc": "cd06b4b2",
+     "optional": false
+    },
+    {
+     "name": "cdfw_22a.dif",
+     "size": 524288,
+     "crc": "95c05099",
+     "optional": false
+    },
+    {
+     "name": "cdfw_21a.dif",
+     "size": 524288,
+     "crc": "60dbaaae",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoh",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg, Asia TW 930223)",
+   "files": [
+    {
+     "name": "cda_23h.rom",
+     "size": 524288,
+     "crc": "8e2a9cf0",
+     "optional": false
+    },
+    {
+     "name": "cda_22h.rom",
+     "size": 524288,
+     "crc": "f72cd219",
+     "optional": false
+    },
+    {
+     "name": "cda_21h.rom",
+     "size": 524288,
+     "crc": "bc275b76",
+     "optional": false
+    },
+    {
+     "name": "cda_20h.rom",
+     "size": 524288,
+     "crc": "8987c975",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx01.rom",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx03.rom",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx02.rom",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx04.rom",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx05.rom",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx07.rom",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx06.rom",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd_gfx08.rom",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.rom",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd_q1.rom",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd_q2.rom",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd_q3.rom",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd_q4.rom",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinohc",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Chinese bootleg, Asia TW 930223)",
+   "files": [
+    {
+     "name": "23",
+     "size": 524288,
+     "crc": "cecf4b12",
+     "optional": false
+    },
+    {
+     "name": "22",
+     "size": 524288,
+     "crc": "07eeb238",
+     "optional": false
+    },
+    {
+     "name": "21",
+     "size": 524288,
+     "crc": "3bc3d57a",
+     "optional": false
+    },
+    {
+     "name": "1",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "2",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "3",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "4",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "5",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "6",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "7",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "8",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "9",
+     "size": 65536,
+     "crc": "698e8b58",
+     "optional": false
+    },
+    {
+     "name": "18",
+     "size": 131072,
+     "crc": "6de2c2db",
+     "optional": false
+    },
+    {
+     "name": "19",
+     "size": 131072,
+     "crc": "b99091ae",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinohunt",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Dinosaur Hunter (Chinese bootleg of Cadillacs and Dinosaurs)",
+   "files": [
+    {
+     "name": "u23",
+     "size": 524288,
+     "crc": "8d5ddc5d",
+     "optional": false
+    },
+    {
+     "name": "u22",
+     "size": 524288,
+     "crc": "f72cd219",
+     "optional": false
+    },
+    {
+     "name": "u21",
+     "size": 524288,
+     "crc": "bc275b76",
+     "optional": false
+    },
+    {
+     "name": "u20",
+     "size": 524288,
+     "crc": "8987c975",
+     "optional": false
+    },
+    {
+     "name": "u1",
+     "size": 524288,
+     "crc": "a01a9fb5",
+     "optional": false
+    },
+    {
+     "name": "u2",
+     "size": 524288,
+     "crc": "bdf02c17",
+     "optional": false
+    },
+    {
+     "name": "u3",
+     "size": 524288,
+     "crc": "058beefa",
+     "optional": false
+    },
+    {
+     "name": "u4",
+     "size": 524288,
+     "crc": "5028a9f1",
+     "optional": false
+    },
+    {
+     "name": "u5",
+     "size": 524288,
+     "crc": "d77f89ea",
+     "optional": false
+    },
+    {
+     "name": "u6",
+     "size": 524288,
+     "crc": "bfbcb034",
+     "optional": false
+    },
+    {
+     "name": "u7",
+     "size": 524288,
+     "crc": "a2544d4e",
+     "optional": false
+    },
+    {
+     "name": "u8",
+     "size": 524288,
+     "crc": "8869bbb1",
+     "optional": false
+    },
+    {
+     "name": "u9",
+     "size": 65536,
+     "crc": "2eb16a83",
+     "optional": false
+    },
+    {
+     "name": "u18",
+     "size": 131072,
+     "crc": "8d2899ba",
+     "optional": false
+    },
+    {
+     "name": "u19",
+     "size": 131072,
+     "crc": "b34a4b42",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs: Kyouryuu Shin Seiki (Japan 930201)",
+   "files": [
+    {
+     "name": "cdj_23a.8f",
+     "size": 524288,
+     "crc": "5f3ece96",
+     "optional": false
+    },
+    {
+     "name": "cdj_22a.7f",
+     "size": 524288,
+     "crc": "a0d8de29",
+     "optional": false
+    },
+    {
+     "name": "cdj_21a.6f",
+     "size": 524288,
+     "crc": "66d23de2",
+     "optional": false
+    },
+    {
+     "name": "cd_01.3a",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd_02.4a",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd_03.5a",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd_04.6a",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd_05.7a",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd_06.8a",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd_07.9a",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd_08.10a",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "cd63b.1a",
+     "size": 279,
+     "crc": "ef72e902",
+     "optional": true
+    },
+    {
+     "name": "iob1.12d",
+     "size": 279,
+     "crc": "3abc0700",
+     "optional": true
+    },
+    {
+     "name": "bprg1.11d",
+     "size": 279,
+     "crc": "31793da7",
+     "optional": true
+    },
+    {
+     "name": "ioc1.ic1",
+     "size": 260,
+     "crc": "a399772d",
+     "optional": true
+    },
+    {
+     "name": "d7l1.7l",
+     "size": 279,
+     "crc": "27b7410d",
+     "optional": true
+    },
+    {
+     "name": "d8l1.8l",
+     "size": 279,
+     "crc": "539fc7da",
+     "optional": true
+    },
+    {
+     "name": "d9k2.9k",
+     "size": 279,
+     "crc": "cd85a156",
+     "optional": true
+    },
+    {
+     "name": "d10f1.10f",
+     "size": 279,
+     "crc": "6619c494",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinojd",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (GOTVG 10th Anniversary, Hack)",
+   "files": [
+    {
+     "name": "cdjd_23a.8f",
+     "size": 524288,
+     "crc": "87056a55",
+     "optional": false
+    },
+    {
+     "name": "cdjd_22a.7f",
+     "size": 524288,
+     "crc": "a24529f3",
+     "optional": false
+    },
+    {
+     "name": "cdjd_21a.6f",
+     "size": 1048576,
+     "crc": "d7e219b2",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinojj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Contest, Hack)",
+   "files": [
+    {
+     "name": "cdjj_23a.8f",
+     "size": 524288,
+     "crc": "7e3d3151",
+     "optional": false
+    },
+    {
+     "name": "cdjj_22a.7f",
+     "size": 524288,
+     "crc": "fab740a9",
+     "optional": false
+    },
+    {
+     "name": "cdjj_21a.6f",
+     "size": 524288,
+     "crc": "84cfc5df",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinokr",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Crazy BBQ, Hack)",
+   "files": [
+    {
+     "name": "cdkr_23a.8f",
+     "size": 524288,
+     "crc": "fdf62879",
+     "optional": false
+    },
+    {
+     "name": "cdkr_22a.7f",
+     "size": 524288,
+     "crc": "f7145191",
+     "optional": false
+    },
+    {
+     "name": "cdkr_21a.6f",
+     "size": 524288,
+     "crc": "11e2b75f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoly",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Purgatory, Hack)",
+   "files": [
+    {
+     "name": "cdly_23a.8f",
+     "size": 524288,
+     "crc": "6f992901",
+     "optional": false
+    },
+    {
+     "name": "cdly_22a.7f",
+     "size": 524288,
+     "crc": "273dacc8",
+     "optional": false
+    },
+    {
+     "name": "cdly_21a.6f",
+     "size": 524288,
+     "crc": "982543a0",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinopic",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg with PIC16C57, set 1)",
+   "files": [
+    {
+     "name": "5.bin",
+     "size": 524288,
+     "crc": "96dfcbf1",
+     "optional": false
+    },
+    {
+     "name": "3.bin",
+     "size": 524288,
+     "crc": "13dfeb08",
+     "optional": false
+    },
+    {
+     "name": "7.bin",
+     "size": 524288,
+     "crc": "6133f349",
+     "optional": false
+    },
+    {
+     "name": "2.bin",
+     "size": 524288,
+     "crc": "0e4058ba",
+     "optional": false
+    },
+    {
+     "name": "4.bin",
+     "size": 524288,
+     "crc": "f3c2c98d",
+     "optional": false
+    },
+    {
+     "name": "8.bin",
+     "size": 524288,
+     "crc": "d574befc",
+     "optional": false
+    },
+    {
+     "name": "9.bin",
+     "size": 524288,
+     "crc": "55ef0adc",
+     "optional": false
+    },
+    {
+     "name": "6.bin",
+     "size": 524288,
+     "crc": "cc0805fc",
+     "optional": false
+    },
+    {
+     "name": "13.bin",
+     "size": 524288,
+     "crc": "1371f714",
+     "optional": false
+    },
+    {
+     "name": "12.bin",
+     "size": 524288,
+     "crc": "b284c4a7",
+     "optional": false
+    },
+    {
+     "name": "11.bin",
+     "size": 524288,
+     "crc": "b7ad3394",
+     "optional": false
+    },
+    {
+     "name": "10.bin",
+     "size": 524288,
+     "crc": "88847705",
+     "optional": false
+    },
+    {
+     "name": "pic16c57-rp",
+     "size": 11596,
+     "crc": "5a6d393c",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "1.bin",
+     "size": 524288,
+     "crc": "7d921309",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinopic2",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg with PIC16C57, set 2)",
+   "files": [
+    {
+     "name": "27c4000-m12481.bin",
+     "size": 524288,
+     "crc": "96dfcbf1",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12374r-2.bin",
+     "size": 524288,
+     "crc": "13dfeb08",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12374r-3.bin",
+     "size": 524288,
+     "crc": "6133f349",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12374r-1.bin",
+     "size": 524288,
+     "crc": "0e4058ba",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-4.bin",
+     "size": 524288,
+     "crc": "f3c2c98d",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-3.bin",
+     "size": 524288,
+     "crc": "a0e1f6e0",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-2.bin",
+     "size": 524288,
+     "crc": "55ef0adc",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-1.bin",
+     "size": 524288,
+     "crc": "cc0805fc",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-8.bin",
+     "size": 524288,
+     "crc": "1371f714",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-7.bin",
+     "size": 524288,
+     "crc": "b284c4a7",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-6.bin",
+     "size": 524288,
+     "crc": "b7ad3394",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12481-5.bin",
+     "size": 524288,
+     "crc": "88847705",
+     "optional": false
+    },
+    {
+     "name": "pic16c57-xt.hex",
+     "size": 9932,
+     "crc": "a6a5eac4",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m12623.bin",
+     "size": 524288,
+     "crc": "7d921309",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "gal20v8a-1.bin",
+     "size": 343,
+     "crc": "cd99ca47",
+     "optional": true
+    },
+    {
+     "name": "gal20v8a-2.bin",
+     "size": 343,
+     "crc": "60d016b9",
+     "optional": true
+    },
+    {
+     "name": "gal20v8a-3.bin",
+     "size": 343,
+     "crc": "049b7f4f",
+     "optional": true
+    },
+    {
+     "name": "palce16v8h-1.bin",
+     "size": 279,
+     "crc": "48253c66",
+     "optional": true
+    },
+    {
+     "name": "palce16v8h-2.bin",
+     "size": 279,
+     "crc": "9ae375ba",
+     "optional": true
+    },
+    {
+     "name": "palce16v8h-3.bin",
+     "size": 279,
+     "crc": "b0f10adf",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinopic3",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg with PIC16C57, set 3)",
+   "files": [
+    {
+     "name": "tk1-305_27c800.bin",
+     "size": 1048576,
+     "crc": "aa468337",
+     "optional": false
+    },
+    {
+     "name": "tk1-204_27c800.bin",
+     "size": 1048576,
+     "crc": "0efd1ddb",
+     "optional": false
+    },
+    {
+     "name": "tb416-02_27c160.bin",
+     "size": 2097152,
+     "crc": "bfd01d21",
+     "optional": false
+    },
+    {
+     "name": "tb415-01_27c160.bin",
+     "size": 2097152,
+     "crc": "ef508ec5",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "ti-i_27c040.bin",
+     "size": 524288,
+     "crc": "7d921309",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "1_palce20v8.bin",
+     "size": 343,
+     "crc": "cd99ca47",
+     "optional": true
+    },
+    {
+     "name": "2_palce20v8.bin",
+     "size": 343,
+     "crc": "60d016b9",
+     "optional": true
+    },
+    {
+     "name": "3_palce20v8.bin",
+     "size": 343,
+     "crc": "049b7f4f",
+     "optional": true
+    },
+    {
+     "name": "4_palce16v8.bin",
+     "size": 279,
+     "crc": "97a67c6d",
+     "optional": true
+    },
+    {
+     "name": "5_palce16v8.bin",
+     "size": 279,
+     "crc": "48253c66",
+     "optional": true
+    },
+    {
+     "name": "6_palce16v8.bin",
+     "size": 279,
+     "crc": "9ae375ba",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinopic4",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg with PIC16C57, set 4)",
+   "files": [
+    {
+     "name": "27c4000-m15377-a-5.bin",
+     "size": 524288,
+     "crc": "96dfcbf1",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15262-a-3.bin",
+     "size": 524288,
+     "crc": "13dfeb08",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15295-a-4.bin",
+     "size": 524288,
+     "crc": "6133f349",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15263-a-1-2.bin",
+     "size": 524288,
+     "crc": "0e4058ba",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15263-a-1-9.bin",
+     "size": 524288,
+     "crc": "f3c2c98d",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15262-a-8.bin",
+     "size": 524288,
+     "crc": "a0e1f6e0",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15279-a-7.bin",
+     "size": 524288,
+     "crc": "55ef0adc",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15279-a-6.bin",
+     "size": 524288,
+     "crc": "cc0805fc",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15013-b-1-13.bin",
+     "size": 524288,
+     "crc": "1371f714",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15263-a-1-12.bin",
+     "size": 524288,
+     "crc": "b284c4a7",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15377-a-11.bin",
+     "size": 524288,
+     "crc": "b7ad3394",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15279-a-10.bin",
+     "size": 524288,
+     "crc": "88847705",
+     "optional": false
+    },
+    {
+     "name": "pic16c57-rc.bin",
+     "size": 4144,
+     "crc": "4d262eaa",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "27c4000-m15388-a-1.bin",
+     "size": 524288,
+     "crc": "7d921309",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "cat93c46p.bin",
+     "size": 128,
+     "crc": "d49fa351",
+     "optional": true
+    },
+    {
+     "name": "gal20v8a-1.bin",
+     "size": 343,
+     "crc": "cd99ca47",
+     "optional": true
+    },
+    {
+     "name": "gal20v8a-2.bin",
+     "size": 343,
+     "crc": "60d016b9",
+     "optional": true
+    },
+    {
+     "name": "gal20v8a-3.bin",
+     "size": 343,
+     "crc": "049b7f4f",
+     "optional": true
+    },
+    {
+     "name": "palce16v8h-1.bin",
+     "size": 279,
+     "crc": "48253c66",
+     "optional": true
+    },
+    {
+     "name": "palce16v8h-2.bin",
+     "size": 279,
+     "crc": "9ae375ba",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinopic5",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (bootleg with PIC16C57, set 5)",
+   "files": [
+    {
+     "name": "cad_28.bin",
+     "size": 262144,
+     "crc": "97dc3d86",
+     "optional": false
+    },
+    {
+     "name": "cad_32.bin",
+     "size": 262144,
+     "crc": "200a594f",
+     "optional": false
+    },
+    {
+     "name": "cad_29.bin",
+     "size": 262144,
+     "crc": "302303c4",
+     "optional": false
+    },
+    {
+     "name": "cad_33.bin",
+     "size": 262144,
+     "crc": "5bf6deda",
+     "optional": false
+    },
+    {
+     "name": "cad_31.bin",
+     "size": 131072,
+     "crc": "f0110c8a",
+     "optional": false
+    },
+    {
+     "name": "cad_35.bin",
+     "size": 131072,
+     "crc": "fbcf4314",
+     "optional": false
+    },
+    {
+     "name": "cad_30.bin",
+     "size": 131072,
+     "crc": "bbcafc3b",
+     "optional": false
+    },
+    {
+     "name": "cad_34.bin",
+     "size": 131072,
+     "crc": "481369b8",
+     "optional": false
+    },
+    {
+     "name": "cad_24.bin",
+     "size": 262144,
+     "crc": "e59e0066",
+     "optional": false
+    },
+    {
+     "name": "cad_20.bin",
+     "size": 262144,
+     "crc": "779bffb2",
+     "optional": false
+    },
+    {
+     "name": "cad_14.bin",
+     "size": 262144,
+     "crc": "79b60fc5",
+     "optional": false
+    },
+    {
+     "name": "cad_10.bin",
+     "size": 262144,
+     "crc": "9d5b2ed4",
+     "optional": false
+    },
+    {
+     "name": "cad_26.bin",
+     "size": 262144,
+     "crc": "2db8cb57",
+     "optional": false
+    },
+    {
+     "name": "cad_22.bin",
+     "size": 262144,
+     "crc": "b58c4246",
+     "optional": false
+    },
+    {
+     "name": "cad_16.bin",
+     "size": 262144,
+     "crc": "569e5cf0",
+     "optional": false
+    },
+    {
+     "name": "cad_12.bin",
+     "size": 262144,
+     "crc": "33ed501d",
+     "optional": false
+    },
+    {
+     "name": "cad_25.bin",
+     "size": 262144,
+     "crc": "900b82b7",
+     "optional": false
+    },
+    {
+     "name": "cad_21.bin",
+     "size": 262144,
+     "crc": "d65ee299",
+     "optional": false
+    },
+    {
+     "name": "cad_15.bin",
+     "size": 262144,
+     "crc": "aa54f07c",
+     "optional": false
+    },
+    {
+     "name": "cad_11.bin",
+     "size": 262144,
+     "crc": "8594b5e8",
+     "optional": false
+    },
+    {
+     "name": "cad_27.bin",
+     "size": 262144,
+     "crc": "27492fde",
+     "optional": false
+    },
+    {
+     "name": "cad_23.bin",
+     "size": 262144,
+     "crc": "f07c16f2",
+     "optional": false
+    },
+    {
+     "name": "cad_17.bin",
+     "size": 262144,
+     "crc": "920df2fd",
+     "optional": false
+    },
+    {
+     "name": "cad_13.bin",
+     "size": 262144,
+     "crc": "07a564b4",
+     "optional": false
+    },
+    {
+     "name": "cad_09.bin",
+     "size": 65536,
+     "crc": "46546432",
+     "optional": false
+    },
+    {
+     "name": "cad_18.bin",
+     "size": 131072,
+     "crc": "bd12c2ce",
+     "optional": false
+    },
+    {
+     "name": "cad_19.bin",
+     "size": 131072,
+     "crc": "9233de5a",
+     "optional": false
+    },
+    {
+     "name": "pic16c57-rp",
+     "size": 0,
+     "crc": "00000000",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinoplus",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Judgement Day, Hack)",
+   "files": [
+    {
+     "name": "cdu_pls.10f",
+     "size": 2097152,
+     "crc": "fbd102e9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinore",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs Readjusted (Hack, v1.4)",
+   "files": [
+    {
+     "name": "cde_re.10f",
+     "size": 2097152,
+     "crc": "7dd12d69",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinosdj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Triassic, Hack)",
+   "files": [
+    {
+     "name": "cdu_sdj.10f",
+     "size": 2097152,
+     "crc": "e9320184",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinosj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Century, Hack)",
+   "files": [
+    {
+     "name": "cdsj_23a.8f",
+     "size": 524288,
+     "crc": "34a60e53",
+     "optional": false
+    },
+    {
+     "name": "cdsj_22a.7f",
+     "size": 524288,
+     "crc": "8c28ca74",
+     "optional": false
+    },
+    {
+     "name": "cdsj_21a.6f",
+     "size": 524288,
+     "crc": "2f9132a4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoss",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Competition, Hack)",
+   "files": [
+    {
+     "name": "cdu_ss.10f",
+     "size": 2097152,
+     "crc": "e51e9eec",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinosyn",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (2020 Commemorative, Hack)",
+   "files": [
+    {
+     "name": "cdj_syn.10f",
+     "size": 2097152,
+     "crc": "aaa165ca",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinot",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs Turbo 97 (bootleg, Asia TW 930223, set 1)",
+   "files": [
+    {
+     "name": "kl2-r1.800",
+     "size": 1048576,
+     "crc": "4c70dca7",
+     "optional": false
+    },
+    {
+     "name": "kl2-l2.800",
+     "size": 1048576,
+     "crc": "c6ae7338",
+     "optional": false
+    },
+    {
+     "name": "cd-a.160",
+     "size": 2097152,
+     "crc": "7e4f9fb3",
+     "optional": false
+    },
+    {
+     "name": "cd-b.160",
+     "size": 2097152,
+     "crc": "89532d85",
+     "optional": false
+    },
+    {
+     "name": "cd_q.rom",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd_q1.rom",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd_q2.rom",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd_q3.rom",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd_q4.rom",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinotj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (General, Hack)",
+   "files": [
+    {
+     "name": "cdtj_23a.8f",
+     "size": 524288,
+     "crc": "6043325e",
+     "optional": false
+    },
+    {
+     "name": "cdtj_22a.7f",
+     "size": 524288,
+     "crc": "31e755b7",
+     "optional": false
+    },
+    {
+     "name": "cdtj_21a.6f",
+     "size": 524288,
+     "crc": "9d6e9406",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinotpic",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs Turbo 97 (bootleg, Asia TW 930223, set 2)",
+   "files": [
+    {
+     "name": "cd-d.800",
+     "size": 1048576,
+     "crc": "2a7b2915",
+     "optional": false
+    },
+    {
+     "name": "cd-e.800",
+     "size": 1048576,
+     "crc": "e8370226",
+     "optional": false
+    },
+    {
+     "name": "cd-a.160",
+     "size": 2097152,
+     "crc": "7e4f9fb3",
+     "optional": false
+    },
+    {
+     "name": "cd-b.160",
+     "size": 2097152,
+     "crc": "89532d85",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinotw",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (King, Hack)",
+   "files": [
+    {
+     "name": "cdtw_23a.8f",
+     "size": 524288,
+     "crc": "8c43cd07",
+     "optional": false
+    },
+    {
+     "name": "cdtw_22a.7f",
+     "size": 524288,
+     "crc": "69ff9e0b",
+     "optional": false
+    },
+    {
+     "name": "cdtw_21a.6f",
+     "size": 1048576,
+     "crc": "e005d793",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinou",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (USA 930201)",
+   "files": [
+    {
+     "name": "cdu_23a.8f",
+     "size": 524288,
+     "crc": "7c2543cd",
+     "optional": false
+    },
+    {
+     "name": "cdu_22a.7f",
+     "size": 524288,
+     "crc": "d19f981e",
+     "optional": false
+    },
+    {
+     "name": "cdu_21a.6f",
+     "size": 524288,
+     "crc": "66d23de2",
+     "optional": false
+    },
+    {
+     "name": "cd-1m.3a",
+     "size": 524288,
+     "crc": "8da4f917",
+     "optional": false
+    },
+    {
+     "name": "cd-3m.5a",
+     "size": 524288,
+     "crc": "6c40f603",
+     "optional": false
+    },
+    {
+     "name": "cd-2m.4a",
+     "size": 524288,
+     "crc": "09c8fc2d",
+     "optional": false
+    },
+    {
+     "name": "cd-4m.6a",
+     "size": 524288,
+     "crc": "637ff38f",
+     "optional": false
+    },
+    {
+     "name": "cd-5m.7a",
+     "size": 524288,
+     "crc": "470befee",
+     "optional": false
+    },
+    {
+     "name": "cd-7m.9a",
+     "size": 524288,
+     "crc": "22bfb7a3",
+     "optional": false
+    },
+    {
+     "name": "cd-6m.8a",
+     "size": 524288,
+     "crc": "e7599ac4",
+     "optional": false
+    },
+    {
+     "name": "cd-8m.10a",
+     "size": 524288,
+     "crc": "211b4b15",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "cd63b.1a",
+     "size": 279,
+     "crc": "ef72e902",
+     "optional": true
+    },
+    {
+     "name": "iob1.12d",
+     "size": 279,
+     "crc": "3abc0700",
+     "optional": true
+    },
+    {
+     "name": "bprg1.11d",
+     "size": 279,
+     "crc": "31793da7",
+     "optional": true
+    },
+    {
+     "name": "ioc1.ic1",
+     "size": 260,
+     "crc": "a399772d",
+     "optional": true
+    },
+    {
+     "name": "d7l1.7l",
+     "size": 279,
+     "crc": "27b7410d",
+     "optional": true
+    },
+    {
+     "name": "d8l1.8l",
+     "size": 279,
+     "crc": "539fc7da",
+     "optional": true
+    },
+    {
+     "name": "d9k2.9k",
+     "size": 279,
+     "crc": "cd85a156",
+     "optional": true
+    },
+    {
+     "name": "d10f1.10f",
+     "size": 279,
+     "crc": "6619c494",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "dinowj",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Random Enemies, Hack)",
+   "files": [
+    {
+     "name": "cdwj_23a.8f",
+     "size": 524288,
+     "crc": "bda42e9c",
+     "optional": false
+    },
+    {
+     "name": "cdwj_22a.7f",
+     "size": 524288,
+     "crc": "74f32a30",
+     "optional": false
+    },
+    {
+     "name": "cdwj_21a.6f",
+     "size": 524288,
+     "crc": "2ac06ad8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoxz",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Scream, Hack)",
+   "files": [
+    {
+     "name": "cdxz_23a.8f",
+     "size": 524288,
+     "crc": "7a7a3c6d",
+     "optional": false
+    },
+    {
+     "name": "cdxz_22a.7f",
+     "size": 524288,
+     "crc": "aa2c872b",
+     "optional": false
+    },
+    {
+     "name": "cdxz_21a.6f",
+     "size": 1048576,
+     "crc": "582d153d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "dinoyz",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Cadillacs and Dinosaurs (Dragon, Hack)",
+   "files": [
+    {
+     "name": "cdyz_23a.8f",
+     "size": 524288,
+     "crc": "c0296a45",
+     "optional": false
+    },
+    {
+     "name": "cdyz_22a.7f",
+     "size": 524288,
+     "crc": "8390b36d",
+     "optional": false
+    },
+    {
+     "name": "cdyz_21a.6f",
+     "size": 1048576,
+     "crc": "2fced599",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "jurassic99",
+   "parent": "dino",
+   "base": "dino",
+   "title": "Jurassic 99 (Cadillacs and Dinosaurs bootleg with EM78P447AP)",
+   "files": [
+    {
+     "name": "210204_rom2.bin",
+     "size": 1048576,
+     "crc": "3f713043",
+     "optional": false
+    },
+    {
+     "name": "210105a_rom1.bin",
+     "size": 1048576,
+     "crc": "e6294edf",
+     "optional": false
+    },
+    {
+     "name": "210101a_cda2.bin",
+     "size": 2097152,
+     "crc": "3f167412",
+     "optional": false
+    },
+    {
+     "name": "210102_cdb2.bin",
+     "size": 2097152,
+     "crc": "8a6920d8",
+     "optional": false
+    },
+    {
+     "name": "cd_q.5k",
+     "size": 131072,
+     "crc": "605fdb0b",
+     "optional": false
+    },
+    {
+     "name": "21003_u27.bin",
+     "size": 524288,
+     "crc": "7d921309",
+     "optional": false
+    },
+    {
+     "name": "cd-q1.1k",
+     "size": 524288,
+     "crc": "60927775",
+     "optional": false
+    },
+    {
+     "name": "cd-q2.2k",
+     "size": 524288,
+     "crc": "770f4c47",
+     "optional": false
+    },
+    {
+     "name": "cd-q3.3k",
+     "size": 524288,
+     "crc": "2f273ffc",
+     "optional": false
+    },
+    {
+     "name": "cd-q4.4k",
+     "size": 524288,
+     "crc": "2c67821d",
+     "optional": false
+    },
+    {
+     "name": "1_atf20v8.u25",
+     "size": 343,
+     "crc": "cd99ca47",
+     "optional": true
+    },
+    {
+     "name": "2_atf16v8.u66",
+     "size": 279,
+     "crc": "48253c66",
+     "optional": true
+    },
+    {
+     "name": "3_atf16v8.u100",
+     "size": 279,
+     "crc": "9ae375ba",
+     "optional": true
+    },
+    {
+     "name": "4_atf20v8.u118",
+     "size": 343,
+     "crc": "60d016b9",
+     "optional": true
+    },
+    {
+     "name": "5_atf20v8.u146",
+     "size": 343,
+     "crc": "049b7f4f",
+     "optional": true
+    },
+    {
+     "name": "6_atf16v8.u160",
+     "size": 279,
+     "crc": "b0f10adf",
+     "optional": true
+    },
+    {
+     "name": "8_atf16v8.u96g",
+     "size": 279,
+     "crc": "11f38ab7",
+     "optional": true
+    },
+    {
+     "name": "8_atf16v8.u97g",
+     "size": 279,
+     "crc": "11f38ab7",
+     "optional": true
+    },
+    {
+     "name": "8_atf16v8.u98g",
+     "size": 279,
+     "crc": "11f38ab7",
+     "optional": true
+    },
+    {
+     "name": "8_atf16v8.u99g",
+     "size": 279,
+     "crc": "11f38ab7",
+     "optional": true
+    },
+    {
+     "name": "8_atf16v8.u134g",
+     "size": 279,
+     "crc": "11f38ab7",
+     "optional": true
+    }
+   ]
+  },
   {
    "name": "kf10thep",
    "parent": "kof2002",

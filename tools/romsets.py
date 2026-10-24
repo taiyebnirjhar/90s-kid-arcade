@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Builds android/core/src/main/resources/romsets.json from FBNeo's Neo Geo driver.
+"""Builds android/core/src/main/resources/romsets.json from FBNeo's drivers.
 
 Lists, for every version (set) of the games the app supports, the files FBNeo
 loads with their sizes and CRC32s. The app checks imported zips against it.
 
-Usage: tools/romsets.py path/to/FBNeo/src/burn/drv/neogeo/d_neogeo.cpp
-(raw.githubusercontent.com/finalburnneo/FBNeo/master/src/burn/drv/neogeo/d_neogeo.cpp)
+Usage: tools/romsets.py path/to/d_neogeo.cpp path/to/d_cps1.cpp
+(raw.githubusercontent.com/finalburnneo/FBNeo/master/src/burn/drv/neogeo/d_neogeo.cpp,
+ .../src/burn/drv/capcom/d_cps1.cpp)
 """
 import json
 import os
@@ -14,9 +15,10 @@ import sys
 
 # The sets the app's games are listed under (core Games.kt); their clones are added.
 BASE = ["kof97", "kof2002", "kf2k5uni", "kof10th", "kf10thep",
-        "mslug", "mslug2", "mslugx", "mslug3", "mslug4", "mslug5", "sengoku3"]
+        "mslug", "mslug2", "mslugx", "mslug3", "mslug4", "mslug5", "sengoku3",
+        "dino"]
 
-src = open(sys.argv[1], encoding="latin-1").read()
+src = "\n".join(open(p, encoding="latin-1").read() for p in sys.argv[1:])
 
 ROM = re.compile(r'\{\s*"([^"]*)"\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*,\s*(0x[0-9a-fA-F]+)\s*,\s*([^}]*)\}')
 descs = {}
@@ -69,7 +71,7 @@ if missing:
 bios = [f for f in descs["neogeo"] if f["name"] in ("sp-s3.sp1", "sm1.sm1", "sfix.sfix", "000-lo.lo")]
 out = os.path.join(os.path.dirname(__file__), "..", "android/core/src/main/resources/romsets.json")
 with open(out, "w") as f:
-    json.dump({"source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp", "bios": bios, "sets": sets}, f, indent=1)
+    json.dump({"source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, src/burn/drv/capcom/d_cps1.cpp", "bios": bios, "sets": sets}, f, indent=1)
     f.write("\n")
 print("%d sets, %d BIOS files -> %s" % (len(sets), len(bios), os.path.normpath(out)))
 for s in sets:

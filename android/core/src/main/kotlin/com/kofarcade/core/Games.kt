@@ -55,10 +55,15 @@ data class Game(
     val block: Boolean = false,
     /** The game runs on a double-tap forward: shows a Run button and runs when the stick is pushed to the edge. */
     val run: Boolean = false,
+    /** A Neo Geo game: needs the BIOS (neogeo.zip). Capcom's CPS-1 games don't. */
+    val neoGeo: Boolean = true,
 ) {
-    /** Face buttons shown: shooters only show the buttons that have a job. */
+    /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
+    val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
+
+    /** Face buttons shown: only the labelled ones, unless it's a fighter (A B C D all have jobs). */
     val faceButtons: List<Char>
-        get() = if (layout == Layout.SHOOTER) BUTTONS.filter { it in labels }.toList() else BUTTONS.toList()
+        get() = if (layout != Layout.FIGHTER && labels.isNotEmpty()) BUTTONS.filter { it in labels }.toList() else BUTTONS.toList()
 }
 
 const val BIOS = "neogeo.zip"
@@ -128,6 +133,16 @@ val GAMES: List<Game> = listOf(
     // Inputs every Sengoku 3 character shares.
     moves = listOf(Move("Special 1", "22+A"), Move("Special 2", "22+B"), Move("Super", "28+AB", type = "dm")),
     run = true,
+) + Game(
+    // Called "Mostofa" in Bangladesh, after its fighter Mustapha Cairo. Capcom
+    // CPS-1: no BIOS. Checked in FBNeo (tools/emu.py): A attacks, B jumps,
+    // A+B is the spinning special, a double-tap forward runs.
+    id = "dino", series = "Capcom", title = "Cadillacs and Dinosaurs", sets = listOf("dino"),
+    layout = Layout.BRAWLER, art = "Cadillacs and Dinosaurs (World 930201)",
+    labels = mapOf('A' to "Attack", 'B' to "Jump"),
+    moves = listOf(Move("Special", "AB", type = "dm")),
+    run = true,
+    neoGeo = false,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

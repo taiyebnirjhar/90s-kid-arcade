@@ -134,7 +134,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         // Once downloaded, the check says what it is; before, the file name
         // usually does ("sengoku3 (1).zip" -> Sengoku 3).
         val set = prefs.librarySet(e.name) ?: setName(e.name).replace(Regex(""" \(\d+\)$"""), "")
-        val title = if (set == "neogeo") "Neo Geo BIOS" else gameForSet(set)?.title
+        val title = if (set == "neogeo") "Neo Geo BIOS" else gameForSet(set)?.fullTitle
         val d = downloads[e.name]
         LibraryRowUi(
             file = e.name,

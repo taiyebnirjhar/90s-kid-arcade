@@ -85,8 +85,11 @@ class MainActivity : ComponentActivity() {
             picker.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*"))
         }
 
+        // Neo Geo games need the BIOS; Capcom's don't.
+        fun needsBios(game: Game) = game.neoGeo && !hasBios
+
         fun open(game: Game) = when {
-            !hasBios -> ask = Pick.Bios
+            needsBios(game) -> ask = Pick.Bios
             sets[game.id] == null -> ask = Pick.Rom(game)
             else -> play(game)
         }
@@ -100,13 +103,13 @@ class MainActivity : ComponentActivity() {
             sets = sets,
             hero = hero,
             heroLabel = when {
-                !hasBios -> "Get started"
+                needsBios(hero) -> "Get started"
                 hero == last && sets[hero.id] != null -> "Continue"
                 sets[hero.id] != null -> "Ready to play"
                 else -> "Get started"
             },
             heroAction = when {
-                !hasBios -> "Add BIOS"
+                needsBios(hero) -> "Add BIOS"
                 sets[hero.id] == null -> "Add ROM"
                 else -> "Play"
             },
@@ -131,7 +134,7 @@ class MainActivity : ComponentActivity() {
                 onTwoPlayer = { twoPlayer = true },
                 onLibrary = { library = true },
                 onBios = { ask = Pick.Bios },
-                onHero = { if (!hasBios) ask = Pick.Bios else open(hero) },
+                onHero = { open(hero) },
                 onGame = ::open,
                 onLongGame = { if (sets[it.id] != null) remove = it },
             )
@@ -142,9 +145,9 @@ class MainActivity : ComponentActivity() {
                 Pick.Bios -> if (hasBios) {
                     "Replace the BIOS?" to "Pick another neogeo.zip to use instead of the current one, or get it from your library."
                 } else {
-                    "Add the Neo Geo BIOS" to "Every game needs neogeo.zip. Pick it from your phone, or get it from your library."
+                    "Add the Neo Geo BIOS" to "Neo Geo games need neogeo.zip. Pick it from your phone, or get it from your library."
                 }
-                is Pick.Rom -> "Add ${p.game.title}" to
+                is Pick.Rom -> "Add ${p.game.fullTitle}" to
                     "Pick its zip from your phone (any file name works: the app checks what's inside), or get it from your library."
             }
             ArcadeDialog(
@@ -174,7 +177,7 @@ class MainActivity : ComponentActivity() {
                 message = check.message(),
                 onDismiss = { result = null },
                 tone = if (ok) Tone.GOOD else Tone.BAD,
-                primary = if (game != null && hasBios) {
+                primary = if (game != null && !needsBios(game)) {
                     "Play" to {
                         result = null
                         play(game)
@@ -207,7 +210,7 @@ class MainActivity : ComponentActivity() {
 
         remove?.let { game ->
             ArcadeDialog(
-                title = "Remove ${game.title}?",
+                title = "Remove ${game.fullTitle}?",
                 message = "Deletes the ROM from this app. You can add it again any time.",
                 onDismiss = { remove = null },
                 tone = Tone.BAD,
