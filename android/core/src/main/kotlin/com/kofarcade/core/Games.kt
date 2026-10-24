@@ -169,9 +169,20 @@ val GAMES: List<Game> = listOf(
 } + Game(
     id = "sengoku3", series = "Sengoku", title = "Sengoku 3", sets = listOf("sengoku3"), layout = Layout.BRAWLER,
     art = "Sengoku 3 / Sengoku Densho 2001 (set 1)",
-    labels = mapOf('A' to "Weapon", 'B' to "Punch", 'C' to "Jump", 'D' to "Throw"),
-    // Inputs every Sengoku 3 character shares.
-    moves = listOf(Move("Special 1", "22+A"), Move("Special 2", "22+B"), Move("Super", "28+AB", type = "dm")),
+    labels = mapOf('A' to "Weapon", 'B' to "Punch", 'C' to "Jump", 'D' to "Shuriken"),
+    // Every character uses the same inputs (the English AES manual; SNK's
+    // Virtual Console page): Ninja Arts 1 and 2, Ninja Art 3 while holding
+    // an enemy (Kagetsura's Shrike Drop carries them into the sky, Kongoh
+    // slams them; the others have none), the Ultimate with the gauge full,
+    // and A+B+C, which swaps you for a log to escape at the cost of some
+    // life. Checked in FBNeo: 22+A, 22+B, 28+AB and A+B+C (the log).
+    moves = listOf(
+        Move("Ninja Art 1", "22+A"),
+        Move("Ninja Art 2", "22+B"),
+        Move("Ninja Art 3", "28+B", note = "while holding an enemy: Kagetsura and Kongoh"),
+        Move("Ultimate", "28+AB", type = "dm", note = "gauge full"),
+        Move("Log escape", "ABC", note = "costs some life"),
+    ),
     run = true,
 ) + Game(
     // Called "Mostofa" in Bangladesh, after its fighter Mustapha Cairo. Capcom

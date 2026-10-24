@@ -77,7 +77,10 @@ fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
 **Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
 flames (the same rapid fire switch as Metal Slug).
 
-**Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
+**Sengoku 3:** Weapon, Punch, Jump, Shuriken, and the Ninja Arts every
+character shares: 22+A, 22+B, 28+B while holding an enemy (Kagetsura's
+Shrike Drop into the sky, Kongoh's slam), the Ultimate (28+AB, gauge full)
+and **Log escape** (A+B+C: you swap places with a log, for some life).
 
 **Cadillacs and Dinosaurs:** Attack and Jump; **Special** is both at once
 (the spinning attack). Run with the Run button or by pushing the stick to the
