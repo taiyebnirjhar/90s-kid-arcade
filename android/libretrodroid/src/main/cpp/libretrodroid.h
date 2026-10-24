@@ -29,6 +29,8 @@
 #include <mutex>
 #include <memory>
 #include <optional>
+#include <deque>
+#include <array>
 
 #include "log.h"
 #include "core.h"
@@ -78,6 +80,15 @@ public:
     // the app can see which fighter is on screen. Safe from any thread.
     size_t getMemorySize(unsigned id);
     bool readMemory(unsigned id, size_t offset, int8_t* dst, size_t length);
+
+    // Two-player lockstep (90s Kid Arcade): while on, a frame runs only when
+    // its inputs for both players have been pushed, and those replace the
+    // touch input for ports 0 and 1.
+    void setNetplay(bool enabled);
+    bool pushNetInput(int32_t frame, int32_t p1, int32_t p2);
+    int32_t getNetFrame();
+    // The latest state checksum: {frame, sum}, frame -1 if none yet.
+    std::array<int64_t, 2> getNetSum();
 
     void onSurfaceCreated();
     void onSurfaceChanged(unsigned int width, unsigned int height);
@@ -183,6 +194,15 @@ private:
     bool dirtyVideo = false;
 
     std::mutex coreLock;
+
+    std::mutex netMutex;
+    bool netplay = false;
+    std::deque<std::array<int32_t, 3>> netQueue;
+    int32_t netPushed = 0;
+    int32_t netFrame = 0;
+    uint16_t netMask[2] = {0, 0};
+    std::array<int64_t, 2> netSum = {-1, 0};
+    void stepNetplay(unsigned wanted);
 
     std::unique_ptr<Core> core;
     std::unique_ptr<Audio> audio;

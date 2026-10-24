@@ -71,7 +71,7 @@ fun GameDialogs(game: GameActivity) {
         is GameDialog.Editor -> MoveEditor(game, d.character)
         GameDialog.Controls -> ControlsSettings(game)
         is GameDialog.Error -> Sheet(onDismiss = { game.finish() }) {
-            Title("Can't start the game")
+            Title(d.title)
             Text(d.message, color = Palette.muted)
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
@@ -155,7 +155,7 @@ private fun PauseMenu(game: GameActivity) {
             modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Text("PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                Text(if (game.isNetplay) "MENU · THE GAME KEEPS RUNNING" else "PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
                 Text(
                     game.gameTitle,
                     color = Color.White,
@@ -180,16 +180,19 @@ private fun PauseMenu(game: GameActivity) {
                 modifier = Modifier.width(300.dp).verticalScroll(rememberScrollState()),
             ) {
                 BigButton("Resume", primary = true) { game.close() }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BigButton("Save state", Modifier.weight(1f)) { game.saveState() }
-                    BigButton("Load state", Modifier.weight(1f)) { game.loadState() }
+                // A saved state can't be loaded on one phone of two.
+                if (!game.isNetplay) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BigButton("Save state", Modifier.weight(1f)) { game.saveState() }
+                        BigButton("Load state", Modifier.weight(1f)) { game.loadState() }
+                    }
                 }
                 if (c != null) BigButton("Edit ${c.name.substringBefore(" ")}'s moves") { game.show(GameDialog.Editor(c)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     BigButton("Layout", Modifier.weight(1f)) { game.startEditing() }
                     BigButton("Controls", Modifier.weight(1f)) { game.show(GameDialog.Controls) }
                 }
-                BigButton("Quit to game list", danger = true) { game.finish() }
+                BigButton(if (game.isNetplay) "Leave the game" else "Quit to game list", danger = true) { game.finish() }
             }
         }
     }

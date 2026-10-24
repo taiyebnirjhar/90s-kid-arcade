@@ -11,6 +11,7 @@ import com.kofarcade.core.checkRom
 import com.kofarcade.core.describe
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.installedSet
+import com.kofarcade.core.romFingerprint
 import com.kofarcade.core.romSet
 import com.kofarcade.core.setName
 import org.json.JSONArray
@@ -81,6 +82,9 @@ class RomStore(private val context: Context) {
         file(name).delete()
         check(tmp.renameTo(file(name))) { "Couldn't save $name" }
     }
+
+    /** The [romFingerprint] of a zip here, or null if it's missing or unreadable. */
+    fun fingerprint(name: String): Long? = file(name).takeIf { it.isFile }?.let { runCatching { romFingerprint(items(it)) }.getOrNull() }
 
     private fun items(zip: File): List<ZipItem> = ZipFile(zip).use { z ->
         z.entries().asSequence().filterNot { it.isDirectory }.map { ZipItem(it.name, it.size, it.crc) }.toList()

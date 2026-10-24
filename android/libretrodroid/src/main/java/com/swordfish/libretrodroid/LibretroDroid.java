@@ -123,6 +123,12 @@ public class LibretroDroid {
 
     /** Copies [offset, offset + length) of a core memory area, or null if out of range. */
     public static native byte[] readMemory(int id, int offset, int length);
+
+    // Two-player lockstep: see LibretroDroid::setNetplay in libretrodroid.h.
+    public static native void setNetplay(boolean enabled);
+    public static native boolean pushNetInput(int frame, int p1, int p2);
+    public static native int getNetFrame();
+    public static native long[] getNetSum();
     public static native boolean unserializeState(byte[] state);
 
     public static native void setCheat(int index, boolean enable, String code);

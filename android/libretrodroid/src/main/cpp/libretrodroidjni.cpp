@@ -220,6 +220,42 @@ JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getMemoryS
     return (jint) LibretroDroid::getInstance().getMemorySize(id);
 }
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setNetplay(
+    JNIEnv* env,
+    jclass obj,
+    jboolean enabled
+) {
+    LibretroDroid::getInstance().setNetplay(enabled);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushNetInput(
+    JNIEnv* env,
+    jclass obj,
+    jint frame,
+    jint p1,
+    jint p2
+) {
+    return LibretroDroid::getInstance().pushNetInput(frame, p1, p2);
+}
+
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetFrame(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().getNetFrame();
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetSum(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto sum = LibretroDroid::getInstance().getNetSum();
+    jlong values[2] = {(jlong) sum[0], (jlong) sum[1]};
+    jlongArray result = env->NewLongArray(2);
+    env->SetLongArrayRegion(result, 0, 2, values);
+    return result;
+}
+
 JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_readMemory(
     JNIEnv* env,
     jclass obj,

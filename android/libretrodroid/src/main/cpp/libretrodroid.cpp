@@ -473,8 +473,12 @@ void LibretroDroid::step() {
         frames = std::min(requestedFrames, 2u);
     }
 
-    for (size_t i = 0; i < frames * frameSpeed; i++)
-        core->retro_run();
+    if (netplay) {
+        stepNetplay(frames);
+    } else {
+        for (size_t i = 0; i < frames * frameSpeed; i++)
+            core->retro_run();
+    }
 
     if (video && !video->rendersInVideoCallback()) {
         video->renderFrame();
@@ -568,6 +572,11 @@ int16_t LibretroDroid::handleSetInputState(
     unsigned int index,
     unsigned int id
 ) {
+    if (netplay) {
+        if (device != RETRO_DEVICE_JOYPAD || port > 1) return 0;
+        if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t) netMask[port];
+        return (netMask[port] >> id) & 1;
+    }
     if (input) {
         return input->getInputState(port, device, index, id);
     }
@@ -669,3 +678,75 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
 }
 
 } //namespace libretrodroid
+
+void LibretroDroid::setNetplay(bool enabled) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    netplay = enabled;
+    netQueue.clear();
+    netPushed = 0;
+    netFrame = 0;
+    netMask[0] = netMask[1] = 0;
+    netSum = {-1, 0};
+}
+
+bool LibretroDroid::pushNetInput(int32_t frame, int32_t p1, int32_t p2) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    if (!netplay || frame != netPushed) {
+        LOGE("Netplay input for frame %d out of order (expected %d)", frame, netPushed);
+        return false;
+    }
+    netQueue.push_back({frame, p1, p2});
+    netPushed++;
+    return true;
+}
+
+int32_t LibretroDroid::getNetFrame() {
+    std::lock_guard<std::mutex> lock(netMutex);
+    return netFrame;
+}
+
+std::array<int64_t, 2> LibretroDroid::getNetSum() {
+    std::lock_guard<std::mutex> lock(netMutex);
+    return netSum;
+}
+
+// Called from step() with coreLock held. Runs up to [wanted] frames (what the
+// display pacing asks for), only as far as both players' inputs have
+// arrived; if they're piling up because this phone fell behind, it runs one
+// more to catch up.
+void LibretroDroid::stepNetplay(unsigned wanted) {
+    size_t queued;
+    {
+        std::lock_guard<std::mutex> lock(netMutex);
+        queued = netQueue.size();
+    }
+    if (queued > wanted + 2) wanted++;
+    for (unsigned i = 0; i < wanted; i++) {
+        std::array<int32_t, 3> in{};
+        {
+            std::lock_guard<std::mutex> lock(netMutex);
+            if (netQueue.empty()) return;
+            in = netQueue.front();
+            netQueue.pop_front();
+            netMask[0] = (uint16_t) in[1];
+            netMask[1] = (uint16_t) in[2];
+        }
+        core->retro_run();
+        std::lock_guard<std::mutex> lock(netMutex);
+        netFrame = in[0] + 1;
+        // Every 2 seconds, a checksum of the game's RAM to compare with the
+        // partner's: FNV-1a over RETRO_MEMORY_SYSTEM_RAM.
+        if (netFrame % 120 == 0) {
+            auto* mem = (uint8_t*) core->retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
+            size_t size = core->retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
+            if (mem != nullptr) {
+                uint64_t hash = 1469598103934665603ULL;
+                for (size_t j = 0; j < size; j++) {
+                    hash ^= mem[j];
+                    hash *= 1099511628211ULL;
+                }
+                netSum = {netFrame, (int64_t) hash};
+            }
+        }
+    }
+}

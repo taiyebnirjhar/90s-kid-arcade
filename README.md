@@ -54,6 +54,24 @@ Shoot. Slug Attack on 4 and 5, Slide on 5.
 Pause → **Controls**: stick style (floating, fixed or hidden), size,
 opacity, move names, vibration, left-handed layout, move timing.
 
+## Two players
+
+Two phones on the same Wi-Fi, or one phone's hotspot with the other connected
+to it. Home → **2P**: one phone hosts a game (player 1), the other joins
+(player 2); it finds the host by itself, or type the address the host shows.
+Both phones need the same game zip and BIOS (the library has them).
+
+How it works:
+- Both phones run the game, exchanging only button states over UDP.
+  Every frame runs with both players' inputs on both phones: delay-based
+  lockstep, 3 frames (~50 ms) of input delay.
+- Phones start identical because the host sends its emulator state when the
+  game opens. Without that, the Neo Geo clock, which starts from each
+  phone's time, would differ.
+- A RAM checksum every 2 seconds catches the games drifting apart.
+- Native side: `android/libretrodroid` lockstep mode. Protocol and tests:
+  `android/core/.../net`.
+
 ## Your ROM library (optional)
 
 Keep your zips in a private Cloudflare R2 bucket and download them on any
