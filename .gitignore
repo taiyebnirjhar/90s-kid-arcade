@@ -4,3 +4,4 @@
 
 # Paparazzi output (CI publishes it to the ui-snapshots branch).
 /android/app/src/test/snapshots/
+__pycache__/
