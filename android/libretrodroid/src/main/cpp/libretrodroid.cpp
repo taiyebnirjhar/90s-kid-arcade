@@ -578,7 +578,7 @@ int16_t LibretroDroid::handleSetInputState(
     unsigned int id
 ) {
     if (netplay) {
-        if (device != RETRO_DEVICE_JOYPAD || port > 1) return 0;
+        if (device != RETRO_DEVICE_JOYPAD || port >= (unsigned) netPlayers) return 0;
         if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t) netMask[port];
         return (netMask[port] >> id) & 1;
     }
@@ -682,16 +682,18 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
     }
 }
 
-void LibretroDroid::setNetplay(bool enabled, int localPlayer, int maxRollback) {
+void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int maxRollback) {
     std::lock_guard<std::mutex> lock(netMutex);
     netplay = enabled;
-    netLocalPlayer = localPlayer == 1 ? 1 : 0;
+    netPlayers = std::max(2, std::min(players, NET_MAX_PLAYERS));
+    netLocalPlayer = std::max(0, std::min(localPlayer, netPlayers - 1));
     netMaxRollback = std::max(0, std::min(maxRollback, NET_RING - 8));
     netFrame = 0;
-    netLocalKnown = 0;
-    netRemoteKnown = 0;
+    for (int p = 0; p < NET_MAX_PLAYERS; p++) {
+        netKnown[p] = 0;
+        netMask[p] = 0;
+    }
     netFirstWrong = INT32_MAX;
-    netMask[0] = netMask[1] = 0;
     netSum = {-1, 0};
     netPendingSums.clear();
     netReplayed = 0;
@@ -701,24 +703,34 @@ void LibretroDroid::setNetplay(bool enabled, int localPlayer, int maxRollback) {
     Environment::getInstance().audioVideoOverride = -1;
 }
 
+int32_t LibretroDroid::netRemoteKnown() const {
+    int32_t known = INT32_MAX;
+    for (int p = 0; p < netPlayers; p++) {
+        if (p != netLocalPlayer) known = std::min(known, netKnown[p]);
+    }
+    return known;
+}
+
 bool LibretroDroid::pushLocalInput(int32_t frame, int32_t mask) {
     std::lock_guard<std::mutex> lock(netMutex);
     // In order, and not so far ahead that the ring would wrap.
-    if (!netplay || frame != netLocalKnown || frame >= netFrame + NET_RING / 2) return false;
-    netLocal[frame % NET_RING] = (uint16_t) mask;
-    netLocalKnown++;
+    int32_t& known = netKnown[netLocalPlayer];
+    if (!netplay || frame != known || frame >= netFrame + NET_RING / 2) return false;
+    netInput[netLocalPlayer][frame % NET_RING] = (uint16_t) mask;
+    known++;
     return true;
 }
 
-bool LibretroDroid::pushRemoteInput(int32_t frame, int32_t mask) {
+bool LibretroDroid::pushRemoteInput(int player, int32_t frame, int32_t mask) {
     std::lock_guard<std::mutex> lock(netMutex);
-    if (!netplay || frame != netRemoteKnown) return false;
-    netRemote[frame % NET_RING] = (uint16_t) mask;
+    if (!netplay || player < 0 || player >= netPlayers || player == netLocalPlayer) return false;
+    if (frame != netKnown[player]) return false;
+    netInput[player][frame % NET_RING] = (uint16_t) mask;
     // Already run with a wrong guess: replay from there on the next step.
-    if (frame < netFrame && netUsedRemote[frame % NET_RING] != (uint16_t) mask) {
+    if (frame < netFrame && netUsed[player][frame % NET_RING] != (uint16_t) mask) {
         netFirstWrong = std::min(netFirstWrong, frame);
     }
-    netRemoteKnown++;
+    netKnown[player]++;
     return true;
 }
 
@@ -751,16 +763,17 @@ void LibretroDroid::netSimulate(int32_t frame, bool replay) {
     if (state.size() != size) state.resize(size);
     core->retro_serialize(state.data(), size);
 
-    uint16_t local = netLocal[frame % NET_RING];
-    uint16_t remote = 0;
-    if (frame < netRemoteKnown) {
-        remote = netRemote[frame % NET_RING];
-    } else if (netRemoteKnown > 0) {
-        remote = netRemote[(netRemoteKnown - 1) % NET_RING];
+    // Each player's input for the frame, or their last one as the guess.
+    for (int p = 0; p < netPlayers; p++) {
+        uint16_t mask = 0;
+        if (frame < netKnown[p]) {
+            mask = netInput[p][frame % NET_RING];
+        } else if (netKnown[p] > 0) {
+            mask = netInput[p][(netKnown[p] - 1) % NET_RING];
+        }
+        netUsed[p][frame % NET_RING] = mask;
+        netMask[p] = mask;
     }
-    netUsedRemote[frame % NET_RING] = remote;
-    netMask[netLocalPlayer] = local;
-    netMask[1 - netLocalPlayer] = remote;
 
     // Replays are silent and undrawn; only the newest frame is seen and heard.
     Environment::getInstance().audioVideoOverride = replay ? 4 : -1;
@@ -808,9 +821,10 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
     }
     netFirstWrong = INT32_MAX;
 
-    // Frames below netRemoteKnown have now run with the real inputs.
+    // Frames below netRemoteKnown() have now run with the real inputs.
+    int32_t remoteKnown = netRemoteKnown();
     for (auto it = netPendingSums.begin(); it != netPendingSums.end();) {
-        if (it->first - 1 < netRemoteKnown) {
+        if (it->first - 1 < remoteKnown) {
             if (it->first > netSum[0]) netSum = {it->first, it->second};
             it = netPendingSums.erase(it);
         } else {
@@ -823,10 +837,11 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
         return;
     }
     // Catch up a frame when this phone is behind its own input.
-    if (netLocalKnown - netFrame > 4) wanted++;
+    int32_t localKnown = netKnown[netLocalPlayer];
+    if (localKnown - netFrame > 4) wanted++;
     for (unsigned i = 0; i < wanted; i++) {
-        if (netFrame >= netLocalKnown) return;                    // our input isn't sampled yet
-        if (netFrame >= netRemoteKnown + netMaxRollback) return;  // too far ahead of the partner
+        if (netFrame >= localKnown) return;                     // our input isn't sampled yet
+        if (netFrame >= remoteKnown + netMaxRollback) return;   // too far ahead of the slowest partner
         netSimulate(netFrame, false);
         netFrame++;
     }

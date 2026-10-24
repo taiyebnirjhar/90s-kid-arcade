@@ -1,7 +1,7 @@
 package com.kofarcade.core.net
 
-// Two players over the network: both phones run the game and exchange only
-// button states, so each needs, for every frame, its own input and the
+// Playing over the network: every phone runs the game and they exchange only
+// button states, so each needs, for every frame, its own input and every
 // partner's. The emulator (LibretroDroid's rollback netcode) runs a frame as
 // soon as it has its own input, guessing the partner's until it arrives and
 // replaying if the guess was wrong. This class is the bookkeeping between
@@ -12,11 +12,16 @@ package com.kofarcade.core.net
 // frame or two of delay gives it time to arrive, so fewer guesses are wrong.
 // Each phone picks its own delay ([DelayTuner]); the partner needn't match.
 
-/** Inputs exchanged on both sides, thread-safe: the network thread receives, the game samples. */
-class Lockstep(delay: Int, val localPlayer: Int) {
+/**
+ * Inputs exchanged between [players] phones (2 to 4), thread-safe: the network
+ * thread receives, the game samples. Each partner acknowledges our inputs on
+ * its own, and we send each one only what it hasn't got.
+ */
+class Lockstep(delay: Int, val localPlayer: Int, val players: Int = 2) {
     init {
         require(delay >= 1) { "delay must be at least one frame" }
-        require(localPlayer == 0 || localPlayer == 1)
+        require(players in 2..4) { "2 to 4 players" }
+        require(localPlayer in 0 until players)
     }
 
     /** May change mid-game: the next [sampleUpTo] then reads one input more, or one fewer. */
@@ -26,24 +31,32 @@ class Lockstep(delay: Int, val localPlayer: Int) {
             field = value
         }
 
+    /** The other players. */
+    val partners: List<Int> = (0 until players).filter { it != localPlayer }
+
     private val local = HashMap<Int, Int>()
-    private val remote = HashMap<Int, Int>()
+    private val remote = Array(players) { HashMap<Int, Int>() }
+    private val known = IntArray(players)
+    private val taken = IntArray(players)
+    private val acked = IntArray(players)
 
     /** The next local frame to sample. */
     var nextLocal = 0
         private set
 
-    /** All remote frames below this are known. */
-    var remoteKnown = 0
-        private set
+    /** All of [player]'s frames below this are known. */
+    @Synchronized
+    fun known(player: Int): Int = known[player]
 
-    /** Remote frames below this have been handed out by [takeRemote]. */
-    var remoteTaken = 0
-        private set
+    /** Every partner's frames below this are known. */
+    val remoteKnown: Int @Synchronized get() = partners.minOf { known[it] }
 
-    /** The partner has all our frames below this. */
-    var localAcked = 0
-        private set
+    /** [player]'s frames below this have been handed out by [takeRemote]. */
+    @Synchronized
+    fun taken(player: Int): Int = taken[player]
+
+    /** Every partner has all our frames below this. */
+    val localAcked: Int @Synchronized get() = partners.minOf { acked[it] }
 
     /**
      * Samples local input for every frame up to [emulated] + [delay] not yet
@@ -63,33 +76,36 @@ class Lockstep(delay: Int, val localPlayer: Int) {
         return start to out.toIntArray()
     }
 
-    /** Remote inputs for frames [start] until start + masks.size; [ack]: they have our frames below it. */
+    /** [from]'s inputs for frames [start] until start + masks.size; [ack]: they have our frames below it. */
     @Synchronized
-    fun receive(start: Int, masks: IntArray, ack: Int) {
+    fun receive(from: Int, start: Int, masks: IntArray, ack: Int) {
+        require(from in partners) { "not a partner: $from" }
+        val got = remote[from]
         masks.forEachIndexed { i, m ->
             val f = start + i
-            if (f >= remoteTaken) remote.putIfAbsent(f, m)
+            if (f >= taken[from]) got.putIfAbsent(f, m)
         }
-        while (remote.containsKey(remoteKnown)) remoteKnown++
-        if (ack > localAcked) {
-            localAcked = minOf(ack, nextLocal)
-            local.keys.removeAll { it < localAcked }
+        while (got.containsKey(known[from])) known[from]++
+        if (ack > acked[from]) {
+            acked[from] = minOf(ack, nextLocal)
+            val all = localAcked
+            local.keys.removeAll { it < all }
         }
     }
 
-    /** The partner's inputs not handed out yet, in order and without gaps: (first frame, masks). */
+    /** [from]'s inputs not handed out yet, in order and without gaps: (first frame, masks). */
     @Synchronized
-    fun takeRemote(): Pair<Int, IntArray> {
-        val start = remoteTaken
-        val masks = IntArray(remoteKnown - start) { remote.remove(start + it)!! }
-        remoteTaken = remoteKnown
+    fun takeRemote(from: Int): Pair<Int, IntArray> {
+        val start = taken[from]
+        val masks = IntArray(known[from] - start) { remote[from].remove(start + it)!! }
+        taken[from] = known[from]
         return start to masks
     }
 
-    /** Our inputs the partner hasn't acknowledged: (first frame, masks), at most [max]. */
+    /** Our inputs [to] hasn't acknowledged: (first frame, masks), at most [max]. */
     @Synchronized
-    fun outgoing(max: Int = 120): Pair<Int, IntArray> {
-        val start = localAcked
+    fun outgoing(to: Int, max: Int = 120): Pair<Int, IntArray> {
+        val start = acked[to]
         val end = minOf(nextLocal, start + max)
         return start to IntArray(maxOf(0, end - start)) { local[start + it] ?: 0 }
     }

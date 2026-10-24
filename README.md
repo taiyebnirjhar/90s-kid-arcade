@@ -68,17 +68,23 @@ edge.
 Pause → **Controls**: stick style (floating, fixed or hidden), size,
 opacity, move names, vibration, left-handed layout, move timing.
 
-## Two players
+## Multiplayer
 
-Two phones on the same Wi-Fi, or one phone's hotspot with the other connected
-to it. Home → **2P**: one phone hosts a game (player 1), the other joins
-(player 2); it finds the host by itself, or type the address the host shows.
-Both phones need the same game zip and BIOS (the library has them).
+One phone per player, as many as the game takes: 2 for most games, 3 for
+Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
+hotspot. Home → **Multiplayer**: one phone hosts a game (player 1), the others
+join; they find the host by themselves, or type the address it shows. The
+host accepts each player, and the game starts when it's full or when the host
+taps **Start**. Every phone needs the same game zip (and the BIOS for Neo Geo
+games; the library has them).
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
-- Both phones run the game, exchanging only button states over UDP.
+- Every phone runs the game, sending only its button states over UDP,
+  straight to every other phone. Pause, rematch and leaving go through the
+  host.
 - Your own presses take effect after one frame. The partner's input is
-  guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi.
+  guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi;
+  each partner's separately.
   On a slower connection (a hotspot, a far router) each phone raises its
   own input delay to 2-3 frames so the partner guesses less, and drops back
   to 1 when the connection allows.
@@ -87,16 +93,17 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   When a guess was wrong, the phone loads the state from that frame and
   replays to now in a few milliseconds, silently. You see the corrected
   game, not a delay.
-- A phone that runs ahead of its partner waits a frame now and then (time
-  sync). A phone stops only if its partner falls 8 frames behind.
-- Phones start identical because the host sends its emulator state when the
-  game opens. Without that, the Neo Geo clock, which starts from each
+- A phone that runs ahead of a partner waits a frame now and then (time
+  sync). A phone stops only if a partner falls 8 frames behind.
+- Phones start identical because the host sends its emulator state to each
+  when the game opens. Without that, the Neo Geo clock, which starts from each
   phone's time, would differ.
 - A RAM checksum of confirmed frames every 2 seconds catches drift.
-- The pause menu pauses both phones; **Rematch** restarts both from the
+- The pause menu pauses every phone; **Rematch** restarts them all from the
   same start.
 - Checked against the real games with `tools/emu.py`: rollback with
-  random 0-7 frame delays lands on the same game as a perfect run.
+  random 0-7 frame delays lands on the same game as a perfect run, with two
+  players in KOF and three in Cadillacs and Dinosaurs.
 - Native side: `android/libretrodroid` (LibretroDroid::setNetplay).
   Protocol and tests: `android/core/.../net`.
 

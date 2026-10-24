@@ -164,7 +164,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         // Before the emulator starts: in two-player mode frames run from both
         // phones' inputs (rollback netcode, see LibretroDroid::setNetplay).
-        LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, MAX_ROLLBACK)
+        LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, link?.players ?: 2, MAX_ROLLBACK)
         if (link != null) holdWifi()
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
@@ -208,7 +208,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setPadding(36, 20, 36, 20)
             visibility = if (link != null) View.VISIBLE else View.GONE
-            text = if (link?.isHost == true) "Starting the game…" else "Getting the game from ${link?.peerName}…"
+            text = if (link?.isHost == true) "Starting the game…" else "Getting the game from ${link?.nameOf(0)}…"
         }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
@@ -368,11 +368,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val isNetplay: Boolean get() = link != null
 
-    /** This phone's player: 0 alone or hosting, 1 when joined. */
+    /** This phone's player: 0 alone or hosting, 1 and up when joined. */
     private val localPlayer: Int get() = link?.localPlayer ?: 0
 
-    // Both phones must start from the same state: the host sends its own
-    // (right after loading, before any frame has run), the guest loads it.
+    // Every phone must start from the same state: the host sends its own
+    // (right after loading, before any frame has run), the guests load it.
     private fun startNetplay(link: Link) {
         lifecycleScope.launch {
             try {
@@ -394,28 +394,28 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 return@launch
             }
             link.start(object : LinkListener {
-                override fun onRemote(start: Int, masks: IntArray) {
-                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(start + i, m) }
+                override fun onRemote(player: Int, start: Int, masks: IntArray) {
+                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(player, start + i, m) }
                 }
 
                 override fun onDesync(frame: Int) {
                     runOnUiThread {
                         if (!desyncShown) {
                             desyncShown = true
-                            Toast.makeText(this@GameActivity, "The two games went out of sync. Restart the match.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@GameActivity, "The games went out of sync. Restart the match.", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
 
                 override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
 
-                override fun onPartnerPaused(paused: Boolean) = runOnUiThread {
-                    remotePaused = paused
+                override fun onPartnerPaused(player: Int, paused: Boolean) = runOnUiThread {
+                    remotePaused = link.partnerPaused
                     applyNetFreeze()
                 }
 
-                override fun onRematch() = runOnUiThread {
-                    Toast.makeText(this@GameActivity, "${link.peerName} started a rematch", Toast.LENGTH_SHORT).show()
+                override fun onRematch(player: Int) = runOnUiThread {
+                    Toast.makeText(this@GameActivity, "${link.nameOf(player)} started a rematch", Toast.LENGTH_SHORT).show()
                     restartNet()
                 }
             })
@@ -436,10 +436,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             localMask
         }
         masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) }
-        // Time sync: when this phone's game runs ahead of its partner's
-        // (see Link.lead), wait a frame so it catches up. Both phones then
-        // guess as little as possible, and neither stalls at the rollback limit.
-        link.advantage = emulated - link.lockstep.remoteKnown
+        // Time sync: when this phone's game runs ahead of a partner's (see
+        // Link.lead), wait a frame so it catches up. Every phone then guesses
+        // as little as possible, and none stalls at the rollback limit.
+        link.updateAdvantage(emulated)
         if (link.lead >= 2 && frame - lastWait > 20) {
             lastWait = frame
             LibretroDroid.netWait(1)
@@ -463,7 +463,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun applyNetFreeze() {
         LibretroDroid.setFrozen(restarting || localPaused || remotePaused)
         if (remotePaused && !localPaused) {
-            netStatus.text = "${link?.peerName} paused the game"
+            netStatus.text = "${link?.pausedName ?: "Someone"} paused the game"
             netStatus.visibility = View.VISIBLE
         } else if (netStarted) {
             netStatus.visibility = View.GONE
@@ -476,7 +476,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lifecycleScope.launch(Dispatchers.IO) { action(l) }
     }
 
-    /** Pause menu: restart the game on both phones, from the start state they shared. */
+    /** Pause menu: restart the game on every phone, from the start state they shared. */
     fun rematch() {
         sendNet { it.sendRematch() }
         close()
@@ -493,7 +493,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         pad.releaseAll()
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                link.restart { LibretroDroid.setNetplay(true, link.localPlayer, MAX_ROLLBACK) }
+                link.restart { LibretroDroid.setNetplay(true, link.localPlayer, link.players, MAX_ROLLBACK) }
                 retroView.unserializeState(state)
             }
             lastSumFrame = -1
@@ -508,7 +508,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         if (isFinishing) return
         link?.close(sendBye = false)
         netStatus.visibility = View.GONE
-        show(GameDialog.Error(reason, title = "Two-player game ended"))
+        show(GameDialog.Error(reason, title = "Multiplayer game ended"))
     }
 
     // Two players: Wi-Fi normally naps between packets to save battery, so an

@@ -8,11 +8,13 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 
-// The wire format. A TCP connection carries the handshake, the start state
-// and leaving; UDP carries the inputs (small, frequent, and resent until
-// acknowledged, so a lost packet costs nothing).
+// The wire format. TCP connections (each guest to the host) carry the
+// handshake, the start state and pause / rematch / leaving, which the host
+// passes on to the other guests; UDP carries the inputs, straight from every
+// phone to every other (small, frequent, and resent until acknowledged, so a
+// lost packet costs nothing).
 
-const val PROTOCOL = 4
+const val PROTOCOL = 5
 const val TCP_PORT = 7845
 const val BEACON_PORT = 7846
 
@@ -41,14 +43,35 @@ data class Welcome(
     val set: String = "",
     val title: String = "",
     val rom: Long = 0,
+    /** The guest's player number (host 0) and how many can play this game. */
+    val player: Int = 1,
+    val maxPlayers: Int = 2,
 )
+
+/** One player of a starting game: where its inputs come from ([host] null: the host's TCP address). */
+@Serializable
+data class RosterEntry(val player: Int, val name: String, val host: String?, val udpPort: Int)
+
+/** Sent by the host to every guest when it starts the game: who plays, and where to send inputs. */
+@Serializable
+data class Roster(val players: List<RosterEntry>)
 
 /** A [Hello] with this set asks only which game the host is running (joining by address). */
 const val PROBE = "?"
 
 /** What a host announces on the local network. */
 @Serializable
-data class Beacon(val protocol: Int, val name: String, val set: String, val title: String, val rom: Long, val tcpPort: Int)
+data class Beacon(
+    val protocol: Int,
+    val name: String,
+    val set: String,
+    val title: String,
+    val rom: Long,
+    val tcpPort: Int,
+    /** Players in so far (the host counts) and how many the game takes. */
+    val players: Int = 1,
+    val maxPlayers: Int = 2,
+)
 
 internal val json = Json { ignoreUnknownKeys = true }
 
@@ -61,6 +84,7 @@ internal object Msg {
     const val PAUSE: Byte = 6
     const val RESUME: Byte = 7
     const val REMATCH: Byte = 8
+    const val ROSTER: Byte = 9
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {
@@ -86,8 +110,8 @@ internal inline fun <reified T> encode(value: T): ByteArray = json.encodeToStrin
 internal inline fun <reified T> decode(bytes: ByteArray): T = json.decodeFromString(String(bytes))
 
 /**
- * One input packet: the sender's unacknowledged inputs from [start], what it
- * has received from us ([ack]: all frames below it), how many frames it runs
+ * One input packet from player [from]: the sender's unacknowledged inputs
+ * from [start], what it has received from us ([ack]: all frames below it), how many frames it runs
  * ahead of our inputs ([advantage], for time sync) with its input [delay],
  * and optionally a state checksum for frame [sumFrame] (-1: none).
  */
@@ -102,10 +126,11 @@ data class InputPacket(
     /** Which game of the session (each rematch starts the next); others' packets are ignored. */
     val epoch: Int = 0,
     val delay: Int = 1,
+    val from: Int = 0,
 ) {
     fun encode(): ByteArray {
-        val b = ByteBuffer.allocate(4 + 1 + 4 * 4 + 1 + 1 + 1 + 1 + masks.size * 2 + 8)
-        b.putInt(MAGIC).put(VERSION).putInt(session).put(epoch.toByte()).putInt(ack).putInt(start).putInt(sumFrame)
+        val b = ByteBuffer.allocate(4 + 1 + 4 + 1 + 1 + 4 * 3 + 1 + 1 + 1 + masks.size * 2 + 8)
+        b.putInt(MAGIC).put(VERSION).putInt(session).put(from.toByte()).put(epoch.toByte()).putInt(ack).putInt(start).putInt(sumFrame)
         b.put(advantage.coerceIn(-127, 127).toByte())
         b.put(delay.toByte())
         b.put(masks.size.toByte())
@@ -116,7 +141,7 @@ data class InputPacket(
 
     companion object {
         private const val MAGIC = 0x39304B41 // "90KA"
-        private const val VERSION: Byte = 4
+        private const val VERSION: Byte = 5
         const val MAX_MASKS = 120
 
         fun decode(data: ByteArray, length: Int = data.size): InputPacket? = try {
@@ -125,6 +150,7 @@ data class InputPacket(
                 null
             } else {
                 val session = b.int
+                val from = b.get().toInt() and 0xFF
                 val epoch = b.get().toInt() and 0xFF
                 val ack = b.int
                 val start = b.int
@@ -133,7 +159,7 @@ data class InputPacket(
                 val delay = b.get().toInt()
                 val n = b.get().toInt() and 0xFF
                 val masks = IntArray(n) { b.short.toInt() and 0xFFFF }
-                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage, epoch, delay)
+                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage, epoch, delay, from)
             }
         } catch (e: RuntimeException) {
             null
@@ -142,7 +168,7 @@ data class InputPacket(
 
     override fun equals(other: Any?) = other is InputPacket && session == other.session && ack == other.ack &&
         start == other.start && masks.contentEquals(other.masks) && sumFrame == other.sumFrame && sum == other.sum &&
-        advantage == other.advantage && epoch == other.epoch && delay == other.delay
+        advantage == other.advantage && epoch == other.epoch && delay == other.delay && from == other.from
 
     override fun hashCode() = start * 31 + masks.contentHashCode()
 }
