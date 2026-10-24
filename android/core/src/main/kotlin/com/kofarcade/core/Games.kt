@@ -53,6 +53,8 @@ data class Game(
     val art: String? = null,
     /** Shows a Block button (hold = back, slide down = low block). */
     val block: Boolean = false,
+    /** The game runs on a double-tap forward: shows a Run button and runs when the stick is pushed to the edge. */
+    val run: Boolean = false,
 ) {
     /** Face buttons shown: shooters only show the buttons that have a job. */
     val faceButtons: List<Char>
@@ -107,6 +109,7 @@ val GAMES: List<Game> = listOf(
     labels = mapOf('A' to "Weapon", 'B' to "Punch", 'C' to "Jump", 'D' to "Throw"),
     // Inputs every Sengoku 3 character shares.
     moves = listOf(Move("Special 1", "22+A"), Move("Special 2", "22+B"), Move("Super", "28+AB", type = "dm")),
+    run = true,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

@@ -49,10 +49,21 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
         /** Block button: 4 = block (back), 1 = low block (down-back), null = let go. */
         fun onBlock(relDir: Int?)
+
+        /** Run: held from the Run button, or the stick pushed to its edge. */
+        fun onRun(on: Boolean)
     }
 
     /** A one-tap button on the inner ring. [cmd] null means a toggle (rapid fire). */
-    data class SysButton(val name: String, val sub: String, val cmd: String?, val power: Boolean = false, val on: Boolean = false)
+    data class SysButton(
+        val name: String,
+        val sub: String,
+        val cmd: String?,
+        val power: Boolean = false,
+        val on: Boolean = false,
+        /** Works while held (Run) instead of on a tap. */
+        val hold: Boolean = false,
+    )
 
     data class Slot(val name: String?, val active: Boolean)
 
@@ -107,6 +118,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val stick: StickMode = StickMode.FLOATING,
         val haptics: Boolean = true,
         val block: Boolean = false,
+        /** Pushing the stick to its edge left or right runs. */
+        val run: Boolean = false,
     )
 
     var state = State()
@@ -795,7 +808,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             Kind.SKILL -> fire(id, el, el.move!!.cmd)
             Kind.SYS -> {
                 val cmd = el.sys!!.cmd
-                if (cmd != null) fire(id, el, cmd) else {
+                if (el.sys.hold) {
+                    pointerEl[id] = el
+                    pressed += el
+                    holdRuns++
+                    listener.onRun(true)
+                    haptic()
+                } else if (cmd != null) fire(id, el, cmd) else {
                     listener.onRapid()
                     haptic()
                 }
@@ -865,6 +884,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             lastDir = 5
             resetStick()
             listener.onDir(5)
+            setStickRun(false)
             return
         }
         if (id == blockPointer) {
@@ -877,6 +897,21 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val el = pointerEl.remove(id) ?: return
         pressed -= el
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
+        if (el.kind == Kind.SYS && el.sys?.hold == true) {
+            holdRuns--
+            if (holdRuns == 0 && !stickRun) listener.onRun(false)
+        }
+    }
+
+    // Running from the Run button (how many fingers hold it) and from the stick.
+    private var holdRuns = 0
+    private var stickRun = false
+
+    private fun setStickRun(on: Boolean) {
+        if (on == stickRun) return
+        stickRun = on
+        if (on) haptic(strong = true)
+        if (holdRuns == 0) listener.onRun(on)
     }
 
     private fun stickRadius() = 64 * d * state.size * tweak("stick").scale
@@ -917,6 +952,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             lastDir = dir
             if (dir != 5) haptic()
             listener.onDir(dir)
+        }
+        if (state.run) {
+            // Pushed past the edge sideways: run. Easing back in (or turning
+            // up or down) walks again; the gap between the two stops flicker.
+            val sideways = dir == 4 || dir == 6 || dir == 1 || dir == 3 || dir == 7 || dir == 9
+            val reach = hypot(dx, dy)
+            if (!stickRun && sideways && reach > r * 1.25f) setStickRun(true)
+            else if (stickRun && (!sideways || reach < r * 0.9f)) setStickRun(false)
         }
     }
 }

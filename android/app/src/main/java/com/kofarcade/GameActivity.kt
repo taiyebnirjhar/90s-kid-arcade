@@ -315,6 +315,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onBlock(relDir: Int?) = pad.setHold(relDir)
 
+    override fun onRun(on: Boolean) = if (on) pad.startRun() else pad.stopRun()
+
     override fun onRapid() {
         game.rapid?.let { pad.setRapid(it, !pad.isRapid(it)) }
         updateHud()
@@ -520,6 +522,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val system = buildList {
             game.power?.let { add(HudView.SysButton(it.name, it.cmd, it.cmd, power = true)) }
             game.system.forEach { add(HudView.SysButton(it.name, subLabel(it.cmd), it.cmd)) }
+            if (game.run) add(HudView.SysButton("Run", "hold", null, hold = true))
             game.rapid?.let {
                 val on = pad.isRapid(it)
                 add(HudView.SysButton("Rapid", if (on) "ON" else "OFF", null, on = on))
@@ -545,6 +548,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             stick = prefs.stick,
             haptics = prefs.haptics,
             block = game.block,
+            run = game.run,
         )
     }
 
