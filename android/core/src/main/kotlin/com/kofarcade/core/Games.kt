@@ -185,6 +185,15 @@ val GAMES: List<Game> = listOf(
     neoGeo = false,
     players = 3,
 ) + Game(
+    // Neo Geo, 2000: a graveyard platformer for two. Checked in FBNeo
+    // (tools/emu.py): A throws the lantern's fire, B jumps, C fires too, D
+    // does nothing. A held button fires once; quick presses keep the flames
+    // coming, so Fire has rapid fire like Metal Slug's Shoot.
+    id = "nitd", series = "Nightmare in the Dark", title = "Nightmare in the Dark", sets = listOf("nitd"),
+    layout = Layout.SHOOTER, art = "Nightmare in the Dark",
+    labels = mapOf('A' to "Fire", 'B' to "Jump"),
+    rapid = Key.A,
+) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
     // buttons. Moves checked in FBNeo (tools/movetest.py).

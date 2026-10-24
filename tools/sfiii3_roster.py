@@ -222,7 +222,6 @@ CHARACTERS = [
     ]),
     ("gill", "Gill", [
         sa(0, "Meteor Strike", "236236+" + LP),
-        sa(0, "Seraphic Wing", "236236+" + LK),
         sp("Pyro / Cryo-kinesis", "236+" + LP),
         sp("Cyber Lariat", "623+" + LP),
         sp("Moonsault Knee Drop", "63214+" + LK),

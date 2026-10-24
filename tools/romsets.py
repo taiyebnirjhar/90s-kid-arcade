@@ -16,7 +16,7 @@ import sys
 # The sets the app's games are listed under (core Games.kt); their clones are added.
 BASE = ["kof97", "kof2002", "kf2k5uni", "kof10th", "kf10thep",
         "mslug", "mslug2", "mslugx", "mslug3", "mslug4", "mslug5", "sengoku3",
-        "dino", "doubledr", "mvsc", "sfiii3"]
+        "dino", "doubledr", "mvsc", "sfiii3", "nitd"]
 
 src = "\n".join(open(p, encoding="latin-1").read() for p in sys.argv[1:])
 

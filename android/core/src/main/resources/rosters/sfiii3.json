@@ -1059,12 +1059,6 @@
      "note": ""
     },
     {
-     "name": "Seraphic Wing",
-     "cmd": "236236+D",
-     "type": "dm",
-     "note": ""
-    },
-    {
      "name": "Pyro / Cryo-kinesis",
      "cmd": "236+A",
      "type": "special",

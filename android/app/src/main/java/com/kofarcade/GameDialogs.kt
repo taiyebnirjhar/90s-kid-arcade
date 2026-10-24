@@ -633,7 +633,7 @@ fun ControlsPanel(
 
     if (canRapid) {
         SectionLabel("Shooting")
-        SwitchRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot to keep firing")
+        SwitchRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot or Fire to keep firing")
     }
 
     if (canDetect) {

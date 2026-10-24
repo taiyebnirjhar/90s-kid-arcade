@@ -188,7 +188,7 @@ class Prefs(context: Context) {
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
-    /** Metal Slug: holding Shoot keeps firing. */
+    /** Metal Slug, Nightmare in the Dark: holding Shoot / Fire keeps firing. */
     var rapidFire: Boolean
         get() = sp.getBoolean("rapidFire", true)
         set(v) = sp.edit().putBoolean("rapidFire", v).apply()

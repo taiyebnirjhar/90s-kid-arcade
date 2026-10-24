@@ -17496,6 +17496,106 @@
    ]
   },
   {
+   "name": "nitd",
+   "parent": null,
+   "base": "nitd",
+   "title": "Nightmare in the Dark",
+   "files": [
+    {
+     "name": "260-p1.p1",
+     "size": 524288,
+     "crc": "61361082",
+     "optional": false
+    },
+    {
+     "name": "260-c1.c1",
+     "size": 8388608,
+     "crc": "147b0c7f",
+     "optional": false
+    },
+    {
+     "name": "260-c2.c2",
+     "size": 8388608,
+     "crc": "d2b04b0d",
+     "optional": false
+    },
+    {
+     "name": "260-m1.m1",
+     "size": 524288,
+     "crc": "6407c5e5",
+     "optional": false
+    },
+    {
+     "name": "260-v1.v1",
+     "size": 4194304,
+     "crc": "24b0480c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "nitdbl",
+   "parent": "nitd",
+   "base": "nitd",
+   "title": "Nightmare in the Dark (bootleg)",
+   "files": [
+    {
+     "name": "nitd-p1.bin",
+     "size": 524288,
+     "crc": "1a05bd1b",
+     "optional": false
+    },
+    {
+     "name": "nitd-s1.bin",
+     "size": 131072,
+     "crc": "dd3bf47c",
+     "optional": false
+    },
+    {
+     "name": "nitd-c1.bin",
+     "size": 2097152,
+     "crc": "b4353190",
+     "optional": false
+    },
+    {
+     "name": "nitd-c2.bin",
+     "size": 2097152,
+     "crc": "6e27511f",
+     "optional": false
+    },
+    {
+     "name": "nitd-c3.bin",
+     "size": 2097152,
+     "crc": "472cf075",
+     "optional": false
+    },
+    {
+     "name": "nitd-c4.bin",
+     "size": 2097152,
+     "crc": "4c3926e6",
+     "optional": false
+    },
+    {
+     "name": "260-m1.m1",
+     "size": 524288,
+     "crc": "6407c5e5",
+     "optional": false
+    },
+    {
+     "name": "nitd-v1.bin",
+     "size": 2097152,
+     "crc": "79008868",
+     "optional": false
+    },
+    {
+     "name": "nitd-v2.bin",
+     "size": 2097152,
+     "crc": "728558f9",
+     "optional": false
+    }
+   ]
+  },
+  {
    "name": "sengk3eb",
    "parent": "sengoku3",
    "base": "sengoku3",

@@ -16,6 +16,7 @@ with rapid fire for Metal Slug.
 | Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` |
 | Sengoku 3 | `sengoku3` |
 | Cadillacs and Dinosaurs ("Mostofa", Capcom CPS-1) | `dino` |
+| Nightmare in the Dark | `nitd` |
 | Double Dragon (Neo Geo, 1995) | `doubledr` |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 
@@ -72,6 +73,9 @@ that one on the ring, with the fighter's specials.
 
 **Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
 fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
+
+**Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
+flames (the same rapid fire switch as Metal Slug).
 
 **Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
 
