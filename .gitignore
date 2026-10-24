@@ -1,3 +1,6 @@
 
 # tools/emu.py working folder: emulator core, ROMs, screenshots. Never committed.
 /emu/
+
+# Paparazzi output (CI publishes it to the ui-snapshots branch).
+/android/app/src/test/snapshots/

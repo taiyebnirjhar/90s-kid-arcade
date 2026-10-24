@@ -2,6 +2,9 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    // Screenshot tests: renders the Compose screens to PNGs on the build
+    // machine (CI publishes them to the ui-snapshots branch).
+    id("app.cash.paparazzi") version "1.3.5"
 }
 
 android {
@@ -70,4 +73,6 @@ dependencies {
 
     // Game pictures from libretro's thumbnail collection, cached on the phone.
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

@@ -624,7 +624,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
         }
         val active = prefs.active(game.id)
-        val slots = if (game.layout == Layout.FIGHTER && roster != null) {
+        // With detection on, the game says who's fighting and which way they
+        // face: no team slots or FACING button to tap.
+        val detecting = canDetect && prefs.autoDetect
+        val slots = if (game.layout == Layout.FIGHTER && roster != null && !detecting) {
             team().mapIndexed { i, id -> HudView.Slot(roster?.character(id)?.name, i == active) }
         } else {
             emptyList()
@@ -644,6 +647,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             haptics = look.haptics,
             block = game.block,
             run = game.run,
+            facingButton = !detecting,
         )
     }
 

@@ -80,3 +80,27 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "90s Kid Arcade (latest build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download 90s-Kid-Arcade.apk on your phone and open it to install."
+
+      # Screenshots of the app's screens (Paparazzi, app/src/test), published
+      # to the ui-snapshots branch to check the look without a phone. Never
+      # holds up the APK.
+      - name: Render UI screenshots
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: ./gradlew :app:recordPaparazziDebug --no-daemon
+
+      - name: Publish UI screenshots
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shots=app/src/test/snapshots/images
+          [ -d "$shots" ] || { echo "no screenshots"; exit 0; }
+          out=$(mktemp -d)
+          cp "$shots"/*.png "$out"/
+          cd "$out"
+          git init -q -b ui-snapshots
+          git add .
+          git -c user.name="ci" -c user.email="ci@users.noreply.github.com" commit -qm "UI screenshots of ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ui-snapshots

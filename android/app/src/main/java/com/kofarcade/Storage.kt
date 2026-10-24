@@ -113,10 +113,10 @@ fun RomCheck.message(): String = when (this) {
     RomCheck.Unknown -> "This zip isn't one of the app's games or the Neo Geo BIOS."
 }
 
-enum class StickMode(val label: String) {
-    FLOATING("Floating: appears under your thumb"),
-    FIXED("Fixed: always shown"),
-    HIDDEN("Hidden: works, not drawn"),
+enum class StickMode(val label: String, val short: String) {
+    FLOATING("Appears under your thumb, anywhere on the left", "Floating"),
+    FIXED("Always in the same place", "Fixed"),
+    HIDDEN("Works the same, but isn't drawn", "Hidden"),
 }
 
 enum class LabelMode(val label: String) {
@@ -130,11 +130,11 @@ enum class LabelMode(val label: String) {
  * stretches them, so the in-between widths trade a small gap at the sides for
  * fighters that keep their shape. [aspect] null = the whole screen.
  */
-enum class ScreenMode(val label: String, val aspect: Float?) {
-    ORIGINAL("Original 4:3 (no stretch)", 4f / 3f),
-    SLIGHT("Slightly wide (small gaps)", 3f / 2f),
-    WIDE("Wide 16:9", 16f / 9f),
-    FULL("Full screen (most stretch)", null),
+enum class ScreenMode(val label: String, val aspect: Float?, val short: String) {
+    ORIGINAL("Original shape, no stretch", 4f / 3f, "4:3"),
+    SLIGHT("A little wider, small gaps at the sides", 3f / 2f, "Slightly wide"),
+    WIDE("Widescreen, a little stretched", 16f / 9f, "16:9"),
+    FULL("The whole screen, most stretch", null, "Full"),
 }
 
 /** Settings, teams and custom move lists. */
