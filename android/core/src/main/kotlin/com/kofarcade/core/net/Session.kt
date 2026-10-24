@@ -32,6 +32,12 @@ interface LinkListener {
 
     /** The connection ended: the partner left, or went quiet. */
     fun onClosed(reason: String)
+
+    /** The partner opened (true) or closed (false) their menu: the game waits for both. */
+    fun onPartnerPaused(paused: Boolean) {}
+
+    /** The partner started a rematch: restart from the session's start state, then [Link.restart]. */
+    fun onRematch() {}
 }
 
 /**
@@ -51,7 +57,13 @@ class Link internal constructor(
     private val input = DataInputStream(BufferedInputStream(socket.getInputStream()))
     private val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
 
-    val lockstep = Lockstep(delay, localPlayer)
+    /** This game's inputs; replaced by [restart] for a rematch. */
+    @Volatile var lockstep = Lockstep(delay, localPlayer)
+        private set
+
+    /** Which game of the session this is: 0, then +1 per rematch. */
+    @Volatile var epoch = 0
+        private set
 
     @Volatile private var closed = false
     @Volatile private var listener: LinkListener? = null
@@ -102,7 +114,9 @@ class Link internal constructor(
     fun flush() {
         val (start, masks) = lockstep.outgoing(InputPacket.MAX_MASKS)
         val sum = latestSum
-        val packet = InputPacket(session, lockstep.remoteKnown, start, masks, sum?.first ?: -1, sum?.second ?: 0, advantage)
+        val packet = InputPacket(
+            session, lockstep.remoteKnown, start, masks, sum?.first ?: -1, sum?.second ?: 0, advantage, epoch and 0xFF,
+        )
         val bytes = packet.encode()
         try {
             udp.send(DatagramPacket(bytes, bytes.size, peer))
@@ -147,8 +161,15 @@ class Link internal constructor(
             val p = InputPacket.decode(buf, packet.length) ?: continue
             if (p.session != session) continue
             lastHeard = System.nanoTime()
-            partnerAdvantage = p.advantage
-            lockstep.receive(p.start, p.masks, p.ack)
+            val current = synchronized(deliverLock) {
+                // From the previous game (still in flight) or the next one
+                // (the partner restarted first): not this game's inputs.
+                if (p.epoch != (epoch and 0xFF)) return@synchronized false
+                partnerAdvantage = p.advantage
+                lockstep.receive(p.start, p.masks, p.ack)
+                true
+            }
+            if (!current) continue
             if (p.sumFrame >= 0) check(p.sumFrame, p.sum, mine = false)
             deliver()
         }
@@ -158,9 +179,14 @@ class Link internal constructor(
         try {
             while (!closed) {
                 val (t, _) = input.message()
-                if (t == Msg.BYE) {
-                    end("$peerName left the game")
-                    return
+                when (t) {
+                    Msg.BYE -> {
+                        end("$peerName left the game")
+                        return
+                    }
+                    Msg.PAUSE -> listener?.onPartnerPaused(true)
+                    Msg.RESUME -> listener?.onPartnerPaused(false)
+                    Msg.REMATCH -> listener?.onRematch()
                 }
             }
         } catch (e: IOException) {
@@ -191,6 +217,37 @@ class Link internal constructor(
         val new = lockstep.sampleUpTo(emulated, input)
         if (new.second.isNotEmpty()) flush()
         return new
+    }
+
+    /** Tells the partner our menu opened or closed. */
+    fun sendPause(paused: Boolean) {
+        runCatching { output.message(if (paused) Msg.PAUSE else Msg.RESUME) }
+    }
+
+    /** Asks the partner to restart too; then restart here (see [LinkListener.onRematch]). */
+    fun sendRematch() {
+        runCatching { output.message(Msg.REMATCH) }
+    }
+
+    /**
+     * Starts the next game of the session: inputs from frame 0 again, under a
+     * new epoch so the old game's packets still in flight are ignored. Call
+     * with the emulator stopped. [reset] (resetting the emulator's input
+     * counters) runs at the switch, so no input of either game slips between.
+     */
+    fun restart(reset: () -> Unit = {}) {
+        synchronized(deliverLock) {
+            reset()
+            lockstep = Lockstep(delay, localPlayer)
+            epoch++
+            latestSum = null
+            synchronized(sums) {
+                sums.clear()
+                remoteSums.clear()
+            }
+            advantage = 0
+            partnerAdvantage = 0
+        }
     }
 
     private val deliverLock = Any()

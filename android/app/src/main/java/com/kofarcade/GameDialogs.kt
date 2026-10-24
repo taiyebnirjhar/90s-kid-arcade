@@ -170,7 +170,7 @@ private fun PauseMenu(game: GameActivity) {
             modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Text(if (game.isNetplay) "MENU · THE GAME KEEPS RUNNING" else "PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                Text(if (game.isNetplay) "PAUSED FOR BOTH PLAYERS" else "PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
                 Text(
                     game.gameTitle,
                     color = Color.White,
@@ -195,7 +195,8 @@ private fun PauseMenu(game: GameActivity) {
                 modifier = Modifier.width(300.dp).verticalScroll(rememberScrollState()),
             ) {
                 BigButton("Resume", primary = true) { game.close() }
-                // A saved state can't be loaded on one phone of two.
+                // Two players: restart together. (A saved state can't be loaded on one phone of two.)
+                if (game.isNetplay) BigButton("Rematch") { game.rematch() }
                 if (!game.isNetplay) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BigButton("Save state", Modifier.weight(1f)) { game.saveState() }

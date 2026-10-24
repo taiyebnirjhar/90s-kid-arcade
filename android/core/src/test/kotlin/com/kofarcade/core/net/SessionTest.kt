@@ -10,6 +10,14 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class SessionTest {
+    private fun waitFor(condition: () -> Boolean) {
+        val until = System.currentTimeMillis() + 5000
+        while (!condition()) {
+            assertTrue(System.currentTimeMillis() < until, "timed out")
+            Thread.sleep(10)
+        }
+    }
+
     private val localhost = InetAddress.getLoopbackAddress()
 
     /** Plays [frames] frames on a link like the game screen would, with a fake emulator. */
@@ -19,12 +27,32 @@ class SessionTest {
         val done = CountDownLatch(1)
         @Volatile var closedReason: String? = null
         @Volatile var running = true
+        @Volatile var emulated = 0
+        @Volatile var partnerPaused: Boolean? = null
+        @Volatile var done2 = CountDownLatch(1)
+
+        // A rematch: back to frame 0 with fresh inputs, as the game screen does.
+        fun restart() {
+            synchronized(remote) {
+                link.restart()
+                local.clear()
+                remote.clear()
+                emulated = 0
+            }
+        }
+
+        override fun onPartnerPaused(paused: Boolean) {
+            partnerPaused = paused
+        }
+
+        override fun onRematch() = restart()
 
         override fun onRemote(start: Int, masks: IntArray) {
             synchronized(remote) {
                 assertEquals(remote.size, start)
                 remote += masks.toList()
                 if (remote.size >= frames) done.countDown()
+                if (link.epoch > 0 && remote.size >= frames) done2.countDown()
             }
         }
 
@@ -38,16 +66,17 @@ class SessionTest {
         fun play() {
             link.start(this)
             thread(isDaemon = true) {
-                var emulated = 0
                 // Keeps playing (and sending) until told to stop, like a real phone.
                 while (running) {
                     // Rollback emulator: runs ahead of the partner by up to 8 frames.
-                    val known = synchronized(remote) { remote.size }
-                    if (emulated < local.size && emulated < known + 8) emulated++
-                    var f = link.lockstep.nextLocal
-                    val (_, masks) = link.sample(emulated) { (f++ * 13 + link.localPlayer) and 0xFFF }
-                    local += masks.toList()
-                    link.advantage = emulated - known
+                    synchronized(remote) {
+                        val known = remote.size
+                        if (emulated < local.size && emulated < known + 8) emulated++
+                        var f = link.lockstep.nextLocal
+                        val (_, masks) = link.sample(emulated) { (f++ * 13 + link.localPlayer) and 0xFFF }
+                        local += masks.toList()
+                        link.advantage = emulated - known
+                    }
                     Thread.sleep(16)
                 }
             }
@@ -79,14 +108,33 @@ class SessionTest {
         a.play()
         b.play()
         assertTrue(a.done.await(20, TimeUnit.SECONDS) && b.done.await(20, TimeUnit.SECONDS))
-        a.running = false
-        b.running = false
         assertEquals(null, a.closedReason)
+        synchronized(a.remote) {
         // Each side got exactly what the other sampled, frame by frame.
         assertEquals(b.local.take(120), a.remote.take(120))
         assertEquals(a.local.take(120), b.remote.take(120))
         a.remote.take(120).forEachIndexed { frame, m -> assertEquals((frame * 13 + 1) and 0xFFF, m) }
         assertTrue(a.link.partnerAdvantage in -10..10)
+        }
+
+        // Pausing reaches the partner.
+        h.sendPause(true)
+        waitFor { b.partnerPaused == true }
+        h.sendPause(false)
+        waitFor { b.partnerPaused == false }
+
+        // A rematch: both restart from frame 0 and play the same inputs again.
+        guestLink.sendRematch()
+        b.restart()
+        assertTrue(a.done2.await(20, TimeUnit.SECONDS) && b.done2.await(20, TimeUnit.SECONDS))
+        assertEquals(1, h.epoch)
+        assertEquals(1, guestLink.epoch)
+        synchronized(a.remote) { synchronized(b.local) {
+            assertEquals(b.local.take(120), a.remote.take(120))
+            a.remote.take(120).forEachIndexed { frame, m -> assertEquals((frame * 13 + 1) and 0xFFF, m) }
+        } }
+        a.running = false
+        b.running = false
 
         // Leaving tells the other side.
         val left = CountDownLatch(1)
