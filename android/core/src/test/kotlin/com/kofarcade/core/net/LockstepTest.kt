@@ -91,8 +91,56 @@ class LockstepTest {
 
     @Test
     fun packetsRoundTrip() {
-        val p = InputPacket(42, 10, 7, intArrayOf(0, 1, 0xFFFF, 256), 120, -5L, advantage = -3)
+        val p = InputPacket(42, 10, 7, intArrayOf(0, 1, 0xFFFF, 256), 120, -5L, advantage = -3, epoch = 2, delay = 3)
         assertEquals(p, InputPacket.decode(p.encode()))
         assertEquals(null, InputPacket.decode(byteArrayOf(1, 2, 3)))
+    }
+
+    @Test
+    fun theDelayCanChangeMidGameWithoutGapsOrRepeats() {
+        val a = Lockstep(1, 0)
+        var next = 0
+        val frames = ArrayList<Int>()
+        fun sample(emulated: Int) = a.sampleUpTo(emulated) { next++ }.also { (start, masks) ->
+            assertEquals(frames.size, start)
+            frames += masks.toList()
+        }
+        sample(0) // frames 0, 1
+        a.delay = 3
+        assertEquals(3, sample(1).second.size) // up to 1 + 3
+        a.delay = 1
+        assertEquals(0, sample(2).second.size) // already have frame 3
+        assertEquals(1, sample(4).second.size)
+        assertEquals((0..5).toList(), frames)
+    }
+
+    /** The partner's advantage with a network [latency] in frames, as [DelayTuner] sees it. */
+    private fun tune(latency: Double, start: Int, seconds: Int): List<Int> {
+        val tuner = DelayTuner()
+        var delay = start
+        val seen = ArrayList<Int>()
+        repeat(seconds * 60) {
+            val jitter = if (it % 3 == 0) 1 else 0
+            delay = tuner.update(delay, Math.round(latency - delay).toInt() + jitter)
+            seen += delay
+        }
+        return seen
+    }
+
+    @Test
+    fun aSlowConnectionGetsMoreDelayAndAFastOneLess() {
+        assertEquals(3, tune(latency = 4.5, start = 1, seconds = 20).last())
+        assertEquals(1, tune(latency = 0.0, start = 3, seconds = 20).last())
+        // A good connection stays at one frame.
+        assertEquals(setOf(1), tune(latency = 0.5, start = 1, seconds = 20).toSet())
+    }
+
+    @Test
+    fun theDelaySettlesInsteadOfSwinging() {
+        for (latency in listOf(1.0, 1.5, 2.0, 2.5, 3.0, 3.5)) {
+            val seen = tune(latency, start = 1, seconds = 60)
+            val changes = seen.zipWithNext().count { (a, b) -> a != b }
+            assertTrue(changes <= 2, "latency $latency: $changes changes")
+        }
     }
 }

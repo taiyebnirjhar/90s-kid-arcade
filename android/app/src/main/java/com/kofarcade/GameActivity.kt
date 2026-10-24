@@ -2,6 +2,8 @@ package com.kofarcade
 
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -162,6 +164,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Before the emulator starts: in two-player mode frames run from both
         // phones' inputs (rollback netcode, see LibretroDroid::setNetplay).
         LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, MAX_ROLLBACK)
+        if (link != null) holdWifi()
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
         LibretroDroid.setFrozen(false)
@@ -420,13 +423,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             localMask
         }
         masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) }
-        // Time sync: when this phone runs further ahead of its partner's
-        // inputs than the partner does of ours, wait a frame so it catches up.
-        // Both phones then guess as little as possible, and neither stalls at
-        // the rollback limit.
-        val advantage = emulated - link.lockstep.remoteKnown
-        link.advantage = advantage
-        if (advantage - link.partnerAdvantage >= 2 && frame - lastWait > 20) {
+        // Time sync: when this phone's game runs ahead of its partner's
+        // (see Link.lead), wait a frame so it catches up. Both phones then
+        // guess as little as possible, and neither stalls at the rollback limit.
+        link.advantage = emulated - link.lockstep.remoteKnown
+        if (link.lead >= 2 && frame - lastWait > 20) {
             lastWait = frame
             LibretroDroid.netWait(1)
         }
@@ -497,8 +498,30 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         show(GameDialog.Error(reason, title = "Two-player game ended"))
     }
 
+    // Two players: Wi-Fi normally naps between packets to save battery, so an
+    // input can sit for tens of milliseconds and the partner's game has to
+    // guess and correct. This keeps the radio awake while the game is on screen.
+    private var wifiLock: WifiManager.WifiLock? = null
+
+    private fun holdWifi() {
+        val wifi = applicationContext.getSystemService(WifiManager::class.java) ?: return
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+        } else {
+            @Suppress("DEPRECATION")
+            WifiManager.WIFI_MODE_FULL_HIGH_PERF
+        }
+        wifiLock = runCatching {
+            wifi.createWifiLock(mode, "90s-kid-arcade:two-players").apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }.getOrNull()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        wifiLock?.let { if (it.isHeld) it.release() }
         link?.let {
             it.close()
             if (Netplay.link === it) Netplay.link = null

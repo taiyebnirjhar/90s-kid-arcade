@@ -8,6 +8,8 @@
     <!-- Two players: finding a hosted game on the local network (Wi-Fi or hotspot). -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Keeps Wi-Fi awake during a two-player game (WifiLock). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".ArcadeApp"
