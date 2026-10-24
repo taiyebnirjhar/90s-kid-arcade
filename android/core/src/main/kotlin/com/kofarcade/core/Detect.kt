@@ -2,7 +2,7 @@ package com.kofarcade.core
 
 // Automatic fighter detection: reads the game's RAM to find your team (or
 // fighter), which member is fighting and which way they face. KOF first;
-// Double Dragon and Street Fighter III at the bottom.
+// Double Dragon, Street Fighter III and Marvel vs Capcom at the bottom.
 //
 // Addresses are 68000 addresses in Neo Geo work RAM (0x100000-0x10FFFF), from
 // the hitbox viewers, training-mode scripts and cheat files the fighting game
@@ -74,7 +74,15 @@ class DetectSpec(
     val alternateFlags: Int? = null,
     /** Street Fighter III: the Super Art picked (0-2), P1; P2's is the next byte. */
     val superArt: Int? = null,
+    /** Tag teams: the block of the fighter on screen, from the player's first block (null: that one). */
+    val pointBase: ((Ram, Int) -> Int)? = null,
 )
+
+/** The block of [player]'s fighter on screen. */
+fun fighterBase(spec: DetectSpec, ram: Ram, player: Int): Int {
+    val base = spec.player + spec.playerStride * player
+    return spec.pointBase?.invoke(ram, base) ?: base
+}
 
 private fun kof97(ids: List<String?>) = DetectSpec(
     team = listOf(0x10A84B, 0x10A84C, 0x10A84D),
@@ -167,6 +175,38 @@ private val SF3 = DetectSpec(
     superArt = 0x0201138B,
 )
 
+// Marvel vs Capcom (CPS-2, 68000 RAM from 0xFF0000): four fighter blocks
+// 0x400 apart, P1's first at 0xFF3000, P2's first 0xFF3400, their partners
+// 0x800 later. The character is the byte at +0x53, facing bit 0 of +0x4B (1 =
+// right), X at +0x0C; +0x00 is 1 for whichever of a player's two is on screen
+// and +0xB4 is 0 on the floor. From the FBNeo cheat file and the CPS-2
+// hitbox scripts; checked in mvsc (tools/emu.py), tag included.
+private val MVSC_IDS = List(0x2E) { id ->
+    mapOf(
+        0x02 to "warmachine", 0x04 to "captainamerica", 0x06 to "hulk", 0x08 to "wolverine",
+        0x0A to "gambit", 0x0C to "venom", 0x0E to "spiderman", 0x10 to "roll", 0x12 to "ryu",
+        0x14 to "captaincommando", 0x16 to "chunli", 0x18 to "jin", 0x1A to "zangief",
+        0x1C to "strider", 0x1E to "morrigan", 0x20 to "megaman", 0x24 to "redvenom",
+        0x26 to "orangehulk", 0x28 to "goldwarmachine", 0x2A to "shadowlady", 0x2C to "lilith",
+    )[id]
+}
+
+private val MVSC = DetectSpec(
+    memoryBase = 0xFF0000,
+    windows = listOf(0xFF3000 to 0x1000, 0xFF4000 to 0x10),
+    player = 0xFF3000,
+    playerStride = 0x400,
+    character = 0x53,
+    x = 0x0C,
+    grounded = 0xB4,
+    facing = { ram, base -> ram.byte(base + 0x4B) and 1 == 0 },
+    team = listOf(0xFF3053, 0xFF3853),
+    teamStride = 0x400,
+    inRound = { it.byte(0xFF4000) == 8 },
+    ids = MVSC_IDS,
+    pointBase = { ram, base -> if (ram.byte(base) == 1) base else base + 0x800 },
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
@@ -174,6 +214,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof2002", "kof2005", "kof2002mp" -> KOF2002
     "doubledr" -> DOUBLE_DRAGON
     "sfiii3" -> SF3
+    "mvsc" -> MVSC
     else -> null
 }
 
@@ -200,8 +241,8 @@ data class Detection(
 /** Reads [player]'s (0 = P1, 1 = P2) fighters from [ram]. */
 fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
     val other = 1 - player
-    val base = spec.player + spec.playerStride * player
-    val otherBase = spec.player + spec.playerStride * other
+    val base = fighterBase(spec, ram, player)
+    val otherBase = fighterBase(spec, ram, other)
     val flags = spec.alternateFlags?.let { ram.byte(it + spec.teamStride * player) } ?: 0
     val teamRaw = spec.team.map { ram.byte(it + spec.teamStride * player) and spec.teamMask }
     val team = teamRaw.mapIndexed { slot, raw ->

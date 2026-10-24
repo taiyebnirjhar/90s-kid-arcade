@@ -27,7 +27,7 @@ class DetectTest {
 
     @Test
     fun everyDetectedIdIsInItsRoster() {
-        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3")) {
+        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3", "mvsc")) {
             val roster = loadRoster(name)!!
             val spec = detectSpec(name)!!
             val ids = spec.ids.filterNotNull() + spec.alternates.values
@@ -127,6 +127,24 @@ class DetectTest {
         assertEquals(3, Move("Stun Gun Headbutt", "236236+A", "dm", "Super Art III").superArt)
         assertEquals(1, Move("Hyper Bomb", "63214789+A", "dm", "Super Art I; close").superArt)
         assertNull(Move("Flash Chop", "236+A").superArt)
+    }
+
+    @Test
+    fun marvelVsCapcomFollowsTheTag() {
+        val buf = ByteArray(0x1000)
+        fun set(addr: Int, v: Int) { buf[(addr - 0xFF3000) xor 1] = v.toByte() }
+        set(0xFF3053, 0x06) // Hulk
+        set(0xFF3853, 0x0E) // Spider-Man, his partner
+        set(0xFF3000, 0) // Hulk tagged out: Spider-Man is on screen
+        set(0xFF384B, 1) // facing right
+        set(0xFF3400, 1)
+        val rest = ByteArray(0x10).also { it[0 xor 1] = 8 } // 0xFF4000: fighting
+        val d = detect(detectSpec("mvsc")!!, Ram(listOf(0xFF3000 to buf, 0xFF4000 to rest)))
+        assertEquals(listOf("hulk", "spiderman"), d.team)
+        assertEquals("spiderman", d.active)
+        assertEquals(1, d.activeSlot)
+        assertTrue(d.inRound)
+        assertFalse(d.facingLeft)
     }
 
     @Test

@@ -37,8 +37,10 @@ class Emu:
     def __init__(self, game):
         # Street Fighter III (CPS-3): SH-2 RAM from 0x02000000 in 32-bit words.
         cps3 = game.startswith("sfiii")
-        self.pad = CAPCOM_6 if cps3 else PAD
-        self.base, self.swap = (0x02000000, 3) if cps3 else (0x100000, 1)
+        # Marvel vs Capcom (CPS-2): 68000 RAM from 0xFF0000.
+        cps2 = game.startswith("mvsc")
+        self.pad = CAPCOM_6 if cps3 or cps2 else PAD
+        self.base, self.swap = (0x02000000, 3) if cps3 else (0xFF0000, 1) if cps2 else (0x100000, 1)
         self.lib = C.CDLL(os.path.join(EMU, "fbneo_libretro.so"))
         self.fmt = 0
         self.frame = None
