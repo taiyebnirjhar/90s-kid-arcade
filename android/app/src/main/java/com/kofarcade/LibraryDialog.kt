@@ -52,13 +52,14 @@ import kotlinx.coroutines.withContext
 private data class Download(val done: Long = 0, val result: String? = null, val ok: Boolean = false)
 
 /**
- * Your private ROM library: asks for its address and key once, then lists
+ * Your private ROM library: asks for the key once (the address is built
+ * in, see [Library.DEFAULT_URL], and can be changed), then lists
  * its zips with a Download button each. Every download is checked like an
  * import, so a broken zip says what's missing instead of failing in the game.
  */
 @Composable
 fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: () -> Unit) {
-    var editing by remember { mutableStateOf(prefs.libraryUrl == null || prefs.libraryKey == null) }
+    var editing by remember { mutableStateOf(prefs.libraryKey == null) }
     var entries by remember { mutableStateOf<List<Library.Entry>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -66,7 +67,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    fun library() = Library(prefs.libraryUrl.orEmpty(), prefs.libraryKey.orEmpty())
+    fun library() = Library(prefs.libraryUrl, prefs.libraryKey.orEmpty())
 
     fun load() {
         loading = true
@@ -119,24 +120,15 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
                 TextButton(onClick = onClose, enabled = !busy) { Text("Close") }
             }
             if (editing) {
-                var url by remember { mutableStateOf(prefs.libraryUrl.orEmpty()) }
+                var url by remember { mutableStateOf(prefs.libraryUrl) }
                 var key by remember { mutableStateOf(prefs.libraryKey.orEmpty()) }
+                var showUrl by remember { mutableStateOf(prefs.libraryUrl != Library.DEFAULT_URL) }
                 Text(
-                    "Your ROMs, from your own Cloudflare R2 bucket. Enter the Worker's address and the key you set " +
-                        "as ARCADE_KEY. They stay on this phone.",
+                    "Enter the library key to download your games. It stays on this phone.",
                     color = Palette.muted,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 10.dp),
                 )
-                OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    label = { Text("Address, e.g. arcade-roms.you.workers.dev") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = key,
                     onValueChange = { key = it },
@@ -146,6 +138,19 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (showUrl) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text("Library address") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    TextButton(onClick = { showUrl = true }) { Text("Use another library") }
+                }
                 error?.let { Text(it, color = Palette.red, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp)) }
                 Button(
                     onClick = {

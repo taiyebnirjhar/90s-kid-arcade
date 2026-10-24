@@ -13,6 +13,11 @@ import java.net.URLEncoder
  * downloads one; every request sends "Authorization: Bearer <key>".
  */
 class Library(url: String, private val key: String) {
+    companion object {
+        /** Our library. Only the key unlocks it; the app asks for that. */
+        const val DEFAULT_URL = "https://arcade-roms.taiyebnirjhor.workers.dev"
+    }
+
     data class Entry(val name: String, val size: Long)
 
     class WrongKey : IOException("The library didn't accept the key")
