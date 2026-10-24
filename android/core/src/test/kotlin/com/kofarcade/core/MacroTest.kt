@@ -43,6 +43,38 @@ class MacroTest {
     }
 
     @Test
+    fun rollsThroughTheDiagonalLikeAStick() {
+        // 214214: from 4 back to 2 passes 1, as on a real stick.
+        assertEquals(listOf(2, 1, 4, 1, 2, 1, 4, 4, 5), dirs(compile("214214+A", timing = Timing(step = 1, press = 1))))
+        // Already rolled, or opposite directions: nothing added.
+        assertEquals(listOf(2, 3, 6, 6, 5), dirs(compile("236+A", timing = Timing(step = 1, press = 1))))
+        assertEquals(listOf(6, 4, 6, 6, 5), dirs(compile("646+A", timing = Timing(step = 1, press = 1))))
+        // Mirrored with the rest when facing left.
+        assertEquals(listOf(2, 3, 6, 3, 2, 3, 6, 6, 5), dirs(compile("214214+A", facingLeft = true, timing = Timing(step = 1, press = 1))))
+    }
+
+    @Test
+    fun tildeInputsFollowAtOnce() {
+        val f = compile("214+C~A", timing = Timing(step = 1, press = 4, gap = 2, quickPress = 2))
+        assertEquals(listOf("", "", "", "C", "C", "A", "A", ""), f.map { it.buttons })
+        assertTrue(parseCommand("214+C~A").isSequence)
+        assertEquals("↓↙←C A", toArrows("214+C~A"))
+    }
+
+    @Test
+    fun upMidMotionIsOnlyPassedThrough() {
+        // Mary's M. Typhoon: 9 and 8 one frame each, or she jumps.
+        assertEquals(listOf(1, 1, 2, 2, 3, 3, 6, 6, 9, 8, 2, 2, 2, 2, 5), dirs(compile("1236982+BD", timing = Timing(step = 2, press = 2))))
+        // Up at the end (a jump-cancel or [2]8 charge) is held as usual.
+        assertEquals(listOf(2, 2, 3, 3, 6, 6, 9, 9, 9, 5), dirs(compile("2369+B", timing = Timing(step = 2, press = 1))))
+    }
+
+    @Test
+    fun repeatedDirectionsAreSeparateTaps() {
+        assertEquals(listOf(2, 5, 2, 2, 5), dirs(compile("22+B", timing = Timing(step = 1, press = 1))))
+    }
+
+    @Test
     fun chargeHoldsForTheChargeTime() {
         val f = compile("[2]8+A", timing = Timing(step = 2, charge = 10, press = 1))
         assertEquals(10, f.count { it.dir == 2 })

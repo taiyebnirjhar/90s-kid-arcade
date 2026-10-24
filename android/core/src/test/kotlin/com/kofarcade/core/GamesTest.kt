@@ -24,7 +24,7 @@ class GamesTest {
 
     @Test
     fun rostersLoadAndEveryMoveParses() {
-        for (name in listOf("kof97", "kof2002")) {
+        for (name in GAMES.mapNotNull { it.roster }.distinct()) {
             val roster = assertNotNull(loadRoster(name), name)
             assertTrue(roster.characters.size > 30, name)
             for (c in roster.characters) for (m in c.moves) {

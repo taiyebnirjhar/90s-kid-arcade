@@ -407,11 +407,6 @@
      "type": "special"
     },
     {
-     "name": "Bakuretsu Hurricane",
-     "cmd": "41236+C",
-     "type": "special"
-    },
-    {
      "name": "Tiger Kick",
      "cmd": "623+B",
      "type": "special",
@@ -428,6 +423,12 @@
      "cmd": "214+B",
      "type": "special",
      "note": "K: B or D"
+    },
+    {
+     "name": "Bakuretsu Ken",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps); finishers: 236+A, 236+C"
     }
    ]
   },
@@ -455,10 +456,10 @@
      "note": "DM: 1 power stock (or during MAX mode); P: A or C"
     },
     {
-     "name": "Ryuuko Ranbu: Destroy",
-     "cmd": "236+C,A",
+     "name": "Ryuuko Ranbu (MAX)",
+     "cmd": "2363214+AC",
      "type": "dm",
-     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); command.dat lists '236 + C, A' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); SNK Fandom's input: SuperCombo's 'qcf + C, A' doesn't come out in the game"
     },
     {
      "name": "Ko'oh Ken",
@@ -756,6 +757,12 @@
      "cmd": "236236+A",
      "type": "special",
      "note": "P: A or C"
+    },
+    {
+     "name": "Vulcan Punch",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps)"
     }
    ]
   },
@@ -1319,15 +1326,21 @@
     },
     {
      "name": "Dai Hakai Nage",
-     "cmd": "632146+C",
+     "cmd": "632146+A",
      "type": "special",
-     "note": "P: A or C; close range Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+     "note": "P: A or C; close range"
     },
     {
      "name": "Tekkyuu Taiko Uchi",
      "cmd": "41236+B",
      "type": "special",
      "note": "K: B or D; reverse jump/high/mid/Specials"
+    },
+    {
+     "name": "Tekkyuu Dai Kaiten",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps); stop with A+B+C+D"
     }
    ]
   },
@@ -1826,6 +1839,12 @@
      "cmd": "214+D",
      "type": "special",
      "note": "reverse high/mid/low"
+    },
+    {
+     "name": "Senpuu Kon",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "tap the button rapidly (the button plays it as five quick taps)"
     }
    ]
   },
@@ -2035,9 +2054,9 @@
    "moves": [
     {
      "name": "Crimson Star Road",
-     "cmd": "214+C,A",
+     "cmd": "214+C~A",
      "type": "hsdm",
-     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; command.dat lists '214 + C, A' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; C, then A at once"
     },
     {
      "name": "Heat Drive",
@@ -2563,7 +2582,7 @@
      "name": "Loyalty Test For the Liberalists",
      "cmd": "4623+A",
      "type": "dm",
-     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; only as the finish of an Unchain combo (SuperCombo, Moegirl)"
     },
     {
      "name": "Wind's Fairground",
@@ -2581,7 +2600,7 @@
      "name": "Loyalty Test For the Liberalists",
      "cmd": "4623+AC",
      "type": "dm",
-     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); only as the finish of an Unchain combo (SuperCombo, Moegirl)"
     },
     {
      "name": "Senseless Fists",
@@ -2612,6 +2631,12 @@
      "cmd": "421+B",
      "type": "special",
      "note": "K: B or D; close range"
+    },
+    {
+     "name": "Survivor's Banquet",
+     "cmd": "4623+BCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock + low life; counters a jumping attack (SuperCombo)"
     }
    ],
    "note": "Chain Circle follow-ups (8/6/2 + P or K, alternating P/K) and Chain Circle finishers (66+A, 66+C, 66+K, 236+A, 236+C, 41236+K, 4/6+BCD) omitted as follow-ups."

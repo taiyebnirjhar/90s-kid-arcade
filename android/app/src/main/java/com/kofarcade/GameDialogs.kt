@@ -571,6 +571,7 @@ private fun ControlsSettings(game: GameActivity) {
             look = look,
             onLook = { look = it },
             canDetect = game.canDetect,
+            canRapid = game.hasRapidFire,
             autoDetect = auto,
             onAutoDetect = { auto = it },
             detectInfo = info,
@@ -586,6 +587,7 @@ private fun ControlsSettings(game: GameActivity) {
                 p.leftHanded = look.leftHanded
                 p.stepFrames = look.stepFrames
                 p.pressFrames = look.pressFrames
+                p.rapidFire = look.rapidFire
                 p.autoDetect = auto
                 p.detectInfo = info
                 game.applyPrefs()
@@ -601,6 +603,7 @@ fun ControlsPanel(
     look: Look,
     onLook: (Look) -> Unit,
     canDetect: Boolean,
+    canRapid: Boolean = false,
     autoDetect: Boolean,
     onAutoDetect: (Boolean) -> Unit,
     detectInfo: Boolean,
@@ -627,6 +630,11 @@ fun ControlsPanel(
     Spacer(Modifier.size(6.dp))
     SwitchRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
     SwitchRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
+
+    if (canRapid) {
+        SectionLabel("Shooting")
+        SwitchRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot to keep firing")
+    }
 
     if (canDetect) {
         SectionLabel("Fighters")

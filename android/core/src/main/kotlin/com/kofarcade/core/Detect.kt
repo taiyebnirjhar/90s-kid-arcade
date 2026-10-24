@@ -60,19 +60,26 @@ private const val PLAYER_STRIDE = 0x200
 private const val X = 0x18
 private const val FACING = 0x31
 
-private val KOF97 = DetectSpec(
+private fun kof97(ids: List<String?>) = DetectSpec(
     team = listOf(0x10A84B, 0x10A84C, 0x10A84D),
     teamStride = 0x11,
     inRound = { (it.byte(0x10A83E) and 0x80) == 0 && it.byte(0x10A840) > 0 && (it.byte(0x10A788) and 2) == 0 },
-    ids = listOf(
-        "kyo", "benimaru", "daimon", "terry", "andy", "joe", "ryo", "robert",
-        "yuri", "leona", "ralf", "clark", "athena", "kensou", "chin", "chizuru",
-        "mai", "king", "kim", "chang", "choi", "yashiro", "shermie", "chris",
-        "yamazaki", "mary", "billy", "iori", "oiori", "oleona", null /* Orochi */, "shingo",
-    ),
+    ids = ids,
     alternates = mapOf("kyo" to "kyo94", "yashiro" to "oyashiro", "shermie" to "oshermie", "chris" to "ochris"),
     alternateFlags = 0x10A857,
 )
+
+private val KOF97_IDS = listOf(
+    "kyo", "benimaru", "daimon", "terry", "andy", "joe", "ryo", "robert",
+    "yuri", "leona", "ralf", "clark", "athena", "kensou", "chin", "chizuru",
+    "mai", "king", "kim", "chang", "choi", "yashiro", "shermie", "chris",
+    "yamazaki", "mary", "billy", "iori", "oiori", "oleona", null /* Orochi */, "shingo",
+)
+
+private val KOF97 = kof97(KOF97_IDS)
+
+// '97 Plus makes Orochi playable (checked in kof97pls: his ID is 0x1E).
+private val KOF97_PLUS = kof97(KOF97_IDS.map { it ?: "orochi" })
 
 private val KOF2002 = DetectSpec(
     team = listOf(0x10A804, 0x10A805, 0x10A806),
@@ -92,7 +99,8 @@ private val KOF2002 = DetectSpec(
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
-    "kof2002" -> KOF2002
+    "kof97plus" -> KOF97_PLUS
+    "kof2002", "kof2005", "kof2002mp" -> KOF2002
     else -> null
 }
 

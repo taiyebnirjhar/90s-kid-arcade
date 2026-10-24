@@ -8,7 +8,7 @@ enum class Layout {
     /** Stick, A B C D, power button, character move ring, team bar. */
     FIGHTER,
 
-    /** Stick and big labelled buttons. */
+    /** Stick and big labelled buttons; holding Shoot keeps firing. */
     SHOOTER,
 
     /** Stick and four labelled buttons, shared special moves. */
@@ -76,15 +76,29 @@ val GAMES: List<Game> = listOf(
         art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
         layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
     ),
+    // Hacks with their own cards: the same fighters, some moves changed
+    // (their move lists were checked in the real games like the originals').
+    Game(
+        id = "kof97plus", series = "The King of Fighters", title = "KOF '97 Plus", sets = listOf("kof97pls"),
+        art = "The King of Fighters '97 Plus (bootleg)",
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97plus", team = 3, block = true,
+    ),
+    Game(
+        id = "kof2002mp", series = "The King of Fighters", title = "KOF 2002", subtitle = "Magic Plus",
+        art = "The King of Fighters 2002 Magic Plus (bootleg, set 1)",
+        sets = listOf("kf2k2mp", "kf2k2mpl", "kf2k2mp2"),
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true,
+    ),
     // There is no official Neo Geo KOF 2005: "KOF 2005" is the 10th
-    // Anniversary hacks of KOF 2002, which play like 2002.
+    // Anniversary hacks of KOF 2002. Its move list is 2002's with the inputs
+    // 2005 Unique changed (simpler hidden supers, a few moved specials).
     Game(
         id = "kof2005", series = "The King of Fighters", title = "KOF 2005", subtitle = "10th Anniversary",
         // Each hack has its own title screen; the card shows the one you
         // have (artUrl), this one until then.
         art = "The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002)",
         sets = listOf("kf2k5uni", "kof10th", "kf10thep"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2005", team = 3, block = true,
     ),
 ) + listOf(
     Triple("mslug", "Metal Slug", "Metal Slug - Super Vehicle-001"),
@@ -100,6 +114,10 @@ val GAMES: List<Game> = listOf(
         // 4 and 5 add D: the "Metal Slug Attack" while in a vehicle.
         labels = mapOf('A' to "Shoot", 'B' to "Jump", 'C' to "Bomb") +
             (if (hasSlugAttack) mapOf('D' to "Slug Attack") else emptyMap()),
+        // Holding Shoot toggles it every 2 frames: in Metal Slug X that fires
+        // 20 shots in 2 seconds, where a held button fires once and toggling
+        // every frame fires none (tools/emu.py).
+        rapid = Key.A,
         // Metal Slug 5's slide: down + jump.
         system = if (set == "mslug5") listOf(Move("Slide", "2+B")) else emptyList(),
     )

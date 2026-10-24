@@ -176,6 +176,11 @@ class Prefs(context: Context) {
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
+    /** Metal Slug: holding Shoot keeps firing. */
+    var rapidFire: Boolean
+        get() = sp.getBoolean("rapidFire", true)
+        set(v) = sp.edit().putBoolean("rapidFire", v).apply()
+
     /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
     var libraryUrl: String
         get() = sp.getString("libraryUrl", null)?.takeIf { it.isNotBlank() } ?: Library.DEFAULT_URL

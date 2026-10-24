@@ -89,9 +89,9 @@
     },
     {
      "name": "Elec-Trigger",
-     "cmd": "6321463214+A",
+     "cmd": "632146632146+A",
      "type": "dm",
-     "note": "A or C; close range; SDM: same input during MAX (Extra mode: MAX gauge + flashing life)"
+     "note": "A or C; close range; written hcb x2 (StrategyWiki, SuperCombo, command.dat), but in the game it only comes out with hcb-forward twice (632146 632146); SDM: same input during MAX (Extra mode: MAX gauge + flashing life)"
     },
     {
      "name": "Raijin Ken",
@@ -360,6 +360,12 @@
      "cmd": "214+B",
      "type": "special",
      "note": "B or D"
+    },
+    {
+     "name": "Bakuretsu Ken",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "A or C: tap the button rapidly (the button plays it as five quick taps); finishers: 236+A (Bakuretsu Ken Finish), 236+C (Bakuretsu Hurricane)"
     }
    ]
   },
@@ -658,6 +664,12 @@
      "cmd": "41236+B",
      "type": "special",
      "note": "B or D; close range"
+    },
+    {
+     "name": "Vulcan Punch",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "A or C: tap the button rapidly (the button plays it as five quick taps)"
     }
    ]
   },
@@ -701,6 +713,12 @@
      "cmd": "41236+B",
      "type": "special",
      "note": "B or D; close range; follow-ups: Flashing Elbow (236+P)"
+    },
+    {
+     "name": "Vulcan Punch",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "A or C: tap the button rapidly (the button plays it as five quick taps)"
     }
    ]
   },
@@ -858,12 +876,6 @@
      "cmd": "41236+B",
      "type": "special",
      "note": "B or D"
-    },
-    {
-     "name": "Choushuu Rikugyo",
-     "cmd": "23[6]+A",
-     "type": "special",
-     "note": "A or C; source writes the motion as 23 then hold 6"
     },
     {
      "name": "Suikan Kanou",
@@ -1127,6 +1139,12 @@
      "cmd": "632146+C",
      "type": "special",
      "note": "close range"
+    },
+    {
+     "name": "Tekkyuu Dai Kaiten",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "A or C: tap the button rapidly (the button plays it as five quick taps); move with 4/6; stop with A+B+C+D"
     }
    ]
   },
@@ -1500,6 +1518,18 @@
      "cmd": "214+D",
      "type": "special",
      "note": "reverse high/mid"
+    },
+    {
+     "name": "Senpuu Kon",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "tap the button rapidly (the button plays it as five quick taps)"
+    },
+    {
+     "name": "Shuuten Renpa Kon",
+     "cmd": "C,C,C,C,C",
+     "type": "special",
+     "note": "tap the button rapidly (the button plays it as five quick taps); close range"
     }
    ]
   },
