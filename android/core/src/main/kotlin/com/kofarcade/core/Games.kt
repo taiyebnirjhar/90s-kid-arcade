@@ -68,6 +68,8 @@ data class Game(
     val run: Boolean = false,
     /** A Neo Geo game: needs the BIOS (neogeo.zip). Capcom's CPS-1 games don't. */
     val neoGeo: Boolean = true,
+    /** How many can play at once, as on the arcade cabinet: one phone each. */
+    val players: Int = 2,
 ) {
     /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
     val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
@@ -154,6 +156,7 @@ val GAMES: List<Game> = listOf(
     moves = listOf(Move("Special", "AB", type = "dm")),
     run = true,
     neoGeo = false,
+    players = 3,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

@@ -23,7 +23,10 @@ class SessionTest {
     /** Plays [frames] frames on a link like the game screen would, with a fake emulator. */
     private class FakeGame(val link: Link, val frames: Int) : LinkListener {
         val local = ArrayList<Int>()
-        val remote = ArrayList<Int>()
+        /** Each partner's inputs as received, by player. */
+        val remotes = link.peers.associate { it.player to ArrayList<Int>() }
+        /** The first partner's (two players: the partner's). */
+        val remote: ArrayList<Int> get() = remotes.values.first()
         val done = CountDownLatch(1)
         @Volatile var closedReason: String? = null
         @Volatile var running = true
@@ -33,26 +36,28 @@ class SessionTest {
 
         // A rematch: back to frame 0 with fresh inputs, as the game screen does.
         fun restart() {
-            synchronized(remote) {
+            synchronized(remotes) {
                 link.restart()
                 local.clear()
-                remote.clear()
+                remotes.values.forEach { it.clear() }
                 emulated = 0
             }
         }
 
-        override fun onPartnerPaused(paused: Boolean) {
+        override fun onPartnerPaused(player: Int, paused: Boolean) {
             partnerPaused = paused
         }
 
-        override fun onRematch() = restart()
+        override fun onRematch(player: Int) = restart()
 
-        override fun onRemote(start: Int, masks: IntArray) {
-            synchronized(remote) {
-                assertEquals(remote.size, start)
-                remote += masks.toList()
-                if (remote.size >= frames) done.countDown()
-                if (link.epoch > 0 && remote.size >= frames) done2.countDown()
+        override fun onRemote(player: Int, start: Int, masks: IntArray) {
+            synchronized(remotes) {
+                val got = remotes.getValue(player)
+                assertEquals(got.size, start)
+                got += masks.toList()
+                val all = remotes.values.minOf { it.size } >= frames
+                if (all) done.countDown()
+                if (link.epoch > 0 && all) done2.countDown()
             }
         }
 
@@ -68,14 +73,14 @@ class SessionTest {
             thread(isDaemon = true) {
                 // Keeps playing (and sending) until told to stop, like a real phone.
                 while (running) {
-                    // Rollback emulator: runs ahead of the partner by up to 8 frames.
-                    synchronized(remote) {
-                        val known = remote.size
+                    // Rollback emulator: runs ahead of the slowest partner by up to 8 frames.
+                    synchronized(remotes) {
+                        val known = remotes.values.minOf { it.size }
                         if (emulated < local.size && emulated < known + 8) emulated++
                         var f = link.lockstep.nextLocal
                         val (_, masks) = link.sample(emulated) { (f++ * 13 + link.localPlayer) and 0xFFF }
                         local += masks.toList()
-                        link.advantage = emulated - known
+                        link.updateAdvantage(emulated)
                     }
                     Thread.sleep(16)
                 }
@@ -109,7 +114,7 @@ class SessionTest {
         b.play()
         assertTrue(a.done.await(20, TimeUnit.SECONDS) && b.done.await(20, TimeUnit.SECONDS))
         assertEquals(null, a.closedReason)
-        synchronized(a.remote) {
+        synchronized(a.remotes) {
         // Each side got exactly what the other sampled, frame by frame.
         assertEquals(b.local.take(120), a.remote.take(120))
         assertEquals(a.local.take(120), b.remote.take(120))
@@ -129,7 +134,7 @@ class SessionTest {
         assertTrue(a.done2.await(20, TimeUnit.SECONDS) && b.done2.await(20, TimeUnit.SECONDS))
         assertEquals(1, h.epoch)
         assertEquals(1, guestLink.epoch)
-        synchronized(a.remote) { synchronized(b.local) {
+        synchronized(a.remotes) { synchronized(b.remotes) {
             assertEquals(b.local.take(120), a.remote.take(120))
             a.remote.take(120).forEachIndexed { frame, m -> assertEquals((frame * 13 + 1) and 0xFFF, m) }
         } }
@@ -160,9 +165,12 @@ class SessionTest {
         val server = java.net.ServerSocket(0)
         val client = java.net.Socket(localhost, server.localPort)
         val accepted = server.accept()
-        val link = Link(client, udp, java.net.InetSocketAddress(localhost, 9), 0, 1, 1, "peer")
+        val link = Link(
+            listOf(Line(client, 1, "peer")), udp, listOf(Peer(1, "peer", java.net.InetSocketAddress(localhost, 9))),
+            localPlayer = 0, startDelay = 1, session = 1,
+        )
         link.start(object : LinkListener {
-            override fun onRemote(start: Int, masks: IntArray) = Unit
+            override fun onRemote(player: Int, start: Int, masks: IntArray) = Unit
             override fun onDesync(frame: Int) = Unit
             override fun onClosed(reason: String) = Unit
         })
@@ -174,6 +182,71 @@ class SessionTest {
         assertEquals(setOf("net-send"), senders.toSet())
         link.close(sendBye = false)
         accepted.close(); server.close()
+    }
+
+    @Test
+    fun threePhonesPlayTheSameFrames() {
+        val host = NetHost("Host", "dino", "Cadillacs and Dinosaurs", rom = 5, bios = 0, maxPlayers = 3, port = 0)
+        val joinedNames = ArrayList<String>()
+        val accepting = thread { repeat(2) { joinedNames += host.acceptNext { null }!! } }
+        val lobby1 = joinLobby(localhost, host.port, "Guest A", "dino", rom = 5, bios = 0)
+        val lobby2 = joinLobby(localhost, host.port, "Guest B", "dino", rom = 5, bios = 0)
+        accepting.join(5000)
+        assertEquals(listOf("Guest A", "Guest B"), joinedNames)
+        assertEquals(1, lobby1.player)
+        assertEquals(2, lobby2.player)
+        assertTrue(host.full)
+        // A fourth phone is turned away (the host keeps answering until it starts).
+        val stillAccepting = thread { host.acceptNext { null } }
+        val e = assertFailsWith<Refused> { joinLobby(localhost, host.port, "Late", "dino", rom = 5, bios = 0) }
+        assertTrue("full" in e.message!!, e.message)
+
+        var g1: Link? = null
+        var g2: Link? = null
+        val w1 = thread { g1 = lobby1.awaitStart() }
+        val w2 = thread { g2 = lobby2.awaitStart() }
+        val h = host.start()
+        w1.join(5000); w2.join(5000)
+        stillAccepting.join(5000)
+        val a = g1!!
+        val b = g2!!
+        assertEquals(3, h.players)
+        assertEquals(listOf(1, 2), h.peers.map { it.player })
+        assertEquals(listOf(0, 2), a.peers.map { it.player })
+        assertEquals("Host & Guest B", a.peerName)
+
+        val state = ByteArray(1000) { it.toByte() }
+        val loads = listOf(a, b).map { g -> thread { assertTrue(state.contentEquals(g.receiveState())); g.sendReady() } }
+        h.sendState(state)
+        h.awaitReady()
+        loads.forEach { it.join(5000) }
+
+        val games = listOf(FakeGame(h, 120), FakeGame(a, 120), FakeGame(b, 120))
+        games.forEach { it.play() }
+        assertTrue(games.all { it.done.await(20, TimeUnit.SECONDS) })
+        games.forEach { assertEquals(null, it.closedReason) }
+        // Every phone got every partner's inputs exactly as that partner sampled them.
+        for (g in games) synchronized(g.remotes) {
+            for ((player, got) in g.remotes) {
+                val sender = games.first { it.link.localPlayer == player }
+                synchronized(sender.remotes) { assertEquals(sender.local.take(120), got.take(120)) }
+            }
+        }
+
+        // A guest's pause reaches the host and, through it, the other guest.
+        a.sendPause(true)
+        waitFor { games[0].partnerPaused == true && games[2].partnerPaused == true }
+        assertTrue(h.partnerPaused)
+        assertEquals("Guest A", b.pausedName)
+        a.sendPause(false)
+        waitFor { games[0].partnerPaused == false && games[2].partnerPaused == false }
+
+        // One guest leaving ends the game for everyone.
+        games.forEach { it.running = false }
+        b.close()
+        waitFor { games[0].closedReason != null && games[1].closedReason != null }
+        assertTrue("Guest B" in games[0].closedReason!!, games[0].closedReason)
+        h.close(); a.close(); host.close()
     }
 
     @Test

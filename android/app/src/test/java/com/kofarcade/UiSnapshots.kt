@@ -82,12 +82,26 @@ class UiSnapshots {
 
     @Test
     fun hostingWaiting() = shot("twoplayer_hosting") {
-        HostingScreen("Sengoku 3", "Waiting for player 2", false, listOf("192.168.43.1"), null, {}, {}, {})
+        HostingScreen(
+            "Sengoku 3", "Waiting for players", false, listOf("192.168.43.1"), listOf("You"), 2, null,
+            onAccept = {}, onDecline = {}, onStart = null, onBack = {},
+        )
     }
 
     @Test
     fun hostingRequest() = shot("twoplayer_request") {
-        HostingScreen("Sengoku 3", "Waiting for player 2", false, listOf("192.168.43.1"), "SM-S918B", {}, {}, {})
+        HostingScreen(
+            "Sengoku 3", "Waiting for players", false, listOf("192.168.43.1"), listOf("You"), 2, "SM-S918B",
+            onAccept = {}, onDecline = {}, onStart = null, onBack = {},
+        )
+    }
+
+    @Test
+    fun hostingThreePlayers() = shot("multiplayer_hosting_3") {
+        HostingScreen(
+            "Cadillacs and Dinosaurs", "Waiting for players", false, listOf("192.168.43.1"), listOf("You", "Pixel 8"), 3, null,
+            onAccept = {}, onDecline = {}, onStart = {}, onBack = {},
+        )
     }
 
     @Test
@@ -98,7 +112,7 @@ class UiSnapshots {
     @Test
     fun joinFound() = shot("twoplayer_join") {
         JoinScreen(
-            listOf(HostChoice("Sengoku 3", "Pixel 8", true), HostChoice("KOF 2005", "SM-S918B", false)),
+            listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3), HostChoice("KOF 2005", "SM-S918B", false)),
             "", {}, "You need KOF 2005 on this phone first.", true, false, {}, {}, {}, {},
         )
     }

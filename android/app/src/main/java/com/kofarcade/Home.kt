@@ -68,7 +68,7 @@ data class HomeUi(
 )
 
 /**
- * Home: the logo and what you can do (2 players, library, BIOS), a banner for
+ * Home: the logo and what you can do (multiplayer, library, BIOS), a banner for
  * the game you played last, then a shelf of title-screen cards per series.
  */
 @Composable
@@ -91,7 +91,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 14.dp),
         ) {
-            HeaderChip("2 Players", gold = true, onClick = onTwoPlayer)
+            HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
         }

@@ -83,15 +83,15 @@ public:
     size_t getMemorySize(unsigned id);
     bool readMemory(unsigned id, size_t offset, int8_t* dst, size_t length);
 
-    // Two players (90s Kid Arcade), rollback netcode: each frame runs with
-    // this phone's input and the partner's, predicted (their last one) when it
-    // hasn't arrived yet. When it arrives and differs, the game goes back to
-    // that frame and replays to now, silently. A frame runs only up to
-    // maxRollback frames past the partner's last input (0 = strict lockstep).
-    // Inputs replace the touch input for ports 0 and 1.
-    void setNetplay(bool enabled, int localPlayer, int maxRollback);
+    // Multiplayer (90s Kid Arcade), rollback netcode: each frame runs with
+    // this phone's input and every partner's, each predicted (their last one)
+    // when it hasn't arrived yet. When one arrives and differs, the game goes
+    // back to that frame and replays to now, silently. A frame runs only up
+    // to maxRollback frames past the slowest partner's last input (0 = strict
+    // lockstep). Inputs replace the touch input for ports 0 to players - 1.
+    void setNetplay(bool enabled, int localPlayer, int players, int maxRollback);
     bool pushLocalInput(int32_t frame, int32_t mask);
-    bool pushRemoteInput(int32_t frame, int32_t mask);
+    bool pushRemoteInput(int player, int32_t frame, int32_t mask);
     int32_t getNetFrame();
     // The latest confirmed state checksum: {frame, sum}, frame -1 if none yet.
     std::array<int64_t, 2> getNetSum();
@@ -214,18 +214,19 @@ private:
     std::mutex netMutex;
     bool netplay = false;
     static constexpr int NET_RING = 32;
+    static constexpr int NET_MAX_PLAYERS = 4;
+    int netPlayers = 2;
     int netLocalPlayer = 0;
     int netMaxRollback = 0;
-    int32_t netFrame = 0;          // next frame to run
-    int32_t netLocalKnown = 0;     // local inputs below this are in
-    int32_t netRemoteKnown = 0;    // partner inputs below this are in
+    int32_t netFrame = 0;                          // next frame to run
+    int32_t netKnown[NET_MAX_PLAYERS] = {};        // each player's inputs below this are in
     int32_t netFirstWrong = INT32_MAX;
-    uint16_t netLocal[NET_RING] = {};
-    uint16_t netRemote[NET_RING] = {};
-    uint16_t netUsedRemote[NET_RING] = {};
+    uint16_t netInput[NET_MAX_PLAYERS][NET_RING] = {};
+    uint16_t netUsed[NET_MAX_PLAYERS][NET_RING] = {};  // what each frame ran with
     std::vector<std::vector<uint8_t>> netStates;
     std::vector<std::pair<int32_t, int64_t>> netPendingSums;
-    uint16_t netMask[2] = {0, 0};
+    uint16_t netMask[NET_MAX_PLAYERS] = {};
+    int32_t netRemoteKnown() const;                // all partners' inputs below this are in
     std::array<int64_t, 2> netSum = {-1, 0};
     int64_t netReplayed = 0;
     int64_t netRollbacks = 0;

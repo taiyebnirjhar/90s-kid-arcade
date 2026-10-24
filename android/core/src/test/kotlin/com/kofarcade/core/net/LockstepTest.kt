@@ -24,7 +24,7 @@ class LockstepTest {
             val (start, masks) = lockstep.sampleUpTo(emulated) { input(f++) }
             assertEquals(sampled.size, start)
             sampled += masks.toList()
-            val (rs, rm) = lockstep.takeRemote()
+            val (rs, rm) = lockstep.takeRemote(1 - player)
             assertEquals(received.size, rs)
             received += rm.toList()
         }
@@ -35,18 +35,18 @@ class LockstepTest {
         val rnd = Random(7)
         val host = Phone(0, delay = 1, maxRollback = 8)
         val guest = Phone(1, delay = 1, maxRollback = 8)
-        data class Packet(val at: Int, val to: Phone, val start: Int, val masks: IntArray, val ack: Int)
+        data class Packet(val at: Int, val from: Int, val to: Phone, val start: Int, val masks: IntArray, val ack: Int)
         val wire = ArrayList<Packet>()
         for (tick in 0 until 3000) {
             for (p in listOf(host, guest)) p.tick()
             for ((from, to) in listOf(host to guest, guest to host)) {
-                val (start, masks) = from.lockstep.outgoing()
+                val (start, masks) = from.lockstep.outgoing(to.player)
                 // 20% loss, 0-4 ticks of latency (so packets also arrive out of order).
-                if (rnd.nextDouble() > 0.2) wire += Packet(tick + rnd.nextInt(5), to, start, masks, from.lockstep.remoteKnown)
+                if (rnd.nextDouble() > 0.2) wire += Packet(tick + rnd.nextInt(5), from.player, to, start, masks, from.lockstep.remoteKnown)
             }
             val due = wire.filter { it.at <= tick }
             wire.removeAll(due)
-            due.shuffled(rnd).forEach { it.to.lockstep.receive(it.start, it.masks, it.ack) }
+            due.shuffled(rnd).forEach { it.to.lockstep.receive(it.from, it.start, it.masks, it.ack) }
         }
         assertTrue(host.emulated > 2500 && guest.emulated > 2500, "${host.emulated} / ${guest.emulated}")
         assertEquals(guest.sampled.take(guest.received.size.coerceAtMost(host.received.size)), host.received.take(host.received.size.coerceAtMost(guest.sampled.size)))
@@ -54,6 +54,48 @@ class LockstepTest {
         assertEquals(host.sampled.subList(0, guest.received.size), guest.received)
         // Each frame's input is what that player had for that frame.
         host.received.forEachIndexed { f, m -> assertEquals(guest.input(f), m) }
+    }
+
+    @Test
+    fun threePlayersEachGetBothPartnersInputsInOrder() {
+        val rnd = Random(11)
+        val phones = (0 until 3).map { Lockstep(1, it, players = 3) }
+        val sampled = List(3) { ArrayList<Int>() }
+        val received = List(3) { p -> HashMap<Int, ArrayList<Int>>() }
+        data class Packet(val at: Int, val from: Int, val to: Int, val start: Int, val masks: IntArray, val ack: Int)
+        val wire = ArrayList<Packet>()
+        var emulated = 0
+        for (tick in 0 until 1500) {
+            if (phones.all { ls -> ls.partners.all { ls.known(it) + 8 > emulated } }) emulated++
+            phones.forEachIndexed { p, ls ->
+                var f = ls.nextLocal
+                sampled[p] += ls.sampleUpTo(emulated) { (f++ * 7 + p * 100) and 0xFFF }.second.toList()
+                for (q in ls.partners) {
+                    val (start, masks) = ls.outgoing(q)
+                    if (rnd.nextDouble() > 0.2) wire += Packet(tick + rnd.nextInt(5), p, q, start, masks, ls.known(q))
+                }
+            }
+            val due = wire.filter { it.at <= tick }
+            wire.removeAll(due)
+            due.shuffled(rnd).forEach { phones[it.to].receive(it.from, it.start, it.masks, it.ack) }
+            phones.forEachIndexed { p, ls ->
+                for (q in ls.partners) {
+                    val (start, masks) = ls.takeRemote(q)
+                    val got = received[p].getOrPut(q) { ArrayList() }
+                    assertEquals(got.size, start)
+                    got += masks.toList()
+                }
+            }
+        }
+        assertTrue(emulated > 1200, "$emulated")
+        // Every phone has every partner's inputs exactly as that partner sampled them.
+        for (p in 0 until 3) for (q in phones[p].partners) {
+            val got = received[p][q]!!
+            assertTrue(got.size > 1200)
+            assertEquals(sampled[q].subList(0, got.size), got)
+        }
+        // Our inputs are kept until every partner has them.
+        assertTrue(phones[0].localAcked <= phones[0].nextLocal)
     }
 
     @Test
@@ -69,29 +111,29 @@ class LockstepTest {
     @Test
     fun remoteInputsComeOutInOrderOnlyWithoutGaps() {
         val a = Lockstep(1, 0)
-        a.receive(2, intArrayOf(7), ack = 0)
-        assertEquals(0, a.takeRemote().second.size) // frames 0 and 1 missing
-        a.receive(0, intArrayOf(5, 6), ack = 0)
-        val (start, masks) = a.takeRemote()
+        a.receive(1, 2, intArrayOf(7), ack = 0)
+        assertEquals(0, a.takeRemote(1).second.size) // frames 0 and 1 missing
+        a.receive(1, 0, intArrayOf(5, 6), ack = 0)
+        val (start, masks) = a.takeRemote(1)
         assertEquals(0, start)
         assertEquals(listOf(5, 6, 7), masks.toList())
-        a.receive(1, intArrayOf(6, 7, 8), ack = 0) // a resend overlapping what we have
-        assertEquals(3 to listOf(8), a.takeRemote().let { it.first to it.second.toList() })
+        a.receive(1, 1, intArrayOf(6, 7, 8), ack = 0) // a resend overlapping what we have
+        assertEquals(3 to listOf(8), a.takeRemote(1).let { it.first to it.second.toList() })
     }
 
     @Test
     fun acknowledgedInputsAreNotResent() {
         val a = Lockstep(3, 1)
         a.sampleUpTo(0) { 9 }
-        assertEquals(0 to IntArray(4) { 9 }.toList(), a.outgoing().let { it.first to it.second.toList() })
-        a.receive(0, IntArray(0), ack = 3)
-        assertEquals(3, a.outgoing().first)
-        assertEquals(1, a.outgoing().second.size)
+        assertEquals(0 to IntArray(4) { 9 }.toList(), a.outgoing(0).let { it.first to it.second.toList() })
+        a.receive(0, 0, IntArray(0), ack = 3)
+        assertEquals(3, a.outgoing(0).first)
+        assertEquals(1, a.outgoing(0).second.size)
     }
 
     @Test
     fun packetsRoundTrip() {
-        val p = InputPacket(42, 10, 7, intArrayOf(0, 1, 0xFFFF, 256), 120, -5L, advantage = -3, epoch = 2, delay = 3)
+        val p = InputPacket(42, 10, 7, intArrayOf(0, 1, 0xFFFF, 256), 120, -5L, advantage = -3, epoch = 2, delay = 3, from = 2)
         assertEquals(p, InputPacket.decode(p.encode()))
         assertEquals(null, InputPacket.decode(byteArrayOf(1, 2, 3)))
     }
