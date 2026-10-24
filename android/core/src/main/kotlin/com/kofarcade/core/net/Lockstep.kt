@@ -10,13 +10,21 @@ package com.kofarcade.core.net
 //
 // Our input for frame N is read when this phone is at frame N - delay: a
 // frame or two of delay gives it time to arrive, so fewer guesses are wrong.
+// Each phone picks its own delay ([DelayTuner]); the partner needn't match.
 
 /** Inputs exchanged on both sides, thread-safe: the network thread receives, the game samples. */
-class Lockstep(val delay: Int, val localPlayer: Int) {
+class Lockstep(delay: Int, val localPlayer: Int) {
     init {
         require(delay >= 1) { "delay must be at least one frame" }
         require(localPlayer == 0 || localPlayer == 1)
     }
+
+    /** May change mid-game: the next [sampleUpTo] then reads one input more, or one fewer. */
+    @Volatile var delay = delay
+        set(value) {
+            require(value >= 1) { "delay must be at least one frame" }
+            field = value
+        }
 
     private val local = HashMap<Int, Int>()
     private val remote = HashMap<Int, Int>()
@@ -84,5 +92,38 @@ class Lockstep(val delay: Int, val localPlayer: Int) {
         val start = localAcked
         val end = minOf(nextLocal, start + max)
         return start to IntArray(maxOf(0, end - start)) { local[start + it] ?: 0 }
+    }
+}
+
+/**
+ * Picks this phone's input delay from how often the partner has to guess our
+ * inputs. The partner's advantage (frames it runs ahead of our inputs) is
+ * about the network's latency minus our delay: when it stays high the partner
+ * keeps replaying, and characters jump; one frame more delay stops that. When
+ * the delay is a whole frame more than needed, it goes back down, so buttons
+ * feel as quick as the connection allows.
+ */
+class DelayTuner(private val min: Int = 1, private val max: Int = 3, private val window: Int = 180) {
+    private var total = 0
+    private var count = 0
+
+    /** Once per frame with the partner's latest advantage; returns the delay to use from now on. */
+    fun update(delay: Int, partnerAdvantage: Int): Int {
+        total += partnerAdvantage
+        if (++count < window) return delay
+        val average = total.toDouble() / count
+        total = 0
+        count = 0
+        return when {
+            average >= RAISE && delay < max -> delay + 1
+            average <= LOWER && delay > min -> delay - 1
+            else -> delay
+        }
+    }
+
+    private companion object {
+        // Apart by more than a frame, so a change never undoes itself.
+        const val RAISE = 1.5
+        const val LOWER = -1.0
     }
 }

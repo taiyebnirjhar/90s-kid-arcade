@@ -50,7 +50,7 @@ class Link internal constructor(
     private val udp: DatagramSocket,
     private val peer: InetSocketAddress,
     val localPlayer: Int,
-    val delay: Int,
+    startDelay: Int,
     private val session: Int,
     val peerName: String,
 ) : Closeable {
@@ -58,8 +58,12 @@ class Link internal constructor(
     private val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
 
     /** This game's inputs; replaced by [restart] for a rematch. */
-    @Volatile var lockstep = Lockstep(delay, localPlayer)
+    @Volatile var lockstep = Lockstep(startDelay, localPlayer)
         private set
+
+    /** This phone's input delay now: it adapts to the connection ([DelayTuner]). */
+    val delay: Int get() = lockstep.delay
+    private val tuner = DelayTuner()
 
     /** Which game of the session this is: 0, then +1 per rematch. */
     @Volatile var epoch = 0
@@ -76,9 +80,19 @@ class Link internal constructor(
     /** How many frames this phone runs ahead of the partner's inputs; sent for time sync. */
     @Volatile var advantage = 0
 
-    /** The partner's [advantage], as last heard. */
+    /** The partner's [advantage] and input delay, as last heard. */
     @Volatile var partnerAdvantage = 0
         private set
+    @Volatile var partnerDelay = startDelay
+        private set
+
+    /**
+     * How many frames this phone's game runs ahead of the partner's (time
+     * sync waits when it's 2 or more). Each [advantage] counts frames ahead of
+     * the other's inputs, which arrive earlier by that phone's input delay;
+     * adding it back compares the games themselves, whatever the delays.
+     */
+    val lead: Int get() = (advantage + partnerDelay) - (partnerAdvantage + delay)
     private val threads = ArrayList<Thread>()
 
     val isHost: Boolean get() = localPlayer == 0
@@ -129,6 +143,7 @@ class Link internal constructor(
         val sum = latestSum
         val packet = InputPacket(
             session, lockstep.remoteKnown, start, masks, sum?.first ?: -1, sum?.second ?: 0, advantage, epoch and 0xFF,
+            lockstep.delay,
         )
         val bytes = packet.encode()
         try {
@@ -179,6 +194,7 @@ class Link internal constructor(
                 // (the partner restarted first): not this game's inputs.
                 if (p.epoch != (epoch and 0xFF)) return@synchronized false
                 partnerAdvantage = p.advantage
+                partnerDelay = p.delay
                 lockstep.receive(p.start, p.masks, p.ack)
                 true
             }
@@ -234,6 +250,7 @@ class Link internal constructor(
     fun sample(emulated: Int, input: () -> Int): Pair<Int, IntArray> {
         val new = lockstep.sampleUpTo(emulated, input)
         if (new.second.isNotEmpty()) flush()
+        lockstep.delay = tuner.update(lockstep.delay, partnerAdvantage)
         return new
     }
 
@@ -256,7 +273,7 @@ class Link internal constructor(
     fun restart(reset: () -> Unit = {}) {
         synchronized(deliverLock) {
             reset()
-            lockstep = Lockstep(delay, localPlayer)
+            lockstep = Lockstep(lockstep.delay, localPlayer)
             epoch++
             latestSum = null
             synchronized(sums) {
@@ -314,6 +331,9 @@ class Link internal constructor(
         }
         threads += Thread(safe, name).apply {
             isDaemon = true
+            // Inputs go out and come in the moment they're ready, even while
+            // the phone is busy drawing the game.
+            priority = Thread.MAX_PRIORITY
             start()
         }
     }
@@ -380,7 +400,7 @@ class NetHost(
                 output.message(Msg.WELCOME, encode(Welcome(true, name = name, delay = delay, udpPort = udp.localPort, session = session)))
                 socket.soTimeout = 0
                 val peer = InetSocketAddress(socket.inetAddress, hello.udpPort)
-                return Link(socket, udp, peer, localPlayer = 0, delay = delay, session = session, peerName = hello.name)
+                return Link(socket, udp, peer, localPlayer = 0, startDelay = delay, session = session, peerName = hello.name)
             } catch (e: IOException) {
                 runCatching { socket.close() }
                 if (server.isClosed) throw e
@@ -424,7 +444,7 @@ fun join(host: InetAddress, port: Int, name: String, set: String, rom: Long, bio
         if (!welcome.accepted) throw Refused(welcome.reason)
         socket.soTimeout = 0
         val peer = InetSocketAddress(socket.inetAddress, welcome.udpPort)
-        return Link(socket, udp, peer, localPlayer = 1, delay = welcome.delay, session = welcome.session, peerName = welcome.name)
+        return Link(socket, udp, peer, localPlayer = 1, startDelay = welcome.delay, session = welcome.session, peerName = welcome.name)
     } catch (e: IOException) {
         runCatching { socket.close() }
         udp.close()
