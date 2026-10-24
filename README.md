@@ -15,6 +15,12 @@ character, big Shoot / Jump / Bomb buttons and rapid fire for Metal Slug.
 Every game also needs the Neo Geo BIOS, `neogeo.zip`. No ROMs or BIOS are
 included: use dumps of games you own.
 
+File names don't matter. The app checks each zip against the files and CRCs
+FBNeo expects (`romsets.json`, made from FBNeo's driver by `tools/romsets.py`),
+works out which version of the game it is (`sengoku3a`, `kof97h`, ...) and
+stores it under that name. If files are missing it says which ones, instead of
+the game failing to start.
+
 ## Install
 
 Each push to `main` builds the app and publishes it as the
@@ -26,9 +32,9 @@ and settings.
 ## Playing
 
 1. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
-2. Tap a game. The first time it asks for that game's zip; any file name is
-   fine. Files are copied into the app's private storage and never leave
-   the phone. Long-press a game to remove its ROM.
+2. Tap a game. The first time it asks for that game's zip: pick it from the
+   phone (any file name is fine) or download it from your library (below).
+   Long-press a game to remove its ROM.
 3. **COIN**, then **START**.
 
 **KOF:** pick your three fighters in the team bar (top left) — tap a slot,
@@ -48,6 +54,20 @@ Shoot. Slug Attack on 4 and 5, Slide on 5.
 Pause → **Controls**: stick style (floating, fixed or hidden), size,
 opacity, move names, vibration, left-handed layout, move timing.
 
+## Your ROM library (optional)
+
+Keep your zips in a private Cloudflare R2 bucket and download them on any
+phone with one tap (home screen → **LIBRARY**). The app asks for the address
+and a key once.
+
+1. Create an R2 bucket (public access off) and upload your zips.
+2. Create a Worker with the code in `server/worker.js`.
+3. In the Worker's settings, add an R2 binding named `ROMS` to the bucket and
+   a secret named `ARCADE_KEY` (the key the app asks for).
+
+Without the key the Worker answers "Wrong key". The key can only download;
+change the secret to lock out a lost phone.
+
 ## Project
 
 - `android/core` — plain Kotlin: the move engine (numpad commands, played
@@ -57,6 +77,8 @@ opacity, move names, vibration, left-handed layout, move timing.
 - `android/app` — the Android app: [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)
   running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
   native touch HUD, and Compose screens.
+- `server/worker.js` — the ROM library Worker.
+- `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo driver.
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
 

@@ -1,5 +1,31 @@
 # KOF '97 / KOF 2002 (+ 2002-based hacks): 68000 RAM map for fighter detection
 
+## Checked in the real games
+
+Run headless in the FBNeo libretro core (`tools/emu.py`), reading RAM through
+`retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM)` with the byte order below,
+the same way the app does:
+
+- **kf2k5uni (KOF 2005 Unique).**
+  - Picking every portrait on the team select screen wrote that fighter's
+    ID to 0x10A804. All 40 IDs seen (0x00-0x28, Daimon's 0x02 not reached
+    by the sweep) match the KOF 2002 table in section 3, by the name the
+    game shows.
+  - The hack adds no new IDs.
+- **KOF 2005 in a fight.**
+  - With K', Clark, Maxima against Seth, Vanessa, Ramon, 0x108171 = 0x1E
+    (K'), 0x108371 = 0x22 (Seth).
+  - The round flag (0x10A7D6/0x10A7D8/0x10A788) turned true when the fight
+    started.
+  - Facing bit 0x108131 went from 1 to 0 when P1's X (0x108118) passed P2's.
+- **kof97.**
+  - Team picks Kyo, Benimaru, Daimon wrote 00/01/02 to 0x10A84B-4D.
+  - In the fight, 0x108171 = 0x00 (Kyo) and 0x108371 = 0x09 (Leona).
+  - The round flag turned true when the fight started.
+
+So the "inferred" KOF 2002 in-match address below holds, at least for the
+2005 hack that shares its program.
+
 All addresses are 68000 CPU addresses in Neo Geo work RAM (0x100000-0x10FFFF). Sizes: u8 = byte, u16 = big-endian word as the 68000 sees it.
 
 ## 0. FBNeo note: byte order when you read the RAM buffer directly
