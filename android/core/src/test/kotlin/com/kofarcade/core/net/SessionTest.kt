@@ -147,6 +147,36 @@ class SessionTest {
     }
 
     @Test
+    fun inputsAreSentOnlyFromTheNetworkThread() {
+        // Android kills an app that uses the network on its main thread, and
+        // the game calls sample()/flush() from there.
+        val senders = java.util.Collections.synchronizedSet(HashSet<String>())
+        val udp = object : java.net.DatagramSocket(0) {
+            override fun send(p: java.net.DatagramPacket) {
+                senders += Thread.currentThread().name
+                super.send(p)
+            }
+        }
+        val server = java.net.ServerSocket(0)
+        val client = java.net.Socket(localhost, server.localPort)
+        val accepted = server.accept()
+        val link = Link(client, udp, java.net.InetSocketAddress(localhost, 9), 0, 1, 1, "peer")
+        link.start(object : LinkListener {
+            override fun onRemote(start: Int, masks: IntArray) = Unit
+            override fun onDesync(frame: Int) = Unit
+            override fun onClosed(reason: String) = Unit
+        })
+        val caller = Thread.currentThread().name
+        repeat(5) { f -> link.sample(f) { 1 } }
+        Thread.sleep(200)
+        assertTrue(senders.isNotEmpty())
+        assertTrue(caller !in senders, "sent on $senders")
+        assertEquals(setOf("net-send"), senders.toSet())
+        link.close(sendBye = false)
+        accepted.close(); server.close()
+    }
+
+    @Test
     fun aDifferentRomIsRefused() {
         val host = NetHost("Host", "kof97", "KOF '97", rom = 1, bios = 2, port = 0)
         thread(isDaemon = true) { runCatching { host.accept { null } } }

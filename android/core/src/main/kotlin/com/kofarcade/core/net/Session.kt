@@ -112,6 +112,19 @@ class Link internal constructor(
 
     /** Sends our unacknowledged inputs now (after sampling new ones). */
     fun flush() {
+        // Android kills an app that touches the network on its main thread,
+        // which is where the game calls this: the send thread does it, now.
+        synchronized(sendSignal) {
+            sendNow = true
+            sendSignal.notifyAll()
+        }
+    }
+
+    private val sendSignal = Object()
+    private var sendNow = false
+
+    // Only ever on the send thread.
+    private fun send() {
         val (start, masks) = lockstep.outgoing(InputPacket.MAX_MASKS)
         val sum = latestSum
         val packet = InputPacket(
@@ -197,14 +210,19 @@ class Link internal constructor(
     // Resends until acknowledged, and keeps the line alive when nothing changes.
     private fun sendLoop() {
         while (!closed) {
+            val now = synchronized(sendSignal) {
+                if (!sendNow) {
+                    try {
+                        sendSignal.wait(8)
+                    } catch (e: InterruptedException) {
+                        return
+                    }
+                }
+                sendNow.also { sendNow = false }
+            }
             val (_, masks) = lockstep.outgoing(1)
             val idle = System.nanoTime() - lastSent
-            if ((masks.isNotEmpty() && idle > RESEND_NS) || idle > KEEPALIVE_NS) flush()
-            try {
-                Thread.sleep(8)
-            } catch (e: InterruptedException) {
-                return
-            }
+            if (now || (masks.isNotEmpty() && idle > RESEND_NS) || idle > KEEPALIVE_NS) send()
         }
     }
 
@@ -269,16 +287,32 @@ class Link internal constructor(
     fun close(sendBye: Boolean) {
         if (closed) return
         closed = true
-        if (sendBye) runCatching { output.message(Msg.BYE) }
-        runCatching { socket.close() }
-        runCatching { udp.close() }
         threads.forEach { it.interrupt() }
+        // Called from the game screen (Android's main thread, where network
+        // calls aren't allowed): say goodbye and close on a thread of its own.
+        Thread({
+            if (sendBye) runCatching { output.message(Msg.BYE) }
+            runCatching { socket.close() }
+            runCatching { udp.close() }
+        }, "net-close").apply {
+            isDaemon = true
+            start()
+        }
     }
 
     override fun close() = close(sendBye = true)
 
     private fun thread(name: String, body: () -> Unit) {
-        threads += Thread(body, name).apply {
+        // An unexpected error ends the game with a message; uncaught, it
+        // would crash the whole app.
+        val safe = {
+            try {
+                body()
+            } catch (e: Throwable) {
+                if (!closed) end("Connection error: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+        threads += Thread(safe, name).apply {
             isDaemon = true
             start()
         }
