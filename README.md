@@ -1,9 +1,10 @@
 # 90s Kid Arcade
 
 An Android app for a handful of famous arcade games (Neo Geo, and Capcom's
-Cadillacs and Dinosaurs), with touch controls
-built for each one: one-tap specials and supers for every King of Fighters
-character, and big Shoot / Jump / Bomb buttons with rapid fire for Metal Slug.
+Cadillacs and Dinosaurs and Street Fighter III), with touch controls
+built for each one: one-tap specials and supers for every fighter in KOF,
+Double Dragon and Street Fighter III, and big Shoot / Jump / Bomb buttons
+with rapid fire for Metal Slug.
 
 | Game | ROM set (zip) |
 | --- | --- |
@@ -15,15 +16,20 @@ character, and big Shoot / Jump / Bomb buttons with rapid fire for Metal Slug.
 | Metal Slug, 2, X, 3, 4, 5 | `mslug` … `mslug5` |
 | Sengoku 3 | `sengoku3` |
 | Cadillacs and Dinosaurs ("Mostofa", Capcom CPS-1) | `dino` |
+| Nightmare in the Dark | `nitd` |
+| Double Dragon (Neo Geo, 1995) | `doubledr` |
+| Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 
-The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; Cadillacs and
-Dinosaurs doesn't. No ROMs or BIOS are included: use dumps of games you own.
+The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the Capcom
+games don't. No ROMs or BIOS are included: use dumps of games you own.
 
 File names don't matter. The app checks each zip against the files and CRCs
 FBNeo expects (`romsets.json`, made from FBNeo's driver by `tools/romsets.py`),
 works out which version of the game it is (`sengoku3a`, `kof97h`, ...) and
 stores it under that name. If files are missing it says which ones, instead of
-the game failing to start.
+the game failing to start. Older Street Fighter III dumps, which keep each
+flash SIMM as one file (`10`, `20`, `30`, `31`...), are converted to FBNeo's
+chip files on import.
 
 ## Install
 
@@ -56,10 +62,25 @@ moves: rolling through the diagonals (214214), tapping a direction twice
 (Mary's 1236982), and pressing "~" inputs back to back (K''s 214+C~A).
 Button-mash specials (Joe's Bakuretsu Ken) play as five quick taps.
 
+**Double Dragon:** one fighter, picked up automatically like KOF. A to D
+are one attack at four strengths. When the life bar shows **CHARGE**, the
+supers (Charge Moves) on the ring come out; Billy and Jimmy's A+B+C+D
+turns them into their Double Dragon form for the round.
+
+**Street Fighter III 3rd Strike:** six buttons, LP MP HP over LK MK HK, plus
+Throw and Overhead. The app reads which Super Art you picked and shows only
+that one on the ring, with the fighter's specials.
+
 **Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
 fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
 
-**Sengoku 3:** Weapon, Punch, Jump, Throw, plus the shared special inputs.
+**Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
+flames (the same rapid fire switch as Metal Slug).
+
+**Sengoku 3:** Weapon, Punch, Jump, Shuriken, and the Ninja Arts every
+character shares: 22+A, 22+B, 28+B while holding an enemy (Kagetsura's
+Shrike Drop into the sky, Kongoh's slam), the Ultimate (28+AB, gauge full)
+and **Log escape** (A+B+C: you swap places with a log, for some life).
 
 **Cadillacs and Dinosaurs:** Attack and Jump; **Special** is both at once
 (the spinning attack). Run with the Run button or by pushing the stick to the
@@ -110,7 +131,8 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 ## Move lists
 
 `android/core/src/main/resources/rosters/` has one list per game: `kof97`,
-`kof97plus`, `kof2002`, `kof2002mp` (Magic Plus) and `kof2005`.
+`kof97plus`, `kof2002`, `kof2002mp` (Magic Plus), `kof2005`, `doubledr`
+and `sfiii3`.
 
 - **Sources.** '97 and 2002 come from MAME's `command.dat`, cross-checked
   against StrategyWiki, SuperCombo and SNK Fandom. 2005 Unique has no
@@ -128,8 +150,14 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Moves left out on purpose: inputs no source or test could bring out in
   that game.
 
-`tools/fix_rosters.py` holds every change with the reason, and
-`tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
+- **Double Dragon and Street Fighter III** come from `command.dat`,
+  StrategyWiki and SuperCombo (and the 3rd Strike training scripts), and
+  were checked the same way: every Double Dragon special and Charge Move,
+  and every 3rd Strike special and all three Super Arts of each fighter.
+
+`tools/fix_rosters.py` holds every KOF change with the reason;
+`tools/doubledr_roster.py` and `tools/sfiii3_roster.py` write the other two
+lists, and `tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
 
 ## Your ROM library (optional)
 

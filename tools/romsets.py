@@ -4,9 +4,9 @@
 Lists, for every version (set) of the games the app supports, the files FBNeo
 loads with their sizes and CRC32s. The app checks imported zips against it.
 
-Usage: tools/romsets.py path/to/d_neogeo.cpp path/to/d_cps1.cpp
+Usage: tools/romsets.py d_neogeo.cpp d_cps1.cpp d_cps2.cpp d_cps3.cpp
 (raw.githubusercontent.com/finalburnneo/FBNeo/master/src/burn/drv/neogeo/d_neogeo.cpp,
- .../src/burn/drv/capcom/d_cps1.cpp)
+ .../capcom/d_cps1.cpp, .../capcom/d_cps2.cpp, .../cps3/d_cps3.cpp)
 """
 import json
 import os
@@ -16,15 +16,27 @@ import sys
 # The sets the app's games are listed under (core Games.kt); their clones are added.
 BASE = ["kof97", "kof2002", "kf2k5uni", "kof10th", "kf10thep",
         "mslug", "mslug2", "mslugx", "mslug3", "mslug4", "mslug5", "sengoku3",
-        "dino"]
+        "dino", "doubledr", "mvsc", "sfiii3", "nitd"]
 
 src = "\n".join(open(p, encoding="latin-1").read() for p in sys.argv[1:])
+
+# Shared file lists ("#define SFIII3_990608_FLASH \\ { ... }, \\ ..."), used by
+# name inside a set's list.
+macros = {}
+for m in re.finditer(r'#define (\w+)\s*\\\n((?:.*\\\n)*.*)', src):
+    body = m.group(2).replace("\\\n", "\n")
+    if "{" in body:
+        macros[m.group(1)] = body
 
 ROM = re.compile(r'\{\s*"([^"]*)"\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*,\s*(0x[0-9a-fA-F]+)\s*,\s*([^}]*)\}')
 descs = {}
 for m in re.finditer(r'static struct BurnRomInfo (\w+)RomDesc\[\] = \{(.*?)\n\};', src, re.S):
     files = []
+    lines = []
     for line in m.group(2).splitlines():
+        name = line.strip().rstrip(",")
+        lines += macros[name].splitlines() if name in macros else [line]
+    for line in lines:
         if line.strip().startswith("#"):
             continue  # ROM_VERIFY variants: keep the normal build's entries
         r = ROM.search(line.split("//")[0])
@@ -71,7 +83,7 @@ if missing:
 bios = [f for f in descs["neogeo"] if f["name"] in ("sp-s3.sp1", "sm1.sm1", "sfix.sfix", "000-lo.lo")]
 out = os.path.join(os.path.dirname(__file__), "..", "android/core/src/main/resources/romsets.json")
 with open(out, "w") as f:
-    json.dump({"source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, src/burn/drv/capcom/d_cps1.cpp", "bios": bios, "sets": sets}, f, indent=1)
+    json.dump({"source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp", "bios": bios, "sets": sets}, f, indent=1)
     f.write("\n")
 print("%d sets, %d BIOS files -> %s" % (len(sets), len(bios), os.path.normpath(out)))
 for s in sets:

@@ -31,6 +31,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.kofarcade.core.Character
 import com.kofarcade.core.DetectSpec
 import com.kofarcade.core.Detection
+import com.kofarcade.core.FACE_KEYS
 import com.kofarcade.core.Game
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
@@ -278,32 +279,32 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // ----- Input -----
 
-    // FBNeo's default Neo Geo layout puts A on RetroPad B, B on A, C on Y and D on X.
-    private fun keyCode(key: Key) = when (key) {
-        Key.A -> KeyEvent.KEYCODE_BUTTON_B
-        Key.B -> KeyEvent.KEYCODE_BUTTON_A
-        Key.C -> KeyEvent.KEYCODE_BUTTON_Y
-        Key.D -> KeyEvent.KEYCODE_BUTTON_X
-        Key.COIN -> KeyEvent.KEYCODE_BUTTON_SELECT
-        Key.START -> KeyEvent.KEYCODE_BUTTON_START
+    // The Android key for each RetroPad button id (LibretroDroid maps them back).
+    private fun keyCode(key: Key) = when (retroId(key)) {
+        0 -> KeyEvent.KEYCODE_BUTTON_B
+        1 -> KeyEvent.KEYCODE_BUTTON_Y
+        2 -> KeyEvent.KEYCODE_BUTTON_SELECT
+        3 -> KeyEvent.KEYCODE_BUTTON_START
+        8 -> KeyEvent.KEYCODE_BUTTON_A
+        9 -> KeyEvent.KEYCODE_BUTTON_X
+        10 -> KeyEvent.KEYCODE_BUTTON_L1
+        11 -> KeyEvent.KEYCODE_BUTTON_R1
         else -> error("not a button: $key")
     }
 
-    // RetroPad button ids, for two-player masks (FBNeo maps Neo Geo A-D like keyCode()).
+    // RetroPad button ids: the game's layout for A-F (Game.pad), then coin, start and the stick.
     private fun retroId(key: Key) = when (key) {
-        Key.A -> 0 // B
-        Key.C -> 1 // Y
         Key.COIN -> 2 // SELECT
         Key.START -> 3
         Key.UP -> 4
         Key.DOWN -> 5
         Key.LEFT -> 6
         Key.RIGHT -> 7
-        Key.B -> 8 // A
-        Key.D -> 9 // X
+        else -> game.pad.id(FACE_KEYS.indexOf(key))
     }
 
     private fun sendKey(key: Key, down: Boolean) {
+        if (retroId(key) < 0) return // a button this game doesn't have
         if (link != null) {
             val bit = 1 shl retroId(key)
             localMask = if (down) localMask or bit else localMask and bit.inv()
@@ -328,12 +329,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         return pad.play(cmd, jumpFirst = air && onGround())
     }
 
-    /** KOF: the fighter's height above the floor (the word at +0x20) is 0 when standing. */
+    /** The fighter is on the floor (detection's grounded word is 0; KOF: their height). */
     private fun onGround(): Boolean {
-        if (ramMap == null) return true
-        val addr = 0x108120 + 0x200 * localPlayer
-        val b = LibretroDroid.readMemory(SYSTEM_RAM, addr - 0x100000, 2) ?: return true
-        return b[0].toInt() == 0 && b[1].toInt() == 0
+        val spec = ramMap ?: return true
+        val addr = spec.player + spec.playerStride * localPlayer + spec.grounded
+        val ram = readRam(spec, listOf((addr and 3.inv()) to 4)) ?: return true
+        return ram.word(addr) == 0
+    }
+
+    /** Reads [windows] of the game's RAM (start, length: CPU addresses), or null if the core can't. */
+    private fun readRam(spec: DetectSpec, windows: List<Pair<Int, Int>>): Ram? {
+        val read = windows.map { (start, length) ->
+            start to (LibretroDroid.readMemory(SYSTEM_RAM, start - spec.memoryBase, length) ?: return null)
+        }
+        return Ram(read, spec.swap)
     }
 
     override fun onMenu() = show(GameDialog.Pause)
@@ -561,10 +570,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         detectInfo.visibility = View.GONE
                         continue
                     }
-                    val bytes = withContext(Dispatchers.Default) {
-                        LibretroDroid.readMemory(SYSTEM_RAM, Ram.START - 0x100000, Ram.LENGTH)
-                    } ?: continue
-                    onDetected(detect(spec, Ram(Ram.START, bytes), localPlayer))
+                    val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
+                    onDetected(detect(spec, ram, localPlayer))
                 }
             }
         }
@@ -587,6 +594,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 pad.facingLeft = d.facingLeft
                 changed = true
             }
+            if (d.superArt != null && d.superArt != superArt) {
+                superArt = d.superArt
+                changed = true
+            }
             if (changed) updateHud()
         }
         detectInfo.visibility = if (prefs.detectInfo) View.VISIBLE else View.GONE
@@ -599,6 +610,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 append(d.teamRaw.zip(d.team).joinToString("  ") { (raw, id) -> "${hex(raw)} ${name(id)}" })
                 append("\non screen ${hex(d.activeRaw)} ${d.active?.let(::name) ?: "(not in team)"}")
                 append("   facing ${if (d.facingLeft) "←" else "→"}   x ${d.x} vs ${d.otherX}")
+                d.superArt?.let { append("   Super Art $it") }
                 if (!prefs.autoDetect) append("   (auto off)")
             }
         }
@@ -621,7 +633,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun movesKey(c: Character) = "${game.roster}/${c.id}"
 
-    fun movesFor(c: Character): List<Move> = (prefs.customMoves(movesKey(c)) ?: c.moves).take(MAX_MOVES)
+    /** Street Fighter III: the Super Art picked this fight (detected), or null to show all three. */
+    private var superArt: Int? = null
+
+    fun movesFor(c: Character): List<Move> = (prefs.customMoves(movesKey(c)) ?: c.moves)
+        .filter { superArt == null || it.superArt == null || it.superArt == superArt }
+        .take(MAX_MOVES)
 
     fun defaultMoves(c: Character): List<Move> = c.moves.take(MAX_MOVES)
 

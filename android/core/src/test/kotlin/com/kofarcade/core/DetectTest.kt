@@ -27,7 +27,7 @@ class DetectTest {
 
     @Test
     fun everyDetectedIdIsInItsRoster() {
-        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp")) {
+        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3")) {
             val roster = loadRoster(name)!!
             val spec = detectSpec(name)!!
             val ids = spec.ids.filterNotNull() + spec.alternates.values
@@ -91,7 +91,46 @@ class DetectTest {
     }
 
     @Test
-    fun onlyKofHasDetection() {
+    fun doubleDragonFacesTheOtherFighter() {
+        val buf = ByteArray(0x200)
+        fun set(addr: Int, v: Int) { buf[(addr - 0x100400) xor 1] = v.toByte() }
+        set(0x100445, 0x03) // Jimmy, transformed
+        set(0x100545, 0x05) // Abobo
+        set(0x100431, 0x90) // P1 X 0x90, P2 X 0x40: P1 is on the right
+        set(0x100531, 0x40)
+        val d = detect(detectSpec("doubledr")!!, Ram(0x100400, buf))
+        assertEquals(listOf("jimmy"), d.team)
+        assertEquals("jimmy", d.active)
+        assertTrue(d.inRound)
+        assertTrue(d.facingLeft)
+    }
+
+    @Test
+    fun streetFighterThreeReadsThirtyTwoBitWordsAndTheSuperArt() {
+        // CPS-3 RAM as FBNeo keeps it: 32-bit words, bytes reversed (xor 3).
+        val windows = detectSpec("sfiii3")!!.windows.map { (start, length) -> start to ByteArray(length) }
+        fun set(addr: Int, v: Int) {
+            val (start, buf) = windows.first { (start, buf) -> addr - start in buf.indices }
+            buf[(addr - start) xor 3] = v.toByte()
+        }
+        set(0x02011387, 1) // Alex
+        set(0x0201138B, 2) // Super Art III
+        set(0x020154A7, 2) // round on
+        set(0x0206902D, 1) // on screen: Alex
+        set(0x02068C76, 1) // facing right
+        val d = detect(detectSpec("sfiii3")!!, Ram(windows, swap = 3))
+        assertEquals(listOf("alex"), d.team)
+        assertEquals("alex", d.active)
+        assertTrue(d.inRound)
+        assertFalse(d.facingLeft)
+        assertEquals(3, d.superArt)
+        assertEquals(3, Move("Stun Gun Headbutt", "236236+A", "dm", "Super Art III").superArt)
+        assertEquals(1, Move("Hyper Bomb", "63214789+A", "dm", "Super Art I; close").superArt)
+        assertNull(Move("Flash Chop", "236+A").superArt)
+    }
+
+    @Test
+    fun onlyFightersWithAMapHaveDetection() {
         assertNull(detectSpec(null))
         assertNull(detectSpec("mslug"))
     }

@@ -23,7 +23,9 @@ package com.kofarcade.core
 // Every KOF '97, 2002 and 2005 move was checked this way in the real games
 // (FBNeo, tools/emu.py).
 
-const val BUTTONS = "ABCD"
+// Neo Geo games use A-D. Capcom's six-button fighters use A-F as
+// A B C = light, medium, heavy punch; D E F = light, medium, heavy kick.
+const val BUTTONS = "ABCDEF"
 
 data class Part(val dir: Int, val charge: Boolean)
 
@@ -109,7 +111,7 @@ private fun parseStep(src: String): Step {
     var rest = src.substring(i)
     if (rest.startsWith("+")) rest = rest.substring(1)
     if (!rest.all { it in BUTTONS }) {
-        throw CommandException("Unknown input \"$rest\". Use directions 1-9 and buttons A B C D")
+        throw CommandException("Unknown input \"$rest\". Use directions 1-9 and buttons A to F")
     }
     val buttons = BUTTONS.filter { it in rest }
     if (parts.isEmpty() && buttons.isEmpty()) throw CommandException("Command has no inputs")

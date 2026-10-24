@@ -3,6 +3,22 @@ package com.kofarcade.core
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+/**
+ * RetroPad button ids (0 B, 1 Y, 8 A, 9 X, 10 L, 11 R) for A-F, as FBNeo's
+ * libretro core lays out each arcade board. Checked by pressing each one in
+ * the games (tools/emu.py).
+ */
+enum class PadMap(private val ids: IntArray) {
+    /** Neo Geo A B C D (and the CPS-1 games, whose two buttons are A and B). */
+    NEO_GEO(intArrayOf(0, 8, 1, 9, -1, -1)),
+
+    /** Capcom six buttons: LP MP HP on Y X L, LK MK HK on B A R (Street Fighter III 3rd Strike). */
+    CAPCOM_6(intArrayOf(1, 9, 10, 0, 8, 11));
+
+    /** The RetroPad id for button [index] (0 = A ... 5 = F), or -1 if the game has none. */
+    fun id(index: Int): Int = ids[index]
+}
+
 /** How a game's controls are laid out. */
 enum class Layout {
     /** Stick, A B C D, power button, character move ring, team bar. */
@@ -34,11 +50,16 @@ data class Move(
             AIR.containsMatchIn(part) && "also" !in part && "ground" !in part
         }
 
+    /** Street Fighter III: which Super Art (1-3) this is, from its note ("Super Art II"), or null. */
+    val superArt: Int?
+        get() = SUPER_ART.find(note)?.groupValues?.get(1)?.length
+
     /** "Ura 108 Shiki: Orochinagi" -> "Orochinagi": the part people call it. */
     val shortName: String get() = name.substringAfterLast(": ")
 }
 
 private val AIR = Regex("""\bin (the )?air\b""", RegexOption.IGNORE_CASE)
+private val SUPER_ART = Regex("""^Super Art (I{1,3})\b""")
 
 /**
  * A supported game.
@@ -70,13 +91,19 @@ data class Game(
     val neoGeo: Boolean = true,
     /** How many can play at once, as on the arcade cabinet: one phone each. */
     val players: Int = 2,
+    /** Which emulator button each of A-F is (FBNeo's layout for the board). */
+    val pad: PadMap = PadMap.NEO_GEO,
 ) {
     /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
     val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
 
     /** Face buttons shown: only the labelled ones, unless it's a fighter (A B C D all have jobs). */
     val faceButtons: List<Char>
-        get() = if (layout != Layout.FIGHTER && labels.isNotEmpty()) BUTTONS.filter { it in labels }.toList() else BUTTONS.toList()
+        get() = if (labels.isNotEmpty() && (layout != Layout.FIGHTER || pad == PadMap.CAPCOM_6)) {
+            BUTTONS.filter { it in labels }.toList()
+        } else {
+            BUTTONS.take(4).toList()
+        }
 }
 
 const val BIOS = "neogeo.zip"
@@ -142,9 +169,20 @@ val GAMES: List<Game> = listOf(
 } + Game(
     id = "sengoku3", series = "Sengoku", title = "Sengoku 3", sets = listOf("sengoku3"), layout = Layout.BRAWLER,
     art = "Sengoku 3 / Sengoku Densho 2001 (set 1)",
-    labels = mapOf('A' to "Weapon", 'B' to "Punch", 'C' to "Jump", 'D' to "Throw"),
-    // Inputs every Sengoku 3 character shares.
-    moves = listOf(Move("Special 1", "22+A"), Move("Special 2", "22+B"), Move("Super", "28+AB", type = "dm")),
+    labels = mapOf('A' to "Weapon", 'B' to "Punch", 'C' to "Jump", 'D' to "Shuriken"),
+    // Every character uses the same inputs (the English AES manual; SNK's
+    // Virtual Console page): Ninja Arts 1 and 2, Ninja Art 3 while holding
+    // an enemy (Kagetsura's Shrike Drop carries them into the sky, Kongoh
+    // slams them; the others have none), the Ultimate with the gauge full,
+    // and A+B+C, which swaps you for a log to escape at the cost of some
+    // life. Checked in FBNeo: 22+A, 22+B, 28+AB and A+B+C (the log).
+    moves = listOf(
+        Move("Ninja Art 1", "22+A"),
+        Move("Ninja Art 2", "22+B"),
+        Move("Ninja Art 3", "28+B", note = "while holding an enemy: Kagetsura and Kongoh"),
+        Move("Ultimate", "28+AB", type = "dm", note = "gauge full"),
+        Move("Log escape", "ABC", note = "costs some life"),
+    ),
     run = true,
 ) + Game(
     // Called "Mostofa" in Bangladesh, after its fighter Mustapha Cairo. Capcom
@@ -157,6 +195,33 @@ val GAMES: List<Game> = listOf(
     run = true,
     neoGeo = false,
     players = 3,
+) + Game(
+    // Neo Geo, 2000: a graveyard platformer for two. Checked in FBNeo
+    // (tools/emu.py): A throws the lantern's fire, B jumps, C fires too, D
+    // does nothing. A held button fires once; quick presses keep the flames
+    // coming, so Fire has rapid fire like Metal Slug's Shoot.
+    id = "nitd", series = "Nightmare in the Dark", title = "Nightmare in the Dark", sets = listOf("nitd"),
+    layout = Layout.SHOOTER, art = "Nightmare in the Dark",
+    labels = mapOf('A' to "Fire", 'B' to "Jump"),
+    rapid = Key.A,
+) + Game(
+    // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
+    // a full gauge (CHARGE) turns a special into its Charge Move with two
+    // buttons. Moves checked in FBNeo (tools/movetest.py).
+    id = "doubledr", series = "Double Dragon", title = "Double Dragon", sets = listOf("doubledr"),
+    art = "Double Dragon (Neo-Geo)",
+    layout = Layout.FIGHTER, roster = "doubledr", team = 1, block = true,
+) + Game(
+    // Capcom CPS-3, 1999: no BIOS. Six buttons, LP MP HP over LK MK HK; the
+    // older dumps' chip files are converted on import (RomRepack.kt).
+    id = "sfiii3", series = "Street Fighter", title = "Street Fighter III", subtitle = "3rd Strike",
+    sets = listOf("sfiii3n", "sfiii3nr1", "sfiii3", "sfiii3r1"),
+    art = "Street Fighter III 3rd Strike: Fight for the Future (Japan 990608, NO CD)",
+    layout = Layout.FIGHTER, roster = "sfiii3", team = 1, block = true,
+    labels = mapOf('A' to "LP", 'B' to "MP", 'C' to "HP", 'D' to "LK", 'E' to "MK", 'F' to "HK"),
+    system = listOf(Move("Throw", "AD"), Move("Overhead", "BE")),
+    neoGeo = false,
+    pad = PadMap.CAPCOM_6,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

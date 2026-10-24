@@ -12,6 +12,7 @@ import com.kofarcade.core.describe
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.installedSet
 import com.kofarcade.core.romFingerprint
+import com.kofarcade.core.repackCps3
 import com.kofarcade.core.romSet
 import com.kofarcade.core.setName
 import org.json.JSONArray
@@ -59,11 +60,22 @@ class RomStore(private val context: Context) {
      * otherwise pick first; anything else is deleted.
      */
     fun add(tmp: File): RomCheck {
-        val check = try {
+        var check = try {
             checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
         } catch (e: ZipException) {
             tmp.delete()
             throw IllegalArgumentException("That file isn't a zip")
+        }
+        // An older Street Fighter III dump: the same chips, packed differently.
+        if (check !is RomCheck.Game && check != RomCheck.Bios) {
+            val repacked = partFile("repack")
+            if (runCatching { repackCps3(tmp, repacked) }.getOrDefault(false)) {
+                tmp.delete()
+                check(repacked.renameTo(tmp)) { "Couldn't save the converted zip" }
+                check = checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
+            } else {
+                repacked.delete()
+            }
         }
         when (check) {
             RomCheck.Bios -> moveIn(tmp, BIOS)
@@ -176,7 +188,7 @@ class Prefs(context: Context) {
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
-    /** Metal Slug: holding Shoot keeps firing. */
+    /** Metal Slug, Nightmare in the Dark: holding Shoot / Fire keeps firing. */
     var rapidFire: Boolean
         get() = sp.getBoolean("rapidFire", true)
         set(v) = sp.edit().putBoolean("rapidFire", v).apply()

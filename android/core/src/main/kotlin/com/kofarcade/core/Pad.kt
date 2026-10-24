@@ -1,7 +1,10 @@
 package com.kofarcade.core
 
 /** Logical controller inputs. The app maps them onto the emulator's RetroPad. */
-enum class Key { A, B, C, D, COIN, START, UP, DOWN, LEFT, RIGHT }
+enum class Key { A, B, C, D, E, F, COIN, START, UP, DOWN, LEFT, RIGHT }
+
+/** The attack buttons, in [BUTTONS] order. */
+val FACE_KEYS = listOf(Key.A, Key.B, Key.C, Key.D, Key.E, Key.F)
 
 /**
  * Merges finger input and running macros into one controller state and sends
@@ -158,7 +161,7 @@ class Pad(
             Key.COIN to (Key.COIN in held),
             Key.START to (Key.START in held),
         )
-        for (k in listOf(Key.A, Key.B, Key.C, Key.D)) {
+        for (k in FACE_KEYS) {
             state[k] = if (frame != null) {
                 k.name in frame.buttons
             } else {

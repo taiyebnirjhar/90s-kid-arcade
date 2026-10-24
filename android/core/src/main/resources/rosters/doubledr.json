@@ -1,0 +1,515 @@
+{
+ "game": "doubledr",
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "https://strategywiki.org/wiki/Double_Dragon_(Neo_Geo)/Moves",
+  "https://wiki.supercombo.gg/w/Double_Dragon",
+  "Checked in FBNeo with tools/movetest.py"
+ ],
+ "characters": [
+  {
+   "id": "billy",
+   "name": "Billy Lee",
+   "team": "Heroes",
+   "moves": [
+    {
+     "name": "Cho So Syu Ga",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Souryuu Tenshou",
+     "cmd": "ABCD",
+     "type": "dm",
+     "note": "CHARGE gauge full: turns into the Double Dragon form for the round"
+    },
+    {
+     "name": "So Syu Ga",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "Double Dragon form: Hi Ryu Ken"
+    },
+    {
+     "name": "Rekko Ha",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "Double Dragon form: Ryu Jin Ken"
+    },
+    {
+     "name": "Ryu Bi Sen",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "also in air; Double Dragon form: Ryu Jin Kyaku"
+    },
+    {
+     "name": "Sho Ryu Ha",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "Double Dragon form only"
+    }
+   ]
+  },
+  {
+   "id": "jimmy",
+   "name": "Jimmy Lee",
+   "team": "Heroes",
+   "moves": [
+    {
+     "name": "Cho Rekko Ha",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Souryuu Tenshou",
+     "cmd": "ABCD",
+     "type": "dm",
+     "note": "CHARGE gauge full: turns into the Double Dragon form for the round"
+    },
+    {
+     "name": "So Syu Ga",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "Double Dragon form: Hi Ryu Ken"
+    },
+    {
+     "name": "Rekko Ha",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "Double Dragon form: Ryu Jin Ken"
+    },
+    {
+     "name": "Ryu Bi Sen",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "also in air; Double Dragon form: Ryu Jin Kyaku"
+    },
+    {
+     "name": "Sho Ryu Ha",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "Double Dragon form only"
+    }
+   ]
+  },
+  {
+   "id": "marian",
+   "name": "Marian",
+   "team": "Heroes",
+   "moves": [
+    {
+     "name": "Accele Destroyer",
+     "cmd": "[2]8+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Full Moon Drive",
+     "cmd": "[4]6+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Accele Breaker",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Moon Drive",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ikaros Crash",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close (grab)"
+    }
+   ]
+  },
+  {
+   "id": "abobo",
+   "name": "Abobo",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Triple Jackhammer",
+     "cmd": "632+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Earthquake Bomb",
+     "cmd": "63214+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons; close (grab)"
+    },
+    {
+     "name": "Hammer Blow",
+     "cmd": "632+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hyper Bomb",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "close (grab)"
+    },
+    {
+     "name": "Giant Swing",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close (grab)"
+    }
+   ]
+  },
+  {
+   "id": "amon",
+   "name": "Amon",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Cho Bakuen Rai",
+     "cmd": "[2]8+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Mokko Bakudan",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons; also in air"
+    },
+    {
+     "name": "Rekka Bakuen Heki",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shi Ho Ken",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "press a button again to warp behind"
+    },
+    {
+     "name": "Yo So Ken",
+     "cmd": "412+A",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "eddie",
+   "name": "Eddie",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Volcano Upper",
+     "cmd": "[2]8+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Dragon Finisher",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Low Leg Slash",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "High Leg Slash",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Burning Knee",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "rebecca",
+   "name": "Rebecca",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Cho Hi Sho Zan",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Rekko Zan",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Kuchu Rekko Zan",
+     "cmd": "412+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons; in air"
+    },
+    {
+     "name": "Hi Sho Zan",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ko Bi Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kuchu Ko Bi Ken",
+     "cmd": "412+A",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "dulton",
+   "name": "Dulton",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Cannon Punch",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Dynamite Finisher",
+     "cmd": "AB,AB,AB,AB,AB,AB,AB,AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons; mash the pair"
+    },
+    {
+     "name": "Machine Gun Punch",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Dynamite Combo",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "mash"
+    },
+    {
+     "name": "Elbow Neckbreaker",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "chengfu",
+   "name": "Cheng-Fu",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Cho Ko Ryu Kyaku",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Cho Suiko Retsu Ken",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Ko Ryu Kyaku",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Suiko Retsu Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hi Sho Kyaku",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Counter Toss",
+     "cmd": "421+A",
+     "type": "special",
+     "note": "catches an attack"
+    }
+   ]
+  },
+  {
+   "id": "burnov",
+   "name": "Burnov",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Bomb Belch",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Dynamite Tackle",
+     "cmd": "[4]6+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Burning Belch",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Running Tackle",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Bone Crusher",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close (grab)"
+    }
+   ]
+  },
+  {
+   "id": "duke",
+   "name": "Duke",
+   "team": "Hidden",
+   "moves": [
+    {
+     "name": "Moko Ressho Geki Enha",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Hooh Tensho Kyaku",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Hooh Chizan Kyaku",
+     "cmd": "412+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons; in air"
+    },
+    {
+     "name": "Moko Resshoda",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Sho So Kyaku",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cho Geki Hasho",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ko Soran Shobu",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hi So Kyaku",
+     "cmd": "412+A",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "shuko",
+   "name": "Koga Shuko",
+   "team": "Hidden",
+   "moves": [
+    {
+     "name": "Kirin",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Ge Kirin",
+     "cmd": "632+AB",
+     "type": "dm",
+     "note": "CHARGE gauge full: any two buttons"
+    },
+    {
+     "name": "Suzaku",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Suiryu",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kasumi",
+     "cmd": "46+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Byakko",
+     "cmd": "28+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Genbu",
+     "cmd": "632+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hooh",
+     "cmd": "412+A",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  }
+ ]
+}

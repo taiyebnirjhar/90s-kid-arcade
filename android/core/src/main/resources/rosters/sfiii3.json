@@ -1,0 +1,1088 @@
+{
+ "game": "sfiii3",
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "https://strategywiki.org/wiki/Street_Fighter_III:_3rd_Strike/Moves",
+  "https://wiki.supercombo.gg/w/Street_Fighter_3:_3rd_Strike",
+  "https://github.com/Grouflon/3rd_training_lua",
+  "Checked in FBNeo with tools/movetest.py"
+ ],
+ "characters": [
+  {
+   "id": "alex",
+   "name": "Alex",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Hyper Bomb",
+     "cmd": "63214789+A",
+     "type": "dm",
+     "note": "Super Art I; close"
+    },
+    {
+     "name": "Boomerang Raid",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Stun Gun Headbutt",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Flash Chop",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Powerbomb",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Spiral D.D.T.",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Air Knee Smash",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Air Stampede",
+     "cmd": "[2]8+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Slash Elbow",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "akuma",
+   "name": "Akuma",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Messatsu Gou Hadou",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I; also in air"
+    },
+    {
+     "name": "Messatsu Gou Shouryuu",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Messatsu Gou Rasen",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art III; also in air"
+    },
+    {
+     "name": "Shun Goku Satsu",
+     "cmd": "A,A,6,D,C",
+     "type": "dm",
+     "note": "full gauge"
+    },
+    {
+     "name": "Gou Hadou Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gou Shouryuu Ken",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tatsumaki Zankuu Kyaku",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shakunetsu Hadou Ken",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zankuu Hadou Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Hyakki Shuu",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ashura Senkuu",
+     "cmd": "623+AB",
+     "type": "special",
+     "note": "421+AB goes back"
+    }
+   ]
+  },
+  {
+   "id": "chunli",
+   "name": "Chun-Li",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Kikou Shou",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Houyoku Sen",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Tensei Ranka",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Hyakuretsu Kyaku",
+     "cmd": "D,D,D,D,D",
+     "type": "special",
+     "note": "mash"
+    },
+    {
+     "name": "Kikou Ken",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hazan Shuu",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Spinning Bird Kick",
+     "cmd": "[2]8+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "dudley",
+   "name": "Dudley",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Rocket Uppercut",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Rolling Thunder",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II; mash"
+    },
+    {
+     "name": "Corkscrew Blow",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Machine Gun Blow",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Jet Upper",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ducking",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cross Counter",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Short Swing Blow",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "elena",
+   "name": "Elena",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Spinning Beat",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Brave Dance",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Healing",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Rhino Horn",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mallet Smash",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Scratch Wheel",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Lynx Tail",
+     "cmd": "421+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Spin Scythe",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "hugo",
+   "name": "Hugo",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Gigas Breaker",
+     "cmd": "66,63214789632147+A",
+     "type": "dm",
+     "note": "Super Art I; close; dashes in first"
+    },
+    {
+     "name": "Megaton Press",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Hammer Frenzy",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Giant Palm Bomber",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Monster Lariat",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ultra Throw",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Moonsault Press",
+     "cmd": "63214789+A",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Meat Squasher",
+     "cmd": "63214789+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shootdown Backbreaker",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "ibuki",
+   "name": "Ibuki",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Kasumi Suzaku",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I; in air; mash"
+    },
+    {
+     "name": "Yoroi Doushi",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Yami Shigure",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Kunai",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Kubi Ori",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kasumi Gake",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tsuiji Goe",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kazekiri",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hien",
+     "cmd": "421+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Raida",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Tsumuji",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "ken",
+   "name": "Ken",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Shouryuu Reppa",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Shinryuu Ken",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II; mash"
+    },
+    {
+     "name": "Shippuu Jinrai Kyaku",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Hadou Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shouryuu Ken",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tatsumaki Senpuu Kyaku",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "makoto",
+   "name": "Makoto",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Seichu Sen Godan-zuki",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Abare To Sanami Kudaki",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Tanden Renki",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Hayate",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "hold the button to charge"
+    },
+    {
+     "name": "Fukiage",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Oroshi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Karakusa",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Tsurugi",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "necro",
+   "name": "Necro",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Magnetic Storm",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I; mash"
+    },
+    {
+     "name": "Slam Dance",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II; close"
+    },
+    {
+     "name": "Electric Snake",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Tornado Hook",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Denji Blast",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "mash"
+    },
+    {
+     "name": "Snake Fang",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Flying Viper",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Rising Cobra",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "oro",
+   "name": "Oro",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Kishin Riki",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Yagyou Dama",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Tengu Stone",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Nichirin Shou",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Oni Yanma",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Niou Riki",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Jinchuu Watari",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hitobashira Nobori",
+     "cmd": "236+D",
+     "type": "special",
+     "note": "in air; mash"
+    }
+   ]
+  },
+  {
+   "id": "q",
+   "name": "Q",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Critical Combo Attack",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Deadly Double Combination",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Total Destruction",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Dash Head Punch",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Dash Low Kick",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "High Speed Barrage",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Capture and Deadly Blow",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "remy",
+   "name": "Remy",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Light of Justice",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Supreme Rising Rage Flash",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Blue Nocturne",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Light of Virtue (high)",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Light of Virtue (low)",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Rising Rage Flash",
+     "cmd": "[2]8+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cold Blue Kick",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "ryu",
+   "name": "Ryu",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Shinkuu Hadou Ken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Shin Shouryuu Ken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Denjin Hadou Ken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III; hold the button to charge"
+    },
+    {
+     "name": "Hadou Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shouryuu Ken",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tatsumaki Senpuu Kyaku",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Joudan Sokutou Geri",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "sean",
+   "name": "Sean",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Hadou Burst",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Shouryuu Cannon",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II; mash"
+    },
+    {
+     "name": "Hyper Tornado",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Sean Tackle",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Dragon Smash",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tornado",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ryuubi Kyaku",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zenpou Tenshin",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "twelve",
+   "name": "Twelve",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "X.N.D.L.",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "X.F.L.A.T.",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II; in air"
+    },
+    {
+     "name": "X.C.O.P.Y.",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "N.D.L.",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "A.X.E.",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "also in air; mash"
+    },
+    {
+     "name": "D.R.A.",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "urien",
+   "name": "Urien",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Tyrant Slaughter",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Temporal Thunder",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Aegis Reflector",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Metallic Sphere",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "hold the button to delay"
+    },
+    {
+     "name": "Chariot Tackle",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Violence Knee Drop",
+     "cmd": "[2]8+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Dangerous Headbutt",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "yang",
+   "name": "Yang",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Raishin Mahhaken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Tenshin Senkyuutai",
+     "cmd": "236236+D",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Sei'ei Enbu",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Tourou Zan",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "press 3 times"
+    },
+    {
+     "name": "Senkyuutai",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Byakko Soushouda",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kaihou",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zenpou Tenshin",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "yun",
+   "name": "Yun",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "You Hou",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art I"
+    },
+    {
+     "name": "Sourai Rengeki",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art II"
+    },
+    {
+     "name": "Gen'ei Jin",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "Super Art III"
+    },
+    {
+     "name": "Zesshou Hohou",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kobokushi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tetsuzan Kou",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nishou Kyaku",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zenpou Tenshin",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "gill",
+   "name": "Gill",
+   "team": "Boss",
+   "moves": [
+    {
+     "name": "Meteor Strike",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Pyro / Cryo-kinesis",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cyber Lariat",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Moonsault Knee Drop",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Psycho Headbutt",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  }
+ ]
+}
