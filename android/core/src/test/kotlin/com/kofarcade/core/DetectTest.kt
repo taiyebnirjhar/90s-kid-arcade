@@ -27,7 +27,7 @@ class DetectTest {
 
     @Test
     fun everyDetectedIdIsInItsRoster() {
-        for (name in listOf("kof97", "kof97plus", "kof2002")) {
+        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005")) {
             val roster = loadRoster(name)!!
             val spec = detectSpec(name)!!
             val ids = spec.ids.filterNotNull() + spec.alternates.values

@@ -100,7 +100,7 @@ private val KOF2002 = DetectSpec(
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
     "kof97plus" -> KOF97_PLUS
-    "kof2002" -> KOF2002
+    "kof2002", "kof2005" -> KOF2002
     else -> null
 }
 

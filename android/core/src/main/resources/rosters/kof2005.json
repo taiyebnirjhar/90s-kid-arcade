@@ -1,0 +1,2916 @@
+{
+ "game": "kf2k5uni",
+ "power": {
+  "name": "MAX",
+  "cmd": "BC",
+  "note": "Press B+C with at least 1 power stock to activate MAX mode (consumes 1 stock). Quick MAX: press B+C during a normal attack, command move or Body Blow (C+D) to activate MAX instantly mid-combo; costs 2 stocks. In MAX mode specials marked cancelable can be cancelled into other specials (MAX cancel), SDMs (MAX DMs) cost 1 stock, and HSDMs (MAX2) need MAX mode + 1 stock + low life (Dream Cancel: 1/4 life or less; SNK wiki: last 30%, when the life bar turns orange). Power gauge max level: 3 for 1st character, 4 for 2nd, 5 for 3rd. Sources: command.dat kof2002 entry; Dream Cancel wiki; SNK wiki MAX2 page."
+ },
+ "sources": [
+  "https://github.com/AntoPISA/MAME_SupportFiles/blob/main/command.dat/command.dat",
+  "https://github.com/batocera-linux/batocera.linux/blob/master/package/batocera/emulators/mame/dats/command.dat",
+  "https://github.com/mamedev/mame/blob/master/plugins/data/button_char.lua",
+  "https://dreamcancel.com/wiki/The_King_of_Fighters_2002",
+  "https://dreamcancel.com/wiki/Whip_02",
+  "https://snk.fandom.com/wiki/MAX2",
+  "https://en.wikipedia.org/wiki/The_King_of_Fighters_2002",
+  "User-verified HSDM button sequences (GameFAQs: Jin_Sakazaki's KOF 2002 HSDM FAQ, A_Large_Trout's KOF 2002 Move List; Dream Cancel; SuperCombo)",
+  "Cross-checked against https://github.com/Fighters/the-king-of-fighters-2002 (independent fan move lists)",
+  "https://www.ddooo.com/softdown/63700.htm (拳皇十周年2005特别版: hidden supers)",
+  "https://www.kofcn.org/article/13185.html (拳皇2005十周年纪念加强版出招表)",
+  "https://www.gamespot.com.cn/youxi/27588.html (hidden supers)"
+ ],
+ "characters": [
+  {
+   "id": "kyo",
+   "name": "Kyo Kusanagi",
+   "team": "Japan",
+   "moves": [
+    {
+     "name": "524 Shiki: Kamichiri",
+     "cmd": "624624+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ura 108 Shiki: Orochinagi",
+     "cmd": "2141236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Ura 108 Shiki: Orochinagi",
+     "cmd": "2141236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); hold button to charge/delay"
+    },
+    {
+     "name": "114 Shiki: Aragami",
+     "cmd": "236+A",
+     "type": "special"
+    },
+    {
+     "name": "115 Shiki: Dokugami",
+     "cmd": "236+C",
+     "type": "special"
+    },
+    {
+     "name": "100 Shiki: Oniyaki",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "427 Shiki: Hikigane",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "R.E.D. KicK",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "75 Shiki Kai",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K then K (press kick twice)"
+    }
+   ]
+  },
+  {
+   "id": "benimaru",
+   "name": "Benimaru Nikaido",
+   "team": "Japan",
+   "moves": [
+    {
+     "name": "Raijin Ten",
+     "cmd": "4646+ABCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Raikou Ken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Gen'ei Hurricane",
+     "cmd": "214214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Raikou Ken",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Raijin Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kuuchuu Raijin Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    },
+    {
+     "name": "Shinkuu Katategoma",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Iai Geri",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Benimaru Collider",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C; close range; 2005 input; the 2002 one no longer works (632146)"
+    }
+   ]
+  },
+  {
+   "id": "daimon",
+   "name": "Goro Daimon",
+   "team": "Japan",
+   "moves": [
+    {
+     "name": "Jigoku Gokuraku Otoshi",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Arashi no Yama: Nekko Meki",
+     "cmd": "4123641236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; close range"
+    },
+    {
+     "name": "Jigoku Gokuraku Otoshi",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Arashi no Yama: Nekko Meki",
+     "cmd": "4123641236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Jiraishin",
+     "cmd": "623+A",
+     "type": "special"
+    },
+    {
+     "name": "Fake Jiraishin",
+     "cmd": "623+C",
+     "type": "special"
+    },
+    {
+     "name": "Kumo Tsukami Nage",
+     "cmd": "41236+A",
+     "type": "special"
+    },
+    {
+     "name": "Kirikabu Gaeshi",
+     "cmd": "41236+C",
+     "type": "special"
+    },
+    {
+     "name": "Chou Oosotogari",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "Tenchi Gaeshi",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Ura Nage",
+     "cmd": "632146+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Chou Ukemi",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Nekko Gaeshi",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; reverse high/mid"
+    }
+   ]
+  },
+  {
+   "id": "terry",
+   "name": "Terry Bogard",
+   "team": "Fatal Fury",
+   "moves": [
+    {
+     "name": "Rising Force",
+     "cmd": "2626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Power Geyser",
+     "cmd": "21416+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "High Angle Geyser",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Triple Geyser",
+     "cmd": "21416+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Power Wave",
+     "cmd": "236+A",
+     "type": "special"
+    },
+    {
+     "name": "Round Wave",
+     "cmd": "236+C",
+     "type": "special"
+    },
+    {
+     "name": "Rising Tackle",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C; 2005 input; the 2002 one no longer works ([2]8)"
+    },
+    {
+     "name": "Power Dunk",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Burn Knuckle",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Crack Shoot",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "andy",
+   "name": "Andy Bogard",
+   "team": "Fatal Fury",
+   "moves": [
+    {
+     "name": "Zan'ei Shitou Reppa Dan",
+     "cmd": "2626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input, then B+C+D for the extra hit"
+    },
+    {
+     "name": "Chou Reppa Dan",
+     "cmd": "21416+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Zan'ei Ryuusei Ken",
+     "cmd": "21416+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+    },
+    {
+     "name": "Chou Reppa Dan",
+     "cmd": "21416+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Hishou Ken",
+     "cmd": "214+A",
+     "type": "special"
+    },
+    {
+     "name": "Geki Hishou Ken",
+     "cmd": "214+C",
+     "type": "special"
+    },
+    {
+     "name": "Shouryuu Dan",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kuuha Dan",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Zan'ei Ken",
+     "cmd": "16+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Gekiheki Haisui Shou",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Yami Abise Geri",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Gen'ei Shiranui",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    }
+   ]
+  },
+  {
+   "id": "joe",
+   "name": "Joe Higashi",
+   "team": "Fatal Fury",
+   "moves": [
+    {
+     "name": "Cross Gigantes",
+     "cmd": "2626+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Screw Upper",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Bakuretsu Hurricane Tiger Kakato",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Ougon no Tiger Kick",
+     "cmd": "2368+B",
+     "type": "dm",
+     "note": "DM: 1 power stock; K: B or D; 2005 input; the 2002 one no longer works (2369; kofcn.org)"
+    },
+    {
+     "name": "Screw Upper",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Hurricane Upper",
+     "cmd": "41236+A",
+     "type": "special"
+    },
+    {
+     "name": "Tiger Kick",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Slash Kick",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Ougon no Kakato",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Bakuretsu Ken",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps); finishers: 236+A, 236+C"
+    }
+   ]
+  },
+  {
+   "id": "ryo",
+   "name": "Ryo Sakazaki",
+   "team": "Art of Fighting",
+   "moves": [
+    {
+     "name": "Tenchi Haoh Ken",
+     "cmd": "2626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ryuuko Ranbu",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Haoh Shoukou Ken",
+     "cmd": "641236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Ryuuko Ranbu (MAX)",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); SNK Fandom's input: SuperCombo's 'qcf + C, A' doesn't come out in the game"
+    },
+    {
+     "name": "Ko'oh Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kohou",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Hien Shippuu Kyaku",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Mouko Raijin Setsu",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Zanretsu Ken",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; 2005 input; the 2002 one no longer works (646)"
+    }
+   ]
+  },
+  {
+   "id": "robert",
+   "name": "Robert Garcia",
+   "team": "Art of Fighting",
+   "moves": [
+    {
+     "name": "Zetsu!! Ryuuko Ranbu",
+     "cmd": "2624+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ryuuko Ranbu",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Haoh Shoukou Ken",
+     "cmd": "641236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Haiga Ryuu",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; close range"
+    },
+    {
+     "name": "Ryuuko Ranbu",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Ryuugeki Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ryuuga",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Hien Ryuujin Kyaku",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    },
+    {
+     "name": "Gen'ei Kyaku",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D; on the ground (in the air 214+B is Hien Ryuujin Kyaku); 2005 input; the 2002 one no longer works (646)"
+    },
+    {
+     "name": "Kyokugen-ryuu Renbu Kyaku",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    }
+   ]
+  },
+  {
+   "id": "takuma",
+   "name": "Takuma Sakazaki",
+   "team": "Art of Fighting",
+   "moves": [
+    {
+     "name": "Kosatsu Jin",
+     "cmd": "2424+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ryuuko Ranbu",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Shin Kishin Geki",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Ryuuko Ranbu",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Ko'oh Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Mouko Burai Gan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Hien Shippuu Kyaku",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Haoh Shikou Ken",
+     "cmd": "641236+A",
+     "type": "special",
+     "note": "P: A or C"
+    }
+   ]
+  },
+  {
+   "id": "leona",
+   "name": "Leona Heidern",
+   "team": "Ikari Warriors",
+   "moves": [
+    {
+     "name": "Rebel Spark",
+     "cmd": "2426+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "V-Slasher",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; in air"
+    },
+    {
+     "name": "Rebel Spark",
+     "cmd": "2141236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; Leona only"
+    },
+    {
+     "name": "V-Slasher",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); in air"
+    },
+    {
+     "name": "Baltic Launcher",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Moon Slasher",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ground Saber",
+     "cmd": "[4]6+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "X-Caliber",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    },
+    {
+     "name": "Earring Bakudan 1",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Earring Bakudan 2: Heart Attack",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Kakusei: OROCHI LEONA",
+     "cmd": "828282+BD",
+     "type": "special",
+     "note": "needs ½ of remaining life"
+    }
+   ],
+   "note": "Kakusei (828282+BD) turns her into Orochi Leona."
+  },
+  {
+   "id": "ralf",
+   "name": "Ralf Jones",
+   "team": "Ikari Warriors",
+   "moves": [
+    {
+     "name": "Umanori Galactica Phantom",
+     "cmd": "242626+AD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Baribari Vulcan Punch",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Umanori Vulcan Punch",
+     "cmd": "2141236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Baribari Vulcan Punch",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Gatling Attack",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kyuukouka Bakudan Punch: Chijou",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kyuukouka Bakudan Punch: Kuuchuu",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    },
+    {
+     "name": "Ralf Kick",
+     "cmd": "63214+B",
+     "type": "special"
+    },
+    {
+     "name": "Ralf Tackle",
+     "cmd": "63214+D",
+     "type": "special"
+    },
+    {
+     "name": "Super Argentine Backbreaker",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "Galactica Phantom",
+     "cmd": "236236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Vulcan Punch",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps)"
+    }
+   ]
+  },
+  {
+   "id": "clark",
+   "name": "Clark Still",
+   "team": "Ikari Warriors",
+   "moves": [
+    {
+     "name": "Running Pirates",
+     "cmd": "426426+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ultra Argentine Backbreaker",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Running Three",
+     "cmd": "4123641236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Ultra Argentine Backbreaker",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Mount Tackle",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Napalm Stretch",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Frankensteiner",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "Super Argentine Backbreaker",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "Shining Wizard",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "P: A or C; vs crouching opponent"
+    }
+   ]
+  },
+  {
+   "id": "athena",
+   "name": "Athena Asamiya",
+   "team": "Psycho Soldier",
+   "moves": [
+    {
+     "name": "Psycho Medley",
+     "cmd": "26+ABCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Shining Crystal Bit",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; also in air"
+    },
+    {
+     "name": "Phoenix Fang Arrow",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; in air"
+    },
+    {
+     "name": "Shining Crystal Bit",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); also in air"
+    },
+    {
+     "name": "Psychic 9",
+     "cmd": "632146+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); then A B C A B C D"
+    },
+    {
+     "name": "Psycho Ball Attack",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Psycho Sword",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C; also in air"
+    },
+    {
+     "name": "Phoenix Arrow",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    },
+    {
+     "name": "Psycho Reflector",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "reflect projectile"
+    },
+    {
+     "name": "Psychic Teleport",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "kensou",
+   "name": "Sie Kensou",
+   "team": "Psycho Soldier",
+   "moves": [
+    {
+     "name": "Seigan Rairyuu",
+     "cmd": "236236+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; damage increased if hit by the projectile"
+    },
+    {
+     "name": "Shinryuu Seiou Rekkyaku",
+     "cmd": "2363214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode)"
+    },
+    {
+     "name": "Shinryuu Tenbu Kyaku",
+     "cmd": "2363214+D",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode)"
+    },
+    {
+     "name": "Niku Man o Kuu",
+     "cmd": "214214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Senki Hakkei",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Choukyuu Dan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ryuu Renga: Chiryuu",
+     "cmd": "41236+A",
+     "type": "special"
+    },
+    {
+     "name": "Ryuu Renga: Tenryuu",
+     "cmd": "41236+C",
+     "type": "special"
+    },
+    {
+     "name": "Ryuu Gakusai",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Senkyuutai",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Ryuu Sougeki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    }
+   ]
+  },
+  {
+   "id": "chin",
+   "name": "Chin Gentsai",
+   "team": "Psycho Soldier",
+   "moves": [
+    {
+     "name": "Suisou Enbu",
+     "cmd": "2626+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Gouran Enpou",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Gou'en Shourai",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Gouran Enpou",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Hyoutan Geki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Suihai Kou",
+     "cmd": "421+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Bougetsu Sui",
+     "cmd": "22+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "mai",
+   "name": "Mai Shiranui",
+   "team": "Women Fighters",
+   "moves": [
+    {
+     "name": "Shiranui-ryuu: Kyuubi no Kitsune",
+     "cmd": "2424+ABCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Chou Hissatsu Shinobi Bachi",
+     "cmd": "2141236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Hana Arashi",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Chou Hissatsu Shinobi Bachi",
+     "cmd": "2141236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Kachou Sen",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ryuu Enbu",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Sayo Chidori",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Hissatsu Shinobi Bachi",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Musasabi no Mai: Chijou",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Musasabi no Mai: Kuuchuu",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    }
+   ]
+  },
+  {
+   "id": "yuri",
+   "name": "Yuri Sakazaki",
+   "team": "Women Fighters",
+   "moves": [
+    {
+     "name": "\"Ee!\" Hien Hou'ou Kyaku",
+     "cmd": "26264+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Hien Hou'ou Kyaku",
+     "cmd": "2363214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Shin! Chou Upper",
+     "cmd": "236236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Ko'oh Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Rai'ou Ken",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    },
+    {
+     "name": "Yuri Chou Upper",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Saiha",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Hyakuretsu Binta",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "maylee",
+   "name": "May Lee",
+   "team": "Women Fighters",
+   "moves": [
+    {
+     "name": "Key of Victory",
+     "cmd": "6,B,C,6,C",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat. Hero Mode only (ABC switches mode)."
+    },
+    {
+     "name": "Disposition Frog",
+     "cmd": "AC,BD,ABC",
+     "type": "dm",
+     "note": "SDM in Normal Mode; switches May Lee to Hero Mode on hit."
+    },
+    {
+     "name": "Shinjuu Kyaku",
+     "cmd": "214214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); Standard Mode; K: B or D"
+    },
+    {
+     "name": "\"May Lee Dynamic!\"",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); Hero Mode; P: A or C; in air"
+    },
+    {
+     "name": "\"May the End\"",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); Hero Mode"
+    },
+    {
+     "name": "Tatsuo Kyaku",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "Standard Mode; K: B or D"
+    },
+    {
+     "name": "Waga Utan Kasane",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "Standard Mode; K: B or D; reverse jump/high/mid/Specials"
+    },
+    {
+     "name": "Full Swing Chop",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "Hero Mode; P: A or C"
+    },
+    {
+     "name": "\"May Lee Ch~p!\"",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "Hero Mode; P: A or C"
+    },
+    {
+     "name": "Shining Thunder Blow",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "Hero Mode; K: B or D"
+    },
+    {
+     "name": "\"May Lee Break!\"",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "Hero Mode; P: A or C; close range"
+    }
+   ],
+   "note": "Two modes: Standard and Hero; mode noted per move."
+  },
+  {
+   "id": "kim",
+   "name": "Kim Kaphwan",
+   "team": "Korea Justice",
+   "moves": [
+    {
+     "name": "Zero Kyori Hou'ou Kyaku",
+     "cmd": "21416+ABCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4"
+    },
+    {
+     "name": "Hou'ou Kyaku",
+     "cmd": "21416+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Hou'ou Hiten Kyaku",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Hou'ou Kyaku",
+     "cmd": "21416+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); in air"
+    },
+    {
+     "name": "Hangetsu Zan",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Hien Zan",
+     "cmd": "[2]8+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Sanren Geki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; can be repeated up to 3 times"
+    },
+    {
+     "name": "Sankuu Kyaku",
+     "cmd": "214+A,9+B,2+B",
+     "type": "special",
+     "note": "then 9+K, 2+K; P = A or C Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+    },
+    {
+     "name": "Haki Kyaku",
+     "cmd": "22+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Hishou Kyaku",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    }
+   ]
+  },
+  {
+   "id": "chang",
+   "name": "Chang Koehan",
+   "team": "Korea Justice",
+   "moves": [
+    {
+     "name": "Tekkyuu Dai Sekai",
+     "cmd": "214214+A",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input (any button)"
+    },
+    {
+     "name": "Tekkyuu Dai Bousou",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Tekkyuu Dai Assatsu",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Tekkyuu Dai Bokusatsu",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Tekkyuu Dai Assatsu",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Tekkyuu Funsai Geki",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Haki Kyaku",
+     "cmd": "22+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Dai Hakai Nage",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Tekkyuu Taiko Uchi",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; reverse jump/high/mid/Specials"
+    },
+    {
+     "name": "Tekkyuu Dai Kaiten",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "P: A or C: tap the button rapidly (the button plays it as five quick taps); stop with A+B+C+D"
+    }
+   ]
+  },
+  {
+   "id": "choi",
+   "name": "Choi Bounge",
+   "team": "Korea Justice",
+   "moves": [
+    {
+     "name": "Shakushi",
+     "cmd": "2626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input (in the air)"
+    },
+    {
+     "name": "Shin! Chouzetsu Tatsumaki Shinkuu Zan",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Hou'ou Kyaku",
+     "cmd": "2363214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Hou'ou Kyaku",
+     "cmd": "2363214+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Kaiten Hien Zan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Tatsumaki Shippuu Zan",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Senpuu Hien Zashi",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Hishou Kuuretsu Zan",
+     "cmd": "[2]8+B",
+     "type": "special",
+     "note": "hold K (B or D); redirect with any direction + P/K up to 3x"
+    },
+    {
+     "name": "Hien Zan",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Hishou Kyaku",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    }
+   ]
+  },
+  {
+   "id": "iori",
+   "name": "Iori Yagami",
+   "team": "'96 (Iori)",
+   "moves": [
+    {
+     "name": "Kin 1209 Shiki Homura Hotogi",
+     "cmd": "242626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Kin 1211 Shiki: Ya Otome",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Kin 1211 Shiki: Ya Otome",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "108 Shiki: Yami Barai",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "100 Shiki: Oniyaki",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "127 Shiki: Aoi Hana",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; can be repeated up to 3 times"
+    },
+    {
+     "name": "212 Shiki: Kototsuki In",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Kuzukaze",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range; 2005 input; the 2002 one no longer works (632146+P)"
+    }
+   ]
+  },
+  {
+   "id": "mature",
+   "name": "Mature",
+   "team": "'96 (Iori)",
+   "moves": [
+    {
+     "name": "Ecstasy 816",
+     "cmd": "2626+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Heaven's Gate",
+     "cmd": "2141236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Nocturnal Lights",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Heaven's Gate",
+     "cmd": "2141236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Nocturnal Lights",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Death Row",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; can be repeated up to 3 times"
+    },
+    {
+     "name": "Metal Massacre",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Despair",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Deicide",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Sacrilege",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ebony Tears",
+     "cmd": "2363214+A",
+     "type": "special",
+     "note": "P: A or C"
+    }
+   ]
+  },
+  {
+   "id": "vice",
+   "name": "Vice",
+   "team": "'96 (Iori)",
+   "moves": [
+    {
+     "name": "Negative Gain",
+     "cmd": "6321463214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; close range"
+    },
+    {
+     "name": "Withering Surface",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Negative Gain",
+     "cmd": "6321463214+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Withering Surface",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Outrage",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Ravenous",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    },
+    {
+     "name": "Mayhem",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Blackened",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Deicide",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Gore Fest",
+     "cmd": "632146+C",
+     "type": "special",
+     "note": "P: A or C; close range Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+    }
+   ]
+  },
+  {
+   "id": "yamazaki",
+   "name": "Ryuji Yamazaki",
+   "team": "'97 (Yamazaki)",
+   "moves": [
+    {
+     "name": "...!!",
+     "cmd": "6321463214+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; close range"
+    },
+    {
+     "name": "Guillotine",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Drill",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range; tap button rapidly for more hits"
+    },
+    {
+     "name": "Akumu...soshite kyouki",
+     "cmd": "236+ABCD",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode)"
+    },
+    {
+     "name": "Guillotine",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Drill",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range; tap button rapidly for more hits"
+    },
+    {
+     "name": "Hebi Tsukai: Joudan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Hebi Tsukai: Chuudan",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Hebi Tsukai: Gedan",
+     "cmd": "214+C",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Sabaki no Aikuchi",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Yakiire",
+     "cmd": "623+B",
+     "type": "special"
+    },
+    {
+     "name": "Suna Kake",
+     "cmd": "623+D",
+     "type": "special"
+    },
+    {
+     "name": "Bakudan Pachiki",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Bai Gaeshi: Kyuushuu",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "absorb projectile"
+    },
+    {
+     "name": "Bai Gaeshi: Dan Hassha",
+     "cmd": "236+C",
+     "type": "special",
+     "note": "reflect projectile"
+    },
+    {
+     "name": "Sadomazo",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; reverse jump/high/mid/Specials"
+    }
+   ]
+  },
+  {
+   "id": "mary",
+   "name": "Blue Mary",
+   "team": "'97 (Yamazaki)",
+   "moves": [
+    {
+     "name": "M. Splash Rose",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Spin Fall",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Vertical Arrow",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Straight Slicer",
+     "cmd": "[4]6+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Real Counter",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "M. Reverse Facelock",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "reverse jump/Specials"
+    },
+    {
+     "name": "M. Head Buster",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "reverse high/mid"
+    }
+   ],
+   "note": "Not encodable in numpad cmd (command.dat notation): M. Dynamite Swing [dm]: _A_A_6_B_C | M. Dynamite Swing [sdm]: _A_A_4_B_C"
+  },
+  {
+   "id": "billy",
+   "name": "Billy Kane",
+   "team": "'97 (Yamazaki)",
+   "moves": [
+    {
+     "name": "Liar Elemental",
+     "cmd": "2141236+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; reverse all"
+    },
+    {
+     "name": "Chou Kaen Senpuu Kon",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Dai Senpuu",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Dai Senpuu",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Sansetsu Kon: Chuudan Uchi",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kyoushuu Hishou Kon",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Suzume Otoshi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Karyuu Tsuigeki Kon",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "reverse jump/Specials"
+    },
+    {
+     "name": "Suiryuu Tsuigeki Kon",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "reverse high/mid/low"
+    },
+    {
+     "name": "Senpuu Kon",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "tap the button rapidly (the button plays it as five quick taps)"
+    }
+   ]
+  },
+  {
+   "id": "yashiro",
+   "name": "Yashiro Nanakase",
+   "team": "'98 (Orochi)",
+   "moves": [
+    {
+     "name": "[ERROR...] CODE \"2002\"",
+     "cmd": "2426+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Final Impact",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Final Impact",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); hold button to charge/delay"
+    },
+    {
+     "name": "'98 Jet Counter",
+     "cmd": "41236+A",
+     "type": "special"
+    },
+    {
+     "name": "Jet Counter",
+     "cmd": "41236+C",
+     "type": "special"
+    },
+    {
+     "name": "Duel Upper",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Sledgehammer",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "shermie",
+   "name": "Shermie",
+   "team": "'98 (Orochi)",
+   "moves": [
+    {
+     "name": "Inazuma Leg Lariat",
+     "cmd": "2626+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Shermie Flash",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Shermie Carnival",
+     "cmd": "4123641236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Shermie Flash",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Shermie Carnival",
+     "cmd": "4123641236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Shermie Whip",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Axle Spin Kick",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Shermie Spiral",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "F-Captured",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "P: A or C; reverse high/mid"
+    },
+    {
+     "name": "Diamond Bust",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Shermie Clutch",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "chris",
+   "name": "Chris",
+   "team": "'98 (Orochi)",
+   "moves": [
+    {
+     "name": "Honoo no Sadame no Chris: OROCHI CHRIS",
+     "cmd": "6321463214+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; see OROCHI CHRIS move list"
+    },
+    {
+     "name": "Chain Slide Touch",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Twister Drive",
+     "cmd": "214214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Chain Slide Touch",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Twister Drive",
+     "cmd": "214214+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Slide Touch",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Scramble Dash",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Hunting Air",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Direction Change",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Shooting Dancer: Thrust",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Shooting Dancer: Step",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Glider Stomp",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    }
+   ]
+  },
+  {
+   "id": "kdash",
+   "name": "K'",
+   "team": "'99 (K')",
+   "moves": [
+    {
+     "name": "Crimson Star Road",
+     "cmd": "2626+BD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Heat Drive",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Chain Drive",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Chain Drive",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Ein Trigger",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Crow Bite",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Minute Spike",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Minute Spike: Air",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    },
+    {
+     "name": "Blackout",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "maxima",
+   "name": "Maxima",
+   "team": "'99 (K')",
+   "moves": [
+    {
+     "name": "Arc Enemy",
+     "cmd": "26+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Bunker Buster",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Maxima Revenger",
+     "cmd": "6321463214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D; close range"
+    },
+    {
+     "name": "M2 Kata Maxima Beam",
+     "cmd": "641236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Maxima Revenger",
+     "cmd": "6321463214+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "System 1: Maxima Scramble",
+     "cmd": "236+A",
+     "type": "special"
+    },
+    {
+     "name": "System 2: Maxima Scramble",
+     "cmd": "236+C",
+     "type": "special"
+    },
+    {
+     "name": "System 3: Maxima Lift",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "M4 Kata Vapour Cannon",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "M11 Kata Dangerous Arch",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "M19 Kata Blitz Cannon",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "whip",
+   "name": "Whip",
+   "team": "'99 (K')",
+   "moves": [
+    {
+     "name": "Super Black Hawk",
+     "cmd": "4+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Sonic Slaughter \"Code: KW\"",
+     "cmd": "2141236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Sonic Slaughter \"Code: KW\"",
+     "cmd": "2141236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Boomerang Shot \"Code: SC\"",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Assassin Strike \"Code: BB\"",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P or K"
+    },
+    {
+     "name": "Strings Shot Type A \"Code: Yuuetsu\"",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Strings Shot Type B \"Code: Chikara\"",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Strings Shot Type C \"Code: Shouri\"",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Desert Eagle",
+     "cmd": "421+A",
+     "type": "special",
+     "note": "P: A or C; tap button rapidly for more hits"
+    },
+    {
+     "name": "Hook Shot \"Code: Kaze\"",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; in air"
+    }
+   ]
+  },
+  {
+   "id": "vanessa",
+   "name": "Vanessa",
+   "team": "2000 (Vanessa)",
+   "moves": [
+    {
+     "name": "Gaia Gear",
+     "cmd": "6426+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Champion Puncher",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Crazy Puncher",
+     "cmd": "2141236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Crazy Puncher",
+     "cmd": "2141236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Machine Gun Puncher",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; tap button rapidly for more hits"
+    },
+    {
+     "name": "Forbidden Eagle",
+     "cmd": "623+A",
+     "type": "special"
+    },
+    {
+     "name": "Parrying Puncher",
+     "cmd": "623+C",
+     "type": "special"
+    },
+    {
+     "name": "Dash Puncher",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Puncher Weaving",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Puncher Vision: Zenpou",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Puncher Vision: Kouhou",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "seth",
+   "name": "Seth",
+   "team": "2000 (Vanessa)",
+   "moves": [
+    {
+     "name": "Sigure-Rangiku",
+     "cmd": "6426+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "\"Morote\"-Sho-Yoh",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Irimi-Nadazuki",
+     "cmd": "2363214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Doh-Tori-Shichimonsatsu",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); reverse all"
+    },
+    {
+     "name": "Sho-Yoh",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Raku-Getsu",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "An-Getsu",
+     "cmd": "236+D",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Kyu-Getsu",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Doh-Kuzushi",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "reverse jump/Specials"
+    },
+    {
+     "name": "Doh-Kuzushi",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": "reverse high/mid"
+    },
+    {
+     "name": "Ashi-Tori",
+     "cmd": "22+A",
+     "type": "special",
+     "note": "P: A or C; reverse low"
+    }
+   ]
+  },
+  {
+   "id": "ramon",
+   "name": "Ramon",
+   "team": "2000 (Vanessa)",
+   "moves": [
+    {
+     "name": "Hypnotic Tiger",
+     "cmd": "2426+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "El Diablo Amarillo Ramon",
+     "cmd": "2141236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Tiger Spin",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Savage Fire Cat",
+     "cmd": "2363214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Tiger Spin",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Drop Kick",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Feint Step",
+     "cmd": "214+C",
+     "type": "special",
+     "note": "hold button to charge/delay"
+    },
+    {
+     "name": "Tiger Neck Chancery",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Rolling Sobat",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Tiger Road",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Force of Will",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Somersault",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Bird of Paradise",
+     "cmd": "22+A,C",
+     "type": "special",
+     "note": "command.dat lists '22 + A, C' Checked against the Fighters/the-king-of-fighters-2002 move lists on GitHub."
+    }
+   ]
+  },
+  {
+   "id": "kula",
+   "name": "Kula Diamond",
+   "team": "2001 (K9999)",
+   "moves": [
+    {
+     "name": "Freeze Completion",
+     "cmd": "22+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Diamond Edge",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Freeze Execution",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "La * Cachora",
+     "cmd": "236236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); in air"
+    },
+    {
+     "name": "Diamond Breath",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Crow Bite",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Counter Shell",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Ray Spin",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "k9999",
+   "name": "K9999",
+   "team": "2001 (K9999)",
+   "moves": [
+    {
+     "name": "Tsuki...",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock; P: A or C; 2005 input; the 2002 one no longer works (1632143)"
+    },
+    {
+     "name": "Acchi he itteroo!",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Wareroo!",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kudakeroo!",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ]
+  },
+  {
+   "id": "angel",
+   "name": "Angel",
+   "team": "2001 (K9999)",
+   "moves": [
+    {
+     "name": "Loyalty Test For the Liberalists",
+     "cmd": "4623+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; only as the finish of an Unchain combo (SuperCombo, Moegirl)"
+    },
+    {
+     "name": "Wind's Fairground",
+     "cmd": "4623+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); reverse high/mid/low/Specials"
+    },
+    {
+     "name": "Blue Monday Parade",
+     "cmd": "4623+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); reverse jump"
+    },
+    {
+     "name": "Loyalty Test For the Liberalists",
+     "cmd": "4623+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); only as the finish of an Unchain combo (SuperCombo, Moegirl)"
+    },
+    {
+     "name": "Senseless Fists",
+     "cmd": "46+B",
+     "type": "special",
+     "note": "K: B or D; Starter the \"CHAIN CIRCLE\""
+    },
+    {
+     "name": "Repun Kamuy",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; Starter the \"CHAIN CIRCLE\""
+    },
+    {
+     "name": "Beyond the Frames",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; Starter the \"CHAIN CIRCLE\""
+    },
+    {
+     "name": "Red Sky of Japonesia",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Mad Murder Roulette",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    },
+    {
+     "name": "Survivor's Banquet",
+     "cmd": "4623+BCD",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock + low life; counters a jumping attack (SuperCombo)"
+    }
+   ],
+   "note": "Chain Circle follow-ups (8/6/2 + P or K, alternating P/K) and Chain Circle finishers (66+A, 66+C, 66+K, 236+A, 236+C, 41236+K, 4/6+BCD) omitted as follow-ups."
+  },
+  {
+   "id": "oyashiro",
+   "name": "Orochi Yashiro",
+   "team": "Awakened Orochi (hidden)",
+   "moves": [
+    {
+     "name": "Armageddon",
+     "cmd": "B,D,A,ABC",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
+     "name": "Ankoku Jigoku Gokuraku Otoshi",
+     "cmd": "6321463214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; close range"
+    },
+    {
+     "name": "Araburu Daichi",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Ankoku Jigoku Gokuraku Otoshi",
+     "cmd": "6321463214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
+    },
+    {
+     "name": "Araburu Daichi",
+     "cmd": "236236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Kujiku Daichi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Niragu Daichi",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Musebu Daichi",
+     "cmd": "632146+A",
+     "type": "special",
+     "note": "P: A or C; close range"
+    },
+    {
+     "name": "Odoru Daichi",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D"
+    }
+   ],
+   "note": "Hidden: on character select hold Start on Yashiro and press a button (command.dat)."
+  },
+  {
+   "id": "oshermie",
+   "name": "Orochi Shermie",
+   "team": "Awakened Orochi (hidden)",
+   "moves": [
+    {
+     "name": "Unmei no Ya",
+     "cmd": "B,A,4,A,A",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat. The last button can be any of A-D; it sets the distance."
+    },
+    {
+     "name": "Ankoku Raikou Ken",
+     "cmd": "236236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Shukumei, Gen'ei, Shinshi",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Ankoku Raikou Ken",
+     "cmd": "236236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Shukumei, Gen'ei, Shinshi",
+     "cmd": "236236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Mugetsu no Rai'un",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "P or K"
+    },
+    {
+     "name": "Yatanagi no Muchi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Shajitsu no Odori",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Raijin no Tsue",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; in air"
+    }
+   ],
+   "note": "Hidden: on character select hold Start on Shermie and press a button (command.dat)."
+  },
+  {
+   "id": "ochris",
+   "name": "Orochi Chris",
+   "team": "Awakened Orochi (hidden)",
+   "moves": [
+    {
+     "name": "Sanagi o Yaburi, Chou wa Mau",
+     "cmd": "D,C,2,C,D",
+     "type": "hsdm",
+     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+    },
+    {
+     "name": "Ankoku Orochinagi",
+     "cmd": "2141236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Ankoku Orochinagi",
+     "cmd": "2141236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); hold button to charge/delay"
+    },
+    {
+     "name": "Taiyou o Iru Honoo",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Tsuki o Tsumu Honoo",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kagami o Hofuru Honoo",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Shishi o Kamu Honoo",
+     "cmd": "41236+B",
+     "type": "special",
+     "note": "K: B or D; close range"
+    }
+   ],
+   "note": "Hidden: on character select hold Start on Chris and press a button (command.dat)."
+  },
+  {
+   "id": "kusanagi",
+   "name": "Kusanagi",
+   "team": "Hidden",
+   "moves": [
+    {
+     "name": "Saishuu Kessen Ougi Reishiki",
+     "cmd": "2626+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Ura 108 Shiki: Orochinagi",
+     "cmd": "2141236+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Ura 108 Shiki: Orochinagi",
+     "cmd": "2141236+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); hold button to charge/delay"
+    },
+    {
+     "name": "108 Shiki: Yami Barai",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "100 Shiki: Oniyaki",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "101 Shiki: Oboro Guruma",
+     "cmd": "421+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "212 Shiki: Kototsuki You",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "75 Shiki Kai",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K then K (press kick twice)"
+    },
+    {
+     "name": "910 Shiki: Nue Tsumi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "P: A or C; reverse high/mid/low"
+    }
+   ],
+   "note": "Hidden: on character select put cursor on Kyo and press 8 2 6 4 2 8 4 6 (command.dat)."
+  },
+  {
+   "id": "rugal",
+   "name": "Omega Rugal",
+   "team": "Boss",
+   "moves": [
+    {
+     "name": "Kaiser Phoenix",
+     "cmd": "426426+AC",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; 2005 input"
+    },
+    {
+     "name": "Gigantic Pressure",
+     "cmd": "2363214+A",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); P: A or C"
+    },
+    {
+     "name": "Destruction Omega",
+     "cmd": "236236+B",
+     "type": "dm",
+     "note": "DM: 1 power stock (or during MAX mode); K: B or D"
+    },
+    {
+     "name": "Gigantic Pressure",
+     "cmd": "2363214+AC",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Destruction Omega",
+     "cmd": "236236+BD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
+     "name": "Reppuu Ken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Kaiser Wave",
+     "cmd": "641236+A",
+     "type": "special",
+     "note": "P: A or C; hold button to charge/delay"
+    },
+    {
+     "name": "Genocide Cutter",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "God Press",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "P: A or C"
+    },
+    {
+     "name": "Beads Destruction",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "K: B or D"
+    },
+    {
+     "name": "Dark Barrier",
+     "cmd": "236+B",
+     "type": "special",
+     "note": "K: B or D; reflect projectile"
+    }
+   ],
+   "note": "Final boss. command.dat lists him as selectable only on the AES (home) version via the black square on character select."
+  }
+ ]
+}
