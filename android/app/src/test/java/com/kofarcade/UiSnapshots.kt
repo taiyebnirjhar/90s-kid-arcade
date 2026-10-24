@@ -161,6 +161,35 @@ class UiSnapshots {
     }
 
     @Test
+    fun roster() {
+        landscape()
+        val r = com.kofarcade.core.loadRoster("kof97")!!
+        shot("roster") {
+            OverGame {
+                RosterContent(r.teams, listOf("iori", "kyo", null).map { r.character(it) }, 1, {}, {}, {}, {})
+            }
+        }
+    }
+
+    @Test
+    fun moveEditor() {
+        landscape()
+        shot("move_editor") {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(680.dp).padding(16.dp)) {
+                    Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
+                        MoveEditorContent(
+                            "Iori Yagami",
+                            listOf(MoveRowUi("Yaotome", "2363214+A"), MoveRowUi("Yami Barai", "236+A"), MoveRowUi("Broken", "23X+A")),
+                            { _, _ -> }, { _, _ -> }, {}, {}, {}, {}, {}, {},
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     fun controls() {
         landscape()
         shot("controls") {
