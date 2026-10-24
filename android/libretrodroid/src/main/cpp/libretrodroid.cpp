@@ -682,24 +682,43 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
     }
 }
 
-void LibretroDroid::setNetplay(bool enabled) {
+void LibretroDroid::setNetplay(bool enabled, int localPlayer, int maxRollback) {
     std::lock_guard<std::mutex> lock(netMutex);
     netplay = enabled;
-    netQueue.clear();
-    netPushed = 0;
+    netLocalPlayer = localPlayer == 1 ? 1 : 0;
+    netMaxRollback = std::max(0, std::min(maxRollback, NET_RING - 8));
     netFrame = 0;
+    netLocalKnown = 0;
+    netRemoteKnown = 0;
+    netFirstWrong = INT32_MAX;
     netMask[0] = netMask[1] = 0;
     netSum = {-1, 0};
+    netPendingSums.clear();
+    netReplayed = 0;
+    netRollbacks = 0;
+    netStates.clear();
+    netWaitFrames = 0;
+    Environment::getInstance().audioVideoOverride = -1;
 }
 
-bool LibretroDroid::pushNetInput(int32_t frame, int32_t p1, int32_t p2) {
+bool LibretroDroid::pushLocalInput(int32_t frame, int32_t mask) {
     std::lock_guard<std::mutex> lock(netMutex);
-    if (!netplay || frame != netPushed) {
-        LOGE("Netplay input for frame %d out of order (expected %d)", frame, netPushed);
-        return false;
+    // In order, and not so far ahead that the ring would wrap.
+    if (!netplay || frame != netLocalKnown || frame >= netFrame + NET_RING / 2) return false;
+    netLocal[frame % NET_RING] = (uint16_t) mask;
+    netLocalKnown++;
+    return true;
+}
+
+bool LibretroDroid::pushRemoteInput(int32_t frame, int32_t mask) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    if (!netplay || frame != netRemoteKnown) return false;
+    netRemote[frame % NET_RING] = (uint16_t) mask;
+    // Already run with a wrong guess: replay from there on the next step.
+    if (frame < netFrame && netUsedRemote[frame % NET_RING] != (uint16_t) mask) {
+        netFirstWrong = std::min(netFirstWrong, frame);
     }
-    netQueue.push_back({frame, p1, p2});
-    netPushed++;
+    netRemoteKnown++;
     return true;
 }
 
@@ -713,44 +732,103 @@ std::array<int64_t, 2> LibretroDroid::getNetSum() {
     return netSum;
 }
 
-// Called from step() with coreLock held. Runs up to [wanted] frames (what the
-// display pacing asks for), only as far as both players' inputs have
-// arrived; if they're piling up because this phone fell behind, it runs one
-// more to catch up.
-void LibretroDroid::stepNetplay(unsigned wanted) {
-    size_t queued;
-    {
-        std::lock_guard<std::mutex> lock(netMutex);
-        queued = netQueue.size();
+void LibretroDroid::netWait(int frames) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    netWaitFrames = std::max(netWaitFrames, std::min(frames, 4));
+}
+
+std::array<int64_t, 2> LibretroDroid::getNetStats() {
+    std::lock_guard<std::mutex> lock(netMutex);
+    return {netReplayed, netRollbacks};
+}
+
+// Runs one frame: saves the state before it (to come back to), applies this
+// phone's input and the partner's (or the guess), and notes a checksum to
+// compare once the frame's inputs are all real. With netMutex held.
+void LibretroDroid::netSimulate(int32_t frame, bool replay) {
+    size_t size = core->retro_serialize_size();
+    auto& state = netStates[frame % NET_RING];
+    if (state.size() != size) state.resize(size);
+    core->retro_serialize(state.data(), size);
+
+    uint16_t local = netLocal[frame % NET_RING];
+    uint16_t remote = 0;
+    if (frame < netRemoteKnown) {
+        remote = netRemote[frame % NET_RING];
+    } else if (netRemoteKnown > 0) {
+        remote = netRemote[(netRemoteKnown - 1) % NET_RING];
     }
-    if (queued > wanted + 2) wanted++;
-    for (unsigned i = 0; i < wanted; i++) {
-        std::array<int32_t, 3> in{};
-        {
-            std::lock_guard<std::mutex> lock(netMutex);
-            if (netQueue.empty()) return;
-            in = netQueue.front();
-            netQueue.pop_front();
-            netMask[0] = (uint16_t) in[1];
-            netMask[1] = (uint16_t) in[2];
-        }
-        core->retro_run();
-        std::lock_guard<std::mutex> lock(netMutex);
-        netFrame = in[0] + 1;
-        // Every 2 seconds, a checksum of the game's RAM to compare with the
-        // partner's: FNV-1a over RETRO_MEMORY_SYSTEM_RAM.
-        if (netFrame % 120 == 0) {
-            auto* mem = (uint8_t*) core->retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
-            size_t size = core->retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
-            if (mem != nullptr) {
-                uint64_t hash = 1469598103934665603ULL;
-                for (size_t j = 0; j < size; j++) {
-                    hash ^= mem[j];
-                    hash *= 1099511628211ULL;
-                }
-                netSum = {netFrame, (int64_t) hash};
+    netUsedRemote[frame % NET_RING] = remote;
+    netMask[netLocalPlayer] = local;
+    netMask[1 - netLocalPlayer] = remote;
+
+    // Replays are silent and undrawn; only the newest frame is seen and heard.
+    Environment::getInstance().audioVideoOverride = replay ? 4 : -1;
+    core->retro_run();
+    Environment::getInstance().audioVideoOverride = -1;
+
+    // Every 2 seconds, a checksum of the game's RAM (FNV-1a) for the partner
+    // to compare: kept until the frame's inputs are confirmed.
+    if ((frame + 1) % 120 == 0) {
+        auto* mem = (uint8_t*) core->retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
+        size_t memSize = core->retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
+        if (mem != nullptr) {
+            uint64_t hash = 1469598103934665603ULL;
+            for (size_t j = 0; j < memSize; j++) {
+                hash ^= mem[j];
+                hash *= 1099511628211ULL;
             }
+            bool found = false;
+            for (auto& p : netPendingSums) {
+                if (p.first == frame + 1) {
+                    p.second = (int64_t) hash;
+                    found = true;
+                }
+            }
+            if (!found) netPendingSums.emplace_back(frame + 1, (int64_t) hash);
         }
+    }
+}
+
+// Called from step() with coreLock held. Replays from the first wrong guess
+// if there is one, then runs up to [wanted] new frames (what the display
+// pacing asks for), each as far as the inputs allow.
+void LibretroDroid::stepNetplay(unsigned wanted) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    if (netStates.size() != NET_RING) netStates.resize(NET_RING);
+
+    if (netFirstWrong < netFrame) {
+        netRollbacks++;
+        auto& state = netStates[netFirstWrong % NET_RING];
+        core->retro_unserialize(state.data(), state.size());
+        for (int32_t f = netFirstWrong; f < netFrame; f++) {
+            netSimulate(f, true);
+            netReplayed++;
+        }
+    }
+    netFirstWrong = INT32_MAX;
+
+    // Frames below netRemoteKnown have now run with the real inputs.
+    for (auto it = netPendingSums.begin(); it != netPendingSums.end();) {
+        if (it->first - 1 < netRemoteKnown) {
+            if (it->first > netSum[0]) netSum = {it->first, it->second};
+            it = netPendingSums.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    if (netWaitFrames > 0) {
+        netWaitFrames--;
+        return;
+    }
+    // Catch up a frame when this phone is behind its own input.
+    if (netLocalKnown - netFrame > 4) wanted++;
+    for (unsigned i = 0; i < wanted; i++) {
+        if (netFrame >= netLocalKnown) return;                    // our input isn't sampled yet
+        if (netFrame >= netRemoteKnown + netMaxRollback) return;  // too far ahead of the partner
+        netSimulate(netFrame, false);
+        netFrame++;
     }
 }
 

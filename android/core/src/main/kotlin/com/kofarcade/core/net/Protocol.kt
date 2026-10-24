@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
 // and leaving; UDP carries the inputs (small, frequent, and resent until
 // acknowledged, so a lost packet costs nothing).
 
-const val PROTOCOL = 1
+const val PROTOCOL = 2
 const val TCP_PORT = 7845
 const val BEACON_PORT = 7846
 
@@ -34,7 +34,7 @@ data class Welcome(
     val accepted: Boolean,
     val reason: String = "",
     val name: String = "",
-    val delay: Int = 3,
+    val delay: Int = 1,
     val udpPort: Int = 0,
     val session: Int = 0,
     /** The host's game, for a [PROBE]. */
@@ -84,7 +84,8 @@ internal inline fun <reified T> decode(bytes: ByteArray): T = json.decodeFromStr
 
 /**
  * One input packet: the sender's unacknowledged inputs from [start], what it
- * has received from us ([ack]: all frames below it), and optionally a state
+ * has received from us ([ack]: all frames below it), how many frames it runs
+ * ahead of our inputs ([advantage], for time sync), and optionally a state
  * checksum for frame [sumFrame] (-1: none).
  */
 data class InputPacket(
@@ -94,10 +95,12 @@ data class InputPacket(
     val masks: IntArray,
     val sumFrame: Int = -1,
     val sum: Long = 0,
+    val advantage: Int = 0,
 ) {
     fun encode(): ByteArray {
-        val b = ByteBuffer.allocate(4 + 1 + 4 * 4 + 1 + masks.size * 2 + 8)
+        val b = ByteBuffer.allocate(4 + 1 + 4 * 4 + 1 + 1 + masks.size * 2 + 8)
         b.putInt(MAGIC).put(VERSION).putInt(session).putInt(ack).putInt(start).putInt(sumFrame)
+        b.put(advantage.coerceIn(-127, 127).toByte())
         b.put(masks.size.toByte())
         masks.forEach { b.putShort(it.toShort()) }
         b.putLong(sum)
@@ -106,7 +109,7 @@ data class InputPacket(
 
     companion object {
         private const val MAGIC = 0x39304B41 // "90KA"
-        private const val VERSION: Byte = 1
+        private const val VERSION: Byte = 2
         const val MAX_MASKS = 120
 
         fun decode(data: ByteArray, length: Int = data.size): InputPacket? = try {
@@ -118,9 +121,10 @@ data class InputPacket(
                 val ack = b.int
                 val start = b.int
                 val sumFrame = b.int
+                val advantage = b.get().toInt()
                 val n = b.get().toInt() and 0xFF
                 val masks = IntArray(n) { b.short.toInt() and 0xFFFF }
-                InputPacket(session, ack, start, masks, sumFrame, b.long)
+                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage)
             }
         } catch (e: RuntimeException) {
             null
@@ -128,7 +132,8 @@ data class InputPacket(
     }
 
     override fun equals(other: Any?) = other is InputPacket && session == other.session && ack == other.ack &&
-        start == other.start && masks.contentEquals(other.masks) && sumFrame == other.sumFrame && sum == other.sum
+        start == other.start && masks.contentEquals(other.masks) && sumFrame == other.sumFrame && sum == other.sum &&
+        advantage == other.advantage
 
     override fun hashCode() = start * 31 + masks.contentHashCode()
 }

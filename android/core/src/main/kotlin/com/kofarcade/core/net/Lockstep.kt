@@ -1,22 +1,17 @@
 package com.kofarcade.core.net
 
-// Two-player over the network, delay-based lockstep: both phones run the game
-// and exchange only button states. Frame N runs on both phones with the same
-// two inputs, so they stay identical (FBNeo is deterministic once both start
-// from the same state, which the host sends at the start).
+// Two players over the network: both phones run the game and exchange only
+// button states, so each needs, for every frame, its own input and the
+// partner's. The emulator (LibretroDroid's rollback netcode) runs a frame as
+// soon as it has its own input, guessing the partner's until it arrives and
+// replaying if the guess was wrong. This class is the bookkeeping between
+// the game and the network: our inputs to send (until acknowledged) and the
+// partner's to hand to the emulator, in order.
 //
-// Your input for frame N is read when your phone is at frame N - delay, so it
-// has `delay` frames (~16 ms each) to reach the other phone before it's
-// needed. A phone that hasn't got its partner's input for the next frame just
-// waits, which a fast local network makes rare.
+// Our input for frame N is read when this phone is at frame N - delay: a
+// frame or two of delay gives it time to arrive, so fewer guesses are wrong.
 
-/** Inputs for one frame: [p1] and [p2] are RetroPad button masks (bit = RetroPad id). */
-data class FrameInputs(val frame: Int, val p1: Int, val p2: Int)
-
-/**
- * The input bookkeeping for one side. Thread-safe: the network thread calls
- * [receive] and [drain], the game calls [sampleUpTo].
- */
+/** Inputs exchanged on both sides, thread-safe: the network thread receives, the game samples. */
 class Lockstep(val delay: Int, val localPlayer: Int) {
     init {
         require(delay >= 1) { "delay must be at least one frame" }
@@ -30,12 +25,12 @@ class Lockstep(val delay: Int, val localPlayer: Int) {
     var nextLocal = 0
         private set
 
-    /** The next frame [drain] will hand out. */
-    var nextMerged = 0
-        private set
-
     /** All remote frames below this are known. */
     var remoteKnown = 0
+        private set
+
+    /** Remote frames below this have been handed out by [takeRemote]. */
+    var remoteTaken = 0
         private set
 
     /** The partner has all our frames below this. */
@@ -45,17 +40,19 @@ class Lockstep(val delay: Int, val localPlayer: Int) {
     /**
      * Samples local input for every frame up to [emulated] + [delay] not yet
      * sampled, [input] once per frame (so a macro advances one step per frame).
-     * Returns how many frames were sampled.
+     * Returns the new inputs: (first frame, masks).
      */
     @Synchronized
-    fun sampleUpTo(emulated: Int, input: () -> Int): Int {
-        var n = 0
+    fun sampleUpTo(emulated: Int, input: () -> Int): Pair<Int, IntArray> {
+        val start = nextLocal
+        val out = ArrayList<Int>()
         while (nextLocal <= emulated + delay) {
-            local[nextLocal] = input()
+            val m = input()
+            local[nextLocal] = m
+            out += m
             nextLocal++
-            n++
         }
-        return n
+        return start to out.toIntArray()
     }
 
     /** Remote inputs for frames [start] until start + masks.size; [ack]: they have our frames below it. */
@@ -63,26 +60,22 @@ class Lockstep(val delay: Int, val localPlayer: Int) {
     fun receive(start: Int, masks: IntArray, ack: Int) {
         masks.forEachIndexed { i, m ->
             val f = start + i
-            if (f >= nextMerged) remote.putIfAbsent(f, m)
+            if (f >= remoteTaken) remote.putIfAbsent(f, m)
         }
-        while (remote.containsKey(remoteKnown) || remoteKnown < nextMerged) remoteKnown++
-        if (ack > localAcked) localAcked = minOf(ack, nextLocal)
+        while (remote.containsKey(remoteKnown)) remoteKnown++
+        if (ack > localAcked) {
+            localAcked = minOf(ack, nextLocal)
+            local.keys.removeAll { it < localAcked }
+        }
     }
 
-    /** Frames whose two inputs are both known, in order, each handed out once. */
+    /** The partner's inputs not handed out yet, in order and without gaps: (first frame, masks). */
     @Synchronized
-    fun drain(): List<FrameInputs> {
-        val out = ArrayList<FrameInputs>()
-        while (true) {
-            val l = local[nextMerged] ?: break
-            val r = remote[nextMerged] ?: break
-            out += if (localPlayer == 0) FrameInputs(nextMerged, l, r) else FrameInputs(nextMerged, r, l)
-            remote.remove(nextMerged)
-            nextMerged++
-        }
-        // Local inputs can go once merged here and received there.
-        local.keys.removeAll { it < minOf(nextMerged, localAcked) }
-        return out
+    fun takeRemote(): Pair<Int, IntArray> {
+        val start = remoteTaken
+        val masks = IntArray(remoteKnown - start) { remote.remove(start + it)!! }
+        remoteTaken = remoteKnown
+        return start to masks
     }
 
     /** Our inputs the partner hasn't acknowledged: (first frame, masks), at most [max]. */

@@ -24,8 +24,8 @@ class Refused(reason: String) : IOException(reason)
 
 /** What the game screen hears from the connection. Called on network threads. */
 interface LinkListener {
-    /** Frames whose inputs both phones now have, in order: feed them to the emulator. */
-    fun onFrames(frames: List<FrameInputs>)
+    /** The partner's inputs for frames [start] onwards, in order and without gaps: feed them to the emulator. */
+    fun onRemote(start: Int, masks: IntArray)
 
     /** The two games differ at [frame]. */
     fun onDesync(frame: Int)
@@ -60,6 +60,13 @@ class Link internal constructor(
     private val sums = HashMap<Int, Long>()
     private val remoteSums = HashMap<Int, Long>()
     @Volatile private var latestSum: Pair<Int, Long>? = null
+
+    /** How many frames this phone runs ahead of the partner's inputs; sent for time sync. */
+    @Volatile var advantage = 0
+
+    /** The partner's [advantage], as last heard. */
+    @Volatile var partnerAdvantage = 0
+        private set
     private val threads = ArrayList<Thread>()
 
     val isHost: Boolean get() = localPlayer == 0
@@ -95,7 +102,7 @@ class Link internal constructor(
     fun flush() {
         val (start, masks) = lockstep.outgoing(InputPacket.MAX_MASKS)
         val sum = latestSum
-        val packet = InputPacket(session, lockstep.remoteKnown, start, masks, sum?.first ?: -1, sum?.second ?: 0)
+        val packet = InputPacket(session, lockstep.remoteKnown, start, masks, sum?.first ?: -1, sum?.second ?: 0, advantage)
         val bytes = packet.encode()
         try {
             udp.send(DatagramPacket(bytes, bytes.size, peer))
@@ -140,6 +147,7 @@ class Link internal constructor(
             val p = InputPacket.decode(buf, packet.length) ?: continue
             if (p.session != session) continue
             lastHeard = System.nanoTime()
+            partnerAdvantage = p.advantage
             lockstep.receive(p.start, p.masks, p.ack)
             if (p.sumFrame >= 0) check(p.sumFrame, p.sum, mine = false)
             deliver()
@@ -176,22 +184,22 @@ class Link internal constructor(
 
     /**
      * Samples our input for every frame up to [emulated] + delay (see
-     * [Lockstep.sampleUpTo]), sends it, and hands over any frames that
-     * completes. Call once per displayed frame.
+     * [Lockstep.sampleUpTo]) and sends it. Returns the new inputs for the
+     * emulator: (first frame, masks). Call once per displayed frame.
      */
-    fun sample(emulated: Int, input: () -> Int) {
-        if (lockstep.sampleUpTo(emulated, input) > 0) flush()
-        deliver()
+    fun sample(emulated: Int, input: () -> Int): Pair<Int, IntArray> {
+        val new = lockstep.sampleUpTo(emulated, input)
+        if (new.second.isNotEmpty()) flush()
+        return new
     }
 
     private val deliverLock = Any()
 
-    // Both threads can complete frames; one lock keeps them reaching the
-    // emulator in order.
+    // One lock keeps the partner's inputs reaching the emulator in order.
     private fun deliver() {
         synchronized(deliverLock) {
-            val frames = lockstep.drain()
-            if (frames.isNotEmpty()) listener?.onFrames(frames)
+            val (start, masks) = lockstep.takeRemote()
+            if (masks.isNotEmpty()) listener?.onRemote(start, masks)
         }
     }
 
@@ -233,7 +241,7 @@ class NetHost(
     private val title: String,
     private val rom: Long,
     private val bios: Long,
-    private val delay: Int = 3,
+    private val delay: Int = 1,
     port: Int = TCP_PORT,
 ) : Closeable {
     private val server = ServerSocket().apply {

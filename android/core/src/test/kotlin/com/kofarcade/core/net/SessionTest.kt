@@ -14,13 +14,18 @@ class SessionTest {
 
     /** Plays [frames] frames on a link like the game screen would, with a fake emulator. */
     private class FakeGame(val link: Link, val frames: Int) : LinkListener {
-        val ran = ArrayList<FrameInputs>()
+        val local = ArrayList<Int>()
+        val remote = ArrayList<Int>()
         val done = CountDownLatch(1)
         @Volatile var closedReason: String? = null
+        @Volatile var running = true
 
-        override fun onFrames(frames: List<FrameInputs>) {
-            synchronized(ran) { ran += frames }
-            if (ran.size >= this.frames) done.countDown()
+        override fun onRemote(start: Int, masks: IntArray) {
+            synchronized(remote) {
+                assertEquals(remote.size, start)
+                remote += masks.toList()
+                if (remote.size >= frames) done.countDown()
+            }
         }
 
         override fun onDesync(frame: Int) = Unit
@@ -33,10 +38,16 @@ class SessionTest {
         fun play() {
             link.start(this)
             thread(isDaemon = true) {
-                while (done.count > 0) {
-                    val emulated = synchronized(ran) { ran.size }
+                var emulated = 0
+                // Keeps playing (and sending) until told to stop, like a real phone.
+                while (running) {
+                    // Rollback emulator: runs ahead of the partner by up to 8 frames.
+                    val known = synchronized(remote) { remote.size }
+                    if (emulated < local.size && emulated < known + 8) emulated++
                     var f = link.lockstep.nextLocal
-                    link.sample(emulated) { (f++ * 13 + link.localPlayer) and 0xFFF }
+                    val (_, masks) = link.sample(emulated) { (f++ * 13 + link.localPlayer) and 0xFFF }
+                    local += masks.toList()
+                    link.advantage = emulated - known
                     Thread.sleep(16)
                 }
             }
@@ -54,6 +65,7 @@ class SessionTest {
         assertEquals("Guest", h.peerName)
         assertEquals("Host", guestLink.peerName)
         assertEquals(2, guestLink.delay)
+        assertEquals(1, Welcome(true).delay)
 
         // The start state goes host -> guest, then both are ready.
         val state = ByteArray(400_000) { (it % 251).toByte() }
@@ -67,12 +79,14 @@ class SessionTest {
         a.play()
         b.play()
         assertTrue(a.done.await(20, TimeUnit.SECONDS) && b.done.await(20, TimeUnit.SECONDS))
+        a.running = false
+        b.running = false
         assertEquals(null, a.closedReason)
-        assertEquals(a.ran.take(120), b.ran.take(120))
-        a.ran.take(120).forEach {
-            assertEquals((it.frame * 13) and 0xFFF, it.p1)
-            assertEquals((it.frame * 13 + 1) and 0xFFF, it.p2)
-        }
+        // Each side got exactly what the other sampled, frame by frame.
+        assertEquals(b.local.take(120), a.remote.take(120))
+        assertEquals(a.local.take(120), b.remote.take(120))
+        a.remote.take(120).forEachIndexed { frame, m -> assertEquals((frame * 13 + 1) and 0xFFF, m) }
+        assertTrue(a.link.partnerAdvantage in -10..10)
 
         // Leaving tells the other side.
         val left = CountDownLatch(1)

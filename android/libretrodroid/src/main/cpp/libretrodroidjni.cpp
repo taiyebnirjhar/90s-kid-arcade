@@ -231,19 +231,48 @@ JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setFrozen(
 JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setNetplay(
     JNIEnv* env,
     jclass obj,
-    jboolean enabled
+    jboolean enabled,
+    jint localPlayer,
+    jint maxRollback
 ) {
-    LibretroDroid::getInstance().setNetplay(enabled);
+    LibretroDroid::getInstance().setNetplay(enabled, localPlayer, maxRollback);
 }
 
-JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushNetInput(
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushLocalInput(
     JNIEnv* env,
     jclass obj,
     jint frame,
-    jint p1,
-    jint p2
+    jint mask
 ) {
-    return LibretroDroid::getInstance().pushNetInput(frame, p1, p2);
+    return LibretroDroid::getInstance().pushLocalInput(frame, mask);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushRemoteInput(
+    JNIEnv* env,
+    jclass obj,
+    jint frame,
+    jint mask
+) {
+    return LibretroDroid::getInstance().pushRemoteInput(frame, mask);
+}
+
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_netWait(
+    JNIEnv* env,
+    jclass obj,
+    jint frames
+) {
+    LibretroDroid::getInstance().netWait(frames);
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetStats(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto stats = LibretroDroid::getInstance().getNetStats();
+    jlong values[2] = {(jlong) stats[0], (jlong) stats[1]};
+    jlongArray result = env->NewLongArray(2);
+    env->SetLongArrayRegion(result, 0, 2, values);
+    return result;
 }
 
 JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetFrame(

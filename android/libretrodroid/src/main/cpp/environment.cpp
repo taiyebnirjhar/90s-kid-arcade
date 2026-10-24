@@ -320,7 +320,11 @@ bool Environment::handle_callback_environment(unsigned cmd, void *data) {
 
         case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
             LOGD("Called RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE");
-            return false;
+            // Normally unsupported (the core draws and plays everything).
+            // Two-player replays answer "neither", to catch up fast.
+            if (audioVideoOverride < 0) return false;
+            if (data) *static_cast<int*>(data) = audioVideoOverride;
+            return true;
 
         case RETRO_ENVIRONMENT_GET_LANGUAGE:
             LOGD("Called RETRO_ENVIRONMENT_GET_LANGUAGE");

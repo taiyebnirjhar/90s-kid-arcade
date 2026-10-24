@@ -61,16 +61,23 @@ to it. Home → **2P**: one phone hosts a game (player 1), the other joins
 (player 2); it finds the host by itself, or type the address the host shows.
 Both phones need the same game zip and BIOS (the library has them).
 
-How it works:
+How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Both phones run the game, exchanging only button states over UDP.
-  Every frame runs with both players' inputs on both phones: delay-based
-  lockstep, 3 frames (~50 ms) of input delay.
+- Your own presses take effect after one frame. The partner's input is
+  guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi.
+  When a guess was wrong, the phone loads the state from that frame and
+  replays to now in a few milliseconds, silently. You see the corrected
+  game, not a delay.
+- A phone that runs ahead of its partner waits a frame now and then (time
+  sync). A phone stops only if its partner falls 8 frames behind.
 - Phones start identical because the host sends its emulator state when the
   game opens. Without that, the Neo Geo clock, which starts from each
   phone's time, would differ.
-- A RAM checksum every 2 seconds catches the games drifting apart.
-- Native side: `android/libretrodroid` lockstep mode. Protocol and tests:
-  `android/core/.../net`.
+- A RAM checksum of confirmed frames every 2 seconds catches drift.
+- Checked against the real games with `tools/emu.py`: rollback with
+  random 0-7 frame delays lands on the same game as a perfect run.
+- Native side: `android/libretrodroid` (LibretroDroid::setNetplay).
+  Protocol and tests: `android/core/.../net`.
 
 ## Your ROM library (optional)
 

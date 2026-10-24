@@ -37,7 +37,6 @@ import com.kofarcade.core.Pad
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
-import com.kofarcade.core.net.FrameInputs
 import com.kofarcade.core.net.Link
 import com.kofarcade.core.net.LinkListener
 import com.kofarcade.core.detect
@@ -91,6 +90,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libfbneo_libretro_android.so"
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
+        /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
+        private const val MAX_ROLLBACK = 8
     }
 
     private lateinit var game: Game
@@ -115,6 +116,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var stalledFrames = 0
     private var lastSumFrame = -1L
     private var desyncShown = false
+    private var lastWait = 0L
     private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
@@ -151,9 +153,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             finish()
             return
         }
-        // Before the emulator starts: in two-player mode no frame runs until
-        // both phones' inputs for it are in.
-        LibretroDroid.setNetplay(link != null)
+        // Before the emulator starts: in two-player mode frames run from both
+        // phones' inputs (rollback netcode, see LibretroDroid::setNetplay).
+        LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, MAX_ROLLBACK)
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
         LibretroDroid.setFrozen(false)
@@ -367,8 +369,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 return@launch
             }
             link.start(object : LinkListener {
-                override fun onFrames(frames: List<FrameInputs>) {
-                    frames.forEach { LibretroDroid.pushNetInput(it.frame, it.p1, it.p2) }
+                override fun onRemote(start: Int, masks: IntArray) {
+                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(start + i, m) }
                 }
 
                 override fun onDesync(frame: Int) {
@@ -393,10 +395,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val link = link ?: return
         if (!netStarted) return
         val emulated = LibretroDroid.getNetFrame()
-        link.sample(emulated) {
+        val (start, masks) = link.sample(emulated) {
             padFrame++
             pad.onFrame()
             localMask
+        }
+        masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) }
+        // Time sync: when this phone runs further ahead of its partner's
+        // inputs than the partner does of ours, wait a frame so it catches up.
+        // Both phones then guess as little as possible, and neither stalls at
+        // the rollback limit.
+        val advantage = emulated - link.lockstep.remoteKnown
+        link.advantage = advantage
+        if (advantage - link.partnerAdvantage >= 2 && frame - lastWait > 20) {
+            lastWait = frame
+            LibretroDroid.netWait(1)
         }
         val sum = LibretroDroid.getNetSum()
         if (sum[0] >= 0 && sum[0] != lastSumFrame) {
@@ -425,7 +438,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         link?.let {
             it.close()
             if (Netplay.link === it) Netplay.link = null
-            LibretroDroid.setNetplay(false)
+            LibretroDroid.setNetplay(false, 0, 0)
         }
     }
 

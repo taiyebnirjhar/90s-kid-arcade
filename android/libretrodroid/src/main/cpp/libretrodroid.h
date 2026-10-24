@@ -31,6 +31,7 @@
 #include <optional>
 #include <deque>
 #include <atomic>
+#include <cstdint>
 #include <array>
 
 #include "log.h"
@@ -82,18 +83,27 @@ public:
     size_t getMemorySize(unsigned id);
     bool readMemory(unsigned id, size_t offset, int8_t* dst, size_t length);
 
-    // Two-player lockstep (90s Kid Arcade): while on, a frame runs only when
-    // its inputs for both players have been pushed, and those replace the
-    // touch input for ports 0 and 1.
-    void setNetplay(bool enabled);
+    // Two players (90s Kid Arcade), rollback netcode: each frame runs with
+    // this phone's input and the partner's, predicted (their last one) when it
+    // hasn't arrived yet. When it arrives and differs, the game goes back to
+    // that frame and replays to now, silently. A frame runs only up to
+    // maxRollback frames past the partner's last input (0 = strict lockstep).
+    // Inputs replace the touch input for ports 0 and 1.
+    void setNetplay(bool enabled, int localPlayer, int maxRollback);
+    bool pushLocalInput(int32_t frame, int32_t mask);
+    bool pushRemoteInput(int32_t frame, int32_t mask);
+    int32_t getNetFrame();
+    // The latest confirmed state checksum: {frame, sum}, frame -1 if none yet.
+    std::array<int64_t, 2> getNetSum();
+    // {frames replayed in total, rollbacks}
+    std::array<int64_t, 2> getNetStats();
+    // Skip running new frames for the next [frames] steps: the phone that's
+    // ahead lets its partner catch up, so neither keeps hitting maxRollback.
+    void netWait(int frames);
 
     // Frozen: no game frames run, but the last one is still drawn, so the
     // picture follows size changes while the game is paused (90s Kid Arcade).
     void setFrozen(bool value) { frozen = value; }
-    bool pushNetInput(int32_t frame, int32_t p1, int32_t p2);
-    int32_t getNetFrame();
-    // The latest state checksum: {frame, sum}, frame -1 if none yet.
-    std::array<int64_t, 2> getNetSum();
 
     void onSurfaceCreated();
     void onSurfaceChanged(unsigned int width, unsigned int height);
@@ -203,12 +213,25 @@ private:
     std::atomic<bool> frozen{false};
     std::mutex netMutex;
     bool netplay = false;
-    std::deque<std::array<int32_t, 3>> netQueue;
-    int32_t netPushed = 0;
-    int32_t netFrame = 0;
+    static constexpr int NET_RING = 32;
+    int netLocalPlayer = 0;
+    int netMaxRollback = 0;
+    int32_t netFrame = 0;          // next frame to run
+    int32_t netLocalKnown = 0;     // local inputs below this are in
+    int32_t netRemoteKnown = 0;    // partner inputs below this are in
+    int32_t netFirstWrong = INT32_MAX;
+    uint16_t netLocal[NET_RING] = {};
+    uint16_t netRemote[NET_RING] = {};
+    uint16_t netUsedRemote[NET_RING] = {};
+    std::vector<std::vector<uint8_t>> netStates;
+    std::vector<std::pair<int32_t, int64_t>> netPendingSums;
     uint16_t netMask[2] = {0, 0};
     std::array<int64_t, 2> netSum = {-1, 0};
+    int64_t netReplayed = 0;
+    int64_t netRollbacks = 0;
+    int netWaitFrames = 0;
     void stepNetplay(unsigned wanted);
+    void netSimulate(int32_t frame, bool replay);
 
     std::unique_ptr<Core> core;
     std::unique_ptr<Audio> audio;
