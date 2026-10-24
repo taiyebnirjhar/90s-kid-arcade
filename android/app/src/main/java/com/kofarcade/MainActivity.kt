@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
         var result by remember { mutableStateOf<RomCheck?>(null) }
         var library by remember { mutableStateOf(false) }
         var twoPlayer by remember { mutableStateOf(false) }
+        var crash by remember { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
         val hasBios = remember(refresh) { roms.has(BIOS) }
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
@@ -181,6 +182,26 @@ class MainActivity : ComponentActivity() {
                 } else {
                     "OK" to { result = null }
                 },
+            )
+        }
+
+        crash?.let { report ->
+            ArcadeDialog(
+                title = "The app stopped last time",
+                message = "Sorry about that. Share the details so it can be fixed:\n\n" +
+                    report.lines().filter { it.isNotBlank() }.take(4).joinToString("\n"),
+                onDismiss = { crash = null },
+                tone = Tone.BAD,
+                primary = "Share details" to {
+                    crash = null
+                    startActivity(
+                        Intent.createChooser(
+                            Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report),
+                            "Share crash details",
+                        ),
+                    )
+                },
+                secondary = "Close" to { crash = null },
             )
         }
 
