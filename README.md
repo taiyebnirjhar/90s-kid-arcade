@@ -57,8 +57,8 @@ opacity, move names, vibration, left-handed layout, move timing.
 ## Your ROM library (optional)
 
 Keep your zips in a private Cloudflare R2 bucket and download them on any
-phone with one tap (home screen → **LIBRARY**). The app asks for the address
-and a key once.
+phone with one tap (home screen → **LIBRARY**). The library address is built
+into the app (`Library.DEFAULT_URL`); it asks only for the key, once.
 
 1. Create an R2 bucket (public access off) and upload your zips.
 2. Create a Worker with the code in `server/worker.js`.

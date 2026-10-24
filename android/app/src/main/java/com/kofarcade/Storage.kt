@@ -173,9 +173,9 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putInt("pressFrames", v).apply()
 
     /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
-    var libraryUrl: String?
-        get() = sp.getString("libraryUrl", null)
-        set(v) = sp.edit().putString("libraryUrl", v).apply()
+    var libraryUrl: String
+        get() = sp.getString("libraryUrl", null)?.takeIf { it.isNotBlank() } ?: Library.DEFAULT_URL
+        set(v) = sp.edit().putString("libraryUrl", v.takeIf { it != Library.DEFAULT_URL }).apply()
 
     var libraryKey: String?
         get() = sp.getString("libraryKey", null)
