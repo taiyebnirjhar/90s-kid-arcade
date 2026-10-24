@@ -123,6 +123,17 @@ public class LibretroDroid {
 
     /** Copies [offset, offset + length) of a core memory area, or null if out of range. */
     public static native byte[] readMemory(int id, int offset, int length);
+
+    // Two players, rollback netcode: see LibretroDroid::setNetplay in libretrodroid.h.
+    public static native void setNetplay(boolean enabled, int localPlayer, int maxRollback);
+    public static native boolean pushLocalInput(int frame, int mask);
+    public static native boolean pushRemoteInput(int frame, int mask);
+    public static native long[] getNetStats();
+    public static native void netWait(int frames);
+    // Paused, but still drawing the last frame (see LibretroDroid::setFrozen).
+    public static native void setFrozen(boolean frozen);
+    public static native int getNetFrame();
+    public static native long[] getNetSum();
     public static native boolean unserializeState(byte[] state);
 
     public static native void setCheat(int index, boolean enable, String code);

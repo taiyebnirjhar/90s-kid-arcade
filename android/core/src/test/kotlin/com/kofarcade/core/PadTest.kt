@@ -94,4 +94,47 @@ class PadTest {
         runFrames(10)
         assertTrue(log.indexOf("b1") > log.indexOf("a1"))
     }
+
+    /** The stick direction the game sees each frame, as numpad digits. */
+    private fun dirNow(): Int {
+        val h = if (state[Key.LEFT] == true) -1 else if (state[Key.RIGHT] == true) 1 else 0
+        val v = if (state[Key.UP] == true) 1 else if (state[Key.DOWN] == true) -1 else 0
+        return 5 + h + 3 * v
+    }
+
+    @Test
+    fun runDoubleTapsThenHolds() {
+        pad.timing = Timing(step = 2)
+        pad.setDir(6) // already walking right
+        pad.startRun()
+        val seen = mutableListOf(dirNow())
+        repeat(8) {
+            runFrames(1)
+            seen += dirNow()
+        }
+        // neutral, tap, tap, release, release, then held right
+        assertEquals(listOf(5, 6, 6, 5, 5, 6, 6, 6, 6), seen)
+        assertTrue(pad.running)
+        // Steering: up while running goes up-right.
+        pad.setDir(8)
+        assertEquals(9, dirNow())
+        pad.setDir(5)
+        assertEquals(6, dirNow())
+        pad.stopRun()
+        assertEquals(5, dirNow())
+    }
+
+    @Test
+    fun runGoesTheWayTheStickLastPointed() {
+        pad.timing = Timing(step = 1)
+        pad.setDir(1)
+        pad.setDir(5)
+        assertEquals(4, pad.lastHorizontal)
+        pad.startRun()
+        runFrames(5)
+        assertEquals(4, dirNow())
+        pad.releaseAll()
+        assertEquals(false, pad.running)
+        assertEquals(5, dirNow())
+    }
 }

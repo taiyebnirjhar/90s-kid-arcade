@@ -132,3 +132,15 @@ fun describe(file: RomFile): String {
 fun installedSet(game: Game, zips: Collection<String>): String? =
     game.sets.firstOrNull { it in zips }
         ?: zips.sorted().firstOrNull { name -> romSet(name)?.base?.let { it in game.sets } == true }
+
+/**
+ * One number for a zip's contents, for checking that two phones have the
+ * same files (CRC32 over the sorted file CRCs, so names and order don't count).
+ */
+fun romFingerprint(items: List<ZipItem>): Long {
+    val crc = java.util.zip.CRC32()
+    for (c in items.map { it.crc }.sorted()) {
+        for (shift in 0 until 32 step 8) crc.update(((c shr shift) and 0xFF).toInt())
+    }
+    return crc.value
+}

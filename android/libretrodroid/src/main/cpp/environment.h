@@ -138,6 +138,12 @@ private:
     bool screenRotationUpdated = false;
 
     bool gameGeometryUpdated = false;
+
+public:
+    // Answer to RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE; -1 = unsupported.
+    int audioVideoOverride = -1;
+
+private:
     unsigned gameGeometryWidth = 0;
     unsigned gameGeometryHeight = 0;
     float gameGeometryAspectRatio = -1.0f;

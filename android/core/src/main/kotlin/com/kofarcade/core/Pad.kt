@@ -26,6 +26,7 @@ class Pad(
 
     private var dir = 5
     private var hold: Int? = null // a held direction from a button (block), facing right
+    private var run: Int? = null // 4 or 6 while running, on screen (not mirrored)
     private val held = mutableSetOf<Key>()
     private val rapid = mutableSetOf<Key>()
     private var macro: MacroPlayer? = null
@@ -35,8 +36,35 @@ class Pad(
 
     val playing: Boolean get() = macro != null
 
+    val running: Boolean get() = run != null
+
+    /** The last way the stick pointed left or right (4 or 6), for running. */
+    var lastHorizontal = 6
+        private set
+
     fun setDir(newDir: Int) {
         dir = newDir
+        val f = dirFlags(newDir)
+        if (f.left) lastHorizontal = 4 else if (f.right) lastHorizontal = 6
+        flush()
+    }
+
+    /**
+     * Runs toward [toward] (4 or 6, on screen): taps it twice the way the
+     * games read a dash (neutral, tap, release), then holds it until
+     * [stopRun]. The stick still steers up and down while running.
+     */
+    fun startRun(toward: Int = lastHorizontal) {
+        require(toward == 4 || toward == 6) { "run left (4) or right (6)" }
+        if (run == toward) return
+        run = toward
+        val s = timing.step
+        start(listOf(Frame(5, "")) + List(s) { Frame(toward, "") } + List(s) { Frame(5, "") })
+    }
+
+    fun stopRun() {
+        if (run == null) return
+        run = null
         flush()
     }
 
@@ -109,6 +137,7 @@ class Pad(
         held.clear()
         dir = 5
         hold = null
+        run = null
         cancel()
     }
 
@@ -116,7 +145,7 @@ class Pad(
     private fun flush() {
         val frame = if (macro != null) current else null
         val holdDir = hold?.let { if (facingLeft) mirrorDir(it) else it }
-        val flags = dirFlags(frame?.dir ?: holdDir ?: dir)
+        val flags = dirFlags(frame?.dir ?: holdDir ?: run?.let { withVertical(it, dir) } ?: dir)
         val phase = (clock() / rapidFrames) % 2 == 0L
         val state = mutableMapOf(
             Key.UP to flags.up,
@@ -139,5 +168,15 @@ class Pad(
                 send(k, v)
             }
         }
+    }
+}
+
+/** [horizontal] (4 or 6) plus the up/down part of [stick]: running steers. */
+internal fun withVertical(horizontal: Int, stick: Int): Int {
+    val f = dirFlags(stick)
+    return when {
+        f.up -> horizontal + 3
+        f.down -> horizontal - 3
+        else -> horizontal
     }
 }

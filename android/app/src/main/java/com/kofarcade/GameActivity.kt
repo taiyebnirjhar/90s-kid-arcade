@@ -37,6 +37,8 @@ import com.kofarcade.core.Pad
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.net.Link
+import com.kofarcade.core.net.LinkListener
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.gameById
@@ -59,18 +61,37 @@ sealed interface GameDialog {
     data class Roster(val slot: Int) : GameDialog
     data class Editor(val character: Character) : GameDialog
     data object Controls : GameDialog
-    data class Error(val message: String) : GameDialog
+    data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
 }
+
+/** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
+data class Look(
+    val screen: ScreenMode,
+    val stick: StickMode,
+    val size: Float,
+    val opacity: Float,
+    val labelMode: LabelMode,
+    val haptics: Boolean,
+    val leftHanded: Boolean,
+    val stepFrames: Int,
+    val pressFrames: Int,
+)
+
+fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
     companion object {
         const val EXTRA_GAME = "game"
         const val EXTRA_SET = "set"
+        /** Two-player: play over [Netplay.link] instead of alone. */
+        const val EXTRA_NETPLAY = "netplay"
         private const val MAX_MOVES = 6
         private const val CORE = "libfbneo_libretro_android.so"
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
+        /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
+        private const val MAX_ROLLBACK = 8
     }
 
     private lateinit var game: Game
@@ -85,6 +106,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private lateinit var detectInfo: TextView
 
     private var frame = 0L
+
+    // Two-player: the connection, and this phone's buttons as a RetroPad mask.
+    private var link: Link? = null
+    private var localMask = 0
+    private var padFrame = 0L
+    private var netStarted = false
+    private var lastNetFrame = -1
+    private var stalledFrames = 0
+    private var lastSumFrame = -1L
+    private var desyncShown = false
+    private var lastWait = 0L
+    private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
 
@@ -115,6 +148,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         roster = game.roster?.let(::loadRoster)
         if (game.layout == Layout.FIGHTER) ramMap = detectSpec(game.roster)
         val roms = RomStore(this)
+        link = if (intent.getBooleanExtra(EXTRA_NETPLAY, false)) Netplay.link else null
+        if (intent.getBooleanExtra(EXTRA_NETPLAY, false) && link == null) {
+            finish()
+            return
+        }
+        // Before the emulator starts: in two-player mode frames run from both
+        // phones' inputs (rollback netcode, see LibretroDroid::setNetplay).
+        LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, MAX_ROLLBACK)
+        // The emulator is one object for the whole app: a game left frozen
+        // (quit from the menu) mustn't start the next one frozen.
+        LibretroDroid.setFrozen(false)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -128,14 +172,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             // FBNeo finds neogeo.zip next to the game, in the same folder.
             gameFilePath = roms.file("$set.zip").absolutePath
             systemDirectory = File(filesDir, "system").apply { mkdirs() }.absolutePath
-            savesDirectory = File(filesDir, "saves").apply { mkdirs() }.absolutePath
+            // Two-player games start from the host's state, saves included;
+            // keep them apart from your own.
+            savesDirectory = File(filesDir, if (link != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
         }
         retroView = GLRetroView(this, data)
         lifecycle.addObserver(retroView)
 
-        pad = Pad(send = ::sendKey, clock = { frame })
+        pad = Pad(send = ::sendKey, clock = { padFrame })
         hud = HudView(this, this)
 
         detectInfo = TextView(this).apply {
@@ -146,6 +192,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             setPadding(12, 6, 12, 6)
             visibility = View.GONE
         }
+        netStatus = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(190, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setPadding(36, 20, 36, 20)
+            visibility = if (link != null) View.VISIBLE else View.GONE
+            text = if (link?.isHost == true) "Starting the game…" else "Getting the game from ${link?.peerName}…"
+        }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
         setContentView(
@@ -153,6 +207,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER))
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
                 addView(detectInfo, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
+                addView(netStatus, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
                 // Full width so the layout editor's bar can centre itself; it
                 // takes no space (and no touches) when nothing is shown.
                 addView(dialogs, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
@@ -170,10 +225,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // One tick per emulated frame drives the macros and rapid fire.
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect {
-                if (it is GLRetroView.GLRetroEvents.FrameRendered) {
-                    frame++
-                    pad.onFrame()
-                    hud.onFrame(frame)
+                when (it) {
+                    is GLRetroView.GLRetroEvents.FrameRendered -> {
+                        frame++
+                        if (link != null) {
+                            onNetFrame()
+                        } else {
+                            padFrame++
+                            pad.onFrame()
+                        }
+                        hud.onFrame(frame)
+                    }
+                    is GLRetroView.GLRetroEvents.SurfaceCreated -> link?.let(::startNetplay)
                 }
             }
         }
@@ -215,7 +278,26 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         else -> error("not a button: $key")
     }
 
+    // RetroPad button ids, for two-player masks (FBNeo maps Neo Geo A-D like keyCode()).
+    private fun retroId(key: Key) = when (key) {
+        Key.A -> 0 // B
+        Key.C -> 1 // Y
+        Key.COIN -> 2 // SELECT
+        Key.START -> 3
+        Key.UP -> 4
+        Key.DOWN -> 5
+        Key.LEFT -> 6
+        Key.RIGHT -> 7
+        Key.B -> 8 // A
+        Key.D -> 9 // X
+    }
+
     private fun sendKey(key: Key, down: Boolean) {
+        if (link != null) {
+            val bit = 1 shl retroId(key)
+            localMask = if (down) localMask or bit else localMask and bit.inv()
+            return
+        }
         if (key in dpad) {
             dpad[key] = down
             val x = (if (dpad[Key.RIGHT] == true) 1f else 0f) - (if (dpad[Key.LEFT] == true) 1f else 0f)
@@ -253,9 +335,111 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onBlock(relDir: Int?) = pad.setHold(relDir)
 
+    override fun onRun(on: Boolean) = if (on) pad.startRun() else pad.stopRun()
+
     override fun onRapid() {
         game.rapid?.let { pad.setRapid(it, !pad.isRapid(it)) }
         updateHud()
+    }
+
+    // ----- Two players -----
+
+    val isNetplay: Boolean get() = link != null
+
+    /** This phone's player: 0 alone or hosting, 1 when joined. */
+    private val localPlayer: Int get() = link?.localPlayer ?: 0
+
+    // Both phones must start from the same state: the host sends its own
+    // (right after loading, before any frame has run), the guest loads it.
+    private fun startNetplay(link: Link) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    if (link.isHost) {
+                        link.sendState(retroView.serializeState())
+                        link.awaitReady()
+                    } else {
+                        val state = link.receiveState()
+                        check(retroView.unserializeState(state)) { "Couldn't load the host's game" }
+                        link.sendReady()
+                    }
+                }
+            } catch (e: Exception) {
+                netEnded("Couldn't start the game: ${e.message}")
+                return@launch
+            }
+            link.start(object : LinkListener {
+                override fun onRemote(start: Int, masks: IntArray) {
+                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(start + i, m) }
+                }
+
+                override fun onDesync(frame: Int) {
+                    runOnUiThread {
+                        if (!desyncShown) {
+                            desyncShown = true
+                            Toast.makeText(this@GameActivity, "The two games went out of sync. Restart the match.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+
+                override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
+            })
+            netStarted = true
+            netStatus.visibility = View.GONE
+        }
+    }
+
+    // Each displayed frame: read our buttons for the frames the game will
+    // need next, one macro step per frame, and send them.
+    private fun onNetFrame() {
+        val link = link ?: return
+        if (!netStarted) return
+        val emulated = LibretroDroid.getNetFrame()
+        val (start, masks) = link.sample(emulated) {
+            padFrame++
+            pad.onFrame()
+            localMask
+        }
+        masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) }
+        // Time sync: when this phone runs further ahead of its partner's
+        // inputs than the partner does of ours, wait a frame so it catches up.
+        // Both phones then guess as little as possible, and neither stalls at
+        // the rollback limit.
+        val advantage = emulated - link.lockstep.remoteKnown
+        link.advantage = advantage
+        if (advantage - link.partnerAdvantage >= 2 && frame - lastWait > 20) {
+            lastWait = frame
+            LibretroDroid.netWait(1)
+        }
+        val sum = LibretroDroid.getNetSum()
+        if (sum[0] >= 0 && sum[0] != lastSumFrame) {
+            lastSumFrame = sum[0]
+            link.reportSum(sum[0].toInt(), sum[1])
+        }
+        // Say so when the partner's inputs stop arriving for a moment.
+        stalledFrames = if (emulated == lastNetFrame) stalledFrames + 1 else 0
+        lastNetFrame = emulated
+        val waiting = stalledFrames > 30
+        if (waiting != (netStatus.visibility == View.VISIBLE)) {
+            netStatus.text = "Waiting for ${link.peerName}…"
+            netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun netEnded(reason: String) {
+        if (isFinishing) return
+        link?.close(sendBye = false)
+        netStatus.visibility = View.GONE
+        show(GameDialog.Error(reason, title = "Two-player game ended"))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        link?.let {
+            it.close()
+            if (Netplay.link === it) Netplay.link = null
+            LibretroDroid.setNetplay(false, 0, 0)
+        }
     }
 
     // ----- Fighter detection -----
@@ -278,7 +462,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     val bytes = withContext(Dispatchers.Default) {
                         LibretroDroid.readMemory(SYSTEM_RAM, Ram.START - 0x100000, Ram.LENGTH)
                     } ?: continue
-                    onDetected(detect(spec, Ram(Ram.START, bytes)))
+                    onDetected(detect(spec, Ram(Ram.START, bytes), localPlayer))
                 }
             }
         }
@@ -369,6 +553,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val system = buildList {
             game.power?.let { add(HudView.SysButton(it.name, it.cmd, it.cmd, power = true)) }
             game.system.forEach { add(HudView.SysButton(it.name, subLabel(it.cmd), it.cmd)) }
+            if (game.run) add(HudView.SysButton("Run", "hold", null, hold = true))
             game.rapid?.let {
                 val on = pad.isRapid(it)
                 add(HudView.SysButton("Rapid", if (on) "ON" else "OFF", null, on = on))
@@ -388,12 +573,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             system = system,
             slots = slots,
             facingLeft = pad.facingLeft,
-            size = prefs.size,
-            leftHanded = prefs.leftHanded,
-            labelMode = prefs.labelMode,
-            stick = prefs.stick,
-            haptics = prefs.haptics,
+            size = look.size,
+            leftHanded = look.leftHanded,
+            labelMode = look.labelMode,
+            stick = look.stick,
+            haptics = look.haptics,
             block = game.block,
+            run = game.run,
         )
     }
 
@@ -403,7 +589,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val w = root.width
         val h = root.height
         if (w == 0 || h == 0) return
-        val aspect = prefs.screen.aspect
+        val aspect = look.screen.aspect
         val viewW = if (aspect == null) w else minOf(w, (h * aspect).roundToInt())
         val lp = retroView.layoutParams as FrameLayout.LayoutParams
         if (lp.width != viewW) {
@@ -414,13 +600,23 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     // Layouts are saved per kind of game and per hand.
-    private fun layoutKey() = "${game.layout.name}.${if (prefs.leftHanded) "L" else "R"}"
+    private fun layoutKey() = "${game.layout.name}.${if (look.leftHanded) "L" else "R"}"
 
-    fun applyPrefs() {
+    /** What's on screen now: the saved settings, or a preview from Controls. */
+    private var look: Look = Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4)
+
+    /** Applies the saved settings. */
+    fun applyPrefs() = applyLook(prefs.look())
+
+    /** Shows [preview] on the game without saving it (Controls, as you change things). */
+    fun preview(preview: Look) = applyLook(preview)
+
+    private fun applyLook(l: Look) {
+        look = l
         hud.tweaks = prefs.tweaks(layoutKey())
         applyScreen()
-        pad.timing = Timing(step = prefs.stepFrames, press = prefs.pressFrames)
-        hud.alpha = prefs.opacity
+        pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
+        hud.alpha = l.opacity
         updateHud()
     }
 
@@ -476,31 +672,41 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun pauseEmulation() {
+        if (link != null) {
+            // The game can't stop for one player; just let go of the buttons.
+            hud.releaseAll()
+            pad.releaseAll()
+            return
+        }
         if (paused) return
         paused = true
         hud.releaseAll()
         pad.releaseAll()
-        retroView.onPause()
+        // Frozen rather than stopped, so the picture still redraws: Controls
+        // shows screen-size changes live while the game waits.
         LibretroDroid.pause()
+        LibretroDroid.setFrozen(true)
     }
 
     private fun resumeEmulation() {
-        if (!paused) return
+        if (link != null || !paused) return
         paused = false
+        LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
-        retroView.onResume()
     }
 
     private val stateFile get() = File(File(filesDir, "states").apply { mkdirs() }, "$set.state")
 
     // Save states run on the emulation thread, so they're done with the game running.
     fun saveState() = close {
+        if (link != null) return@close
         val bytes = withContext(Dispatchers.IO) { retroView.serializeState() }
         withContext(Dispatchers.IO) { stateFile.writeBytes(bytes) }
         Toast.makeText(this, "State saved", Toast.LENGTH_SHORT).show()
     }
 
     fun loadState() = close {
+        if (link != null) return@close
         val file = stateFile
         if (!file.exists()) {
             Toast.makeText(this, "No saved state yet", Toast.LENGTH_SHORT).show()

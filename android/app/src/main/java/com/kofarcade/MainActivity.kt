@@ -124,6 +124,7 @@ class MainActivity : ComponentActivity() {
 
         var result by remember { mutableStateOf<RomCheck?>(null) }
         var library by remember { mutableStateOf(false) }
+        var twoPlayer by remember { mutableStateOf(false) }
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
             try {
@@ -150,7 +151,7 @@ class MainActivity : ComponentActivity() {
 
         Box(Modifier.fillMaxSize().background(Palette.bg)) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).systemBarsPadding()) {
-                Header(hasBios, onLibrary = { library = true }) { ask = Pick.Bios }
+                Header(hasBios, onLibrary = { library = true }, onTwoPlayer = { twoPlayer = true }) { ask = Pick.Bios }
                 Hero(
                     game = hero,
                     label = when {
@@ -257,6 +258,26 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        if (twoPlayer) {
+            TwoPlayerDialog(
+                roms,
+                onStart = { game, set ->
+                    twoPlayer = false
+                    startActivity(
+                        Intent(this, GameActivity::class.java)
+                            .putExtra(GameActivity.EXTRA_GAME, game.id)
+                            .putExtra(GameActivity.EXTRA_SET, set)
+                            .putExtra(GameActivity.EXTRA_NETPLAY, true),
+                    )
+                },
+                onLibrary = {
+                    twoPlayer = false
+                    library = true
+                },
+                onClose = { twoPlayer = false },
+            )
+        }
+
         if (library) {
             LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
         }
@@ -279,7 +300,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Header(hasBios: Boolean, onLibrary: () -> Unit, onBios: () -> Unit) {
+    private fun Header(hasBios: Boolean, onLibrary: () -> Unit, onTwoPlayer: () -> Unit, onBios: () -> Unit) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
@@ -287,6 +308,19 @@ class MainActivity : ComponentActivity() {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
             Spacer(Modifier.weight(1f))
+            Text(
+                "2P",
+                color = Color(0xFF1D1400),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Palette.gold)
+                    .clickable(onClick = onTwoPlayer)
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            )
+            Spacer(Modifier.width(8.dp))
             Text(
                 "LIBRARY",
                 color = Palette.text,
@@ -495,7 +529,7 @@ class MainActivity : ComponentActivity() {
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
             )
-            val url = artUrl(game, kind)
+            val url = artUrl(game, kind, remember(game, refresh) { roms.setFor(game) })
             if (url != null) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),

@@ -220,6 +220,79 @@ JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getMemoryS
     return (jint) LibretroDroid::getInstance().getMemorySize(id);
 }
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setFrozen(
+    JNIEnv* env,
+    jclass obj,
+    jboolean frozen
+) {
+    LibretroDroid::getInstance().setFrozen(frozen);
+}
+
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setNetplay(
+    JNIEnv* env,
+    jclass obj,
+    jboolean enabled,
+    jint localPlayer,
+    jint maxRollback
+) {
+    LibretroDroid::getInstance().setNetplay(enabled, localPlayer, maxRollback);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushLocalInput(
+    JNIEnv* env,
+    jclass obj,
+    jint frame,
+    jint mask
+) {
+    return LibretroDroid::getInstance().pushLocalInput(frame, mask);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushRemoteInput(
+    JNIEnv* env,
+    jclass obj,
+    jint frame,
+    jint mask
+) {
+    return LibretroDroid::getInstance().pushRemoteInput(frame, mask);
+}
+
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_netWait(
+    JNIEnv* env,
+    jclass obj,
+    jint frames
+) {
+    LibretroDroid::getInstance().netWait(frames);
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetStats(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto stats = LibretroDroid::getInstance().getNetStats();
+    jlong values[2] = {(jlong) stats[0], (jlong) stats[1]};
+    jlongArray result = env->NewLongArray(2);
+    env->SetLongArrayRegion(result, 0, 2, values);
+    return result;
+}
+
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetFrame(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().getNetFrame();
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetSum(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto sum = LibretroDroid::getInstance().getNetSum();
+    jlong values[2] = {(jlong) sum[0], (jlong) sum[1]};
+    jlongArray result = env->NewLongArray(2);
+    env->SetLongArrayRegion(result, 0, 2, values);
+    return result;
+}
+
 JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_readMemory(
     JNIEnv* env,
     jclass obj,

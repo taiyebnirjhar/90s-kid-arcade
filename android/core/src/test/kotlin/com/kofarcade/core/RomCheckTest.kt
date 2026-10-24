@@ -78,4 +78,12 @@ class RomCheckTest {
     fun unknownZips() {
         assertEquals(RomCheck.Unknown, checkRom(listOf(ZipItem("readme.txt", 10, 0x1234))))
     }
+
+    @Test
+    fun fingerprintsIgnoreNamesAndOrder() {
+        val a = listOf(ZipItem("a", 1, 0x11), ZipItem("b", 1, 0x22))
+        val b = listOf(ZipItem("y", 1, 0x22), ZipItem("x", 1, 0x11))
+        assertEquals(romFingerprint(a), romFingerprint(b))
+        assertTrue(romFingerprint(a) != romFingerprint(a.take(1)))
+    }
 }
