@@ -8,7 +8,7 @@ enum class Layout {
     /** Stick, A B C D, power button, character move ring, team bar. */
     FIGHTER,
 
-    /** Stick and big labelled buttons, rapid fire. */
+    /** Stick and big labelled buttons. */
     SHOOTER,
 
     /** Stick and four labelled buttons, shared special moves. */
@@ -100,7 +100,6 @@ val GAMES: List<Game> = listOf(
         // 4 and 5 add D: the "Metal Slug Attack" while in a vehicle.
         labels = mapOf('A' to "Shoot", 'B' to "Jump", 'C' to "Bomb") +
             (if (hasSlugAttack) mapOf('D' to "Slug Attack") else emptyMap()),
-        rapid = Key.A,
         // Metal Slug 5's slide: down + jump.
         system = if (set == "mslug5") listOf(Move("Slide", "2+B")) else emptyList(),
     )
