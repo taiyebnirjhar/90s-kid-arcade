@@ -134,9 +134,35 @@ class UiSnapshots {
         }
     }
 
+    private fun landscape() = paparazzi.unsafeUpdateConfig(
+        deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080),
+    )
+
+    /** In-game overlays sit on the game; a stand-in picture behind them. */
+    @Composable
+    private fun OverGame(content: @Composable () -> Unit) {
+        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Palette.blue, Palette.red)))) {
+            Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(0f to androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.88f), 1f to androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f)))) {
+                content()
+            }
+        }
+    }
+
+    @Test
+    fun pause() {
+        landscape()
+        shot("pause") { OverGame { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
+    }
+
+    @Test
+    fun pauseTwoPlayers() {
+        landscape()
+        shot("pause_2p") { OverGame { PauseContent("Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {}) } }
+    }
+
     @Test
     fun controls() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080))
+        landscape()
         shot("controls") {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
                 Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel.copy(alpha = 0.94f), modifier = Modifier.width(420.dp).padding(16.dp)) {

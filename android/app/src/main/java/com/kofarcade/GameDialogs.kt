@@ -165,57 +165,86 @@ private fun Overlay(onDismiss: () -> Unit, dismissOnTap: Boolean = true, content
 private fun PauseMenu(game: GameActivity) {
     val c = game.activeCharacter()
     Overlay(onDismiss = { game.close() }) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
+        PauseContent(
+            title = game.gameTitle,
+            fighter = c?.name,
+            netplay = game.isNetplay,
+            onResume = { game.close() },
+            onRematch = { game.rematch() },
+            onSave = { game.saveState() },
+            onLoad = { game.loadState() },
+            onEditMoves = { c?.let { game.show(GameDialog.Editor(it)) } },
+            onLayout = { game.startEditing() },
+            onControls = { game.show(GameDialog.Controls) },
+            onQuit = { game.finish() },
+        )
+    }
+}
+
+/** The pause menu's contents, from plain data (so it can be previewed). */
+@Composable
+fun PauseContent(
+    title: String,
+    fighter: String?,
+    netplay: Boolean,
+    onResume: () -> Unit,
+    onRematch: () -> Unit,
+    onSave: () -> Unit,
+    onLoad: () -> Unit,
+    onEditMoves: () -> Unit,
+    onLayout: () -> Unit,
+    onControls: () -> Unit,
+    onQuit: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Kicker(if (netplay) "Paused for both players" else "Paused")
+            Text(title, color = Color.White, fontSize = 46.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+            if (netplay) {
+                Spacer(Modifier.size(8.dp))
+                Tag("2 players", Palette.gold)
+            }
+            if (fighter != null) {
+                Spacer(Modifier.size(14.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Portrait(fighter, size = 38)
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text("FIGHTING", color = Palette.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+                        Text(fighter, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.width(320.dp).verticalScroll(rememberScrollState()),
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(if (game.isNetplay) "PAUSED FOR BOTH PLAYERS" else "PAUSED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
-                Text(
-                    game.gameTitle,
-                    color = Color.White,
-                    fontSize = 46.sp,
-                    fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic,
-                )
-                if (c != null) {
-                    Spacer(Modifier.size(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Portrait(c.name, size = 34)
-                        Spacer(Modifier.width(10.dp))
-                        Column {
-                            Text("FIGHTING", color = Palette.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
-                            Text(c.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.width(300.dp).verticalScroll(rememberScrollState()),
-            ) {
-                BigButton("Resume", primary = true) { game.close() }
-                // Two players: restart together. (A saved state can't be loaded on one phone of two.)
-                if (game.isNetplay) BigButton("Rematch") { game.rematch() }
-                if (!game.isNetplay) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BigButton("Save state", Modifier.weight(1f)) { game.saveState() }
-                        BigButton("Load state", Modifier.weight(1f)) { game.loadState() }
-                    }
-                }
-                if (c != null) BigButton("Edit ${c.name.substringBefore(" ")}'s moves") { game.show(GameDialog.Editor(c)) }
+            BigButton("Resume", primary = true, onClick = onResume)
+            // Two players: restart together. (A saved state can't be loaded on one phone of two.)
+            if (netplay) {
+                BigButton("Rematch", onClick = onRematch)
+            } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BigButton("Layout", Modifier.weight(1f)) { game.startEditing() }
-                    BigButton("Controls", Modifier.weight(1f)) { game.show(GameDialog.Controls) }
+                    BigButton("Save state", Modifier.weight(1f), onClick = onSave)
+                    BigButton("Load state", Modifier.weight(1f), onClick = onLoad)
                 }
-                BigButton(if (game.isNetplay) "Leave the game" else "Quit to game list", danger = true) { game.finish() }
             }
+            if (fighter != null) BigButton("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BigButton("Layout", Modifier.weight(1f), onClick = onLayout)
+                BigButton("Controls", Modifier.weight(1f), onClick = onControls)
+            }
+            BigButton(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
         }
     }
 }
 
 @Composable
-private fun BigButton(
+fun BigButton(
     text: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
     primary: Boolean = false,
