@@ -1,10 +1,12 @@
-"""Tries KOF moves in the real game the way the app plays them, and says
-whether the fighter really did each one.
+"""Tries moves in the real game the way the app plays them, and says
+whether the fighter really did each one. KOF, Double Dragon (doubledr) and
+Street Fighter III (sfiii3n): Game() holds where each keeps what's read.
 
 A move counts as working when:
-- a super (dm/sdm/hsdm) uses up power, or darkens the screen for its flash;
-- a special starts an animation (the action ID at 0x108172) that no normal
-  attack, jump or dash makes, and that no simpler listed move starts.
+- a super (dm/sdm/hsdm) uses up power (KOF stock, Double Dragon's CHARGE,
+  a 3rd Strike Super Art stock), or darkens the screen for its flash;
+- a special starts an animation (KOF: the action ID at 0x108172) that no
+  normal attack, jump or dash makes, and that no simpler listed move starts.
 
 Uses tools/emu.py (bring your own FBNeo core and ROMs). Typical use:
 
@@ -24,9 +26,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from emu import Emu  # noqa: E402
 
 def poke(e, addr, val):
-    """Writes a byte of 68000 RAM (FBNeo's byte order, see docs/kof-ram.md)."""
+    """Writes a byte of RAM (FBNeo's byte order, see docs/kof-ram.md)."""
     p = e.lib.retro_get_memory_data(2)
-    C.c_uint8.from_address(p + ((addr - 0x100000) ^ 1)).value = val
+    C.c_uint8.from_address(p + ((addr - e.base) ^ e.swap)).value = val
 
 
 def word(e, addr, r=None):
@@ -84,7 +86,7 @@ def compile_cmd(cmd, step=None, charge=50, press=4, gap=2):
             else:
                 break
         rest = seg[j:].lstrip('+')
-        buttons = ''.join(b for b in 'ABCD' if b in rest)
+        buttons = ''.join(b for b in 'ABCDEF' if b in rest)
         for k, (d, c) in enumerate(parts):
             if k and parts[k - 1][0] == d:
                 out += [(5, '')] * step
@@ -102,6 +104,9 @@ def compile_cmd(cmd, step=None, charge=50, press=4, gap=2):
     return out
 
 LAST_DARK = [1.0]
+# What the fighter is doing: KOF's action ID; Game() switches it per game.
+ACT = [lambda e: word(e, 0x108172)]
+GAME = [None]
 
 def brightness(e):
     """Mean brightness of the play field (0-255), for spotting a super's dark flash."""
@@ -114,23 +119,71 @@ def play(e, frames, watch, n_after=70):
     lums = []
     for d, b in frames:
         e.run(1, *(DIRS[d] + tuple(b)))
-        acts.append(word(e, 0x108172))
+        acts.append(ACT[0](e))
     for _ in range(n_after):
         e.run(1)
-        acts.append(word(e, 0x108172))
+        acts.append(ACT[0](e))
         lums.append(brightness(e))
     # Darkest moment relative to the first frames (1.0: no change).
     ref = max(lums[:3]) if lums else 1
     LAST_DARK[0] = min(lums) / ref if lums and ref else 1.0
     return acts
 
+# Street Fighter III 3rd Strike, P1 (effie3rd's 3rd_training_lua memory map).
+SF3_P1 = 0x02068C6C
+SF3_GAUGE = 0x020695B5  # max at -2
+SF3_STOCK = 0x020695BF  # max at -2
+
+
 class Game:
     def __init__(self, g):
         self.g = g
         self.kof97 = g.startswith('kof97')
+        self.dd = g == 'doubledr'
+        self.sf3 = g.startswith('sfiii')
+        self.buttons = 'ABCDEF' if self.sf3 else 'ABCD'
+        GAME[0] = self
         self.stock = 0x1082E3
+        self.xs = (0x108118, 0x108318)
+        if self.dd:
+            # Double Dragon: the sprite frame (each move has its own frames).
+            self.xs = (0x100430, 0x100530)
+            ACT[0] = lambda e: word(e, 0x10042E)
+        elif self.sf3:
+            # 3rd Strike: the animation at +0x202 of the fighter block (training scripts).
+            self.xs = (SF3_P1 + 0x64, SF3_P1 + 0x498 + 0x64)
+            ACT[0] = lambda e: word(e, SF3_P1 + 0x202)
+        else:
+            ACT[0] = lambda e: word(e, 0x108172)
+
+    def used(self, e, acts, before):
+        """Power a super used: KOF's stock; Double Dragon's CHARGE spent, or a transformation."""
+        if self.sf3:
+            return before - min(e.byte(SF3_STOCK), before)
+        if self.dd:
+            # CHARGE goes out when the move ends, a few seconds in.
+            for _ in range(450):
+                if (e.byte(0x10042A) & 1, e.byte(0x100445)) != before:
+                    return 1
+                e.run(1)
+            return 0
+        return before - min(e.byte(self.stock), before)
+
+    def before(self, e):
+        if self.sf3:
+            return e.byte(SF3_STOCK)
+        return (e.byte(0x10042A) & 1, e.byte(0x100445)) if self.dd else e.byte(self.stock)
 
     def power(self, e, maxmode=False, lowlife=False):
+        if self.sf3:
+            # A full Super Art gauge: its size and stock count are kept beside it.
+            poke(e, SF3_GAUGE, e.byte(SF3_GAUGE - 2))
+            poke(e, SF3_STOCK, max(1, e.byte(SF3_STOCK - 2)))
+            return
+        if self.dd:
+            # CHARGE mode is bit 0 of 0x10042A (the full gauge alone isn't enough).
+            poke(e, 0x10042A, e.byte(0x10042A) | 1)
+            return
         if self.kof97:
             for a, v in ((0x1082E3, 3), (0x1081EA, 0x40), (0x10825F, 0x23), (0x1081E0, 0x10)):
                 poke(e, a, v)
@@ -147,7 +200,7 @@ class Game:
 
 def xdist(e):
     r = e.ram()
-    x1 = word(e, 0x108118, r); x2 = word(e, 0x108318, r)
+    x1 = word(e, GAME[0].xs[0], r); x2 = word(e, GAME[0].xs[1], r)
     return abs(x2 - x1)
 
 def setup_states(e, base):
@@ -173,23 +226,23 @@ def baseline(e, states, game):
         for d in range(1, 10):
             e.load(st); game.power(e)
             seen.update(play(e, [(d, '')] * 25, None, 30))
-            for b in 'ABCD':
+            for b in game.buttons:
                 e.load(st); game.power(e)
                 seen.update(play(e, [(d, '')] * 2 + [(d, b)] * 4, None, 50))
         # jumps and hops with each button, dashes
         for j in (7, 8, 9):
             for hold in (1, 4):
-                for b in 'ABCD':
+                for b in game.buttons:
                     e.load(st); game.power(e)
                     seen.update(play(e, [(j, '')] * hold + [(5, '')] * 8 + [(5, b)] * 4, None, 50))
         for seq in ([6, 5, 6], [4, 5, 4]):
-            for b in ['', 'A', 'B', 'C', 'D']:
+            for b in [''] + list(game.buttons):
                 e.load(st); game.power(e)
                 fr = []
                 for d in seq: fr += [(d, '')] * 2
                 fr += [(seq[-1], '')] * 15 + [(seq[-1], b)] * 4
                 seen.update(play(e, fr, None, 40))
-        for b in ('AB', 'CD', 'BC', 'ABC', 'AC', 'BD'):
+        for b in ('AB', 'CD', 'BC', 'ABC', 'AC', 'BD') + (('AD', 'BE', 'CF', 'DE') if game.sf3 else ()):
             e.load(st); game.power(e)
             seen.update(play(e, [(5, b)] * 4, None, 50))
     return seen
@@ -206,11 +259,10 @@ def try_move(e, st, game, move, air):
     game.power(e, maxmode=maxmode, lowlife=(t == 'hsdm'))
     if maxmode and not game.kof97:
         e.run(1)
-    before = e.byte(game.stock)
+    before = game.before(e)
     pre = [(9, '')] * 4 + [(5, '')] * 8 if air else []
     acts = play(e, pre + compile_cmd(cmd), None)
-    after = min(e.byte(game.stock), before)
-    used = before - after
+    used = game.used(e, acts, before)
     # A super darkens the whole screen for its flash: count that as power used.
     if not used and LAST_DARK[0] < 0.45:
         used = 9
@@ -233,10 +285,11 @@ def suffixes(cmd):
     return [''.join(parts[k:]) + '+' + m.group(2) for k in range(1, len(parts))]
 
 SWAP = str.maketrans('ABCD', 'CDAB')
+SWAP6 = str.maketrans('ABCDEF', 'CBAFED')
 
 def variant(cmd):
-    """The other-strength version: A<->C, B<->D."""
-    return cmd.translate(SWAP)
+    """The other-strength version: A<->C, B<->D (six buttons: light <-> heavy)."""
+    return cmd.translate(SWAP6 if GAME[0] and GAME[0].sf3 else SWAP)
 
 def test_char(e, game, base, ch):
     far, close = setup_states(e, base)
@@ -272,7 +325,7 @@ def test_char(e, game, base, ch):
                 claim(f, variant(m['cmd']))
     res = []
     for m, tries in zip(ch['moves'], tried):
-        if m['type'] in ('dm', 'hsdm', 'sdm'):
+        if m['type'] in ('dm', 'hsdm', 'sdm', 'super'):
             ok = any(used for _, _, used in tries)
         else:
             # Starting the same way as a simpler listed move: the game read that one instead.

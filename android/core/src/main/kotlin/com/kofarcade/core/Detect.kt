@@ -1,7 +1,8 @@
 package com.kofarcade.core
 
-// Automatic fighter detection: reads the KOF engine's RAM to find your team,
-// which member is fighting and which way they face.
+// Automatic fighter detection: reads the game's RAM to find your team (or
+// fighter), which member is fighting and which way they face. KOF first;
+// Double Dragon and Street Fighter III at the bottom.
 //
 // Addresses are 68000 addresses in Neo Geo work RAM (0x100000-0x10FFFF), from
 // the hitbox viewers, training-mode scripts and cheat files the fighting game
@@ -12,25 +13,31 @@ package com.kofarcade.core
 // kf2k5uni in FBNeo (tools/emu.py; results at the top of docs/kof-ram.md).
 
 /**
- * A window of 68000 RAM as FBNeo stores it: 16-bit words in host (little
- * endian) order, so the byte at 68000 address A sits at index (A - base) xor 1.
+ * Windows of a game's RAM as FBNeo stores them: the CPU's big-endian words in
+ * host (little endian) order. The Neo Geo's 68000 has 16-bit words, so the
+ * byte at address A sits at index (A - base) xor 1 ([swap] 1); CPS-3's SH-2
+ * has 32-bit ones (xor 3).
  */
-class Ram(private val base: Int, private val buf: ByteArray) {
+class Ram(private val windows: List<Pair<Int, ByteArray>>, private val swap: Int = 1) {
+    constructor(base: Int, buf: ByteArray, swap: Int = 1) : this(listOf(base to buf), swap)
+
     init {
-        require(base % 2 == 0) { "base must be even" }
+        require(windows.all { (base, _) -> base and swap == 0 }) { "windows must start on a word" }
     }
 
     fun byte(addr: Int): Int {
-        val i = (addr - base) xor 1
-        require(i in buf.indices) { "0x${addr.toString(16)} is outside the RAM read" }
-        return buf[i].toInt() and 0xFF
+        for ((base, buf) in windows) {
+            val i = addr - base
+            if (i >= 0 && i < buf.size) return buf[i xor swap].toInt() and 0xFF
+        }
+        throw IllegalArgumentException("0x${addr.toString(16)} is outside the RAM read")
     }
 
-    /** A big-endian 68000 word at an even address. */
+    /** A big-endian 16-bit word at an even address. */
     fun word(addr: Int): Int = (byte(addr) shl 8) or byte(addr + 1)
 
     companion object {
-        /** The part of RAM detection reads: 0x108000-0x10AFFF. */
+        /** The part of KOF's RAM detection reads: 0x108000-0x10AFFF. */
         const val START = 0x108000
         const val LENGTH = 0x3000
     }
@@ -38,8 +45,20 @@ class Ram(private val base: Int, private val buf: ByteArray) {
 
 /** Where one game keeps what detection needs. */
 class DetectSpec(
-    /** Character ID while fighting (P1; P2 is [PLAYER_STRIDE] later). */
-    val character: Int = 0x108171,
+    /** Where the emulator's RAM starts in the CPU's map, and its [Ram] byte order. */
+    val memoryBase: Int = 0x100000,
+    val swap: Int = 1,
+    /** The parts of RAM read (start, length): what everything below lives in. */
+    val windows: List<Pair<Int, Int>> = listOf(Ram.START to Ram.LENGTH),
+    /** P1's fighter block; P2's is [playerStride] later. */
+    val player: Int = 0x108100,
+    val playerStride: Int = 0x200,
+    /** Offsets in a fighter block: character ID, X, and a word that is 0 while on the floor (KOF: height). */
+    val character: Int = 0x71,
+    val x: Int = 0x18,
+    val grounded: Int = 0x20,
+    /** Facing left, from a fighter block (null: face the other fighter, by X). */
+    val facing: ((Ram, Int) -> Boolean)? = { ram, base -> ram.byte(base + 0x31) and 1 == 0 },
     /** Team members in pick order, P1. */
     val team: List<Int>,
     /** Offset from P1's team bytes to P2's. */
@@ -53,12 +72,9 @@ class DetectSpec(
     /** Alternate versions ('94 Kyo, Orochi Yashiro...) by base character, with the per-slot flag byte. */
     val alternates: Map<String, String> = emptyMap(),
     val alternateFlags: Int? = null,
+    /** Street Fighter III: the Super Art picked (0-2), P1; P2's is the next byte. */
+    val superArt: Int? = null,
 )
-
-private const val PLAYER = 0x108100
-private const val PLAYER_STRIDE = 0x200
-private const val X = 0x18
-private const val FACING = 0x31
 
 private fun kof97(ids: List<String?>) = DetectSpec(
     team = listOf(0x10A84B, 0x10A84C, 0x10A84D),
@@ -96,11 +112,68 @@ private val KOF2002 = DetectSpec(
     ),
 )
 
+// Double Dragon (Neo Geo): one fighter each, P1's block at 0x100400 and P2's
+// 0x100 later; the character ID at +0x45 (the FBNeo cheat file's list; the
+// odd IDs are Billy and Jimmy transformed), X at +0x30 (found walking in
+// tools/emu.py), and +0x46 is 0 on the floor (5 in a jump). Fighters always face each other, so facing comes from X.
+private val DOUBLE_DRAGON_IDS = listOf(
+    "billy", "billy", "jimmy", "jimmy", "marian", "abobo", "amon", "eddie",
+    "rebecca", "dulton", "chengfu", "burnov", "duke", "shuko",
+)
+
+private val DOUBLE_DRAGON = DetectSpec(
+    windows = listOf(0x100400 to 0x200),
+    player = 0x100400,
+    playerStride = 0x100,
+    character = 0x45,
+    x = 0x30,
+    grounded = 0x46,
+    facing = null,
+    team = listOf(0x100445),
+    teamStride = 0x100,
+    // No round flag is known: a fighter is read whenever both IDs are real
+    // ones (on the select screen too, where it shows the fighter picked).
+    inRound = { ram -> ram.byte(0x100445) < DOUBLE_DRAGON_IDS.size && ram.byte(0x100545) < DOUBLE_DRAGON_IDS.size },
+    ids = DOUBLE_DRAGON_IDS,
+)
+
+// Street Fighter III 3rd Strike (CPS-3, SH-2 addresses): P1's fighter block at
+// 0x02068C6C, P2's 0x498 later, with the character in the word at +0x3C0, X
+// at +0x64, Y at +0x68 and facing at +0x0A (0 = left). The pick is also kept at
+// 0x02011387 (P2 0x02011388), the Super Art picked at 0x0201138B (0-2), and
+// 0x020154A7 is 2 while a round is fought.
+// From the 3rd Strike training scripts (Grouflon's and effie3rd's
+// 3rd_training_lua) and FBNeo's cheat file; checked in sfiii3n
+// (tools/emu.py): Alex against Ryu reads 1 and 2, facing 1 and 0.
+private val SF3_IDS = listOf(
+    "gill", "alex", "ryu", "yun", "dudley", "necro", "hugo", "ibuki", "elena", "oro", "yang",
+    "ken", "sean", "urien", "akuma", null /* Shin Akuma */, "chunli", "makoto", "q", "twelve", "remy",
+)
+
+private val SF3 = DetectSpec(
+    memoryBase = 0x02000000,
+    swap = 3,
+    windows = listOf(0x02011380 to 0x10, 0x020154A0 to 0x10, 0x02068C60 to 0x8A0),
+    player = 0x02068C6C,
+    playerStride = 0x498,
+    character = 0x3C1,
+    x = 0x64,
+    grounded = 0x68,
+    facing = { ram, base -> ram.byte(base + 0x0A) == 0 },
+    team = listOf(0x02011387),
+    teamStride = 1,
+    inRound = { it.byte(0x020154A7) == 2 },
+    ids = SF3_IDS,
+    superArt = 0x0201138B,
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
     "kof97plus" -> KOF97_PLUS
     "kof2002", "kof2005", "kof2002mp" -> KOF2002
+    "doubledr" -> DOUBLE_DRAGON
+    "sfiii3" -> SF3
     else -> null
 }
 
@@ -117,6 +190,8 @@ data class Detection(
     val facingLeft: Boolean,
     val x: Int,
     val otherX: Int,
+    /** The Super Art picked (1-3), in games that have them. */
+    val superArt: Int? = null,
 ) {
     /** The whole team was recognised. */
     val teamKnown: Boolean get() = team.all { it != null }
@@ -125,14 +200,15 @@ data class Detection(
 /** Reads [player]'s (0 = P1, 1 = P2) fighters from [ram]. */
 fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
     val other = 1 - player
-    val base = PLAYER + PLAYER_STRIDE * player
+    val base = spec.player + spec.playerStride * player
+    val otherBase = spec.player + spec.playerStride * other
     val flags = spec.alternateFlags?.let { ram.byte(it + spec.teamStride * player) } ?: 0
     val teamRaw = spec.team.map { ram.byte(it + spec.teamStride * player) and spec.teamMask }
     val team = teamRaw.mapIndexed { slot, raw ->
         val id = spec.ids.getOrNull(raw)
         if (id != null && flags and (1 shl slot) != 0) spec.alternates[id] ?: id else id
     }
-    val activeRaw = ram.byte(base + 0x71)
+    val activeRaw = ram.byte(base + spec.character)
     // The on-screen ID has no alternate flag of its own, so it is matched
     // against the team: a recognised fighter that isn't in it is a misread.
     val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 }
@@ -143,8 +219,9 @@ fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
         active = activeSlot?.let { team[it] },
         activeRaw = activeRaw,
         activeSlot = activeSlot,
-        facingLeft = ram.byte(base + FACING) and 1 == 0,
-        x = ram.word(base + X),
-        otherX = ram.word(PLAYER + PLAYER_STRIDE * other + X),
+        facingLeft = spec.facing?.invoke(ram, base) ?: (ram.word(base + spec.x) > ram.word(otherBase + spec.x)),
+        x = ram.word(base + spec.x),
+        otherX = ram.word(otherBase + spec.x),
+        superArt = spec.superArt?.let { ram.byte(it + player) + 1 }?.takeIf { it in 1..3 },
     )
 }

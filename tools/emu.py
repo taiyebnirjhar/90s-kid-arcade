@@ -18,6 +18,8 @@ from PIL import Image
 EMU = os.environ.get("EMU", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "emu"))
 # RetroPad ids; FBNeo's Neo Geo map: A=B(0) B=A(8) C=Y(1) D=X(9)
 PAD = {"A": 0, "B": 8, "C": 1, "D": 9, "COIN": 2, "START": 3, "UP": 4, "DOWN": 5, "LEFT": 6, "RIGHT": 7}
+# Capcom six buttons as the app's A-F (PadMap.CAPCOM_6): LP MP HP LK MK HK.
+CAPCOM_6 = dict(PAD, A=1, B=9, C=10, D=0, E=8, F=11)
 
 ENV_CB = C.CFUNCTYPE(C.c_bool, C.c_uint, C.c_void_p)
 VIDEO_CB = C.CFUNCTYPE(None, C.c_void_p, C.c_uint, C.c_uint, C.c_size_t)
@@ -33,6 +35,10 @@ class GameInfo(C.Structure):
 
 class Emu:
     def __init__(self, game):
+        # Street Fighter III (CPS-3): SH-2 RAM from 0x02000000 in 32-bit words.
+        cps3 = game.startswith("sfiii")
+        self.pad = CAPCOM_6 if cps3 else PAD
+        self.base, self.swap = (0x02000000, 3) if cps3 else (0x100000, 1)
         self.lib = C.CDLL(os.path.join(EMU, "fbneo_libretro.so"))
         self.fmt = 0
         self.frame = None
@@ -90,7 +96,7 @@ class Emu:
     def _state(self, port, device, index, id):
         if device != 1 or port > 1:
             return 0
-        return 1 if id in {PAD[b] for b in self.held[port]} else 0
+        return 1 if id in {self.pad[b] for b in self.held[port]} else 0
 
     def run(self, frames=1, *buttons, port=0):
         self.held[port] = set(buttons)
@@ -114,7 +120,7 @@ class Emu:
 
     def byte(self, addr, ram=None):
         ram = ram or self.ram()
-        return ram[(addr - 0x100000) ^ 1]
+        return ram[(addr - self.base) ^ self.swap]
 
     def save(self):
         n = self.lib.retro_serialize_size()

@@ -329,12 +329,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         return pad.play(cmd, jumpFirst = air && onGround())
     }
 
-    /** KOF: the fighter's height above the floor (the word at +0x20) is 0 when standing. */
+    /** The fighter is on the floor (detection's grounded word is 0; KOF: their height). */
     private fun onGround(): Boolean {
-        if (ramMap == null) return true
-        val addr = 0x108120 + 0x200 * localPlayer
-        val b = LibretroDroid.readMemory(SYSTEM_RAM, addr - 0x100000, 2) ?: return true
-        return b[0].toInt() == 0 && b[1].toInt() == 0
+        val spec = ramMap ?: return true
+        val addr = spec.player + spec.playerStride * localPlayer + spec.grounded
+        val ram = readRam(spec, listOf((addr and 3.inv()) to 4)) ?: return true
+        return ram.word(addr) == 0
+    }
+
+    /** Reads [windows] of the game's RAM (start, length: CPU addresses), or null if the core can't. */
+    private fun readRam(spec: DetectSpec, windows: List<Pair<Int, Int>>): Ram? {
+        val read = windows.map { (start, length) ->
+            start to (LibretroDroid.readMemory(SYSTEM_RAM, start - spec.memoryBase, length) ?: return null)
+        }
+        return Ram(read, spec.swap)
     }
 
     override fun onMenu() = show(GameDialog.Pause)
@@ -562,10 +570,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         detectInfo.visibility = View.GONE
                         continue
                     }
-                    val bytes = withContext(Dispatchers.Default) {
-                        LibretroDroid.readMemory(SYSTEM_RAM, Ram.START - 0x100000, Ram.LENGTH)
-                    } ?: continue
-                    onDetected(detect(spec, Ram(Ram.START, bytes), localPlayer))
+                    val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
+                    onDetected(detect(spec, ram, localPlayer))
                 }
             }
         }
@@ -588,6 +594,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 pad.facingLeft = d.facingLeft
                 changed = true
             }
+            if (d.superArt != null && d.superArt != superArt) {
+                superArt = d.superArt
+                changed = true
+            }
             if (changed) updateHud()
         }
         detectInfo.visibility = if (prefs.detectInfo) View.VISIBLE else View.GONE
@@ -600,6 +610,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 append(d.teamRaw.zip(d.team).joinToString("  ") { (raw, id) -> "${hex(raw)} ${name(id)}" })
                 append("\non screen ${hex(d.activeRaw)} ${d.active?.let(::name) ?: "(not in team)"}")
                 append("   facing ${if (d.facingLeft) "←" else "→"}   x ${d.x} vs ${d.otherX}")
+                d.superArt?.let { append("   Super Art $it") }
                 if (!prefs.autoDetect) append("   (auto off)")
             }
         }
@@ -622,7 +633,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun movesKey(c: Character) = "${game.roster}/${c.id}"
 
-    fun movesFor(c: Character): List<Move> = (prefs.customMoves(movesKey(c)) ?: c.moves).take(MAX_MOVES)
+    /** Street Fighter III: the Super Art picked this fight (detected), or null to show all three. */
+    private var superArt: Int? = null
+
+    fun movesFor(c: Character): List<Move> = (prefs.customMoves(movesKey(c)) ?: c.moves)
+        .filter { superArt == null || it.superArt == null || it.superArt == superArt }
+        .take(MAX_MOVES)
 
     fun defaultMoves(c: Character): List<Move> = c.moves.take(MAX_MOVES)
 

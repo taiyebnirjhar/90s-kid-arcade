@@ -50,11 +50,16 @@ data class Move(
             AIR.containsMatchIn(part) && "also" !in part && "ground" !in part
         }
 
+    /** Street Fighter III: which Super Art (1-3) this is, from its note ("Super Art II"), or null. */
+    val superArt: Int?
+        get() = SUPER_ART.find(note)?.groupValues?.get(1)?.length
+
     /** "Ura 108 Shiki: Orochinagi" -> "Orochinagi": the part people call it. */
     val shortName: String get() = name.substringAfterLast(": ")
 }
 
 private val AIR = Regex("""\bin (the )?air\b""", RegexOption.IGNORE_CASE)
+private val SUPER_ART = Regex("""^Super Art (I{1,3})\b""")
 
 /**
  * A supported game.
@@ -179,6 +184,24 @@ val GAMES: List<Game> = listOf(
     run = true,
     neoGeo = false,
     players = 3,
+) + Game(
+    // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
+    // a full gauge (CHARGE) turns a special into its Charge Move with two
+    // buttons. Moves checked in FBNeo (tools/movetest.py).
+    id = "doubledr", series = "Double Dragon", title = "Double Dragon", sets = listOf("doubledr"),
+    art = "Double Dragon (Neo-Geo)",
+    layout = Layout.FIGHTER, roster = "doubledr", team = 1, block = true,
+) + Game(
+    // Capcom CPS-3, 1999: no BIOS. Six buttons, LP MP HP over LK MK HK; the
+    // older dumps' chip files are converted on import (RomRepack.kt).
+    id = "sfiii3", series = "Street Fighter", title = "Street Fighter III", subtitle = "3rd Strike",
+    sets = listOf("sfiii3n", "sfiii3nr1", "sfiii3", "sfiii3r1"),
+    art = "Street Fighter III 3rd Strike: Fight for the Future (Japan 990608, NO CD)",
+    layout = Layout.FIGHTER, roster = "sfiii3", team = 1, block = true,
+    labels = mapOf('A' to "LP", 'B' to "MP", 'C' to "HP", 'D' to "LK", 'E' to "MK", 'F' to "HK"),
+    system = listOf(Move("Throw", "AD"), Move("Overhead", "BE")),
+    neoGeo = false,
+    pad = PadMap.CAPCOM_6,
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

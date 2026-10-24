@@ -26,10 +26,12 @@ class GamesTest {
     fun rostersLoadAndEveryMoveParses() {
         for (name in GAMES.mapNotNull { it.roster }.distinct()) {
             val roster = assertNotNull(loadRoster(name), name)
-            assertTrue(roster.characters.size > 30, name)
+            assertTrue(roster.characters.size >= 10, name)
             for (c in roster.characters) for (m in c.moves) {
                 assertTrue(isValidCommand(m.cmd), "${c.name}: ${m.name} ${m.cmd}")
-                if (!parseCommand(m.cmd).isSequence) assertNotNull(motionGlyph(m.cmd), "${c.name}: ${m.name} has no motion")
+                // Buttons alone (Double Dragon's ABCD) have no motion to draw.
+                val c1 = parseCommand(m.cmd)
+                if (!c1.isSequence && c1.parts.any { it.dir != 5 }) assertNotNull(motionGlyph(m.cmd), "${c.name}: ${m.name} has no motion")
             }
         }
         for (g in GAMES) for (m in g.moves + g.system + listOfNotNull(g.power)) {
