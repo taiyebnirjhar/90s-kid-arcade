@@ -1,0 +1,8833 @@
+{
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp",
+ "bios": [
+  {
+   "name": "sp-s3.sp1",
+   "size": 131072,
+   "crc": "91b64be3",
+   "optional": false
+  },
+  {
+   "name": "sm1.sm1",
+   "size": 131072,
+   "crc": "94416d67",
+   "optional": false
+  },
+  {
+   "name": "sfix.sfix",
+   "size": 131072,
+   "crc": "c2ea0cfd",
+   "optional": false
+  },
+  {
+   "name": "000-lo.lo",
+   "size": 131072,
+   "crc": "5a86cff2",
+   "optional": false
+  }
+ ],
+ "sets": [
+  {
+   "name": "kf10thep",
+   "parent": "kof2002",
+   "base": "kf10thep",
+   "title": "The King of Fighters 10th Anniversary Extra Plus (bootleg of The King of Fighters 2002)",
+   "files": [
+    {
+     "name": "5008-p1.bin",
+     "size": 2097152,
+     "crc": "bf5469ba",
+     "optional": true
+    },
+    {
+     "name": "5008-p2.bin",
+     "size": 4194304,
+     "crc": "a649ec38",
+     "optional": false
+    },
+    {
+     "name": "5008-p3.bin",
+     "size": 2097152,
+     "crc": "e629e13c",
+     "optional": false
+    },
+    {
+     "name": "5008-s1.bin",
+     "size": 131072,
+     "crc": "92410064",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1a.bin",
+     "size": 4194304,
+     "crc": "3bbc0364",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2a.bin",
+     "size": 4194304,
+     "crc": "91230075",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1b.bin",
+     "size": 4194304,
+     "crc": "b5abfc28",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2b.bin",
+     "size": 4194304,
+     "crc": "6cc4c6e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3a.bin",
+     "size": 4194304,
+     "crc": "5b3d4a16",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4a.bin",
+     "size": 4194304,
+     "crc": "c6f3419b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3b.bin",
+     "size": 4194304,
+     "crc": "9d2bba19",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4b.bin",
+     "size": 4194304,
+     "crc": "5a4050cb",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5a.bin",
+     "size": 4194304,
+     "crc": "a289d1e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6a.bin",
+     "size": 4194304,
+     "crc": "e6494b5d",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5b.bin",
+     "size": 4194304,
+     "crc": "404fff02",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6b.bin",
+     "size": 4194304,
+     "crc": "f2ccfc9e",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7a.bin",
+     "size": 4194304,
+     "crc": "be79c5a8",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8a.bin",
+     "size": 4194304,
+     "crc": "a5952ca4",
+     "optional": false
+    },
+    {
+     "name": "5008-c7b.bin",
+     "size": 4194304,
+     "crc": "33604ef0",
+     "optional": false
+    },
+    {
+     "name": "5008-c8b.bin",
+     "size": 4194304,
+     "crc": "51f6a8f8",
+     "optional": false
+    },
+    {
+     "name": "5008-m1.bin",
+     "size": 131072,
+     "crc": "5a47d9ad",
+     "optional": false
+    },
+    {
+     "name": "kf10-v1.bin",
+     "size": 8388608,
+     "crc": "0fc9a58d",
+     "optional": false
+    },
+    {
+     "name": "kf10-v2.bin",
+     "size": 8388608,
+     "crc": "b8c475a4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf10thuo",
+   "parent": "kof2002",
+   "base": "kof10th",
+   "title": "The King of Fighters 10th Anniversary (Optimized 2020, Hack)",
+   "files": [
+    {
+     "name": "kf10-p1uo.bin",
+     "size": 8388608,
+     "crc": "5c261d57",
+     "optional": false
+    },
+    {
+     "name": "kf10-s1uo.bin",
+     "size": 131072,
+     "crc": "312bf34b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1uo.bin",
+     "size": 8388608,
+     "crc": "2c59db66",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2uo.bin",
+     "size": 8388608,
+     "crc": "024ffd69",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3.bin",
+     "size": 8388608,
+     "crc": "959fad0b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4.bin",
+     "size": 8388608,
+     "crc": "efe6a468",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5.bin",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6.bin",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7.bin",
+     "size": 8388608,
+     "crc": "8a5b561c",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8.bin",
+     "size": 8388608,
+     "crc": "bef667a3",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf10thup",
+   "parent": "kof2002",
+   "base": "kof10th",
+   "title": "The King of Fighters 10th Anniversary (Optimized 2023, Hack)",
+   "files": [
+    {
+     "name": "kf10-p1up.bin",
+     "size": 8388608,
+     "crc": "637dfdce",
+     "optional": false
+    },
+    {
+     "name": "kf10-s1up.bin",
+     "size": 131072,
+     "crc": "614db6b7",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1uo.bin",
+     "size": 8388608,
+     "crc": "2c59db66",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2uo.bin",
+     "size": 8388608,
+     "crc": "024ffd69",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3.bin",
+     "size": 8388608,
+     "crc": "959fad0b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4.bin",
+     "size": 8388608,
+     "crc": "efe6a468",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5.bin",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6.bin",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7up.bin",
+     "size": 8388608,
+     "crc": "2bb52a73",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8up.bin",
+     "size": 8388608,
+     "crc": "26586fc1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k23rd",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (3rd Strike of Orochi, Hack)",
+   "files": [
+    {
+     "name": "265-p13rd.p1",
+     "size": 1048576,
+     "crc": "de02918d",
+     "optional": false
+    },
+    {
+     "name": "265-p23rd.sp2",
+     "size": 4194304,
+     "crc": "293bbf78",
+     "optional": false
+    },
+    {
+     "name": "265-s13rd.s1",
+     "size": 131072,
+     "crc": "67e7cbe1",
+     "optional": false
+    },
+    {
+     "name": "265-c3d.c3",
+     "size": 8388608,
+     "crc": "959fad0b",
+     "optional": false
+    },
+    {
+     "name": "265-c43rd.c4",
+     "size": 8388608,
+     "crc": "2558972f",
+     "optional": false
+    },
+    {
+     "name": "265-c73rd.c7",
+     "size": 8388608,
+     "crc": "201e75e0",
+     "optional": false
+    },
+    {
+     "name": "265-c83rd.c8",
+     "size": 8388608,
+     "crc": "ff0fd53b",
+     "optional": false
+    },
+    {
+     "name": "265-p13rd.dif",
+     "size": 1048576,
+     "crc": "b69fc632",
+     "optional": false
+    },
+    {
+     "name": "265-p23rd.dif",
+     "size": 4194304,
+     "crc": "9db1d92a",
+     "optional": false
+    },
+    {
+     "name": "265-c13rd.dif",
+     "size": 8388608,
+     "crc": "1073e68c",
+     "optional": false
+    },
+    {
+     "name": "265-c23rd.dif",
+     "size": 8388608,
+     "crc": "9afb5756",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2mix",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Climax, Hack)",
+   "files": [
+    {
+     "name": "265-p1mix.p1",
+     "size": 1048576,
+     "crc": "7ff93e96",
+     "optional": false
+    },
+    {
+     "name": "265-p2mix.sp2",
+     "size": 4194304,
+     "crc": "01f474fa",
+     "optional": false
+    },
+    {
+     "name": "265-s1ru.s1",
+     "size": 131072,
+     "crc": "bd19c308",
+     "optional": false
+    },
+    {
+     "name": "265-c3ru.c3",
+     "size": 8388608,
+     "crc": "ca656090",
+     "optional": false
+    },
+    {
+     "name": "265-c4ru.c4",
+     "size": 8388608,
+     "crc": "eb898849",
+     "optional": false
+    },
+    {
+     "name": "265-c5d.c5",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "265-c6d.c6",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "265-c7mix.c7",
+     "size": 8388608,
+     "crc": "629bdf0e",
+     "optional": false
+    },
+    {
+     "name": "265-c8mix.c8",
+     "size": 8388608,
+     "crc": "c7c8c75c",
+     "optional": false
+    },
+    {
+     "name": "265-m1ru.m1",
+     "size": 131072,
+     "crc": "9956ccd8",
+     "optional": false
+    },
+    {
+     "name": "265-v1ru.v1",
+     "size": 8388608,
+     "crc": "6e7e3508",
+     "optional": false
+    },
+    {
+     "name": "265-v2ru.v2",
+     "size": 8388608,
+     "crc": "2157b90f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2mp",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Magic Plus (bootleg, set 1)",
+   "files": [
+    {
+     "name": "kf02m-p1.bin",
+     "size": 4194304,
+     "crc": "ff7c6ec0",
+     "optional": false
+    },
+    {
+     "name": "kf02m-p2.bin",
+     "size": 4194304,
+     "crc": "91584716",
+     "optional": false
+    },
+    {
+     "name": "kf02m-s1.bin",
+     "size": 131072,
+     "crc": "348d6f2c",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2mp2",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Magic Plus II (bootleg)",
+   "files": [
+    {
+     "name": "k2k2m2p1.bin",
+     "size": 2097152,
+     "crc": "1016806c",
+     "optional": false
+    },
+    {
+     "name": "k2k2m2p2.bin",
+     "size": 4194304,
+     "crc": "432fdf53",
+     "optional": false
+    },
+    {
+     "name": "k2k2m2s1.bin",
+     "size": 131072,
+     "crc": "446e74c5",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2mp3",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Magic Plus III (Hack)",
+   "files": [
+    {
+     "name": "265-p1m3.p1",
+     "size": 1048576,
+     "crc": "0cdbe99c",
+     "optional": false
+    },
+    {
+     "name": "265-p2m3.sp2",
+     "size": 4194304,
+     "crc": "de6ffd21",
+     "optional": false
+    },
+    {
+     "name": "265-s1m3.s1",
+     "size": 131072,
+     "crc": "4d0c4e77",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2mpl",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Magic Plus (bootleg, set 2)",
+   "files": [
+    {
+     "name": "kf02m-p1p.bin",
+     "size": 1048576,
+     "crc": "aba169fe",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "kf02m-s1p.bin",
+     "size": 131072,
+     "crc": "29c0693e",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2p17",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Plus 2017, Hack)",
+   "files": [
+    {
+     "name": "265-p1p17.p1",
+     "size": 1048576,
+     "crc": "059da6f9",
+     "optional": false
+    },
+    {
+     "name": "265-p2p17.sp2",
+     "size": 5242880,
+     "crc": "7ad26451",
+     "optional": false
+    },
+    {
+     "name": "265-p3p17.p3",
+     "size": 131072,
+     "crc": "80aacc1f",
+     "optional": false
+    },
+    {
+     "name": "265-s1p17.s1",
+     "size": 131072,
+     "crc": "96bdd036",
+     "optional": false
+    },
+    {
+     "name": "265-c1p17.c1",
+     "size": 8388608,
+     "crc": "93cf6345",
+     "optional": false
+    },
+    {
+     "name": "265-c2p17.c2",
+     "size": 8388608,
+     "crc": "d7373d66",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2pl",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (bootleg set 4)",
+   "files": [
+    {
+     "name": "2k2-p1pl.bin",
+     "size": 1048576,
+     "crc": "ea1b6e9c",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1pl.bin",
+     "size": 131072,
+     "crc": "7df52924",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2pla",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (bootleg set 2)",
+   "files": [
+    {
+     "name": "2k2-p1pa.bin",
+     "size": 1048576,
+     "crc": "6a3a02f3",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1pa.bin",
+     "size": 131072,
+     "crc": "1a3ed064",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2plb",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (bootleg set 3)",
+   "files": [
+    {
+     "name": "2k2-p1p.bin",
+     "size": 1048576,
+     "crc": "3ab03781",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1pb.bin",
+     "size": 131072,
+     "crc": "2072d5e9",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2plc",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Super (bootleg)",
+   "files": [
+    {
+     "name": "2k2-p1pc.bin",
+     "size": 1048576,
+     "crc": "ebedae17",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1pc.bin",
+     "size": 131072,
+     "crc": "fecbb589",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2plh",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (Hack)",
+   "files": [
+    {
+     "name": "265-p1ph.p1",
+     "size": 1048576,
+     "crc": "32cc568f",
+     "optional": false
+    },
+    {
+     "name": "265-p2ph.sp2",
+     "size": 4194304,
+     "crc": "4c91603b",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1p.bin",
+     "size": 131072,
+     "crc": "595e0006",
+     "optional": false
+    },
+    {
+     "name": "265-c13rdy.c1",
+     "size": 8388608,
+     "crc": "745b343e",
+     "optional": false
+    },
+    {
+     "name": "265-c23rdy.c2",
+     "size": 8388608,
+     "crc": "2aab7f98",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2pls",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (bootleg set 1)",
+   "files": [
+    {
+     "name": "2k2-p1p.bin",
+     "size": 1048576,
+     "crc": "3ab03781",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1p.bin",
+     "size": 131072,
+     "crc": "595e0006",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k2ps2re",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (PlayStation 2 Plus 2025 ver 1.0, Hack)",
+   "files": [
+    {
+     "name": "265-p1re.p1",
+     "size": 1048576,
+     "crc": "d2874a19",
+     "optional": false
+    },
+    {
+     "name": "265-p2re.sp2",
+     "size": 5242880,
+     "crc": "14921466",
+     "optional": false
+    },
+    {
+     "name": "265-p3re.p3",
+     "size": 1048576,
+     "crc": "6808554f",
+     "optional": false
+    },
+    {
+     "name": "265-p4re.p4",
+     "size": 1048576,
+     "crc": "76c2051d",
+     "optional": false
+    },
+    {
+     "name": "265-p5re.p5",
+     "size": 1048576,
+     "crc": "30cc9f28",
+     "optional": false
+    },
+    {
+     "name": "265-s1re.s1",
+     "size": 131072,
+     "crc": "7c31a953",
+     "optional": false
+    },
+    {
+     "name": "265-c7re.c7",
+     "size": 8388608,
+     "crc": "f0897b93",
+     "optional": false
+    },
+    {
+     "name": "265-c8re.c8",
+     "size": 8388608,
+     "crc": "8d27a4a6",
+     "optional": false
+    },
+    {
+     "name": "265-c9re.c9",
+     "size": 8388608,
+     "crc": "1a2a8f68",
+     "optional": false
+    },
+    {
+     "name": "265-c10re.c10",
+     "size": 8388608,
+     "crc": "c724c069",
+     "optional": false
+    },
+    {
+     "name": "214-m1.m1",
+     "size": 131072,
+     "crc": "dabc427c",
+     "optional": false
+    },
+    {
+     "name": "214-v1.v1",
+     "size": 4194304,
+     "crc": "63f7b045",
+     "optional": false
+    },
+    {
+     "name": "214-v2.v2",
+     "size": 4194304,
+     "crc": "25929059",
+     "optional": false
+    },
+    {
+     "name": "214-v3.v3",
+     "size": 2097152,
+     "crc": "92a2257d",
+     "optional": false
+    },
+    {
+     "name": "262-m1d.m1",
+     "size": 262144,
+     "crc": "4bcc537b",
+     "optional": false
+    },
+    {
+     "name": "262-v1d.v1",
+     "size": 8388608,
+     "crc": "ac2913bf",
+     "optional": false
+    },
+    {
+     "name": "262-v2d.v2",
+     "size": 8388608,
+     "crc": "15042f30",
+     "optional": false
+    },
+    {
+     "name": "269-m1d.m1",
+     "size": 131072,
+     "crc": "447b3123",
+     "optional": false
+    },
+    {
+     "name": "269-v1d.v1",
+     "size": 8388608,
+     "crc": "ff64cd56",
+     "optional": false
+    },
+    {
+     "name": "269-v2d.v2",
+     "size": 8388608,
+     "crc": "a8dd6446",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k4pls",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters Special Edition 2004 Plus (bootleg)",
+   "files": [
+    {
+     "name": "k2k4s-p1p.bin",
+     "size": 2097152,
+     "crc": "ed97c684",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-p1.bin",
+     "size": 4194304,
+     "crc": "e6c50566",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-s1p.bin",
+     "size": 131072,
+     "crc": "cc0ab564",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c4.bin",
+     "size": 8388608,
+     "crc": "7a050288",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c8.bin",
+     "size": 8388608,
+     "crc": "e924afcf",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c3.bin",
+     "size": 8388608,
+     "crc": "959fad0b",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c7.bin",
+     "size": 8388608,
+     "crc": "efe6a468",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c2.bin",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c6.bin",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c1.bin",
+     "size": 8388608,
+     "crc": "fa705b2b",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c5.bin",
+     "size": 8388608,
+     "crc": "2c912ff9",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-m1.bin",
+     "size": 131072,
+     "crc": "5a47d9ad",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-v2.bin",
+     "size": 8388608,
+     "crc": "e4ddfb3f",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-v1.bin",
+     "size": 8388608,
+     "crc": "b887d287",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kf2k5uni",
+   "parent": "kof2002",
+   "base": "kf2k5uni",
+   "title": "The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002)",
+   "files": [
+    {
+     "name": "5006-p2a.bin",
+     "size": 4194304,
+     "crc": "ced883a2",
+     "optional": false
+    },
+    {
+     "name": "5006-p1.bin",
+     "size": 4194304,
+     "crc": "72c39c46",
+     "optional": false
+    },
+    {
+     "name": "5006-s1.bin",
+     "size": 131072,
+     "crc": "91f8c544",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1a.bin",
+     "size": 4194304,
+     "crc": "3bbc0364",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2a.bin",
+     "size": 4194304,
+     "crc": "91230075",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1b.bin",
+     "size": 4194304,
+     "crc": "b5abfc28",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2b.bin",
+     "size": 4194304,
+     "crc": "6cc4c6e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3a.bin",
+     "size": 4194304,
+     "crc": "5b3d4a16",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4a.bin",
+     "size": 4194304,
+     "crc": "c6f3419b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3b.bin",
+     "size": 4194304,
+     "crc": "9d2bba19",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4b.bin",
+     "size": 4194304,
+     "crc": "5a4050cb",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5a.bin",
+     "size": 4194304,
+     "crc": "a289d1e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6a.bin",
+     "size": 4194304,
+     "crc": "e6494b5d",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5b.bin",
+     "size": 4194304,
+     "crc": "404fff02",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6b.bin",
+     "size": 4194304,
+     "crc": "f2ccfc9e",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7a.bin",
+     "size": 4194304,
+     "crc": "be79c5a8",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8a.bin",
+     "size": 4194304,
+     "crc": "a5952ca4",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7b.bin",
+     "size": 4194304,
+     "crc": "3fdb3542",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8b.bin",
+     "size": 4194304,
+     "crc": "661b7a52",
+     "optional": false
+    },
+    {
+     "name": "5006-m1.bin",
+     "size": 131072,
+     "crc": "9050bfe7",
+     "optional": false
+    },
+    {
+     "name": "kf10-v1.bin",
+     "size": 8388608,
+     "crc": "0fc9a58d",
+     "optional": false
+    },
+    {
+     "name": "kf10-v2.bin",
+     "size": 8388608,
+     "crc": "b8c475a4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof10th",
+   "parent": "kof2002",
+   "base": "kof10th",
+   "title": "The King of Fighters 10th Anniversary (bootleg of The King of Fighters 2002)",
+   "files": [
+    {
+     "name": "kf10-p1.bin",
+     "size": 8388608,
+     "crc": "b1fd0c43",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1a.bin",
+     "size": 4194304,
+     "crc": "3bbc0364",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2a.bin",
+     "size": 4194304,
+     "crc": "91230075",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1b.bin",
+     "size": 4194304,
+     "crc": "b5abfc28",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2b.bin",
+     "size": 4194304,
+     "crc": "6cc4c6e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3a.bin",
+     "size": 4194304,
+     "crc": "5b3d4a16",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4a.bin",
+     "size": 4194304,
+     "crc": "c6f3419b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3b.bin",
+     "size": 4194304,
+     "crc": "9d2bba19",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4b.bin",
+     "size": 4194304,
+     "crc": "5a4050cb",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5a.bin",
+     "size": 4194304,
+     "crc": "a289d1e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6a.bin",
+     "size": 4194304,
+     "crc": "e6494b5d",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5b.bin",
+     "size": 4194304,
+     "crc": "404fff02",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6b.bin",
+     "size": 4194304,
+     "crc": "f2ccfc9e",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7a.bin",
+     "size": 4194304,
+     "crc": "be79c5a8",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8a.bin",
+     "size": 4194304,
+     "crc": "a5952ca4",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7b.bin",
+     "size": 4194304,
+     "crc": "3fdb3542",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8b.bin",
+     "size": 4194304,
+     "crc": "661b7a52",
+     "optional": false
+    },
+    {
+     "name": "kf10-m1.bin",
+     "size": 131072,
+     "crc": "f6fab859",
+     "optional": false
+    },
+    {
+     "name": "kf10-v1.bin",
+     "size": 8388608,
+     "crc": "0fc9a58d",
+     "optional": false
+    },
+    {
+     "name": "kf10-v2.bin",
+     "size": 8388608,
+     "crc": "b8c475a4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof10thd",
+   "parent": "kof2002",
+   "base": "kof10th",
+   "title": "The King of Fighters 10th Anniversary (The King of Fighters 2002 bootleg / Fully Decrypted)",
+   "files": [
+    {
+     "name": "kf10-p1d.bin",
+     "size": 8388608,
+     "crc": "30c82f4c",
+     "optional": false
+    },
+    {
+     "name": "kf10-s1d.bin",
+     "size": 131072,
+     "crc": "3c757cb1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1a.bin",
+     "size": 4194304,
+     "crc": "3bbc0364",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2a.bin",
+     "size": 4194304,
+     "crc": "91230075",
+     "optional": false
+    },
+    {
+     "name": "kf10-c1b.bin",
+     "size": 4194304,
+     "crc": "b5abfc28",
+     "optional": false
+    },
+    {
+     "name": "kf10-c2b.bin",
+     "size": 4194304,
+     "crc": "6cc4c6e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3a.bin",
+     "size": 4194304,
+     "crc": "5b3d4a16",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4a.bin",
+     "size": 4194304,
+     "crc": "c6f3419b",
+     "optional": false
+    },
+    {
+     "name": "kf10-c3b.bin",
+     "size": 4194304,
+     "crc": "9d2bba19",
+     "optional": false
+    },
+    {
+     "name": "kf10-c4b.bin",
+     "size": 4194304,
+     "crc": "5a4050cb",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5a.bin",
+     "size": 4194304,
+     "crc": "a289d1e1",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6a.bin",
+     "size": 4194304,
+     "crc": "e6494b5d",
+     "optional": false
+    },
+    {
+     "name": "kf10-c5b.bin",
+     "size": 4194304,
+     "crc": "404fff02",
+     "optional": false
+    },
+    {
+     "name": "kf10-c6b.bin",
+     "size": 4194304,
+     "crc": "f2ccfc9e",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7a.bin",
+     "size": 4194304,
+     "crc": "be79c5a8",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8a.bin",
+     "size": 4194304,
+     "crc": "a5952ca4",
+     "optional": false
+    },
+    {
+     "name": "kf10-c7b.bin",
+     "size": 4194304,
+     "crc": "3fdb3542",
+     "optional": false
+    },
+    {
+     "name": "kf10-c8b.bin",
+     "size": 4194304,
+     "crc": "661b7a52",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2002",
+   "parent": null,
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
+   "files": [
+    {
+     "name": "265-p1.p1",
+     "size": 1048576,
+     "crc": "9ede7323",
+     "optional": false
+    },
+    {
+     "name": "265-p2.sp2",
+     "size": 4194304,
+     "crc": "327266b8",
+     "optional": false
+    },
+    {
+     "name": "265-c1.c1",
+     "size": 8388608,
+     "crc": "2b65a656",
+     "optional": false
+    },
+    {
+     "name": "265-c2.c2",
+     "size": 8388608,
+     "crc": "adf18983",
+     "optional": false
+    },
+    {
+     "name": "265-c3.c3",
+     "size": 8388608,
+     "crc": "875e9fd7",
+     "optional": false
+    },
+    {
+     "name": "265-c4.c4",
+     "size": 8388608,
+     "crc": "2da13947",
+     "optional": false
+    },
+    {
+     "name": "265-c5.c5",
+     "size": 8388608,
+     "crc": "61bd165d",
+     "optional": false
+    },
+    {
+     "name": "265-c6.c6",
+     "size": 8388608,
+     "crc": "03fdd1eb",
+     "optional": false
+    },
+    {
+     "name": "265-c7.c7",
+     "size": 8388608,
+     "crc": "1a2749d8",
+     "optional": false
+    },
+    {
+     "name": "265-c8.c8",
+     "size": 8388608,
+     "crc": "ab0bb549",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2002b",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (bootleg)",
+   "files": [
+    {
+     "name": "265-p1.p1",
+     "size": 1048576,
+     "crc": "9ede7323",
+     "optional": false
+    },
+    {
+     "name": "2k2-p2.bin",
+     "size": 4194304,
+     "crc": "6dbee4df",
+     "optional": false
+    },
+    {
+     "name": "2k2-s1.bin",
+     "size": 131072,
+     "crc": "2255f5bf",
+     "optional": false
+    },
+    {
+     "name": "2k2-c1.bin",
+     "size": 8388608,
+     "crc": "f25d3d66",
+     "optional": false
+    },
+    {
+     "name": "2k2-c2.bin",
+     "size": 8388608,
+     "crc": "e3e66f1d",
+     "optional": false
+    },
+    {
+     "name": "2k2-c3.bin",
+     "size": 8388608,
+     "crc": "8732fa30",
+     "optional": false
+    },
+    {
+     "name": "2k2-c4.bin",
+     "size": 8388608,
+     "crc": "0989fd40",
+     "optional": false
+    },
+    {
+     "name": "2k2-c5.bin",
+     "size": 8388608,
+     "crc": "60635cd2",
+     "optional": false
+    },
+    {
+     "name": "2k2-c6.bin",
+     "size": 8388608,
+     "crc": "bd736824",
+     "optional": false
+    },
+    {
+     "name": "2k2-c7.bin",
+     "size": 8388608,
+     "crc": "2da8d8cf",
+     "optional": false
+    },
+    {
+     "name": "2k2-c8.bin",
+     "size": 8388608,
+     "crc": "2048404a",
+     "optional": false
+    },
+    {
+     "name": "265-m1.m1",
+     "size": 131072,
+     "crc": "85aaa632",
+     "optional": false
+    },
+    {
+     "name": "265-v1.v1",
+     "size": 8388608,
+     "crc": "15e8f3f5",
+     "optional": false
+    },
+    {
+     "name": "265-v2.v2",
+     "size": 8388608,
+     "crc": "da41d6f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2002m",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Mugen, Hack)",
+   "files": [
+    {
+     "name": "265-p1m.p1",
+     "size": 1048576,
+     "crc": "496b9e90",
+     "optional": false
+    },
+    {
+     "name": "265-p2m.sp2",
+     "size": 4194304,
+     "crc": "046a1232",
+     "optional": false
+    },
+    {
+     "name": "265-s1m.s1",
+     "size": 131072,
+     "crc": "80922b39",
+     "optional": false
+    },
+    {
+     "name": "265-c3m.c3",
+     "size": 8388608,
+     "crc": "102a78a9",
+     "optional": false
+    },
+    {
+     "name": "265-c4m.c4",
+     "size": 8388608,
+     "crc": "ee9d72b8",
+     "optional": false
+    },
+    {
+     "name": "265-c9m.c9",
+     "size": 8388608,
+     "crc": "e0ab7f55",
+     "optional": false
+    },
+    {
+     "name": "265-c10m.c10",
+     "size": 8388608,
+     "crc": "97f53698",
+     "optional": false
+    },
+    {
+     "name": "265-m1m.m1",
+     "size": 131072,
+     "crc": "ce706bc7",
+     "optional": false
+    },
+    {
+     "name": "265-v3m.v3",
+     "size": 4194304,
+     "crc": "86ce1fd1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2002t",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 Plus (Optimised, Hack)",
+   "files": [
+    {
+     "name": "265-p1t.p1",
+     "size": 1048576,
+     "crc": "55a19ab8",
+     "optional": false
+    },
+    {
+     "name": "265-p2t.sp2",
+     "size": 4194304,
+     "crc": "0a189c94",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2br",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Portuguese edition v2.0, Hack)",
+   "files": [
+    {
+     "name": "265-p1br.p1",
+     "size": 1048576,
+     "crc": "95986d7a",
+     "optional": false
+    },
+    {
+     "name": "265-p2br.sp2",
+     "size": 4194304,
+     "crc": "9b4d2ba4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2fd",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Fully Decrypted)",
+   "files": [
+    {
+     "name": "265-p1.p1",
+     "size": 1048576,
+     "crc": "9ede7323",
+     "optional": false
+    },
+    {
+     "name": "265-p2d.sp2",
+     "size": 4194304,
+     "crc": "432fdf53",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2jq",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Infinite Energy, Hack)",
+   "files": [
+    {
+     "name": "265-p1jq.p1",
+     "size": 1048576,
+     "crc": "10554475",
+     "optional": false
+    },
+    {
+     "name": "265-p2t.sp2",
+     "size": 4194304,
+     "crc": "0a189c94",
+     "optional": false
+    },
+    {
+     "name": "265-s1jq.s1",
+     "size": 131072,
+     "crc": "20ba99dc",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2ly",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Remix, Hack)",
+   "files": [
+    {
+     "name": "265-p1ly.p1",
+     "size": 1048576,
+     "crc": "1003a13b",
+     "optional": false
+    },
+    {
+     "name": "265-p2t.sp2",
+     "size": 4194304,
+     "crc": "0a189c94",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2omg",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Omega v.0?)",
+   "files": [
+    {
+     "name": "265omg.p1",
+     "size": 3921089,
+     "crc": "62174834",
+     "optional": false
+    },
+    {
+     "name": "265omg.p2",
+     "size": 4194304,
+     "crc": "6fadc5c3",
+     "optional": false
+    },
+    {
+     "name": "265omg.s1",
+     "size": 131072,
+     "crc": "6145daf4",
+     "optional": false
+    },
+    {
+     "name": "265xxx.c1",
+     "size": 8388608,
+     "crc": "745b343e",
+     "optional": false
+    },
+    {
+     "name": "265xxx.c2",
+     "size": 8388608,
+     "crc": "2aab7f98",
+     "optional": false
+    },
+    {
+     "name": "265ori.c3",
+     "size": 8388608,
+     "crc": "e5074eea",
+     "optional": false
+    },
+    {
+     "name": "265ori.c4",
+     "size": 8388608,
+     "crc": "f6eb1ff2",
+     "optional": false
+    },
+    {
+     "name": "265d.c5",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "265d.c6",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "265ori.c7",
+     "size": 8388608,
+     "crc": "0e9f6adb",
+     "optional": false
+    },
+    {
+     "name": "265ori.c8",
+     "size": 8388608,
+     "crc": "9961799e",
+     "optional": false
+    },
+    {
+     "name": "265ori.m1",
+     "size": 131072,
+     "crc": "ab9d360e",
+     "optional": false
+    },
+    {
+     "name": "265nu.v1",
+     "size": 4194304,
+     "crc": "13d98607",
+     "optional": false
+    },
+    {
+     "name": "265nu.v2",
+     "size": 4194304,
+     "crc": "9cf74677",
+     "optional": false
+    },
+    {
+     "name": "265nu.v3",
+     "size": 4194304,
+     "crc": "8e9448b5",
+     "optional": false
+    },
+    {
+     "name": "265nu.v4",
+     "size": 4194304,
+     "crc": "067271b5",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2omg8",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Omega v0.8)",
+   "files": [
+    {
+     "name": "265omg8.p1",
+     "size": 1048576,
+     "crc": "53086581",
+     "optional": false
+    },
+    {
+     "name": "265omg8.p2",
+     "size": 4194304,
+     "crc": "40228fe5",
+     "optional": false
+    },
+    {
+     "name": "265omg8.s1",
+     "size": 131072,
+     "crc": "65351d40",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c1",
+     "size": 8388608,
+     "crc": "e144302d",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c2",
+     "size": 8388608,
+     "crc": "b10c6958",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c3",
+     "size": 8388608,
+     "crc": "2367927c",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c4",
+     "size": 8388608,
+     "crc": "4ad48c29",
+     "optional": false
+    },
+    {
+     "name": "365ru.c5",
+     "size": 8388608,
+     "crc": "11126545",
+     "optional": false
+    },
+    {
+     "name": "365ru.c6",
+     "size": 8388608,
+     "crc": "d225bb9b",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c7",
+     "size": 8388608,
+     "crc": "890c2a4a",
+     "optional": false
+    },
+    {
+     "name": "265omg8.c8",
+     "size": 8388608,
+     "crc": "b726009d",
+     "optional": false
+    },
+    {
+     "name": "265omg8.m1",
+     "size": 262144,
+     "crc": "9a3d5c65",
+     "optional": false
+    },
+    {
+     "name": "kf10-v1.bin",
+     "size": 8388608,
+     "crc": "0fc9a58d",
+     "optional": false
+    },
+    {
+     "name": "kf10-v2.bin",
+     "size": 8388608,
+     "crc": "b8c475a4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2omg9",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Omega v0.9)",
+   "files": [
+    {
+     "name": "265-p1.p1",
+     "size": 1048576,
+     "crc": "9ede7323",
+     "optional": false
+    },
+    {
+     "name": "265omg9.p2",
+     "size": 4194304,
+     "crc": "cd503fcf",
+     "optional": false
+    },
+    {
+     "name": "265omg9.s1",
+     "size": 131072,
+     "crc": "4562fb20",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c1",
+     "size": 8388608,
+     "crc": "c8314ae2",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c2",
+     "size": 8388608,
+     "crc": "e0ddced5",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c3",
+     "size": 8388608,
+     "crc": "6898f6e2",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c4",
+     "size": 8388608,
+     "crc": "9232e491",
+     "optional": false
+    },
+    {
+     "name": "365ru.c5",
+     "size": 8388608,
+     "crc": "11126545",
+     "optional": false
+    },
+    {
+     "name": "365ru.c6",
+     "size": 8388608,
+     "crc": "d225bb9b",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c7",
+     "size": 8388608,
+     "crc": "6954ef57",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c8",
+     "size": 8388608,
+     "crc": "3e394883",
+     "optional": false
+    },
+    {
+     "name": "265ori.m1",
+     "size": 131072,
+     "crc": "ab9d360e",
+     "optional": false
+    },
+    {
+     "name": "265nu.v1",
+     "size": 4194304,
+     "crc": "13d98607",
+     "optional": false
+    },
+    {
+     "name": "265nu.v2",
+     "size": 4194304,
+     "crc": "9cf74677",
+     "optional": false
+    },
+    {
+     "name": "265nu.v3",
+     "size": 4194304,
+     "crc": "8e9448b5",
+     "optional": false
+    },
+    {
+     "name": "265nu.v4",
+     "size": 4194304,
+     "crc": "067271b5",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2omg9b",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Omega v0.9 beta)",
+   "files": [
+    {
+     "name": "265-p1.p1",
+     "size": 1048576,
+     "crc": "9ede7323",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.p2",
+     "size": 4194304,
+     "crc": "a171b684",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.s1",
+     "size": 131072,
+     "crc": "7e3f391a",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c1",
+     "size": 8388608,
+     "crc": "c8314ae2",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c2",
+     "size": 8388608,
+     "crc": "e0ddced5",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c3",
+     "size": 8388608,
+     "crc": "6898f6e2",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c4",
+     "size": 8388608,
+     "crc": "9232e491",
+     "optional": false
+    },
+    {
+     "name": "365ru.c5",
+     "size": 8388608,
+     "crc": "11126545",
+     "optional": false
+    },
+    {
+     "name": "365ru.c6",
+     "size": 8388608,
+     "crc": "d225bb9b",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c7",
+     "size": 8388608,
+     "crc": "6954ef57",
+     "optional": false
+    },
+    {
+     "name": "265omg9b.c8",
+     "size": 8388608,
+     "crc": "3e394883",
+     "optional": false
+    },
+    {
+     "name": "265omg8.m1",
+     "size": 262144,
+     "crc": "9a3d5c65",
+     "optional": false
+    },
+    {
+     "name": "265nu.v1",
+     "size": 4194304,
+     "crc": "13d98607",
+     "optional": false
+    },
+    {
+     "name": "265nu.v2",
+     "size": 4194304,
+     "crc": "9cf74677",
+     "optional": false
+    },
+    {
+     "name": "265nu.v3",
+     "size": 4194304,
+     "crc": "8e9448b5",
+     "optional": false
+    },
+    {
+     "name": "265nu.v4",
+     "size": 4194304,
+     "crc": "067271b5",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2ru",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Remix Ultra 3.5, Hack)",
+   "files": [
+    {
+     "name": "265-p1ru.p1",
+     "size": 1048576,
+     "crc": "8da72d5c",
+     "optional": false
+    },
+    {
+     "name": "265-p2ru.sp2",
+     "size": 4194304,
+     "crc": "75185760",
+     "optional": false
+    },
+    {
+     "name": "265-s1ru.s1",
+     "size": 131072,
+     "crc": "bd19c308",
+     "optional": false
+    },
+    {
+     "name": "265-c3ru.c3",
+     "size": 8388608,
+     "crc": "ca656090",
+     "optional": false
+    },
+    {
+     "name": "265-c4ru.c4",
+     "size": 8388608,
+     "crc": "eb898849",
+     "optional": false
+    },
+    {
+     "name": "265-c5d.c5",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "265-c6d.c6",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "265-c7ru.c7",
+     "size": 8388608,
+     "crc": "2a9d505c",
+     "optional": false
+    },
+    {
+     "name": "265-c8ru.c8",
+     "size": 8388608,
+     "crc": "93d8501f",
+     "optional": false
+    },
+    {
+     "name": "265-m1ru.m1",
+     "size": 131072,
+     "crc": "9956ccd8",
+     "optional": false
+    },
+    {
+     "name": "265-v1ru.v1",
+     "size": 8388608,
+     "crc": "6e7e3508",
+     "optional": false
+    },
+    {
+     "name": "265-v2ru.v2",
+     "size": 8388608,
+     "crc": "2157b90f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k2ts",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters 2002 (Battle with Orochi, Hack)",
+   "files": [
+    {
+     "name": "265-p1ts.p1",
+     "size": 1048576,
+     "crc": "f20fc573",
+     "optional": false
+    },
+    {
+     "name": "265-p2d.sp2",
+     "size": 4194304,
+     "crc": "432fdf53",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof2k4se",
+   "parent": "kof2002",
+   "base": "kof2002",
+   "title": "The King of Fighters Special Edition 2004 (bootleg of The King of Fighters 2002)",
+   "files": [
+    {
+     "name": "k2k4s-p1.bin",
+     "size": 4194304,
+     "crc": "e6c50566",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-p2.bin",
+     "size": 524288,
+     "crc": "21a84084",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-p3.bin",
+     "size": 524288,
+     "crc": "febb484e",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-s1.bin",
+     "size": 131072,
+     "crc": "a3c9b2d8",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c4.bin",
+     "size": 8388608,
+     "crc": "7a050288",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c8.bin",
+     "size": 8388608,
+     "crc": "e924afcf",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c3.bin",
+     "size": 8388608,
+     "crc": "959fad0b",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c7.bin",
+     "size": 8388608,
+     "crc": "efe6a468",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c2.bin",
+     "size": 8388608,
+     "crc": "74bba7c6",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c6.bin",
+     "size": 8388608,
+     "crc": "e20d2216",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c1.bin",
+     "size": 8388608,
+     "crc": "fa705b2b",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-c5.bin",
+     "size": 8388608,
+     "crc": "2c912ff9",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-m1.bin",
+     "size": 131072,
+     "crc": "5a47d9ad",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-v2.bin",
+     "size": 8388608,
+     "crc": "e4ddfb3f",
+     "optional": false
+    },
+    {
+     "name": "k2k4s-v1.bin",
+     "size": 8388608,
+     "crc": "b887d287",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97",
+   "parent": null,
+   "base": "kof97",
+   "title": "The King of Fighters '97 (NGM-2320)",
+   "files": [
+    {
+     "name": "232-p1.p1",
+     "size": 1048576,
+     "crc": "7db81ad9",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    },
+    {
+     "name": "232-s1.s1",
+     "size": 131072,
+     "crc": "8514ecf5",
+     "optional": false
+    },
+    {
+     "name": "232-c1.c1",
+     "size": 8388608,
+     "crc": "5f8bf0a1",
+     "optional": false
+    },
+    {
+     "name": "232-c2.c2",
+     "size": 8388608,
+     "crc": "e4d45c81",
+     "optional": false
+    },
+    {
+     "name": "232-c3.c3",
+     "size": 8388608,
+     "crc": "581d6618",
+     "optional": false
+    },
+    {
+     "name": "232-c4.c4",
+     "size": 8388608,
+     "crc": "49bb1e68",
+     "optional": false
+    },
+    {
+     "name": "232-c5.c5",
+     "size": 4194304,
+     "crc": "34fc4e51",
+     "optional": false
+    },
+    {
+     "name": "232-c6.c6",
+     "size": 4194304,
+     "crc": "4ff4d47b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ae",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Anniversary, Hack)",
+   "files": [
+    {
+     "name": "232-p1ae.p1",
+     "size": 1048576,
+     "crc": "cecc4f64",
+     "optional": false
+    },
+    {
+     "name": "232-p2ae.sp2",
+     "size": 4194304,
+     "crc": "228aa8d1",
+     "optional": false
+    },
+    {
+     "name": "232-s1ae.s1",
+     "size": 131072,
+     "crc": "30a6b3b8",
+     "optional": false
+    },
+    {
+     "name": "232-c1ae.c1",
+     "size": 8388608,
+     "crc": "5f0133eb",
+     "optional": false
+    },
+    {
+     "name": "232-c2ae.c2",
+     "size": 8388608,
+     "crc": "136b8449",
+     "optional": false
+    },
+    {
+     "name": "232-c5ae.c5",
+     "size": 8388608,
+     "crc": "8167b444",
+     "optional": false
+    },
+    {
+     "name": "232-c6ae.c6",
+     "size": 8388608,
+     "crc": "a410f3ca",
+     "optional": false
+    },
+    {
+     "name": "232-c7ae.c7",
+     "size": 8388608,
+     "crc": "50a48a56",
+     "optional": false
+    },
+    {
+     "name": "232-c8ae.c8",
+     "size": 8388608,
+     "crc": "80d7ec00",
+     "optional": false
+    },
+    {
+     "name": "232-m1ae.m1",
+     "size": 131072,
+     "crc": "f7b7ee13",
+     "optional": false
+    },
+    {
+     "name": "232-p1aef.dif",
+     "size": 1048576,
+     "crc": "8da71759",
+     "optional": false
+    },
+    {
+     "name": "232-p2aef.dif",
+     "size": 4194304,
+     "crc": "c3c641b6",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ae230625",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Anniversary 2.3.0625, Hack)",
+   "files": [
+    {
+     "name": "232-p1ae23.p1",
+     "size": 1048576,
+     "crc": "0bb4f8f5",
+     "optional": false
+    },
+    {
+     "name": "232-p2ae23.sp2",
+     "size": 4194304,
+     "crc": "197c7d8f",
+     "optional": false
+    },
+    {
+     "name": "232-s1ae23.s1",
+     "size": 131072,
+     "crc": "9b83a96c",
+     "optional": false
+    },
+    {
+     "name": "232-c1ae23.c1",
+     "size": 8388608,
+     "crc": "f4c756ff",
+     "optional": false
+    },
+    {
+     "name": "232-c2ae23.c2",
+     "size": 8388608,
+     "crc": "4f2fa6d9",
+     "optional": false
+    },
+    {
+     "name": "232-c5ae23.c5",
+     "size": 8388608,
+     "crc": "7b19f0ef",
+     "optional": false
+    },
+    {
+     "name": "232-c6ae23.c6",
+     "size": 8388608,
+     "crc": "a4310993",
+     "optional": false
+    },
+    {
+     "name": "232-c7ae23.c7",
+     "size": 8388608,
+     "crc": "c14642c2",
+     "optional": false
+    },
+    {
+     "name": "232-c8ae23.c8",
+     "size": 8388608,
+     "crc": "4c0f8fa8",
+     "optional": false
+    },
+    {
+     "name": "232-m1ae23.m1",
+     "size": 131072,
+     "crc": "0fd97b3b",
+     "optional": false
+    },
+    {
+     "name": "232-v4ae23.v4",
+     "size": 2097152,
+     "crc": "7d37caa0",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97bs",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Boss, Hack)",
+   "files": [
+    {
+     "name": "232-p1bs.p1",
+     "size": 1048576,
+     "crc": "5e287c6f",
+     "optional": false
+    },
+    {
+     "name": "232-p2bs.sp2",
+     "size": 4194304,
+     "crc": "05c0500c",
+     "optional": false
+    },
+    {
+     "name": "232-s1bs.s1",
+     "size": 131072,
+     "crc": "ece9abba",
+     "optional": false
+    },
+    {
+     "name": "232-c1plc.c1",
+     "size": 8388608,
+     "crc": "fdfa1933",
+     "optional": false
+    },
+    {
+     "name": "232-c2plc.c2",
+     "size": 8388608,
+     "crc": "ebd8a2c0",
+     "optional": false
+    },
+    {
+     "name": "232-c3st.c3",
+     "size": 8388608,
+     "crc": "b092e64f",
+     "optional": false
+    },
+    {
+     "name": "232-c4st.c4",
+     "size": 8388608,
+     "crc": "d25e8a04",
+     "optional": false
+    },
+    {
+     "name": "232-c5bs.c5",
+     "size": 4194304,
+     "crc": "22fbe729",
+     "optional": false
+    },
+    {
+     "name": "232-c6bs.c6",
+     "size": 4194304,
+     "crc": "50831866",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97bt",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Balanced & Optimized, Hack)",
+   "files": [
+    {
+     "name": "232-p1bt.p1",
+     "size": 1048576,
+     "crc": "efd8fa38",
+     "optional": false
+    },
+    {
+     "name": "232-p2bt.sp2",
+     "size": 4194304,
+     "crc": "6ab81bd7",
+     "optional": false
+    },
+    {
+     "name": "232-c1bt.c1",
+     "size": 8388608,
+     "crc": "1a5bfb12",
+     "optional": false
+    },
+    {
+     "name": "232-c2bt.c2",
+     "size": 8388608,
+     "crc": "a405f128",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97cb",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Combo, Hack)",
+   "files": [
+    {
+     "name": "232-p1cb.p1",
+     "size": 1048576,
+     "crc": "827670ab",
+     "optional": false
+    },
+    {
+     "name": "232-p2cb.sp2",
+     "size": 4194304,
+     "crc": "91c0cfdb",
+     "optional": false
+    },
+    {
+     "name": "232-s1cb.s1",
+     "size": 131072,
+     "crc": "d4957067",
+     "optional": false
+    },
+    {
+     "name": "232-c1cb.c1",
+     "size": 8388608,
+     "crc": "ea16b711",
+     "optional": false
+    },
+    {
+     "name": "232-c2cb.c2",
+     "size": 8388608,
+     "crc": "b7bef674",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97cbt",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Combo Training, Hack, Ver. 2018)",
+   "files": [
+    {
+     "name": "232-p1cbt.p1",
+     "size": 1048576,
+     "crc": "323e4263",
+     "optional": false
+    },
+    {
+     "name": "232-p2cb.sp2",
+     "size": 4194304,
+     "crc": "91c0cfdb",
+     "optional": false
+    },
+    {
+     "name": "232-s1cb.s1",
+     "size": 131072,
+     "crc": "d4957067",
+     "optional": false
+    },
+    {
+     "name": "232-c1cb.c1",
+     "size": 8388608,
+     "crc": "ea16b711",
+     "optional": false
+    },
+    {
+     "name": "232-c2cb.c2",
+     "size": 8388608,
+     "crc": "b7bef674",
+     "optional": false
+    },
+    {
+     "name": "232-c5cbt.c5",
+     "size": 4194304,
+     "crc": "6fe02054",
+     "optional": false
+    },
+    {
+     "name": "232-c6cbt.c6",
+     "size": 4194304,
+     "crc": "0f96c84a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ce",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Champion  Edition, Hack)",
+   "files": [
+    {
+     "name": "232-p1ce.p1",
+     "size": 1048576,
+     "crc": "e1808b39",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97cn",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (10th Anniversary Chinese Edition, Hack)",
+   "files": [
+    {
+     "name": "232-p1cn.p1",
+     "size": 1048576,
+     "crc": "082933c8",
+     "optional": false
+    },
+    {
+     "name": "232-p2cn.sp2",
+     "size": 6291456,
+     "crc": "d22d3ca3",
+     "optional": false
+    },
+    {
+     "name": "232-s1cn.s1",
+     "size": 131072,
+     "crc": "de5ad278",
+     "optional": false
+    },
+    {
+     "name": "232-c1cn.c1",
+     "size": 8388608,
+     "crc": "8c3d2c0c",
+     "optional": false
+    },
+    {
+     "name": "232-c2cn.c2",
+     "size": 8388608,
+     "crc": "43ce69ae",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97eb",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Evolution & Balance, Hack)",
+   "files": [
+    {
+     "name": "232-p1eb.p1",
+     "size": 1048576,
+     "crc": "c602e1c7",
+     "optional": false
+    },
+    {
+     "name": "232-p2eb.sp2",
+     "size": 4194304,
+     "crc": "9b4f127a",
+     "optional": false
+    },
+    {
+     "name": "232-c1eb.c1",
+     "size": 8388608,
+     "crc": "5b382241",
+     "optional": false
+    },
+    {
+     "name": "232-c2eb.c2",
+     "size": 8388608,
+     "crc": "6060de03",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97evf",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Evolution FC2, Hack)",
+   "files": [
+    {
+     "name": "232-p1evf.p1",
+     "size": 1048576,
+     "crc": "e937a935",
+     "optional": false
+    },
+    {
+     "name": "232-p2evf.sp2",
+     "size": 4194304,
+     "crc": "0d2cb10a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97evn",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Evolution New, Hack)",
+   "files": [
+    {
+     "name": "232-p1evn.p1",
+     "size": 1048576,
+     "crc": "f047c328",
+     "optional": false
+    },
+    {
+     "name": "232-p2evn.sp2",
+     "size": 4194304,
+     "crc": "5cbb2499",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97h",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (NGH-2320)",
+   "files": [
+    {
+     "name": "232-pg1.p1",
+     "size": 1048576,
+     "crc": "5c2400b7",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    },
+    {
+     "name": "232-s1.s1",
+     "size": 131072,
+     "crc": "8514ecf5",
+     "optional": false
+    },
+    {
+     "name": "232-c1.c1",
+     "size": 8388608,
+     "crc": "5f8bf0a1",
+     "optional": false
+    },
+    {
+     "name": "232-c2.c2",
+     "size": 8388608,
+     "crc": "e4d45c81",
+     "optional": false
+    },
+    {
+     "name": "232-c3.c3",
+     "size": 8388608,
+     "crc": "581d6618",
+     "optional": false
+    },
+    {
+     "name": "232-c4.c4",
+     "size": 8388608,
+     "crc": "49bb1e68",
+     "optional": false
+    },
+    {
+     "name": "232-c5.c5",
+     "size": 4194304,
+     "crc": "34fc4e51",
+     "optional": false
+    },
+    {
+     "name": "232-c6.c6",
+     "size": 4194304,
+     "crc": "4ff4d47b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97inv",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Invincible Plus!, B2.1.2107, Hack)",
+   "files": [
+    {
+     "name": "232-p1inv.p1",
+     "size": 1048576,
+     "crc": "ff90a715",
+     "optional": false
+    },
+    {
+     "name": "232-p2inv.sp2",
+     "size": 4194304,
+     "crc": "9bccc862",
+     "optional": false
+    },
+    {
+     "name": "232-s1inv.s1",
+     "size": 131072,
+     "crc": "de61d11c",
+     "optional": false
+    },
+    {
+     "name": "232-c1inv.c1",
+     "size": 8388608,
+     "crc": "b496fb6e",
+     "optional": false
+    },
+    {
+     "name": "232-c2inv.c2",
+     "size": 8388608,
+     "crc": "ff3fde05",
+     "optional": false
+    },
+    {
+     "name": "232-c3inv.c3",
+     "size": 8388608,
+     "crc": "46db93d9",
+     "optional": false
+    },
+    {
+     "name": "232-c4inv.c4",
+     "size": 8388608,
+     "crc": "b1a4ac4a",
+     "optional": false
+    },
+    {
+     "name": "232-c5inv.c5",
+     "size": 8388608,
+     "crc": "1a921988",
+     "optional": false
+    },
+    {
+     "name": "232-c6inv.c6",
+     "size": 8388608,
+     "crc": "07630b58",
+     "optional": false
+    },
+    {
+     "name": "232-c7inv.c7",
+     "size": 4194304,
+     "crc": "c71dcab9",
+     "optional": false
+    },
+    {
+     "name": "232-c8inv.c8",
+     "size": 4194304,
+     "crc": "c6d74eaf",
+     "optional": false
+    },
+    {
+     "name": "232-m1inv.m1",
+     "size": 131072,
+     "crc": "7b933dd8",
+     "optional": false
+    },
+    {
+     "name": "232-v4inv.v4",
+     "size": 4194304,
+     "crc": "225996c3",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97k",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Korean release)",
+   "files": [
+    {
+     "name": "232-p1.p1",
+     "size": 1048576,
+     "crc": "7db81ad9",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    },
+    {
+     "name": "232-s1.s1",
+     "size": 131072,
+     "crc": "8514ecf5",
+     "optional": false
+    },
+    {
+     "name": "232-c1.c1",
+     "size": 8388608,
+     "crc": "5f8bf0a1",
+     "optional": false
+    },
+    {
+     "name": "232-c2.c2",
+     "size": 8388608,
+     "crc": "e4d45c81",
+     "optional": false
+    },
+    {
+     "name": "232-c3.c3",
+     "size": 8388608,
+     "crc": "581d6618",
+     "optional": false
+    },
+    {
+     "name": "232-c4.c4",
+     "size": 8388608,
+     "crc": "49bb1e68",
+     "optional": false
+    },
+    {
+     "name": "232-c5.c5",
+     "size": 4194304,
+     "crc": "34fc4e51",
+     "optional": false
+    },
+    {
+     "name": "232-c6.c6",
+     "size": 4194304,
+     "crc": "4ff4d47b",
+     "optional": false
+    },
+    {
+     "name": "232-m1k.m1",
+     "size": 131072,
+     "crc": "bbea9070",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97m",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Dream Back, Hack)",
+   "files": [
+    {
+     "name": "232-p1m.p1",
+     "size": 1048576,
+     "crc": "8f00511f",
+     "optional": false
+    },
+    {
+     "name": "232-p2m.sp2",
+     "size": 4194304,
+     "crc": "0fa5639a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97oro",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 Chongchu Jianghu Plus 2003 (bootleg, set 1)",
+   "files": [
+    {
+     "name": "orochi-p1.bin",
+     "size": 1048576,
+     "crc": "6dcb2946",
+     "optional": false
+    },
+    {
+     "name": "orochi-p21.bin",
+     "size": 2097152,
+     "crc": "6e1c4d8c",
+     "optional": false
+    },
+    {
+     "name": "orochi-p29.bin",
+     "size": 2097152,
+     "crc": "4c7c0221",
+     "optional": false
+    },
+    {
+     "name": "orochi-s1.bin",
+     "size": 131072,
+     "crc": "4ee2149a",
+     "optional": false
+    },
+    {
+     "name": "orochi-c1.bin",
+     "size": 16777216,
+     "crc": "f13e841c",
+     "optional": false
+    },
+    {
+     "name": "orochi-c2.bin",
+     "size": 16777216,
+     "crc": "2db1f6d3",
+     "optional": false
+    },
+    {
+     "name": "orochi-c51.bin",
+     "size": 2097152,
+     "crc": "a90340cb",
+     "optional": false
+    },
+    {
+     "name": "orochi-c61.bin",
+     "size": 2097152,
+     "crc": "188e351a",
+     "optional": false
+    },
+    {
+     "name": "orochi-c52.bin",
+     "size": 2097152,
+     "crc": "d4eec50a",
+     "optional": false
+    },
+    {
+     "name": "orochi-c62.bin",
+     "size": 2097152,
+     "crc": "031b1ad5",
+     "optional": false
+    },
+    {
+     "name": "orochi-m1.bin",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "orochi-v1.bin",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "orochi-v2.bin",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "orochi-v3.bin",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97pla",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 Chongchu Jianghu Plus 2003 (bootleg, set 2)",
+   "files": [
+    {
+     "name": "kf97-p1a.bin",
+     "size": 1048576,
+     "crc": "035911c5",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    },
+    {
+     "name": "kf97-s1a.bin",
+     "size": 131072,
+     "crc": "4ee2149a",
+     "optional": false
+    },
+    {
+     "name": "232-c1.c1",
+     "size": 8388608,
+     "crc": "5f8bf0a1",
+     "optional": false
+    },
+    {
+     "name": "232-c2.c2",
+     "size": 8388608,
+     "crc": "e4d45c81",
+     "optional": false
+    },
+    {
+     "name": "232-c3.c3",
+     "size": 8388608,
+     "crc": "581d6618",
+     "optional": false
+    },
+    {
+     "name": "232-c4.c4",
+     "size": 8388608,
+     "crc": "49bb1e68",
+     "optional": false
+    },
+    {
+     "name": "232-c5.c5",
+     "size": 4194304,
+     "crc": "34fc4e51",
+     "optional": false
+    },
+    {
+     "name": "232-c6.c6",
+     "size": 4194304,
+     "crc": "4ff4d47b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97plc",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 Plus (Enhanced, Hack)",
+   "files": [
+    {
+     "name": "232-p1plc.p1",
+     "size": 1048576,
+     "crc": "677ce06d",
+     "optional": false
+    },
+    {
+     "name": "232-p2plc.sp2",
+     "size": 4194304,
+     "crc": "000c6683",
+     "optional": false
+    },
+    {
+     "name": "232-s1plc.s1",
+     "size": 131072,
+     "crc": "dd7d3b98",
+     "optional": false
+    },
+    {
+     "name": "232-c1plc.c1",
+     "size": 8388608,
+     "crc": "fdfa1933",
+     "optional": false
+    },
+    {
+     "name": "232-c2plc.c2",
+     "size": 8388608,
+     "crc": "ebd8a2c0",
+     "optional": false
+    },
+    {
+     "name": "232-c3st.c3",
+     "size": 8388608,
+     "crc": "b092e64f",
+     "optional": false
+    },
+    {
+     "name": "232-c4st.c4",
+     "size": 8388608,
+     "crc": "d25e8a04",
+     "optional": false
+    },
+    {
+     "name": "232-c5cbt.c5",
+     "size": 4194304,
+     "crc": "6fe02054",
+     "optional": false
+    },
+    {
+     "name": "232-c6cbt.c6",
+     "size": 4194304,
+     "crc": "0f96c84a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97plh",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 Plus (Hack)",
+   "files": [
+    {
+     "name": "kf97-p1ph.bin",
+     "size": 1048576,
+     "crc": "f24cc135",
+     "optional": false
+    },
+    {
+     "name": "kf97-p2p.bin",
+     "size": 4194304,
+     "crc": "5502b020",
+     "optional": false
+    },
+    {
+     "name": "kf97-s1p.bin",
+     "size": 131072,
+     "crc": "73254270",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97pls",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 Plus (bootleg)",
+   "files": [
+    {
+     "name": "kf97-p1p.bin",
+     "size": 1048576,
+     "crc": "c01fda46",
+     "optional": false
+    },
+    {
+     "name": "kf97-p2p.bin",
+     "size": 4194304,
+     "crc": "5502b020",
+     "optional": false
+    },
+    {
+     "name": "kf97-s1p.bin",
+     "size": 131072,
+     "crc": "73254270",
+     "optional": false
+    },
+    {
+     "name": "232-c1.c1",
+     "size": 8388608,
+     "crc": "5f8bf0a1",
+     "optional": false
+    },
+    {
+     "name": "232-c2.c2",
+     "size": 8388608,
+     "crc": "e4d45c81",
+     "optional": false
+    },
+    {
+     "name": "232-c3.c3",
+     "size": 8388608,
+     "crc": "581d6618",
+     "optional": false
+    },
+    {
+     "name": "232-c4.c4",
+     "size": 8388608,
+     "crc": "49bb1e68",
+     "optional": false
+    },
+    {
+     "name": "232-c5.c5",
+     "size": 4194304,
+     "crc": "34fc4e51",
+     "optional": false
+    },
+    {
+     "name": "232-c6.c6",
+     "size": 4194304,
+     "crc": "4ff4d47b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97pm",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Practice Mode, Hack)",
+   "files": [
+    {
+     "name": "232-p1pm.p1",
+     "size": 1048576,
+     "crc": "34ccabae",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ps",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Imitation Playstation final improved version 2016-10-29)",
+   "files": [
+    {
+     "name": "232-p1ps.p1",
+     "size": 1048576,
+     "crc": "fc25feec",
+     "optional": false
+    },
+    {
+     "name": "232-p2ps.sp2",
+     "size": 4194304,
+     "crc": "90723643",
+     "optional": false
+    },
+    {
+     "name": "232-c1ps.c1",
+     "size": 8388608,
+     "crc": "748ade86",
+     "optional": false
+    },
+    {
+     "name": "232-c2ps.c2",
+     "size": 8388608,
+     "crc": "3270fa6e",
+     "optional": false
+    },
+    {
+     "name": "232-c5ps.c5",
+     "size": 4194304,
+     "crc": "47711a8c",
+     "optional": false
+    },
+    {
+     "name": "232-c6ps.c6",
+     "size": 4194304,
+     "crc": "6703a48a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97rc",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Random Combo, Hack, Ver. 2010)",
+   "files": [
+    {
+     "name": "232-p1rc.p1",
+     "size": 1048576,
+     "crc": "1d476235",
+     "optional": false
+    },
+    {
+     "name": "232-p2rc.sp2",
+     "size": 4194304,
+     "crc": "406e4a4b",
+     "optional": false
+    },
+    {
+     "name": "232-s1cb.s1",
+     "size": 131072,
+     "crc": "d4957067",
+     "optional": false
+    },
+    {
+     "name": "232-c1rc.c1",
+     "size": 8388608,
+     "crc": "e2fe7d7a",
+     "optional": false
+    },
+    {
+     "name": "232-c2rc.c2",
+     "size": 8388608,
+     "crc": "d0746893",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97rm",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Randomized, Hack)",
+   "files": [
+    {
+     "name": "232-p1rm.p1",
+     "size": 1048576,
+     "crc": "4c597fda",
+     "optional": false
+    },
+    {
+     "name": "232-p2rm.sp2",
+     "size": 4194304,
+     "crc": "0410b42e",
+     "optional": false
+    },
+    {
+     "name": "232-s1rm.s1",
+     "size": 131072,
+     "crc": "53b57ce2",
+     "optional": false
+    },
+    {
+     "name": "232-c1st.c1",
+     "size": 8388608,
+     "crc": "57633aca",
+     "optional": false
+    },
+    {
+     "name": "232-c2st.c2",
+     "size": 8388608,
+     "crc": "831ec266",
+     "optional": false
+    },
+    {
+     "name": "232-c3st.c3",
+     "size": 8388608,
+     "crc": "b092e64f",
+     "optional": false
+    },
+    {
+     "name": "232-c4st.c4",
+     "size": 8388608,
+     "crc": "d25e8a04",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97sp",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Special, Hack)",
+   "files": [
+    {
+     "name": "232-p1sp.p1",
+     "size": 1048576,
+     "crc": "a511714d",
+     "optional": false
+    },
+    {
+     "name": "232-p2sp.sp2",
+     "size": 4194304,
+     "crc": "d9e51750",
+     "optional": false
+    },
+    {
+     "name": "232-s1sp.s1",
+     "size": 131072,
+     "crc": "ba445f53",
+     "optional": false
+    },
+    {
+     "name": "232-c1sp.c1",
+     "size": 8388608,
+     "crc": "b7f5a3b9",
+     "optional": false
+    },
+    {
+     "name": "232-c2sp.c2",
+     "size": 8388608,
+     "crc": "959d6d78",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97st",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Strengthen Innovation, Hack)",
+   "files": [
+    {
+     "name": "232-p1st.p1",
+     "size": 1048576,
+     "crc": "4d4dfd30",
+     "optional": false
+    },
+    {
+     "name": "232-p2st.sp2",
+     "size": 4194304,
+     "crc": "f144c697",
+     "optional": false
+    },
+    {
+     "name": "232-c1st.c1",
+     "size": 8388608,
+     "crc": "57633aca",
+     "optional": false
+    },
+    {
+     "name": "232-c2st.c2",
+     "size": 8388608,
+     "crc": "831ec266",
+     "optional": false
+    },
+    {
+     "name": "232-c3st.c3",
+     "size": 8388608,
+     "crc": "b092e64f",
+     "optional": false
+    },
+    {
+     "name": "232-c4st.c4",
+     "size": 8388608,
+     "crc": "d25e8a04",
+     "optional": false
+    },
+    {
+     "name": "232-c5st.c5",
+     "size": 4194304,
+     "crc": "91771218",
+     "optional": false
+    },
+    {
+     "name": "232-c6st.c6",
+     "size": 4194304,
+     "crc": "55a1bf39",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97t",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Optimized, Hack)",
+   "files": [
+    {
+     "name": "232-p1t.p1",
+     "size": 1048576,
+     "crc": "45834e9b",
+     "optional": false
+    },
+    {
+     "name": "232-p2t.sp2",
+     "size": 4194304,
+     "crc": "d9e51750",
+     "optional": false
+    },
+    {
+     "name": "232-c1t.c1",
+     "size": 8388608,
+     "crc": "b7f5a3b9",
+     "optional": false
+    },
+    {
+     "name": "232-c2t.c2",
+     "size": 8388608,
+     "crc": "959d6d78",
+     "optional": false
+    },
+    {
+     "name": "232-p1t.dif",
+     "size": 1048576,
+     "crc": "b162219a",
+     "optional": false
+    },
+    {
+     "name": "232-p2t.dif",
+     "size": 4194304,
+     "crc": "a5e6d358",
+     "optional": false
+    },
+    {
+     "name": "232-s1t.dif",
+     "size": 131072,
+     "crc": "18c4f447",
+     "optional": false
+    },
+    {
+     "name": "232-c1t.dif",
+     "size": 8388608,
+     "crc": "29a75f37",
+     "optional": false
+    },
+    {
+     "name": "232-c2t.dif",
+     "size": 8388608,
+     "crc": "5f5506f4",
+     "optional": false
+    },
+    {
+     "name": "232-c5t.dif",
+     "size": 8388608,
+     "crc": "30abf231",
+     "optional": false
+    },
+    {
+     "name": "232-c6t.dif",
+     "size": 8388608,
+     "crc": "67d28823",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ts",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Battle with Orochi, v1.2, Hack)",
+   "files": [
+    {
+     "name": "232-p1ts.p1",
+     "size": 1048576,
+     "crc": "9a56d828",
+     "optional": false
+    },
+    {
+     "name": "232-p2ts.sp2",
+     "size": 4194304,
+     "crc": "6aacb6f3",
+     "optional": false
+    },
+    {
+     "name": "232-s1ts.s1",
+     "size": 131072,
+     "crc": "a7d2ea6d",
+     "optional": false
+    },
+    {
+     "name": "232-c5ts.c5",
+     "size": 4194304,
+     "crc": "8174fdf5",
+     "optional": false
+    },
+    {
+     "name": "232-c6ts.c6",
+     "size": 4194304,
+     "crc": "32d5aa6a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97ubp",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Ultimate Battle Plus, Hack)",
+   "files": [
+    {
+     "name": "232-p1ubp.p1",
+     "size": 1048576,
+     "crc": "8490e92e",
+     "optional": false
+    },
+    {
+     "name": "232-p2ubp.sp2",
+     "size": 4194304,
+     "crc": "33482c71",
+     "optional": false
+    },
+    {
+     "name": "232-s1ubp.s1",
+     "size": 131072,
+     "crc": "0016c83a",
+     "optional": false
+    },
+    {
+     "name": "232-c1ubp.c1",
+     "size": 8388608,
+     "crc": "e1b11416",
+     "optional": false
+    },
+    {
+     "name": "232-c2ubp.c2",
+     "size": 8388608,
+     "crc": "0ea40438",
+     "optional": false
+    },
+    {
+     "name": "232-c3st.c3",
+     "size": 8388608,
+     "crc": "b092e64f",
+     "optional": false
+    },
+    {
+     "name": "232-c4st.c4",
+     "size": 8388608,
+     "crc": "d25e8a04",
+     "optional": false
+    },
+    {
+     "name": "232-c5ubp.c5",
+     "size": 8388608,
+     "crc": "8572aa61",
+     "optional": false
+    },
+    {
+     "name": "232-c6ubp.c6",
+     "size": 8388608,
+     "crc": "dcef5f41",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2ubp.v2",
+     "size": 4194304,
+     "crc": "92b14f89",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kof97xt",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "The King of Fighters '97 (Final Battle, Hack)",
+   "files": [
+    {
+     "name": "232-p1xt.p1",
+     "size": 1048576,
+     "crc": "2e4f4e3b",
+     "optional": false
+    },
+    {
+     "name": "232-p2xt.sp2",
+     "size": 4194304,
+     "crc": "6d4503ce",
+     "optional": false
+    },
+    {
+     "name": "232-s1xt.s1",
+     "size": 131072,
+     "crc": "d6fe166f",
+     "optional": false
+    },
+    {
+     "name": "232-c1xt.c1",
+     "size": 8388608,
+     "crc": "d504bf4a",
+     "optional": false
+    },
+    {
+     "name": "232-c2xt.c2",
+     "size": 8388608,
+     "crc": "942ea708",
+     "optional": false
+    },
+    {
+     "name": "232-c5xt.c5",
+     "size": 8388608,
+     "crc": "c1bd2375",
+     "optional": false
+    },
+    {
+     "name": "232-c6xt.c6",
+     "size": 8388608,
+     "crc": "a7c8506a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kog",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "King of Gladiator (bootleg of The King of Fighters '97)",
+   "files": [
+    {
+     "name": "5232-p1.bin",
+     "size": 2097152,
+     "crc": "d2413ec6",
+     "optional": false
+    },
+    {
+     "name": "232-p2.sp2",
+     "size": 4194304,
+     "crc": "158b23f6",
+     "optional": false
+    },
+    {
+     "name": "5232-s1.bin",
+     "size": 131072,
+     "crc": "0bef69da",
+     "optional": false
+    },
+    {
+     "name": "5232-c1a.bin",
+     "size": 8388608,
+     "crc": "4eab9b0a",
+     "optional": false
+    },
+    {
+     "name": "5232-c2a.bin",
+     "size": 8388608,
+     "crc": "697f8fd0",
+     "optional": false
+    },
+    {
+     "name": "5232-c1b.bin",
+     "size": 8388608,
+     "crc": "1143fdf3",
+     "optional": false
+    },
+    {
+     "name": "5232-c2b.bin",
+     "size": 8388608,
+     "crc": "ea82cf8f",
+     "optional": false
+    },
+    {
+     "name": "5232-c3.bin",
+     "size": 4194304,
+     "crc": "abd1be07",
+     "optional": false
+    },
+    {
+     "name": "5232-c4.bin",
+     "size": 4194304,
+     "crc": "d2bd967b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "kogplus",
+   "parent": "kof97",
+   "base": "kof97",
+   "title": "King of Gladiator Plus (The King of Fighters '97 bootleg)",
+   "files": [
+    {
+     "name": "5232-p1p.bin",
+     "size": 2097152,
+     "crc": "0338f453",
+     "optional": false
+    },
+    {
+     "name": "5232-p2p.bin",
+     "size": 4194304,
+     "crc": "5502b020",
+     "optional": false
+    },
+    {
+     "name": "5232-s1p.bin",
+     "size": 131072,
+     "crc": "6271e9ba",
+     "optional": false
+    },
+    {
+     "name": "5232-c1a.bin",
+     "size": 8388608,
+     "crc": "4eab9b0a",
+     "optional": false
+    },
+    {
+     "name": "5232-c2a.bin",
+     "size": 8388608,
+     "crc": "697f8fd0",
+     "optional": false
+    },
+    {
+     "name": "5232-c1b.bin",
+     "size": 8388608,
+     "crc": "1143fdf3",
+     "optional": false
+    },
+    {
+     "name": "5232-c2b.bin",
+     "size": 8388608,
+     "crc": "ea82cf8f",
+     "optional": false
+    },
+    {
+     "name": "5232-c3.bin",
+     "size": 4194304,
+     "crc": "abd1be07",
+     "optional": false
+    },
+    {
+     "name": "5232-c4.bin",
+     "size": 4194304,
+     "crc": "d2bd967b",
+     "optional": false
+    },
+    {
+     "name": "232-m1.m1",
+     "size": 131072,
+     "crc": "45348747",
+     "optional": false
+    },
+    {
+     "name": "232-v1.v1",
+     "size": 4194304,
+     "crc": "22a2b5b5",
+     "optional": false
+    },
+    {
+     "name": "232-v2.v2",
+     "size": 4194304,
+     "crc": "2304e744",
+     "optional": false
+    },
+    {
+     "name": "232-v3.v3",
+     "size": 4194304,
+     "crc": "759eb954",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms21v2",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "241-p11v2.p1",
+     "size": 1048576,
+     "crc": "c3efed6c",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms31v2",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "ms31v2.neo-sma",
+     "size": 262144,
+     "crc": "1c090500",
+     "optional": false
+    },
+    {
+     "name": "256-pg1.p1",
+     "size": 4194304,
+     "crc": "b07edfd5",
+     "optional": false
+    },
+    {
+     "name": "256-p21v2.p2",
+     "size": 4194304,
+     "crc": "45db3f1d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms3dbpls",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Double Enemy, Hack)",
+   "files": [
+    {
+     "name": "256-p1dbp.p1",
+     "size": 1048576,
+     "crc": "2922bacd",
+     "optional": false
+    },
+    {
+     "name": "256-p2dbp.sp2",
+     "size": 4194304,
+     "crc": "d5613fc9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms41v2",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "263-p11v2.p1",
+     "size": 1048576,
+     "crc": "dddca463",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms4plus",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 Plus (bootleg)",
+   "files": [
+    {
+     "name": "ms4-p1p.bin",
+     "size": 1048576,
+     "crc": "806a6e04",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    },
+    {
+     "name": "ms4-s1p.bin",
+     "size": 131072,
+     "crc": "07ff87ce",
+     "optional": false
+    },
+    {
+     "name": "263-c1.c1",
+     "size": 8388608,
+     "crc": "84865f8a",
+     "optional": false
+    },
+    {
+     "name": "263-c2.c2",
+     "size": 8388608,
+     "crc": "81df97f2",
+     "optional": false
+    },
+    {
+     "name": "263-c3.c3",
+     "size": 8388608,
+     "crc": "1a343323",
+     "optional": false
+    },
+    {
+     "name": "263-c4.c4",
+     "size": 8388608,
+     "crc": "942cfb44",
+     "optional": false
+    },
+    {
+     "name": "263-c5.c5",
+     "size": 8388608,
+     "crc": "a748854f",
+     "optional": false
+    },
+    {
+     "name": "263-c6.c6",
+     "size": 8388608,
+     "crc": "5c8ba116",
+     "optional": false
+    },
+    {
+     "name": "263-m1.m1",
+     "size": 131072,
+     "crc": "46ac8228",
+     "optional": false
+    },
+    {
+     "name": "263-v1.v1",
+     "size": 8388608,
+     "crc": "01e9b9cd",
+     "optional": false
+    },
+    {
+     "name": "263-v2.v2",
+     "size": 8388608,
+     "crc": "4ab2bf81",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms51v2",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "268-p11v2.p1",
+     "size": 6291456,
+     "crc": "953d6e11",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms5esr",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Double Enemy, Hack)",
+   "files": [
+    {
+     "name": "268-p1esr.p1",
+     "size": 6291456,
+     "crc": "8f8327a1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms5plus",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 Plus (bootleg)",
+   "files": [
+    {
+     "name": "ms5-p1p.bin",
+     "size": 1048576,
+     "crc": "106b276f",
+     "optional": false
+    },
+    {
+     "name": "ms5-p2p.bin",
+     "size": 2097152,
+     "crc": "d6a458e8",
+     "optional": false
+    },
+    {
+     "name": "ms5-p3p.bin",
+     "size": 2097152,
+     "crc": "439ec031",
+     "optional": false
+    },
+    {
+     "name": "ms5-s1p.bin",
+     "size": 131072,
+     "crc": "21e04432",
+     "optional": false
+    },
+    {
+     "name": "268-c1c.c1",
+     "size": 8388608,
+     "crc": "ab7c389a",
+     "optional": false
+    },
+    {
+     "name": "268-c2c.c2",
+     "size": 8388608,
+     "crc": "3560881b",
+     "optional": false
+    },
+    {
+     "name": "268-c3c.c3",
+     "size": 8388608,
+     "crc": "3af955ea",
+     "optional": false
+    },
+    {
+     "name": "268-c4c.c4",
+     "size": 8388608,
+     "crc": "c329c373",
+     "optional": false
+    },
+    {
+     "name": "268-c5c.c5",
+     "size": 8388608,
+     "crc": "959c8177",
+     "optional": false
+    },
+    {
+     "name": "268-c6c.c6",
+     "size": 8388608,
+     "crc": "010a831b",
+     "optional": false
+    },
+    {
+     "name": "268-c7c.c7",
+     "size": 8388608,
+     "crc": "6d72a969",
+     "optional": false
+    },
+    {
+     "name": "268-c8c.c8",
+     "size": 8388608,
+     "crc": "551d720e",
+     "optional": false
+    },
+    {
+     "name": "268-m1.m1",
+     "size": 524288,
+     "crc": "4a5a6e0e",
+     "optional": false
+    },
+    {
+     "name": "268-v1c.v1",
+     "size": 8388608,
+     "crc": "ae31d60c",
+     "optional": false
+    },
+    {
+     "name": "268-v2c.v2",
+     "size": 8388608,
+     "crc": "c40613ed",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms5plush",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Plus, Hack)",
+   "files": [
+    {
+     "name": "268-p1ph.p1",
+     "size": 1048576,
+     "crc": "612b6005",
+     "optional": false
+    },
+    {
+     "name": "268-p2ph.p2",
+     "size": 2097152,
+     "crc": "9a644e2a",
+     "optional": false
+    },
+    {
+     "name": "268-p3ph.p3",
+     "size": 2097152,
+     "crc": "1bd24469",
+     "optional": false
+    },
+    {
+     "name": "268-s1ph.s1",
+     "size": 131072,
+     "crc": "99ef577b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ms5sgf",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Remake FC2, Hack)",
+   "files": [
+    {
+     "name": "268-p1sgf.p1",
+     "size": 6291456,
+     "crc": "b1fbb850",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug",
+   "parent": null,
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001",
+   "files": [
+    {
+     "name": "201-p1.p1",
+     "size": 2097152,
+     "crc": "08d8daa5",
+     "optional": false
+    },
+    {
+     "name": "201-s1.s1",
+     "size": 131072,
+     "crc": "2f55958d",
+     "optional": false
+    },
+    {
+     "name": "201-c1.c1",
+     "size": 4194304,
+     "crc": "72813676",
+     "optional": false
+    },
+    {
+     "name": "201-c2.c2",
+     "size": 4194304,
+     "crc": "96f62574",
+     "optional": false
+    },
+    {
+     "name": "201-c3.c3",
+     "size": 4194304,
+     "crc": "5121456a",
+     "optional": false
+    },
+    {
+     "name": "201-c4.c4",
+     "size": 4194304,
+     "crc": "f4ad59a3",
+     "optional": false
+    },
+    {
+     "name": "201-m1.m1",
+     "size": 131072,
+     "crc": "c28b3253",
+     "optional": false
+    },
+    {
+     "name": "201-v1.v1",
+     "size": 4194304,
+     "crc": "23d22ed1",
+     "optional": false
+    },
+    {
+     "name": "201-v2.v2",
+     "size": 4194304,
+     "crc": "472cf9db",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug1v2",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "201-p11v2.p1",
+     "size": 1048576,
+     "crc": "18301e60",
+     "optional": false
+    },
+    {
+     "name": "201-p2d.sp2",
+     "size": 1048576,
+     "crc": "c4d10926",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2",
+   "parent": null,
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (NGM-2410 ~ NGH-2410)",
+   "files": [
+    {
+     "name": "241-p1.p1",
+     "size": 1048576,
+     "crc": "2a53c5da",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    },
+    {
+     "name": "241-s1.s1",
+     "size": 131072,
+     "crc": "f3d32f0f",
+     "optional": false
+    },
+    {
+     "name": "241-c1.c1",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c2.c2",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c3.c3",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c4.c4",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c5.c5",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c6.c6",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c7.c7",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c8.c8",
+     "size": 4194304,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "241-c1.c1",
+     "size": 8388608,
+     "crc": "394b5e0d",
+     "optional": false
+    },
+    {
+     "name": "241-c2.c2",
+     "size": 8388608,
+     "crc": "e5806221",
+     "optional": false
+    },
+    {
+     "name": "241-c3.c3",
+     "size": 8388608,
+     "crc": "9f6bfa6f",
+     "optional": false
+    },
+    {
+     "name": "241-c4.c4",
+     "size": 8388608,
+     "crc": "7d3e306f",
+     "optional": false
+    },
+    {
+     "name": "241-m1.m1",
+     "size": 131072,
+     "crc": "94520ebd",
+     "optional": false
+    },
+    {
+     "name": "241-v1.v1",
+     "size": 4194304,
+     "crc": "99ec20e8",
+     "optional": false
+    },
+    {
+     "name": "241-v2.v2",
+     "size": 4194304,
+     "crc": "ecb16799",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2ct",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Survival, Hack)",
+   "files": [
+    {
+     "name": "241-p1ct.p1",
+     "size": 1048576,
+     "crc": "78ad6864",
+     "optional": false
+    },
+    {
+     "name": "241-p2ct.sp2",
+     "size": 2097152,
+     "crc": "fe36f353",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2dd",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Starlight, Hack)",
+   "files": [
+    {
+     "name": "241-p1dd.p1",
+     "size": 1048576,
+     "crc": "da22fd32",
+     "optional": false
+    },
+    {
+     "name": "241-p2dd.sp2",
+     "size": 2097152,
+     "crc": "89adbf97",
+     "optional": false
+    },
+    {
+     "name": "241-c3dd.c3",
+     "size": 8388608,
+     "crc": "c54c2548",
+     "optional": false
+    },
+    {
+     "name": "241-c4dd.c4",
+     "size": 8388608,
+     "crc": "f8168521",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2dg",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "241-p1dg.p1",
+     "size": 1048576,
+     "crc": "00c455e7",
+     "optional": false
+    },
+    {
+     "name": "241-p2dg.sp2",
+     "size": 2097152,
+     "crc": "1bf6b12a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2eg",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Extraction Green Turbo, Hack)",
+   "files": [
+    {
+     "name": "241-p1eg.p1",
+     "size": 1048576,
+     "crc": "bb312904",
+     "optional": false
+    },
+    {
+     "name": "241-p2eg.sp2",
+     "size": 3145728,
+     "crc": "abf37360",
+     "optional": false
+    },
+    {
+     "name": "241-s1eg.s1",
+     "size": 131072,
+     "crc": "d983067f",
+     "optional": false
+    },
+    {
+     "name": "241-c5eg.c5",
+     "size": 8388608,
+     "crc": "cae9af4f",
+     "optional": false
+    },
+    {
+     "name": "241-c6eg.c6",
+     "size": 8388608,
+     "crc": "7cf51055",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2fm",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Friendly Fire FC2, Hack)",
+   "files": [
+    {
+     "name": "241-p1fm.p1",
+     "size": 1048576,
+     "crc": "487173f6",
+     "optional": false
+    },
+    {
+     "name": "241-p2fm.sp2",
+     "size": 2097152,
+     "crc": "37a118fc",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2p",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Weapon Storage, Hack)",
+   "files": [
+    {
+     "name": "241-p1p.p1",
+     "size": 1048576,
+     "crc": "fe803784",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2r",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II (Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "241-p1r.p1",
+     "size": 1048576,
+     "crc": "f882d50d",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2t",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 Turbo (NGM-9410) (hack)",
+   "files": [
+    {
+     "name": "941-p1.p1",
+     "size": 1048576,
+     "crc": "df5d6fbc",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    },
+    {
+     "name": "241-s1.s1",
+     "size": 131072,
+     "crc": "f3d32f0f",
+     "optional": false
+    },
+    {
+     "name": "241-c1.c1",
+     "size": 8388608,
+     "crc": "394b5e0d",
+     "optional": false
+    },
+    {
+     "name": "241-c2.c2",
+     "size": 8388608,
+     "crc": "e5806221",
+     "optional": false
+    },
+    {
+     "name": "241-c3.c3",
+     "size": 8388608,
+     "crc": "9f6bfa6f",
+     "optional": false
+    },
+    {
+     "name": "241-c4.c4",
+     "size": 8388608,
+     "crc": "7d3e306f",
+     "optional": false
+    },
+    {
+     "name": "241-m1.m1",
+     "size": 131072,
+     "crc": "94520ebd",
+     "optional": false
+    },
+    {
+     "name": "241-v1.v1",
+     "size": 4194304,
+     "crc": "99ec20e8",
+     "optional": false
+    },
+    {
+     "name": "241-v2.v2",
+     "size": 4194304,
+     "crc": "ecb16799",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug2unity",
+   "parent": "mslug2",
+   "base": "mslug2",
+   "title": "Metal Slug 2 - Super Vehicle-001/II Unity (Added Timer Ver. 2021-01-22)",
+   "files": [
+    {
+     "name": "241-p1uni.p1",
+     "size": 1048576,
+     "crc": "1562cf23",
+     "optional": false
+    },
+    {
+     "name": "241-p2.sp2",
+     "size": 2097152,
+     "crc": "38883f44",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3",
+   "parent": null,
+   "base": "mslug3",
+   "title": "Metal Slug 3 (NGM-2560)",
+   "files": [
+    {
+     "name": "green.neo-sma",
+     "size": 262144,
+     "crc": "9cd55736",
+     "optional": false
+    },
+    {
+     "name": "256-pg1.p1",
+     "size": 4194304,
+     "crc": "b07edfd5",
+     "optional": false
+    },
+    {
+     "name": "256-pg2.p2",
+     "size": 4194304,
+     "crc": "6097c26b",
+     "optional": false
+    },
+    {
+     "name": "256-c1.c1",
+     "size": 8388608,
+     "crc": "5a79c34e",
+     "optional": false
+    },
+    {
+     "name": "256-c2.c2",
+     "size": 8388608,
+     "crc": "944c362c",
+     "optional": false
+    },
+    {
+     "name": "256-c3.c3",
+     "size": 8388608,
+     "crc": "6e69d36f",
+     "optional": false
+    },
+    {
+     "name": "256-c4.c4",
+     "size": 8388608,
+     "crc": "b755b4eb",
+     "optional": false
+    },
+    {
+     "name": "256-c5.c5",
+     "size": 8388608,
+     "crc": "7aacab47",
+     "optional": false
+    },
+    {
+     "name": "256-c6.c6",
+     "size": 8388608,
+     "crc": "c698fd5d",
+     "optional": false
+    },
+    {
+     "name": "256-c7.c7",
+     "size": 8388608,
+     "crc": "cfceddd2",
+     "optional": false
+    },
+    {
+     "name": "256-c8.c8",
+     "size": 8388608,
+     "crc": "4d9be34c",
+     "optional": false
+    },
+    {
+     "name": "256-m1.m1",
+     "size": 524288,
+     "crc": "eaeec116",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4.v4",
+     "size": 4194304,
+     "crc": "9b4b22d4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3a",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (NGM-2560, earlier)",
+   "files": [
+    {
+     "name": "white.neo-sma",
+     "size": 262144,
+     "crc": "c60d29b2",
+     "optional": false
+    },
+    {
+     "name": "256.p1",
+     "size": 4194304,
+     "crc": "a1177628",
+     "optional": false
+    },
+    {
+     "name": "256.p2",
+     "size": 4194304,
+     "crc": "9b659826",
+     "optional": false
+    },
+    {
+     "name": "256-c1.c1",
+     "size": 8388608,
+     "crc": "5a79c34e",
+     "optional": false
+    },
+    {
+     "name": "256-c2.c2",
+     "size": 8388608,
+     "crc": "944c362c",
+     "optional": false
+    },
+    {
+     "name": "256-c3.c3",
+     "size": 8388608,
+     "crc": "6e69d36f",
+     "optional": false
+    },
+    {
+     "name": "256-c4.c4",
+     "size": 8388608,
+     "crc": "b755b4eb",
+     "optional": false
+    },
+    {
+     "name": "256-c5.c5",
+     "size": 8388608,
+     "crc": "7aacab47",
+     "optional": false
+    },
+    {
+     "name": "256-c6.c6",
+     "size": 8388608,
+     "crc": "c698fd5d",
+     "optional": false
+    },
+    {
+     "name": "256-c7.c7",
+     "size": 8388608,
+     "crc": "cfceddd2",
+     "optional": false
+    },
+    {
+     "name": "256-c8.c8",
+     "size": 8388608,
+     "crc": "4d9be34c",
+     "optional": false
+    },
+    {
+     "name": "256-m1.m1",
+     "size": 524288,
+     "crc": "eaeec116",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4.v4",
+     "size": 4194304,
+     "crc": "9b4b22d4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3b6",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 6 (bootleg of Metal Slug 3)",
+   "files": [
+    {
+     "name": "299-p1.bin",
+     "size": 2097152,
+     "crc": "5f2fe228",
+     "optional": false
+    },
+    {
+     "name": "299-p2.bin",
+     "size": 4194304,
+     "crc": "193fa835",
+     "optional": false
+    },
+    {
+     "name": "299-s1.bin",
+     "size": 131072,
+     "crc": "6f8b9635",
+     "optional": false
+    },
+    {
+     "name": "256-c1.c1",
+     "size": 8388608,
+     "crc": "5a79c34e",
+     "optional": false
+    },
+    {
+     "name": "256-c2.c2",
+     "size": 8388608,
+     "crc": "944c362c",
+     "optional": false
+    },
+    {
+     "name": "256-c3.c3",
+     "size": 8388608,
+     "crc": "6e69d36f",
+     "optional": false
+    },
+    {
+     "name": "256-c4.c4",
+     "size": 8388608,
+     "crc": "b755b4eb",
+     "optional": false
+    },
+    {
+     "name": "256-c5.c5",
+     "size": 8388608,
+     "crc": "7aacab47",
+     "optional": false
+    },
+    {
+     "name": "256-c6.c6",
+     "size": 8388608,
+     "crc": "c698fd5d",
+     "optional": false
+    },
+    {
+     "name": "256-c7.c7",
+     "size": 8388608,
+     "crc": "cfceddd2",
+     "optional": false
+    },
+    {
+     "name": "256-c8.c8",
+     "size": 8388608,
+     "crc": "4d9be34c",
+     "optional": false
+    },
+    {
+     "name": "256-m1.m1",
+     "size": 524288,
+     "crc": "eaeec116",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4.v4",
+     "size": 4194304,
+     "crc": "9b4b22d4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3c",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "256-p1c.p1",
+     "size": 1048576,
+     "crc": "05c99714",
+     "optional": false
+    },
+    {
+     "name": "256-p2c.sp2",
+     "size": 4194304,
+     "crc": "b948a472",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3cq",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Legend, Hack)",
+   "files": [
+    {
+     "name": "256-p1cq.p1",
+     "size": 1048576,
+     "crc": "84241993",
+     "optional": false
+    },
+    {
+     "name": "256-p2cq.sp2",
+     "size": 4194304,
+     "crc": "09607601",
+     "optional": false
+    },
+    {
+     "name": "256-c7cq.c7",
+     "size": 8388608,
+     "crc": "2d54bf3c",
+     "optional": false
+    },
+    {
+     "name": "256-c8cq.c8",
+     "size": 8388608,
+     "crc": "e7f00844",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3cqi",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Legendary Unlimited Fire v7.5, Hack)",
+   "files": [
+    {
+     "name": "256-p1cqi.p1",
+     "size": 1048576,
+     "crc": "8e877210",
+     "optional": false
+    },
+    {
+     "name": "256-p2cqi.sp2",
+     "size": 8388608,
+     "crc": "8b06f167",
+     "optional": false
+    },
+    {
+     "name": "256-c5cqi.c5",
+     "size": 8388608,
+     "crc": "0c5abf1d",
+     "optional": false
+    },
+    {
+     "name": "256-c6cqi.c6",
+     "size": 8388608,
+     "crc": "004da62a",
+     "optional": false
+    },
+    {
+     "name": "256-c7cqi.c7",
+     "size": 8388608,
+     "crc": "59567ee7",
+     "optional": false
+    },
+    {
+     "name": "256-c8cqi.c8",
+     "size": 8388608,
+     "crc": "1f91351f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3cqt",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Legend TD v6.0, Hack)",
+   "files": [
+    {
+     "name": "256-p1cqt.p1",
+     "size": 1048576,
+     "crc": "ebb9e075",
+     "optional": false
+    },
+    {
+     "name": "256-p2cqt.sp2",
+     "size": 8388608,
+     "crc": "4d38e566",
+     "optional": false
+    },
+    {
+     "name": "256-c7cqt.c7",
+     "size": 8388608,
+     "crc": "ac5d0a7e",
+     "optional": false
+    },
+    {
+     "name": "256-c8cqt.c8",
+     "size": 8388608,
+     "crc": "e0018022",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3cqz",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Legendary Journey v5.0, Hack)",
+   "files": [
+    {
+     "name": "256-p1cqz.p1",
+     "size": 1048576,
+     "crc": "44b4b221",
+     "optional": false
+    },
+    {
+     "name": "256-p2cqz.sp2",
+     "size": 8388608,
+     "crc": "a6aecb08",
+     "optional": false
+    },
+    {
+     "name": "256-c7cqz.c7",
+     "size": 8388608,
+     "crc": "ac5d0a7e",
+     "optional": false
+    },
+    {
+     "name": "256-c8cqz.c8",
+     "size": 8388608,
+     "crc": "e0018022",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3dd",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Starlight, Hack)",
+   "files": [
+    {
+     "name": "256-p1dd.p1",
+     "size": 1048576,
+     "crc": "9a83cb7a",
+     "optional": false
+    },
+    {
+     "name": "256-p2dd.sp2",
+     "size": 4194304,
+     "crc": "e82fc07a",
+     "optional": false
+    },
+    {
+     "name": "256-c7dd.c7",
+     "size": 8388608,
+     "crc": "ec74423d",
+     "optional": false
+    },
+    {
+     "name": "256-c8dd.c8",
+     "size": 8388608,
+     "crc": "a9fe9b98",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3eb",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Blue, Hack)",
+   "files": [
+    {
+     "name": "ms3eb.neo-sma",
+     "size": 262144,
+     "crc": "c2dc0b28",
+     "optional": false
+    },
+    {
+     "name": "256-pg1eb.p1",
+     "size": 4194304,
+     "crc": "6ec2e58d",
+     "optional": false
+    },
+    {
+     "name": "256-pg2eb.p2",
+     "size": 4194304,
+     "crc": "faaf8cd8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3fd",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Fully Decrypted)",
+   "files": [
+    {
+     "name": "256-ph1.p1",
+     "size": 1048576,
+     "crc": "9c42ca85",
+     "optional": false
+    },
+    {
+     "name": "256-ph2.sp2",
+     "size": 4194304,
+     "crc": "1f3d8ce8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3g",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "256-p1g.p1",
+     "size": 1048576,
+     "crc": "b23bd9b7",
+     "optional": false
+    },
+    {
+     "name": "256-p2g.sp2",
+     "size": 4194304,
+     "crc": "8053a3fb",
+     "optional": false
+    },
+    {
+     "name": "256-s1g.s1",
+     "size": 131072,
+     "crc": "af90d166",
+     "optional": false
+    },
+    {
+     "name": "256-c7n.c7",
+     "size": 8388608,
+     "crc": "ed559fac",
+     "optional": false
+    },
+    {
+     "name": "256-c8n.c8",
+     "size": 8388608,
+     "crc": "1c52378b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3gw",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Onimusha Samanosuke, Hack)",
+   "files": [
+    {
+     "name": "256-p1gw.p1",
+     "size": 1048576,
+     "crc": "fafde0b4",
+     "optional": false
+    },
+    {
+     "name": "256-ph2.sp2",
+     "size": 4194304,
+     "crc": "1f3d8ce8",
+     "optional": false
+    },
+    {
+     "name": "256-m1gw.m1",
+     "size": 524288,
+     "crc": "c84d22f2",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4gw.v4",
+     "size": 4194304,
+     "crc": "b45d9a3b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3h",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (NGH-2560)",
+   "files": [
+    {
+     "name": "256-ph1.p1",
+     "size": 1048576,
+     "crc": "9c42ca85",
+     "optional": false
+    },
+    {
+     "name": "256-ph2.sp2",
+     "size": 4194304,
+     "crc": "1f3d8ce8",
+     "optional": false
+    },
+    {
+     "name": "256-c1.c1",
+     "size": 8388608,
+     "crc": "5a79c34e",
+     "optional": false
+    },
+    {
+     "name": "256-c2.c2",
+     "size": 8388608,
+     "crc": "944c362c",
+     "optional": false
+    },
+    {
+     "name": "256-c3.c3",
+     "size": 8388608,
+     "crc": "6e69d36f",
+     "optional": false
+    },
+    {
+     "name": "256-c4.c4",
+     "size": 8388608,
+     "crc": "b755b4eb",
+     "optional": false
+    },
+    {
+     "name": "256-c5.c5",
+     "size": 8388608,
+     "crc": "7aacab47",
+     "optional": false
+    },
+    {
+     "name": "256-c6.c6",
+     "size": 8388608,
+     "crc": "c698fd5d",
+     "optional": false
+    },
+    {
+     "name": "256-c7.c7",
+     "size": 8388608,
+     "crc": "cfceddd2",
+     "optional": false
+    },
+    {
+     "name": "256-c8.c8",
+     "size": 8388608,
+     "crc": "4d9be34c",
+     "optional": false
+    },
+    {
+     "name": "256-m1.m1",
+     "size": 524288,
+     "crc": "eaeec116",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4.v4",
+     "size": 4194304,
+     "crc": "9b4b22d4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3i",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Firepower Enhance, Hack)",
+   "files": [
+    {
+     "name": "ms3i.neo-sma",
+     "size": 262144,
+     "crc": "3a631f79",
+     "optional": false
+    },
+    {
+     "name": "256-pg1.p1",
+     "size": 4194304,
+     "crc": "b07edfd5",
+     "optional": false
+    },
+    {
+     "name": "256-pg2i.p2",
+     "size": 4194304,
+     "crc": "3a040bcc",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3ki",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Komorebi, Hack)",
+   "files": [
+    {
+     "name": "256-p1ki.p1",
+     "size": 1048576,
+     "crc": "16a83b0a",
+     "optional": false
+    },
+    {
+     "name": "256-p2ki.sp2",
+     "size": 4194304,
+     "crc": "57f01937",
+     "optional": false
+    },
+    {
+     "name": "256-c7dd.c7",
+     "size": 8388608,
+     "crc": "ec74423d",
+     "optional": false
+    },
+    {
+     "name": "256-c8dd.c8",
+     "size": 8388608,
+     "crc": "a9fe9b98",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3lw",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Last Bullet Remix, Hack)",
+   "files": [
+    {
+     "name": "256-p1lw.p1",
+     "size": 1048576,
+     "crc": "94527837",
+     "optional": false
+    },
+    {
+     "name": "256-p2ps.sp2",
+     "size": 4194304,
+     "crc": "08ee1fe3",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3ps",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Pigeon Slug, Hack)",
+   "files": [
+    {
+     "name": "256-p1ps.p1",
+     "size": 1048576,
+     "crc": "3f9c4361",
+     "optional": false
+    },
+    {
+     "name": "256-p2ps.sp2",
+     "size": 4194304,
+     "crc": "08ee1fe3",
+     "optional": false
+    },
+    {
+     "name": "256-c5ps.c5",
+     "size": 8388608,
+     "crc": "3dd2c01f",
+     "optional": false
+    },
+    {
+     "name": "256-c6ps.c6",
+     "size": 8388608,
+     "crc": "1ea253a8",
+     "optional": false
+    },
+    {
+     "name": "256-m1ps.m1",
+     "size": 524288,
+     "crc": "0c876e7f",
+     "optional": false
+    },
+    {
+     "name": "256-v1.v1",
+     "size": 4194304,
+     "crc": "f2690241",
+     "optional": false
+    },
+    {
+     "name": "256-v2.v2",
+     "size": 4194304,
+     "crc": "7e2a10bd",
+     "optional": false
+    },
+    {
+     "name": "256-v3.v3",
+     "size": 4194304,
+     "crc": "0eaec17c",
+     "optional": false
+    },
+    {
+     "name": "256-v4ps.v4",
+     "size": 4194304,
+     "crc": "e4421cbf",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3sc",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Survival, Hack)",
+   "files": [
+    {
+     "name": "256-p1sc.p1",
+     "size": 1048576,
+     "crc": "dc0b9622",
+     "optional": false
+    },
+    {
+     "name": "256-p2sc.sp2",
+     "size": 4194304,
+     "crc": "3e880fe2",
+     "optional": false
+    },
+    {
+     "name": "256-c7sc.c7",
+     "size": 8388608,
+     "crc": "f7a5eeeb",
+     "optional": false
+    },
+    {
+     "name": "256-c8sc.c8",
+     "size": 8388608,
+     "crc": "03c3ad8f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3sd",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Shop, Hack)",
+   "files": [
+    {
+     "name": "256-p1sd.p1",
+     "size": 1048576,
+     "crc": "e1e21cc4",
+     "optional": false
+    },
+    {
+     "name": "256-p2sd.sp2",
+     "size": 4194304,
+     "crc": "7343335b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3se",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Special, Hack)",
+   "files": [
+    {
+     "name": "256-p1se.p1",
+     "size": 1048576,
+     "crc": "46330db5",
+     "optional": false
+    },
+    {
+     "name": "256-ph2.sp2",
+     "size": 4194304,
+     "crc": "1f3d8ce8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3unity",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 Unity (Added Timer Ver. 2021-02-13)",
+   "files": [
+    {
+     "name": "unity.neo-sma",
+     "size": 262144,
+     "crc": "3c6c536b",
+     "optional": false
+    },
+    {
+     "name": "256-pg1.p1",
+     "size": 4194304,
+     "crc": "b07edfd5",
+     "optional": false
+    },
+    {
+     "name": "256-p2uni.p2",
+     "size": 4194304,
+     "crc": "ea0c22b6",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3v",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Enhanced Violence, Hack)",
+   "files": [
+    {
+     "name": "256-pg1v.p1",
+     "size": 1048576,
+     "crc": "47f9aeea",
+     "optional": false
+    },
+    {
+     "name": "256-ph2.sp2",
+     "size": 4194304,
+     "crc": "1f3d8ce8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug3zh",
+   "parent": "mslug3",
+   "base": "mslug3",
+   "title": "Metal Slug 3 (Vehicle Summon, Hack)",
+   "files": [
+    {
+     "name": "256-p1zh.p1",
+     "size": 1048576,
+     "crc": "257fa6b9",
+     "optional": false
+    },
+    {
+     "name": "256-p2zh.sp2",
+     "size": 4194304,
+     "crc": "badc753c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4",
+   "parent": null,
+   "base": "mslug4",
+   "title": "Metal Slug 4 (NGM-2630)",
+   "files": [
+    {
+     "name": "263-p1.p1",
+     "size": 1048576,
+     "crc": "27e4def3",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    },
+    {
+     "name": "263-c1.c1",
+     "size": 8388608,
+     "crc": "84865f8a",
+     "optional": false
+    },
+    {
+     "name": "263-c2.c2",
+     "size": 8388608,
+     "crc": "81df97f2",
+     "optional": false
+    },
+    {
+     "name": "263-c3.c3",
+     "size": 8388608,
+     "crc": "1a343323",
+     "optional": false
+    },
+    {
+     "name": "263-c4.c4",
+     "size": 8388608,
+     "crc": "942cfb44",
+     "optional": false
+    },
+    {
+     "name": "263-c5.c5",
+     "size": 8388608,
+     "crc": "a748854f",
+     "optional": false
+    },
+    {
+     "name": "263-c6.c6",
+     "size": 8388608,
+     "crc": "5c8ba116",
+     "optional": false
+    },
+    {
+     "name": "263-m1.m1",
+     "size": 131072,
+     "crc": "46ac8228",
+     "optional": false
+    },
+    {
+     "name": "263-v1.v1",
+     "size": 8388608,
+     "crc": "01e9b9cd",
+     "optional": false
+    },
+    {
+     "name": "263-v2.v2",
+     "size": 8388608,
+     "crc": "4ab2bf81",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4a",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (20th Anniversary, Hack)",
+   "files": [
+    {
+     "name": "263-p1a.p1",
+     "size": 1048576,
+     "crc": "0f2b0fc2",
+     "optional": false
+    },
+    {
+     "name": "263-p2a.sp2",
+     "size": 4194304,
+     "crc": "87dc01b9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4ar",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Random Ammunition, Hack)",
+   "files": [
+    {
+     "name": "263-p1ar.p1",
+     "size": 1048576,
+     "crc": "21b68d31",
+     "optional": false
+    },
+    {
+     "name": "263-p2lw.sp2",
+     "size": 5242880,
+     "crc": "7deba8eb",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4c",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "263-p1c.p1",
+     "size": 1048576,
+     "crc": "f8145f8d",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4cqi",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Legendary Unlimited Fire v7.0, Hack)",
+   "files": [
+    {
+     "name": "263-p1cqi.p1",
+     "size": 1048576,
+     "crc": "98bdd962",
+     "optional": false
+    },
+    {
+     "name": "263-p2cqi.sp2",
+     "size": 8388608,
+     "crc": "4d8ff476",
+     "optional": false
+    },
+    {
+     "name": "263-c5cqi.c5",
+     "size": 8388608,
+     "crc": "703095cf",
+     "optional": false
+    },
+    {
+     "name": "263-c6cqi.c6",
+     "size": 8388608,
+     "crc": "753a5f74",
+     "optional": false
+    },
+    {
+     "name": "263-m1cqi.m1",
+     "size": 131072,
+     "crc": "98e75e61",
+     "optional": false
+    },
+    {
+     "name": "263-v1cqi.v1",
+     "size": 8388608,
+     "crc": "3a8ff8f1",
+     "optional": false
+    },
+    {
+     "name": "263-v2cqi.v2",
+     "size": 8388608,
+     "crc": "fe4f910c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4dd",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Starlight, Hack)",
+   "files": [
+    {
+     "name": "263-p1dd.p1",
+     "size": 1048576,
+     "crc": "02ce0fcd",
+     "optional": false
+    },
+    {
+     "name": "263-p2dd.sp2",
+     "size": 4194304,
+     "crc": "4569a092",
+     "optional": false
+    },
+    {
+     "name": "263-c5dd.c5",
+     "size": 8388608,
+     "crc": "1d340215",
+     "optional": false
+    },
+    {
+     "name": "263-c6dd.c6",
+     "size": 8388608,
+     "crc": "231d54ea",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4dg",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "263-p1dg.p1",
+     "size": 1048576,
+     "crc": "36dfa877",
+     "optional": false
+    },
+    {
+     "name": "263-p2dg.sp2",
+     "size": 4194304,
+     "crc": "cf6feb75",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4fd",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Fully Decrypted)",
+   "files": [
+    {
+     "name": "263-p1.p1",
+     "size": 1048576,
+     "crc": "27e4def3",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4h",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (NGH-2630)",
+   "files": [
+    {
+     "name": "263-ph1.p1",
+     "size": 1048576,
+     "crc": "c67f5c8d",
+     "optional": false
+    },
+    {
+     "name": "263-ph2.sp2",
+     "size": 4194304,
+     "crc": "bc3ec89e",
+     "optional": false
+    },
+    {
+     "name": "263-c1.c1",
+     "size": 8388608,
+     "crc": "84865f8a",
+     "optional": false
+    },
+    {
+     "name": "263-c2.c2",
+     "size": 8388608,
+     "crc": "81df97f2",
+     "optional": false
+    },
+    {
+     "name": "263-c3.c3",
+     "size": 8388608,
+     "crc": "1a343323",
+     "optional": false
+    },
+    {
+     "name": "263-c4.c4",
+     "size": 8388608,
+     "crc": "942cfb44",
+     "optional": false
+    },
+    {
+     "name": "263-c5.c5",
+     "size": 8388608,
+     "crc": "a748854f",
+     "optional": false
+    },
+    {
+     "name": "263-c6.c6",
+     "size": 8388608,
+     "crc": "5c8ba116",
+     "optional": false
+    },
+    {
+     "name": "263-m1.m1",
+     "size": 131072,
+     "crc": "46ac8228",
+     "optional": false
+    },
+    {
+     "name": "263-v1.v1",
+     "size": 8388608,
+     "crc": "01e9b9cd",
+     "optional": false
+    },
+    {
+     "name": "263-v2.v2",
+     "size": 8388608,
+     "crc": "4ab2bf81",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4ki",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Komorebi, Hack)",
+   "files": [
+    {
+     "name": "263-p1ki.p1",
+     "size": 1048576,
+     "crc": "4e2363d3",
+     "optional": false
+    },
+    {
+     "name": "263-p2ki.sp2",
+     "size": 4194304,
+     "crc": "e95f6bd8",
+     "optional": false
+    },
+    {
+     "name": "263-c5dd.c5",
+     "size": 8388608,
+     "crc": "1d340215",
+     "optional": false
+    },
+    {
+     "name": "263-c6dd.c6",
+     "size": 8388608,
+     "crc": "231d54ea",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4lq",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Last Bullet Remix - Without body armor, Hack)",
+   "files": [
+    {
+     "name": "263-p1lq.p1",
+     "size": 1048576,
+     "crc": "9ebe335e",
+     "optional": false
+    },
+    {
+     "name": "263-p2lw.sp2",
+     "size": 5242880,
+     "crc": "7deba8eb",
+     "optional": false
+    },
+    {
+     "name": "263-c3lw.c3",
+     "size": 8388608,
+     "crc": "e296612c",
+     "optional": false
+    },
+    {
+     "name": "263-c4lw.c4",
+     "size": 8388608,
+     "crc": "c22e3ad0",
+     "optional": false
+    },
+    {
+     "name": "263-c5lw.c5",
+     "size": 4194304,
+     "crc": "288cd91f",
+     "optional": false
+    },
+    {
+     "name": "263-c6lw.c6",
+     "size": 4194304,
+     "crc": "b015aeee",
+     "optional": false
+    },
+    {
+     "name": "263-m1lw.m1",
+     "size": 131072,
+     "crc": "49b1453e",
+     "optional": false
+    },
+    {
+     "name": "263-v1d.v1",
+     "size": 4194304,
+     "crc": "8cb5a9ef",
+     "optional": false
+    },
+    {
+     "name": "263-v2lw.v2",
+     "size": 4194304,
+     "crc": "c9572c14",
+     "optional": false
+    },
+    {
+     "name": "263-v3lw.v3",
+     "size": 4194304,
+     "crc": "e7c14624",
+     "optional": false
+    },
+    {
+     "name": "263-v4lw.v4",
+     "size": 4194304,
+     "crc": "9260c539",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4lw",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (Last Bullet Remix, Hack)",
+   "files": [
+    {
+     "name": "263-p1lw.p1",
+     "size": 1048576,
+     "crc": "ad713169",
+     "optional": false
+    },
+    {
+     "name": "263-p2lw.sp2",
+     "size": 5242880,
+     "crc": "7deba8eb",
+     "optional": false
+    },
+    {
+     "name": "263-c3dlw.c3",
+     "size": 8388608,
+     "crc": "e296612c",
+     "optional": false
+    },
+    {
+     "name": "263-c4dlw.c4",
+     "size": 8388608,
+     "crc": "c22e3ad0",
+     "optional": false
+    },
+    {
+     "name": "263-c5dlw.c5",
+     "size": 4194304,
+     "crc": "288cd91f",
+     "optional": false
+    },
+    {
+     "name": "263-c6dlw.c6",
+     "size": 4194304,
+     "crc": "b015aeee",
+     "optional": false
+    },
+    {
+     "name": "263-m1lw.m1",
+     "size": 131072,
+     "crc": "49b1453e",
+     "optional": false
+    },
+    {
+     "name": "263-v1d.v1",
+     "size": 4194304,
+     "crc": "8cb5a9ef",
+     "optional": false
+    },
+    {
+     "name": "263-v2lw.v2",
+     "size": 4194304,
+     "crc": "c9572c14",
+     "optional": false
+    },
+    {
+     "name": "263-v3lw.v3",
+     "size": 4194304,
+     "crc": "e7c14624",
+     "optional": false
+    },
+    {
+     "name": "263-v4lw.v4",
+     "size": 4194304,
+     "crc": "9260c539",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4q",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 (The Longest Battle, Hack)",
+   "files": [
+    {
+     "name": "263-p1q.p1",
+     "size": 1048576,
+     "crc": "1b5121b6",
+     "optional": false
+    },
+    {
+     "name": "263-p2q.sp2",
+     "size": 4194304,
+     "crc": "f132898f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug4unity",
+   "parent": "mslug4",
+   "base": "mslug4",
+   "title": "Metal Slug 4 Unity (Added Timer Ver. 2021-01-30)",
+   "files": [
+    {
+     "name": "263-p1uni.p1",
+     "size": 1048576,
+     "crc": "ef3501b6",
+     "optional": false
+    },
+    {
+     "name": "263-p2.sp2",
+     "size": 4194304,
+     "crc": "fdb7aed8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5",
+   "parent": null,
+   "base": "mslug5",
+   "title": "Metal Slug 5 (NGM-2680)",
+   "files": [
+    {
+     "name": "268-p1cr.p1",
+     "size": 4194304,
+     "crc": "d0466792",
+     "optional": false
+    },
+    {
+     "name": "268-p2cr.p2",
+     "size": 4194304,
+     "crc": "fbf6b61e",
+     "optional": false
+    },
+    {
+     "name": "268-c1c.c1",
+     "size": 8388608,
+     "crc": "ab7c389a",
+     "optional": false
+    },
+    {
+     "name": "268-c2c.c2",
+     "size": 8388608,
+     "crc": "3560881b",
+     "optional": false
+    },
+    {
+     "name": "268-c3c.c3",
+     "size": 8388608,
+     "crc": "3af955ea",
+     "optional": false
+    },
+    {
+     "name": "268-c4c.c4",
+     "size": 8388608,
+     "crc": "c329c373",
+     "optional": false
+    },
+    {
+     "name": "268-c5c.c5",
+     "size": 8388608,
+     "crc": "959c8177",
+     "optional": false
+    },
+    {
+     "name": "268-c6c.c6",
+     "size": 8388608,
+     "crc": "010a831b",
+     "optional": false
+    },
+    {
+     "name": "268-c7c.c7",
+     "size": 8388608,
+     "crc": "6d72a969",
+     "optional": false
+    },
+    {
+     "name": "268-c8c.c8",
+     "size": 8388608,
+     "crc": "551d720e",
+     "optional": false
+    },
+    {
+     "name": "268-m1.m1",
+     "size": 524288,
+     "crc": "4a5a6e0e",
+     "optional": false
+    },
+    {
+     "name": "268-v1c.v1",
+     "size": 8388608,
+     "crc": "ae31d60c",
+     "optional": false
+    },
+    {
+     "name": "268-v2c.v2",
+     "size": 8388608,
+     "crc": "c40613ed",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5ae",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (20th Anniversary, Hack)",
+   "files": [
+    {
+     "name": "268-p1ae.p1",
+     "size": 6291456,
+     "crc": "022c7fe1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5ar",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Random Ammunition, Hack)",
+   "files": [
+    {
+     "name": "268-p1ar.p1",
+     "size": 6291456,
+     "crc": "9ba6f532",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5b",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (bootleg, set 1)",
+   "files": [
+    {
+     "name": "ms5b-p1.bin",
+     "size": 1048576,
+     "crc": "1376f43c",
+     "optional": false
+    },
+    {
+     "name": "ms5b-p2.bin",
+     "size": 4194304,
+     "crc": "4becfba0",
+     "optional": false
+    },
+    {
+     "name": "ms5b-s1.bin",
+     "size": 131072,
+     "crc": "3a427c9f",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c1.bin",
+     "size": 8388608,
+     "crc": "4b0e5998",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c2.bin",
+     "size": 8388608,
+     "crc": "022fc30b",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c3.bin",
+     "size": 8388608,
+     "crc": "ead86d28",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c4.bin",
+     "size": 8388608,
+     "crc": "0be6be35",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c5.bin",
+     "size": 2097152,
+     "crc": "2a23e569",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c6.bin",
+     "size": 2097152,
+     "crc": "6eb6bc9e",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c7.bin",
+     "size": 8388608,
+     "crc": "57f4e53f",
+     "optional": false
+    },
+    {
+     "name": "ms5b-c8.bin",
+     "size": 8388608,
+     "crc": "9d59ff7c",
+     "optional": false
+    },
+    {
+     "name": "ms5b-m1.bin",
+     "size": 131072,
+     "crc": "bf1601bc",
+     "optional": false
+    },
+    {
+     "name": "ms5b-v1.bin",
+     "size": 4194304,
+     "crc": "e3f9fd75",
+     "optional": false
+    },
+    {
+     "name": "ms5b-v2.bin",
+     "size": 4194304,
+     "crc": "a53618f6",
+     "optional": false
+    },
+    {
+     "name": "ms5b-v3.bin",
+     "size": 4194304,
+     "crc": "14f000ee",
+     "optional": false
+    },
+    {
+     "name": "ms5b-v4.bin",
+     "size": 4194304,
+     "crc": "0ccee813",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5b2",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (bootleg, set 2)",
+   "files": [
+    {
+     "name": "ms5-p1b.bin",
+     "size": 5242880,
+     "crc": "d05853ea",
+     "optional": false
+    },
+    {
+     "name": "268-c1c.bin",
+     "size": 8388608,
+     "crc": "ab7c389a",
+     "optional": false
+    },
+    {
+     "name": "268-c2c.bin",
+     "size": 8388608,
+     "crc": "3560881b",
+     "optional": false
+    },
+    {
+     "name": "268-c3c.bin",
+     "size": 8388608,
+     "crc": "3af955ea",
+     "optional": false
+    },
+    {
+     "name": "268-c4c.bin",
+     "size": 8388608,
+     "crc": "c329c373",
+     "optional": false
+    },
+    {
+     "name": "268-c5c.bin",
+     "size": 8388608,
+     "crc": "959c8177",
+     "optional": false
+    },
+    {
+     "name": "268-c6c.bin",
+     "size": 8388608,
+     "crc": "010a831b",
+     "optional": false
+    },
+    {
+     "name": "268-c7c.bin",
+     "size": 8388608,
+     "crc": "6d72a969",
+     "optional": false
+    },
+    {
+     "name": "268-c8c.bin",
+     "size": 8388608,
+     "crc": "551d720e",
+     "optional": false
+    },
+    {
+     "name": "268-m1h.bin",
+     "size": 524288,
+     "crc": "4a5a6e0e",
+     "optional": false
+    },
+    {
+     "name": "268-v1c.bin",
+     "size": 8388608,
+     "crc": "ae31d60c",
+     "optional": false
+    },
+    {
+     "name": "268-v2c.bin",
+     "size": 8388608,
+     "crc": "c40613ed",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5bs",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Boss Battles, Hack)",
+   "files": [
+    {
+     "name": "268-p1bs.p1",
+     "size": 6291456,
+     "crc": "8bb8c097",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5c",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "268-p1c.p1",
+     "size": 6291456,
+     "crc": "e876d1e7",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5cqi",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Legendary Unlimited Fire v7.5, Hack)",
+   "files": [
+    {
+     "name": "268-p1cq.p1",
+     "size": 10485760,
+     "crc": "86ac155a",
+     "optional": false
+    },
+    {
+     "name": "268-c5cq.c5",
+     "size": 8388608,
+     "crc": "46c761bd",
+     "optional": false
+    },
+    {
+     "name": "268-c6cq.c6",
+     "size": 8388608,
+     "crc": "93bd5717",
+     "optional": false
+    },
+    {
+     "name": "268-c7cq.c7",
+     "size": 8388608,
+     "crc": "1e0f83aa",
+     "optional": false
+    },
+    {
+     "name": "268-c8cq.c8",
+     "size": 8388608,
+     "crc": "d36812db",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5db",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Enemy Enhance, Hack)",
+   "files": [
+    {
+     "name": "268-p1db.p1",
+     "size": 6291456,
+     "crc": "1527c4dd",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5dd",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Starlight, Hack)",
+   "files": [
+    {
+     "name": "268-p1dd.p1",
+     "size": 6291456,
+     "crc": "40917fba",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5dg",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "268-p1dg.p1",
+     "size": 6291456,
+     "crc": "3be747ab",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5es",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (The Longest Battle, Hack)",
+   "files": [
+    {
+     "name": "268-p1es.p1",
+     "size": 6291456,
+     "crc": "8f8327a1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5ex",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Extend v1.2, Hack)",
+   "files": [
+    {
+     "name": "268-p1ex.p1",
+     "size": 6291456,
+     "crc": "7ff5364b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5f",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Fierce Battle, Hack)",
+   "files": [
+    {
+     "name": "268-p1f.p1",
+     "size": 1048576,
+     "crc": "6be7043d",
+     "optional": false
+    },
+    {
+     "name": "268-p2w.sp2",
+     "size": 4194304,
+     "crc": "f06c589a",
+     "optional": false
+    },
+    {
+     "name": "268-c5f.c5",
+     "size": 8388608,
+     "crc": "3bc09dbf",
+     "optional": false
+    },
+    {
+     "name": "268-c6f.c6",
+     "size": 8388608,
+     "crc": "0db5ce14",
+     "optional": false
+    },
+    {
+     "name": "268-c7f.c7",
+     "size": 8388608,
+     "crc": "aa4f3214",
+     "optional": false
+    },
+    {
+     "name": "268-c8f.c8",
+     "size": 8388608,
+     "crc": "c86d0d81",
+     "optional": false
+    },
+    {
+     "name": "268-m1w.m1",
+     "size": 131072,
+     "crc": "9577a692",
+     "optional": false
+    },
+    {
+     "name": "268-v1f.v1",
+     "size": 8388608,
+     "crc": "ebae8143",
+     "optional": false
+    },
+    {
+     "name": "268-v2f.v2",
+     "size": 8615200,
+     "crc": "84aac915",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5fd",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Fully Decrypted)",
+   "files": [
+    {
+     "name": "268-p1d.p1",
+     "size": 1048576,
+     "crc": "24ae2e4d",
+     "optional": false
+    },
+    {
+     "name": "268-p2d.sp2",
+     "size": 4194304,
+     "crc": "768ee64a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5h",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (NGH-2680)",
+   "files": [
+    {
+     "name": "268-p1c.p1",
+     "size": 4194304,
+     "crc": "3636690a",
+     "optional": false
+    },
+    {
+     "name": "268-p2c.p2",
+     "size": 4194304,
+     "crc": "8dfc47a2",
+     "optional": false
+    },
+    {
+     "name": "268-c1c.c1",
+     "size": 8388608,
+     "crc": "ab7c389a",
+     "optional": false
+    },
+    {
+     "name": "268-c2c.c2",
+     "size": 8388608,
+     "crc": "3560881b",
+     "optional": false
+    },
+    {
+     "name": "268-c3c.c3",
+     "size": 8388608,
+     "crc": "3af955ea",
+     "optional": false
+    },
+    {
+     "name": "268-c4c.c4",
+     "size": 8388608,
+     "crc": "c329c373",
+     "optional": false
+    },
+    {
+     "name": "268-c5c.c5",
+     "size": 8388608,
+     "crc": "959c8177",
+     "optional": false
+    },
+    {
+     "name": "268-c6c.c6",
+     "size": 8388608,
+     "crc": "010a831b",
+     "optional": false
+    },
+    {
+     "name": "268-c7c.c7",
+     "size": 8388608,
+     "crc": "6d72a969",
+     "optional": false
+    },
+    {
+     "name": "268-c8c.c8",
+     "size": 8388608,
+     "crc": "551d720e",
+     "optional": false
+    },
+    {
+     "name": "268-m1.m1",
+     "size": 524288,
+     "crc": "4a5a6e0e",
+     "optional": false
+    },
+    {
+     "name": "268-v1c.v1",
+     "size": 8388608,
+     "crc": "ae31d60c",
+     "optional": false
+    },
+    {
+     "name": "268-v2c.v2",
+     "size": 8388608,
+     "crc": "c40613ed",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5ki",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Komorebi, Hack)",
+   "files": [
+    {
+     "name": "268-p1ki.p1",
+     "size": 6291456,
+     "crc": "846bc220",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5mg",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Devil Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "268-p1mg.p1",
+     "size": 6291456,
+     "crc": "1fc7de70",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5nd",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Not Encrypted)",
+   "files": [
+    {
+     "name": "268-p1n.p1",
+     "size": 6291456,
+     "crc": "975eb06a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5sc",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Survival, Hack)",
+   "files": [
+    {
+     "name": "268-p1sc.p1",
+     "size": 6291456,
+     "crc": "71a0953f",
+     "optional": false
+    },
+    {
+     "name": "268-c7sc.c7",
+     "size": 8388608,
+     "crc": "080b585a",
+     "optional": false
+    },
+    {
+     "name": "268-c8sc.c8",
+     "size": 8388608,
+     "crc": "a6450c3a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5sg",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Stone Turtle, Hack)",
+   "files": [
+    {
+     "name": "268-p1sg.p1",
+     "size": 6291456,
+     "crc": "b6cb640e",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5unity",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 Unity (Added Timer Ver. 2021-04-23)",
+   "files": [
+    {
+     "name": "268-p1uni.p1",
+     "size": 4194304,
+     "crc": "ced9f5a8",
+     "optional": false
+    },
+    {
+     "name": "268-p2uni.p2",
+     "size": 4194304,
+     "crc": "1c08dbb6",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5w",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (New Battle, Hack)",
+   "files": [
+    {
+     "name": "268-p1w.p1",
+     "size": 1048576,
+     "crc": "4df30bcb",
+     "optional": false
+    },
+    {
+     "name": "268-p2w.sp2",
+     "size": 4194304,
+     "crc": "f06c589a",
+     "optional": false
+    },
+    {
+     "name": "268-c5w.c5",
+     "size": 8388608,
+     "crc": "483a986c",
+     "optional": false
+    },
+    {
+     "name": "268-c6w.c6",
+     "size": 8388608,
+     "crc": "d918f796",
+     "optional": false
+    },
+    {
+     "name": "268-c7w.c7",
+     "size": 8388608,
+     "crc": "bdb9a887",
+     "optional": false
+    },
+    {
+     "name": "268-c8w.c8",
+     "size": 8388608,
+     "crc": "6f8ac6fb",
+     "optional": false
+    },
+    {
+     "name": "268-m1w.m1",
+     "size": 131072,
+     "crc": "9577a692",
+     "optional": false
+    },
+    {
+     "name": "268-v1w.v1",
+     "size": 8388608,
+     "crc": "c0cafa36",
+     "optional": false
+    },
+    {
+     "name": "268-v2w.v2",
+     "size": 8389360,
+     "crc": "cc81efa3",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5x",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (X, Hack)",
+   "files": [
+    {
+     "name": "268-p1x.p1",
+     "size": 6291456,
+     "crc": "afffcd5b",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslug5zh",
+   "parent": "mslug5",
+   "base": "mslug5",
+   "title": "Metal Slug 5 (Vehicle Summon, Hack)",
+   "files": [
+    {
+     "name": "268-p1zh.p1",
+     "size": 6291456,
+     "crc": "dc057a7a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugdg",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "201-p1dg.p1",
+     "size": 1048576,
+     "crc": "7f66b97f",
+     "optional": false
+    },
+    {
+     "name": "201-p2dg.sp2",
+     "size": 1048576,
+     "crc": "c3cb544c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugdyf2",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Origins Item Random v2, Hack)",
+   "files": [
+    {
+     "name": "201-p1dyf2.p1",
+     "size": 2097152,
+     "crc": "84c96797",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugfc1",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Random Item, Hack)",
+   "files": [
+    {
+     "name": "201-p1fc1.p1",
+     "size": 1048576,
+     "crc": "267042be",
+     "optional": false
+    },
+    {
+     "name": "201-p2fc1.sp2",
+     "size": 1048576,
+     "crc": "65749e35",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugfc2",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Random Item & Powerful Enemy Defense, Hack)",
+   "files": [
+    {
+     "name": "201-p1fc2.p1",
+     "size": 1048576,
+     "crc": "fb553230",
+     "optional": false
+    },
+    {
+     "name": "201-p2fc2.sp2",
+     "size": 1048576,
+     "crc": "4a173063",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugfs",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Firepower Showdown, Hack)",
+   "files": [
+    {
+     "name": "201-p1fs.p1",
+     "size": 1048576,
+     "crc": "aa1c9f84",
+     "optional": false
+    },
+    {
+     "name": "201-p2fs.sp2",
+     "size": 1048576,
+     "crc": "057962bd",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugqy",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Origins, Hack)",
+   "files": [
+    {
+     "name": "201-p1qy.p1",
+     "size": 2097152,
+     "crc": "ee4ec348",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugunity",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug Unity (Added Timer Ver. 2021-02-05)",
+   "files": [
+    {
+     "name": "201-p1uni.p1",
+     "size": 2097152,
+     "crc": "a3186dfd",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugx",
+   "parent": null,
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500)",
+   "files": [
+    {
+     "name": "250-p1.p1",
+     "size": 1048576,
+     "crc": "81f1f60b",
+     "optional": false
+    },
+    {
+     "name": "250-p2.ep1",
+     "size": 4194304,
+     "crc": "1fda2e12",
+     "optional": false
+    },
+    {
+     "name": "250-s1.s1",
+     "size": 131072,
+     "crc": "fb6f441d",
+     "optional": false
+    },
+    {
+     "name": "250-c1.c1",
+     "size": 8388608,
+     "crc": "09a52c6f",
+     "optional": false
+    },
+    {
+     "name": "250-c2.c2",
+     "size": 8388608,
+     "crc": "31679821",
+     "optional": false
+    },
+    {
+     "name": "250-c3.c3",
+     "size": 8388608,
+     "crc": "fd602019",
+     "optional": false
+    },
+    {
+     "name": "250-c4.c4",
+     "size": 8388608,
+     "crc": "31354513",
+     "optional": false
+    },
+    {
+     "name": "250-c5.c5",
+     "size": 8388608,
+     "crc": "a4b56124",
+     "optional": false
+    },
+    {
+     "name": "250-c6.c6",
+     "size": 8388608,
+     "crc": "83e3e69d",
+     "optional": false
+    },
+    {
+     "name": "250-m1.m1",
+     "size": 131072,
+     "crc": "fd42a842",
+     "optional": false
+    },
+    {
+     "name": "250-v1.v1",
+     "size": 4194304,
+     "crc": "c79ede73",
+     "optional": false
+    },
+    {
+     "name": "250-v2.v2",
+     "size": 4194304,
+     "crc": "ea9aabe1",
+     "optional": false
+    },
+    {
+     "name": "250-v3.v3",
+     "size": 2097152,
+     "crc": "2ca65102",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugx2r",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (2R, Hack)",
+   "files": [
+    {
+     "name": "250-p12r.p1",
+     "size": 1048576,
+     "crc": "721f11aa",
+     "optional": false
+    },
+    {
+     "name": "250-p22r.ep1",
+     "size": 4194304,
+     "crc": "4f875278",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxc1",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Multi Vehicle, Hack)",
+   "files": [
+    {
+     "name": "250-p1c1.p1",
+     "size": 1048576,
+     "crc": "e74f36c2",
+     "optional": false
+    },
+    {
+     "name": "250-p2c1.ep1",
+     "size": 4194304,
+     "crc": "e954b8aa",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxc2",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Enemy Remix, Hack)",
+   "files": [
+    {
+     "name": "250-p1.p1",
+     "size": 1048576,
+     "crc": "81f1f60b",
+     "optional": false
+    },
+    {
+     "name": "250-p2c2.ep1",
+     "size": 4194304,
+     "crc": "5d1c52cd",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxcq",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Legend, Hack)",
+   "files": [
+    {
+     "name": "250-p1cq.p1",
+     "size": 1048576,
+     "crc": "bea434ac",
+     "optional": false
+    },
+    {
+     "name": "250-p2cq.ep1",
+     "size": 4194304,
+     "crc": "80cd6b69",
+     "optional": false
+    },
+    {
+     "name": "250-s1sc.s1",
+     "size": 131072,
+     "crc": "03bce893",
+     "optional": false
+    },
+    {
+     "name": "250-c3cq.c3",
+     "size": 8388608,
+     "crc": "917f95c5",
+     "optional": false
+    },
+    {
+     "name": "250-c4cq.c4",
+     "size": 8388608,
+     "crc": "93290f81",
+     "optional": false
+    },
+    {
+     "name": "250-c5cq.c5",
+     "size": 8388608,
+     "crc": "c2d442e1",
+     "optional": false
+    },
+    {
+     "name": "250-c6cq.c6",
+     "size": 8388608,
+     "crc": "ec2f6882",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxcqi",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Legendary Unlimited Fire v7.5, Hack)",
+   "files": [
+    {
+     "name": "250-p1cqi.p1",
+     "size": 1048576,
+     "crc": "d004ed8b",
+     "optional": false
+    },
+    {
+     "name": "250-p2cqi.ep1",
+     "size": 8388608,
+     "crc": "f8a2bb8b",
+     "optional": false
+    },
+    {
+     "name": "250-s1sc.s1",
+     "size": 131072,
+     "crc": "03bce893",
+     "optional": false
+    },
+    {
+     "name": "250-c3cq.c3",
+     "size": 8388608,
+     "crc": "917f95c5",
+     "optional": false
+    },
+    {
+     "name": "250-c4cq.c4",
+     "size": 8388608,
+     "crc": "93290f81",
+     "optional": false
+    },
+    {
+     "name": "250-c5cqi.c5",
+     "size": 8388608,
+     "crc": "e66c6f58",
+     "optional": false
+    },
+    {
+     "name": "250-c6cqi.c6",
+     "size": 8388608,
+     "crc": "d6406f54",
+     "optional": false
+    },
+    {
+     "name": "250-c7cqi.c7",
+     "size": 8388608,
+     "crc": "616082e8",
+     "optional": false
+    },
+    {
+     "name": "250-c8cqi.c8",
+     "size": 8388608,
+     "crc": "b9710e89",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxdd",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Starlight, Hack)",
+   "files": [
+    {
+     "name": "250-p1dd.p1",
+     "size": 1048576,
+     "crc": "aa09586a",
+     "optional": false
+    },
+    {
+     "name": "250-p2dd.ep1",
+     "size": 4194304,
+     "crc": "1791d721",
+     "optional": false
+    },
+    {
+     "name": "250-c5dd.c5",
+     "size": 8388608,
+     "crc": "b2d7bf98",
+     "optional": false
+    },
+    {
+     "name": "250-c6dd.c6",
+     "size": 8388608,
+     "crc": "e0f7a059",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxdg",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Multifunction, Hack)",
+   "files": [
+    {
+     "name": "250-p1dg.p1",
+     "size": 1048576,
+     "crc": "f86ea146",
+     "optional": false
+    },
+    {
+     "name": "250-p2dg.ep1",
+     "size": 4194304,
+     "crc": "ef0c263f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxeb",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Blue, Hack)",
+   "files": [
+    {
+     "name": "250-p1eb.p1",
+     "size": 1048576,
+     "crc": "764d1bb1",
+     "optional": false
+    },
+    {
+     "name": "250-p2eb.ep1",
+     "size": 4194304,
+     "crc": "a51363d1",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxif",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Infinite Firepower, Hack)",
+   "files": [
+    {
+     "name": "250-p1if.p1",
+     "size": 1048576,
+     "crc": "a507546f",
+     "optional": false
+    },
+    {
+     "name": "250-p2if.ep1",
+     "size": 4194304,
+     "crc": "9cf91e0f",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxlb",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Extreme Space, Hack)",
+   "files": [
+    {
+     "name": "250-p1lb.p1",
+     "size": 1048576,
+     "crc": "41fc71cc",
+     "optional": false
+    },
+    {
+     "name": "250-p2lb.ep1",
+     "size": 4194304,
+     "crc": "6a114e1a",
+     "optional": false
+    },
+    {
+     "name": "250-c1lb.c1",
+     "size": 8388608,
+     "crc": "d52e8702",
+     "optional": false
+    },
+    {
+     "name": "250-c2lb.c2",
+     "size": 8388608,
+     "crc": "edec334c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxsc",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Survival, Hack)",
+   "files": [
+    {
+     "name": "250-p1sc.p1",
+     "size": 1048576,
+     "crc": "e0792609",
+     "optional": false
+    },
+    {
+     "name": "250-p2sc.ep1",
+     "size": 4194304,
+     "crc": "01f48336",
+     "optional": false
+    },
+    {
+     "name": "250-s1sc.s1",
+     "size": 131072,
+     "crc": "03bce893",
+     "optional": false
+    },
+    {
+     "name": "250-c5sc.c5",
+     "size": 8388608,
+     "crc": "916b7239",
+     "optional": false
+    },
+    {
+     "name": "250-c6sc.c6",
+     "size": 8388608,
+     "crc": "23016767",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxsv",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Unbounded, Hack)",
+   "files": [
+    {
+     "name": "250-p1sv.p1",
+     "size": 1048576,
+     "crc": "1b213460",
+     "optional": false
+    },
+    {
+     "name": "250-p2sv.ep1",
+     "size": 4194304,
+     "crc": "718d6d66",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxunity",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 Unity (Added Timer Ver. 2021-01-23)",
+   "files": [
+    {
+     "name": "250-p1uni.p1",
+     "size": 1048576,
+     "crc": "36102d34",
+     "optional": false
+    },
+    {
+     "name": "250-p2.ep1",
+     "size": 4194304,
+     "crc": "1fda2e12",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxxb",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Soldier Version, Hack)",
+   "files": [
+    {
+     "name": "250-p1xb.p1",
+     "size": 1048576,
+     "crc": "787403ef",
+     "optional": false
+    },
+    {
+     "name": "250-p2xb.ep1",
+     "size": 8388608,
+     "crc": "bcb02121",
+     "optional": false
+    },
+    {
+     "name": "250-c5xb.c5",
+     "size": 8388608,
+     "crc": "882f41c7",
+     "optional": false
+    },
+    {
+     "name": "250-c6xb.c6",
+     "size": 8388608,
+     "crc": "35b5bb3a",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mslugxxr",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (Warriors, Hack)",
+   "files": [
+    {
+     "name": "250-p1xr.p1",
+     "size": 1048576,
+     "crc": "bea1f7e5",
+     "optional": false
+    },
+    {
+     "name": "250-p2xr.ep1",
+     "size": 4194304,
+     "crc": "0efc5d67",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "msqyfc1",
+   "parent": "mslug",
+   "base": "mslug",
+   "title": "Metal Slug - Super Vehicle-001 (Origins Item Random, Hack)",
+   "files": [
+    {
+     "name": "201-p1qyfc1.p1",
+     "size": 1048576,
+     "crc": "4f107600",
+     "optional": false
+    },
+    {
+     "name": "201-p2dgfc1.sp2",
+     "size": 1048576,
+     "crc": "f0b93488",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "msx1v2",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "250-p11v2.p1",
+     "size": 1048576,
+     "crc": "0cf1f95b",
+     "optional": false
+    },
+    {
+     "name": "250-p2.ep1",
+     "size": 4194304,
+     "crc": "1fda2e12",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "msx2r1v2",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (2R 1v2 Mode, Hack)",
+   "files": [
+    {
+     "name": "250-p12r1v2.p1",
+     "size": 1048576,
+     "crc": "d13fd368",
+     "optional": false
+    },
+    {
+     "name": "250-p22r1v2.ep1",
+     "size": 4194304,
+     "crc": "730e94a2",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "msx2reb",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (2R Blue, Hack)",
+   "files": [
+    {
+     "name": "250-p12reb.p1",
+     "size": 1048576,
+     "crc": "dba3f1a1",
+     "optional": false
+    },
+    {
+     "name": "250-p22reb.ep1",
+     "size": 4194304,
+     "crc": "3866eb68",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "msxsrf",
+   "parent": "mslugx",
+   "base": "mslugx",
+   "title": "Metal Slug X - Super Vehicle-001 (AzStar Soda Remix FC2, Hack)",
+   "files": [
+    {
+     "name": "250-p1srf.p1",
+     "size": 1048576,
+     "crc": "aed327fe",
+     "optional": false
+    },
+    {
+     "name": "250-p2srf.ep1",
+     "size": 4194304,
+     "crc": "4389f47d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengk3eb",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (Green Blue, Hack)",
+   "files": [
+    {
+     "name": "261-p1eb.p1",
+     "size": 1048576,
+     "crc": "f05a0ab3",
+     "optional": false
+    },
+    {
+     "name": "261-p2d.sp2",
+     "size": 1048576,
+     "crc": "c74e374c",
+     "optional": false
+    },
+    {
+     "name": "261-p1eb.dif",
+     "size": 1048576,
+     "crc": "a285ce0d",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengk3fd",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (Fully Decrypted)",
+   "files": [
+    {
+     "name": "261-ph1d.p1",
+     "size": 1048576,
+     "crc": "9295cc2c",
+     "optional": false
+    },
+    {
+     "name": "261-p2d.sp2",
+     "size": 1048576,
+     "crc": "c74e374c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengk3fs",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (Demeanor, Hack)",
+   "files": [
+    {
+     "name": "261-p1fs.p1",
+     "size": 1048576,
+     "crc": "60038a12",
+     "optional": false
+    },
+    {
+     "name": "261-p2d.sp2",
+     "size": 1048576,
+     "crc": "c74e374c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengok3i",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (Infinite Power, Hack)",
+   "files": [
+    {
+     "name": "261-p1i.p1",
+     "size": 1048576,
+     "crc": "a2a750cd",
+     "optional": false
+    },
+    {
+     "name": "261-p2d.sp2",
+     "size": 1048576,
+     "crc": "c74e374c",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengoku3",
+   "parent": null,
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (set 1)",
+   "files": [
+    {
+     "name": "261-ph1.p1",
+     "size": 2097152,
+     "crc": "e0d4bc0a",
+     "optional": false
+    },
+    {
+     "name": "261-c1.c1",
+     "size": 8388608,
+     "crc": "ded84d9c",
+     "optional": false
+    },
+    {
+     "name": "261-c2.c2",
+     "size": 8388608,
+     "crc": "b8eb4348",
+     "optional": false
+    },
+    {
+     "name": "261-c3.c3",
+     "size": 8388608,
+     "crc": "84e2034a",
+     "optional": false
+    },
+    {
+     "name": "261-c4.c4",
+     "size": 8388608,
+     "crc": "0b45ae53",
+     "optional": false
+    },
+    {
+     "name": "261-m1.m1",
+     "size": 524288,
+     "crc": "7d501c39",
+     "optional": false
+    },
+    {
+     "name": "261-v1.v1",
+     "size": 4194304,
+     "crc": "64c30081",
+     "optional": false
+    },
+    {
+     "name": "261-v2.v2",
+     "size": 4194304,
+     "crc": "392a9c47",
+     "optional": false
+    },
+    {
+     "name": "261-v3.v3",
+     "size": 4194304,
+     "crc": "c1a7ebe3",
+     "optional": false
+    },
+    {
+     "name": "261-v4.v4",
+     "size": 2097152,
+     "crc": "9000d085",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengoku3a",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (set 2)",
+   "files": [
+    {
+     "name": "261-pg1.p1",
+     "size": 2097152,
+     "crc": "5b557201",
+     "optional": false
+    },
+    {
+     "name": "261-c1.c1",
+     "size": 8388608,
+     "crc": "ded84d9c",
+     "optional": false
+    },
+    {
+     "name": "261-c2.c2",
+     "size": 8388608,
+     "crc": "b8eb4348",
+     "optional": false
+    },
+    {
+     "name": "261-c3.c3",
+     "size": 8388608,
+     "crc": "84e2034a",
+     "optional": false
+    },
+    {
+     "name": "261-c4.c4",
+     "size": 8388608,
+     "crc": "0b45ae53",
+     "optional": false
+    },
+    {
+     "name": "261-m1.m1",
+     "size": 524288,
+     "crc": "7d501c39",
+     "optional": false
+    },
+    {
+     "name": "261-v1.v1",
+     "size": 4194304,
+     "crc": "64c30081",
+     "optional": false
+    },
+    {
+     "name": "261-v2.v2",
+     "size": 4194304,
+     "crc": "392a9c47",
+     "optional": false
+    },
+    {
+     "name": "261-v3.v3",
+     "size": 4194304,
+     "crc": "c1a7ebe3",
+     "optional": false
+    },
+    {
+     "name": "261-v4.v4",
+     "size": 2097152,
+     "crc": "9000d085",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "sengoku3s",
+   "parent": "sengoku3",
+   "base": "sengoku3",
+   "title": "Sengoku 3 / Sengoku Densho 2001 (Evolution 1.0, FCHT hack)",
+   "files": [
+    {
+     "name": "261-p1s.p1",
+     "size": 1048576,
+     "crc": "20b15bb5",
+     "optional": false
+    },
+    {
+     "name": "261-p2d.sp2",
+     "size": 1048576,
+     "crc": "c74e374c",
+     "optional": false
+    }
+   ]
+  }
+ ]
+}

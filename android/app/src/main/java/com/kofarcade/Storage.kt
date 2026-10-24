@@ -2,18 +2,28 @@ package com.kofarcade
 
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
+import com.kofarcade.core.BIOS
 import com.kofarcade.core.Game
 import com.kofarcade.core.Move
+import com.kofarcade.core.RomCheck
+import com.kofarcade.core.ZipItem
+import com.kofarcade.core.checkRom
+import com.kofarcade.core.describe
+import com.kofarcade.core.gameForSet
+import com.kofarcade.core.installedSet
+import com.kofarcade.core.romSet
 import com.kofarcade.core.setName
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.zip.ZipException
+import java.util.zip.ZipFile
 
 /**
- * ROM zips, copied into the app's private storage when you pick them. They
- * never leave the phone. FBNeo identifies a game by its zip name, so files are
- * stored under the set name it expects ("King of Fighters 97.zip" -> kof97.zip).
+ * ROM zips, copied into the app's private storage. FBNeo identifies a game by
+ * its zip name, so each zip is checked first (see core RomCheck) and stored
+ * under the name of the version it holds: whatever it was called,
+ * a complete Sengoku 3 (set 2) becomes sengoku3a.zip, the BIOS neogeo.zip.
  */
 class RomStore(private val context: Context) {
     val dir: File = File(context.filesDir, "roms").apply { mkdirs() }
@@ -22,34 +32,81 @@ class RomStore(private val context: Context) {
 
     fun has(name: String) = file(name).let { it.isFile && it.length() > 0 }
 
-    /** The zip to boot for [game]: the first of its sets that is present. */
-    fun setFor(game: Game): String? = game.sets.firstOrNull { has("$it.zip") }
+    /** Set names of the zips on the phone. */
+    fun zips(): List<String> =
+        dir.listFiles().orEmpty().filter { it.isFile && it.name.endsWith(".zip") && it.length() > 0 }.map { setName(it.name) }
 
-    /**
-     * Copies the picked file in. If its name is one of [accept] (a set name)
-     * it keeps that name, otherwise it is stored as [storeAs].
-     */
-    fun import(uri: Uri, storeAs: String, accept: List<String> = emptyList()): String {
-        val picked = displayName(uri)?.let(::setName)
-        val name = if (picked != null && picked in accept) "$picked.zip" else storeAs
-        val tmp = File(dir, "$name.part")
+    /** The zip to boot for [game], if any version of it is here. */
+    fun setFor(game: Game): String? = installedSet(game, zips())
+
+    /** A scratch file in the ROM folder, for a copy or download in progress. */
+    fun partFile(label: String) = File(dir, "$label.part")
+
+    /** Copies the picked file in and checks it. */
+    fun import(uri: Uri): RomCheck {
+        val tmp = partFile("import")
         context.contentResolver.openInputStream(uri).use { input ->
             requireNotNull(input) { "Can't read the picked file" }
             tmp.outputStream().use { input.copyTo(it) }
         }
-        require(tmp.length() > 0) { "The picked file is empty" }
-        tmp.renameTo(file(name))
-        return name
+        return add(tmp)
+    }
+
+    /**
+     * Checks the zip at [tmp]. The BIOS or a complete game is moved into
+     * place, replacing other versions of the same game that FBNeo would
+     * otherwise pick first; anything else is deleted.
+     */
+    fun add(tmp: File): RomCheck {
+        val check = try {
+            checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
+        } catch (e: ZipException) {
+            tmp.delete()
+            throw IllegalArgumentException("That file isn't a zip")
+        }
+        when (check) {
+            RomCheck.Bios -> moveIn(tmp, BIOS)
+            is RomCheck.Game -> {
+                val set = check.set
+                zips().filter { it != set.name && it != set.parent && romSet(it)?.base == set.base }
+                    .forEach { file("$it.zip").delete() }
+                moveIn(tmp, "${set.name}.zip")
+            }
+            else -> tmp.delete()
+        }
+        return check
+    }
+
+    private fun moveIn(tmp: File, name: String) {
+        file(name).delete()
+        check(tmp.renameTo(file(name))) { "Couldn't save $name" }
+    }
+
+    private fun items(zip: File): List<ZipItem> = ZipFile(zip).use { z ->
+        z.entries().asSequence().filterNot { it.isDirectory }.map { ZipItem(it.name, it.size, it.crc) }.toList()
     }
 
     fun remove(name: String) {
         file(name).delete()
     }
+}
 
-    private fun displayName(uri: Uri): String? =
-        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
-            if (it.moveToFirst()) it.getString(0) else null
-        }
+/** What a check found, in words, for a toast or dialog. */
+fun RomCheck.message(): String = when (this) {
+    RomCheck.Bios -> "Neo Geo BIOS added."
+    is RomCheck.Game -> {
+        val game = gameForSet(set.name)
+        "Added ${game?.title ?: set.title}: ${set.title}." +
+            if (parentNeeded) " It also uses your ${set.parent}.zip, so keep that one." else ""
+    }
+    is RomCheck.Incomplete -> {
+        val list = missing.take(6).joinToString("\n") { "• " + describe(it) } +
+            if (missing.size > 6) "\n• and ${missing.size - 6} more" else ""
+        "This is ${set.title}, but it's missing ${missing.size} file${if (missing.size == 1) "" else "s"} " +
+            "the emulator needs:\n$list\n\nIt's from an older or different ROM set. " +
+            "You need a copy made for current FBNeo."
+    }
+    RomCheck.Unknown -> "This zip isn't one of the app's games or the Neo Geo BIOS."
 }
 
 enum class StickMode(val label: String) {
@@ -114,6 +171,20 @@ class Prefs(context: Context) {
     var pressFrames: Int
         get() = sp.getInt("pressFrames", 4)
         set(v) = sp.edit().putInt("pressFrames", v).apply()
+
+    /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
+    var libraryUrl: String?
+        get() = sp.getString("libraryUrl", null)
+        set(v) = sp.edit().putString("libraryUrl", v).apply()
+
+    var libraryKey: String?
+        get() = sp.getString("libraryKey", null)
+        set(v) = sp.edit().putString("libraryKey", v).apply()
+
+    /** The set a library file was saved as, once downloaded ("neogeo (1).zip" -> neogeo). */
+    fun librarySet(file: String): String? = sp.getString("lib.$file", null)
+
+    fun setLibrarySet(file: String, set: String?) = sp.edit().putString("lib.$file", set).apply()
 
     /** KOF: fill the team, the active fighter and their facing from the game's RAM. */
     var autoDetect: Boolean

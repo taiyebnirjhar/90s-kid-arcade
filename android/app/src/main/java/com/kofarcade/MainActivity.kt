@@ -68,6 +68,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kofarcade.core.Art
 import com.kofarcade.core.BIOS
+import com.kofarcade.core.RomCheck
+import com.kofarcade.core.gameForSet
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.Game
 import com.kofarcade.core.Layout
@@ -105,7 +107,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    /** What the file picker is for: the BIOS, or a game's ROM. */
+    /** What the "add" dialog is for: the BIOS, or a game's ROM. */
     private sealed interface Pick {
         data object Bios : Pick
         data class Rom(val game: Game) : Pick
@@ -113,7 +115,6 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Home() {
-        var pending by remember { mutableStateOf<Pick?>(null) }
         var ask by remember { mutableStateOf<Pick?>(null) }
         var remove by remember { mutableStateOf<Game?>(null) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
@@ -121,25 +122,18 @@ class MainActivity : ComponentActivity() {
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
         val last = remember(refresh) { prefs.lastGame?.let(::gameById) }
 
+        var result by remember { mutableStateOf<RomCheck?>(null) }
+        var library by remember { mutableStateOf(false) }
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            val target = pending
-            pending = null
-            if (uri == null || target == null) return@rememberLauncherForActivityResult
+            if (uri == null) return@rememberLauncherForActivityResult
             try {
-                when (target) {
-                    Pick.Bios -> roms.import(uri, BIOS)
-                    is Pick.Rom -> {
-                        roms.import(uri, target.game.sets.first() + ".zip", target.game.sets)
-                        if (roms.has(BIOS)) play(target.game)
-                    }
-                }
+                result = roms.import(uri)
             } catch (e: Exception) {
                 Toast.makeText(this, "Couldn't add the file: ${e.message}", Toast.LENGTH_LONG).show()
             }
             refresh++
         }
-        fun launch(p: Pick) {
-            pending = p
+        fun launch() {
             picker.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*"))
         }
 
@@ -156,7 +150,7 @@ class MainActivity : ComponentActivity() {
 
         Box(Modifier.fillMaxSize().background(Palette.bg)) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).systemBarsPadding()) {
-                Header(hasBios) { if (hasBios) ask = Pick.Bios else launch(Pick.Bios) }
+                Header(hasBios, onLibrary = { library = true }) { ask = Pick.Bios }
                 Hero(
                     game = hero,
                     label = when {
@@ -170,7 +164,7 @@ class MainActivity : ComponentActivity() {
                         sets[hero.id] == null -> "Add ROM"
                         else -> "Play"
                     },
-                    onClick = { if (!hasBios) launch(Pick.Bios) else open(hero) },
+                    onClick = { if (!hasBios) ask = Pick.Bios else open(hero) },
                 )
                 for ((series, games) in GAMES.groupBy { it.series }) {
                     Text(
@@ -214,7 +208,8 @@ class MainActivity : ComponentActivity() {
                     "Add the Neo Geo BIOS" to "Every game needs neogeo.zip. Pick it from your phone."
                 }
                 is Pick.Rom -> "Add ${p.game.title}" to
-                    "Pick your ${p.game.sets.joinToString(" or ") { "$it.zip" }}. Any file name works."
+                    "Pick its zip from your phone (any name works; the app checks what's inside), " +
+                    "or download it from your library."
             }
             AlertDialog(
                 onDismissRequest = { ask = null },
@@ -223,11 +218,47 @@ class MainActivity : ComponentActivity() {
                 confirmButton = {
                     TextButton(onClick = {
                         ask = null
-                        launch(p)
+                        launch()
                     }) { Text("Choose file") }
                 },
-                dismissButton = { TextButton(onClick = { ask = null }) { Text("Cancel") } },
+                dismissButton = {
+                    TextButton(onClick = {
+                        ask = null
+                        library = true
+                    }) { Text("From my library") }
+                },
             )
+        }
+
+        result?.let { check ->
+            val game = (check as? RomCheck.Game)?.let { gameForSet(it.set.name) }
+            AlertDialog(
+                onDismissRequest = { result = null },
+                title = {
+                    Text(
+                        when (check) {
+                            RomCheck.Bios, is RomCheck.Game -> "Ready"
+                            is RomCheck.Incomplete -> "This zip won't run"
+                            RomCheck.Unknown -> "Not a game the app knows"
+                        },
+                    )
+                },
+                text = { Text(check.message()) },
+                confirmButton = {
+                    if (game != null && hasBios) {
+                        TextButton(onClick = {
+                            result = null
+                            play(game)
+                        }) { Text("Play") }
+                    } else {
+                        TextButton(onClick = { result = null }) { Text("OK") }
+                    }
+                },
+            )
+        }
+
+        if (library) {
+            LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
         }
 
         remove?.let { game ->
@@ -248,7 +279,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Header(hasBios: Boolean, onBios: () -> Unit) {
+    private fun Header(hasBios: Boolean, onLibrary: () -> Unit, onBios: () -> Unit) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
@@ -256,6 +287,19 @@ class MainActivity : ComponentActivity() {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
             Spacer(Modifier.weight(1f))
+            Text(
+                "LIBRARY",
+                color = Palette.text,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .border(1.dp, Palette.line, RoundedCornerShape(50))
+                    .clickable(onClick = onLibrary)
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            )
+            Spacer(Modifier.width(8.dp))
             // BIOS status: green when ready, a red call to action when missing.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
