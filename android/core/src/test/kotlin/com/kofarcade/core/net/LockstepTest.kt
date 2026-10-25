@@ -3,6 +3,7 @@ package com.kofarcade.core.net
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class LockstepTest {
@@ -184,5 +185,33 @@ class LockstepTest {
             val changes = seen.zipWithNext().count { (a, b) -> a != b }
             assertTrue(changes <= 2, "latency $latency: $changes changes")
         }
+    }
+
+    @Test
+    fun aWatcherGetsEveryInputSendsNoneAndHoldsTheInputsUntilItHasThem() {
+        // Phones 0 and 1 play; phone 5 watches.
+        val a = Lockstep(1, 0, partners = listOf(1), watchers = listOf(5))
+        val w = Lockstep(1, -1, partners = listOf(0, 1))
+        assertFalse(w.playing)
+        assertEquals(0, w.sampleUpTo(10) { 1 }.second.size)
+        assertEquals(0, w.outgoing(0).second.size)
+
+        a.sampleUpTo(9) { 3 } // frames 0..10
+        val (start, masks) = a.outgoing(5)
+        assertEquals(0, start)
+        assertEquals(11, masks.size)
+        w.receive(0, start, masks, ack = 0)
+        assertEquals(11, w.known(0))
+        assertEquals(0, w.remoteKnown) // player 2's inputs aren't in yet
+        assertEquals(11, w.takeRemote(0).second.size)
+
+        // The partner has them all; the watcher not yet: they're kept for it.
+        a.receive(1, 0, IntArray(0), ack = 11)
+        assertEquals(0, a.localAcked)
+        a.receive(5, 0, IntArray(0), ack = 11)
+        assertEquals(11, a.localAcked)
+        assertEquals(0, a.outgoing(5).second.size)
+        // A watcher's packets carry no inputs for the game.
+        assertEquals(0, a.known(5))
     }
 }

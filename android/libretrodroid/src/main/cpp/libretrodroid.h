@@ -102,6 +102,13 @@ public:
     // Skip running new frames for the next [frames] steps: the phone that's
     // ahead lets its partner catch up, so neither keeps hitting maxRollback.
     void netWait(int frames);
+    // The game at the newest frame every player's input is in for (nothing
+    // guessed), without stopping it: {frame, state}, or an empty state if
+    // that frame's no longer kept. What a newcomer starts watching from.
+    std::pair<int32_t, std::vector<uint8_t>> getNetState();
+    // Watching from [frame] on (after setNetplay and loading that frame's
+    // state): the inputs pushed next are that frame's.
+    void netStartAt(int32_t frame);
 
     // Frozen: no game frames run, but the last one is still drawn, so the
     // picture follows size changes while the game is paused (90s Kid Arcade).
@@ -215,7 +222,8 @@ private:
     std::atomic<bool> frozen{false};
     std::mutex netMutex;
     bool netplay = false;
-    static constexpr int NET_RING = 32;
+    static constexpr int NET_RING = 32;            // states kept to roll back to
+    static constexpr int NET_INPUT_RING = 1024;    // inputs kept: a watcher may trail the players
     static constexpr int NET_MAX_PLAYERS = 4;
     int netPlayers = 2;
     uint32_t netActive = 0x3;
@@ -224,7 +232,7 @@ private:
     int32_t netFrame = 0;                          // next frame to run
     int32_t netKnown[NET_MAX_PLAYERS] = {};        // each player's inputs below this are in
     int32_t netFirstWrong = INT32_MAX;
-    uint16_t netInput[NET_MAX_PLAYERS][NET_RING] = {};
+    uint16_t netInput[NET_MAX_PLAYERS][NET_INPUT_RING] = {};
     uint16_t netUsed[NET_MAX_PLAYERS][NET_RING] = {};  // what each frame ran with
     std::vector<std::vector<uint8_t>> netStates;
     std::vector<std::pair<int32_t, int64_t>> netPendingSums;

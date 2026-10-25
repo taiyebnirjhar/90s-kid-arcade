@@ -13,11 +13,13 @@ package com.kofarcade.core.net
 // Each phone picks its own delay ([DelayTuner]); the partner needn't match.
 
 /**
- * Inputs exchanged between the phones in a game of [players] seats (2 to 4),
- * thread-safe: the network thread receives, the game samples. [partners] are
- * the other seats with a phone in them (all of them by default; none when
- * alone in a room). Each partner acknowledges our inputs on its own, and we
- * send each one only what it hasn't got.
+ * Inputs exchanged between the phones of a game, thread-safe: the network
+ * thread receives, the game samples. Phones are numbered (a room's member
+ * ids, below [MAX_IDS]; in a plain match, the seats). [partners] are the
+ * other phones that play: we need their inputs. [watchers] only watch: they
+ * get our inputs too, but send none. [localPlayer] -1: this phone watches.
+ * Each one acknowledges our inputs on its own, and we send each one only
+ * what it hasn't got.
  */
 class Lockstep(
     delay: Int,
@@ -25,13 +27,18 @@ class Lockstep(
     val players: Int = 2,
     /** The other players. */
     val partners: List<Int> = (0 until players).filter { it != localPlayer },
+    /** Phones that watch: they're sent our inputs, and send none. */
+    val watchers: List<Int> = emptyList(),
 ) {
     init {
         require(delay >= 1) { "delay must be at least one frame" }
         require(players in 2..4) { "2 to 4 players" }
-        require(localPlayer in 0 until players)
-        require(partners.all { it in 0 until players && it != localPlayer }) { "bad partners $partners" }
+        require(localPlayer in -1 until MAX_IDS)
+        require((partners + watchers).all { it in 0 until MAX_IDS && it != localPlayer }) { "bad partners $partners $watchers" }
     }
+
+    /** This phone plays (it has inputs to send), rather than watching. */
+    val playing: Boolean get() = localPlayer >= 0
 
     /** May change mid-game: the next [sampleUpTo] then reads one input more, or one fewer. */
     @Volatile var delay = delay
@@ -41,10 +48,10 @@ class Lockstep(
         }
 
     private val local = HashMap<Int, Int>()
-    private val remote = Array(players) { HashMap<Int, Int>() }
-    private val known = IntArray(players)
-    private val taken = IntArray(players)
-    private val acked = IntArray(players)
+    private val remote = Array(MAX_IDS) { HashMap<Int, Int>() }
+    private val known = IntArray(MAX_IDS)
+    private val taken = IntArray(MAX_IDS)
+    private val acked = IntArray(MAX_IDS)
 
     /** The next local frame to sample. */
     var nextLocal = 0
@@ -61,8 +68,8 @@ class Lockstep(
     @Synchronized
     fun taken(player: Int): Int = taken[player]
 
-    /** Every partner has all our frames below this (alone: everything sampled). */
-    val localAcked: Int @Synchronized get() = partners.minOfOrNull { acked[it] } ?: nextLocal
+    /** Everyone has all our frames below this (alone: everything sampled). */
+    val localAcked: Int @Synchronized get() = (partners + watchers).minOfOrNull { acked[it] } ?: nextLocal
 
     /**
      * Samples local input for every frame up to [emulated] + [delay] not yet
@@ -72,6 +79,7 @@ class Lockstep(
     @Synchronized
     fun sampleUpTo(emulated: Int, input: () -> Int): Pair<Int, IntArray> {
         val start = nextLocal
+        if (!playing) return start to IntArray(0)
         val out = ArrayList<Int>()
         while (nextLocal <= emulated + delay) {
             val m = input()
@@ -80,20 +88,22 @@ class Lockstep(
             nextLocal++
         }
         // Alone: nobody to send them to, so nothing to keep.
-        if (partners.isEmpty()) local.clear()
+        if (partners.isEmpty() && watchers.isEmpty()) local.clear()
         return start to out.toIntArray()
     }
 
-    /** [from]'s inputs for frames [start] until start + masks.size; [ack]: they have our frames below it. */
+    /** [from]'s inputs for frames [start] until start + masks.size (a watcher's: none); [ack]: they have our frames below it. */
     @Synchronized
     fun receive(from: Int, start: Int, masks: IntArray, ack: Int) {
-        require(from in partners) { "not a partner: $from" }
-        val got = remote[from]
-        masks.forEachIndexed { i, m ->
-            val f = start + i
-            if (f >= taken[from]) got.putIfAbsent(f, m)
+        require(from in partners || from in watchers) { "not in the game: $from" }
+        if (from in partners) {
+            val got = remote[from]
+            masks.forEachIndexed { i, m ->
+                val f = start + i
+                if (f >= taken[from]) got.putIfAbsent(f, m)
+            }
+            while (got.containsKey(known[from])) known[from]++
         }
-        while (got.containsKey(known[from])) known[from]++
         if (ack > acked[from]) {
             acked[from] = minOf(ack, nextLocal)
             val all = localAcked
@@ -118,6 +128,9 @@ class Lockstep(
         return start to IntArray(maxOf(0, end - start)) { local[start + it] ?: 0 }
     }
 }
+
+/** Phone numbers in a [Lockstep] are below this. */
+const val MAX_IDS = 16
 
 /**
  * Picks this phone's input delay from how often the partner has to guess our

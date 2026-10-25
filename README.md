@@ -35,6 +35,9 @@ chip files on import.
 
 ## Install
 
+The website, [taiyebnirjhar.github.io/90s-kid-arcade](https://taiyebnirjhar.github.io/90s-kid-arcade/)
+(`site/`, published by `.github/workflows/pages.yml`), has the download button and how to install.
+
 Each push to `main` builds the app and publishes it as the
 [latest release](../../releases/latest) (the **Releases** box on the repo page). On your phone, download
 `90s-Kid-Arcade.apk` from there and open it (allow installing from your browser
@@ -43,7 +46,7 @@ and settings.
 
 ## Playing
 
-1. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
+1. Tap **Add BIOS** and pick your `neogeo.zip` (once).
 2. Tap a game. The first time it asks for that game's zip: pick it from the
    phone (any file name is fine) or download it from your library (below).
    Long-press a game to remove its ROM.
@@ -104,20 +107,35 @@ Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
 hotspot (no internet needed). Every phone needs the same game zip (and the
 BIOS for Neo Geo games; the library has them).
 
-- **Open a room** (Home → **Multiplayer**): pick the game and start playing.
-  The room has a code (like `K7Q2`) so friends can tell rooms apart.
-- **Join a room**: rooms on the network show up with their code and free
-  seats; tap one and the host gets "<name> wants to join" with Let them
-  in / No. You take a free seat and get the game exactly as it stands.
-  Or type the host's address (in its pause menu).
-- **Leave any time**: your seat empties and the game goes on for the others;
-  someone else can take it. If the host leaves, the next player takes the
-  room over. A phone that goes quiet for 5 seconds is treated as gone.
+- **Open a room** (Home → **Multiplayer**): pick the game and it starts. The
+  room's key (like `K7Q-2M`) shows as it opens, with a **Copy** button, and
+  stays in the pause menu. It holds the host phone's address on the Wi-Fi or
+  hotspot, so typing it connects straight there: no server, no internet, no
+  searching.
+- **Join a room**: type the key, or tap the room in the list of rooms nearby.
+  Nobody has to let you in. You come in watching the game as it stands
+  (up to 8 phones in a room), and watching never slows the players down.
+- **Take a seat**: while watching, press **COIN** or **START**. You get a free
+  seat, or the seat of a player who has pressed nothing for 20 seconds (say,
+  the challenger who lost): they go back to watching. If two ask at once, the
+  first request to reach the host wins; the other is told. The press goes in
+  once you're seated, so in KOF COIN then START brings you in as the
+  challenger. The host follows the same rule.
+- **Leave any time**: your seat empties and the game goes on for the others.
+  If the host leaves, the next phone takes the room over (and the key
+  changes to its address). A phone that goes quiet for 5-10 seconds is
+  treated as gone.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
-- Every phone runs the game, sending only its button states over UDP,
-  straight to every other phone. Pause, rematch and leaving go through the
-  host.
+- Every player's phone runs the game, sending only its button states over
+  UDP, straight to the other players. Pause, taking a seat, restarting and
+  leaving go through the host.
+- Watchers never hold the players up: the host gives a newcomer the game at
+  the newest frame every input is in for (from the emulator's rollback
+  states, without stopping it), then passes on the players' inputs from
+  there, over that watcher's own connection and thread. Watchers run only
+  frames whose inputs are all in, so they never guess; one that falls
+  behind or out of step gets the game again, and nobody else notices.
 - Your own presses take effect after one frame. The partner's input is
   guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi;
   each partner's separately.
@@ -131,14 +149,17 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   game, not a delay.
 - A phone that runs ahead of a partner waits a frame now and then (time
   sync). A phone stops only if a partner falls 8 frames behind.
-- Phones play the same game because whenever who sits where changes
-  (someone joins or leaves), the room's owner stops the game for a moment and
-  sends everyone its emulator state and the new seats; all carry on from that
-  state. An empty seat plays no input and nobody waits for it.
+- Phones play the same game because whenever who plays changes (someone
+  takes a seat, or a player leaves), the room's owner stops the game for a
+  moment and sends everyone its emulator state (compressed) and the new
+  seats; all carry on from that state. An empty seat plays no input and
+  nobody waits for it.
 - A RAM checksum of confirmed frames every 2 seconds catches drift; if two
   phones ever differ, the owner re-sends its game to everyone in the same
-  way, and play goes on from there (nothing restarts).
-- The pause menu pauses every phone. For a rematch, use the game's own:
+  way, and play goes on from there (nothing restarts). A game stuck for 3
+  seconds with nobody paused asks for the same. The pause menu shows how
+  the connection is doing (each phone's inputs and when it was last heard).
+- A player's pause menu pauses every phone (a watcher's pauses nobody). For a rematch, use the game's own:
   in KOF the other player presses COIN and START mid-fight ("Here comes a
   new challenger!"), and after a versus fight the loser continues with
   COIN and START. *Restart the game for everyone* (bottom of the pause menu)
@@ -184,7 +205,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 ## Your ROM library (optional)
 
 Keep your zips in a private Cloudflare R2 bucket and download them on any
-phone with one tap (home screen → **LIBRARY**). The library address is built
+phone with one tap (home screen → **Library**). The library address is built
 into the app (`Library.DEFAULT_URL`); it asks only for the key, once.
 
 1. Create an R2 bucket (public access off) and upload your zips.

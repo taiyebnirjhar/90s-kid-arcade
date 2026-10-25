@@ -30,6 +30,21 @@ import java.util.zip.ZipFile
 class RomStore(private val context: Context) {
     val dir: File = File(context.filesDir, "roms").apply { mkdirs() }
 
+    init {
+        // Copies and downloads cut off when the app was last closed: nothing
+        // can still be writing them in a new process.
+        synchronized(RomStore) {
+            if (!cleaned) {
+                cleaned = true
+                dir.listFiles().orEmpty().filter { it.name.endsWith(".part") }.forEach { it.delete() }
+            }
+        }
+    }
+
+    private companion object {
+        var cleaned = false
+    }
+
     fun file(name: String) = File(dir, name)
 
     fun has(name: String) = file(name).let { it.isFile && it.length() > 0 }
@@ -41,8 +56,12 @@ class RomStore(private val context: Context) {
     /** The zip to boot for [game], if any version of it is here. */
     fun setFor(game: Game): String? = installedSet(game, zips())
 
-    /** A scratch file in the ROM folder, for a copy or download in progress. */
-    fun partFile(label: String) = File(dir, "$label.part")
+    /**
+     * A new scratch file in the ROM folder, for a copy or download in
+     * progress: each its own, so two at once (a download left running by a
+     * rotated screen, an import meanwhile) never write the same file.
+     */
+    fun partFile(label: String): File = File.createTempFile("$label-", ".part", dir)
 
     /** Copies the picked file in and checks it. */
     fun import(uri: Uri): RomCheck {
@@ -70,13 +89,17 @@ class RomStore(private val context: Context) {
         } finally {
             // Moved into place, or not wanted: either way no scratch file stays behind.
             tmp.delete()
-            partFile("repack").delete()
         }
     }
 
+    // A zip already here, for a version that borrows files from it; a broken
+    // one counts as missing (the new file isn't to blame).
+    private fun existing(set: String): List<ZipItem>? =
+        file("$set.zip").takeIf { it.isFile }?.let { runCatching { items(it) }.getOrNull() }
+
     private fun checkAndStore(tmp: File): RomCheck {
         var check = try {
-            checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
+            checkRom(items(tmp), ::existing)
         } catch (e: ZipException) {
             tmp.delete()
             throw IllegalArgumentException("That file isn't a zip")
@@ -84,11 +107,13 @@ class RomStore(private val context: Context) {
         // An older Street Fighter III dump: the same chips, packed differently.
         if (check !is RomCheck.Game && check != RomCheck.Bios) {
             val repacked = partFile("repack")
-            if (runCatching { repackCps3(tmp, repacked) }.getOrDefault(false)) {
-                tmp.delete()
-                check(repacked.renameTo(tmp)) { "Couldn't save the converted zip" }
-                check = checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
-            } else {
+            try {
+                if (runCatching { repackCps3(tmp, repacked) }.getOrDefault(false)) {
+                    tmp.delete()
+                    check(repacked.renameTo(tmp)) { "Couldn't save the converted zip" }
+                    check = checkRom(items(tmp), ::existing)
+                }
+            } finally {
                 repacked.delete()
             }
         }

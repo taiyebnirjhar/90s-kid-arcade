@@ -47,9 +47,11 @@ import com.kofarcade.core.net.BeaconListener
 import com.kofarcade.core.net.PROTOCOL
 import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
-import com.kofarcade.core.net.TCP_PORT
+import com.kofarcade.core.net.parseRoomKey
 import com.kofarcade.core.net.probe
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
@@ -71,16 +73,42 @@ private data class FoundHost(val beacon: Beacon, val address: InetAddress)
 /** A game in the pick list. */
 data class GameChoice(val title: String, val subtitle: String)
 
-/** A room found on the network: [players] in of [maxPlayers]. */
-data class HostChoice(val title: String, val hostName: String, val have: Boolean, val players: Int = 1, val maxPlayers: Int = 2, val code: String = "")
+/** A room found on the network: [players] playing of [maxPlayers], [watchers] watching. */
+data class HostChoice(
+    val title: String,
+    val hostName: String,
+    val have: Boolean,
+    val players: Int = 1,
+    val maxPlayers: Int = 2,
+    val key: String = "",
+    val watchers: Int = 0,
+)
 
 private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
 
 /**
- * MULTIPLAYER: one phone opens a room and starts playing; the others join it
- * whenever there's a free seat (one phone per player, as many as the game
- * takes), on the same Wi-Fi or on a phone's hotspot. Anyone can leave; the
- * room carries on.
+ * Which FBNeo build this app runs (a hash of the core library), so phones
+ * with different builds don't join a game they'd play a little differently.
+ */
+private fun emulatorBuild(context: Context): String = runCatching {
+    val core = java.io.File(context.applicationInfo.nativeLibraryDir, "libfbneo_libretro_android.so")
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+    core.inputStream().use { input ->
+        val buf = ByteArray(1 shl 16)
+        while (true) {
+            val n = input.read(buf)
+            if (n < 0) break
+            digest.update(buf, 0, n)
+        }
+    }
+    digest.digest().take(8).joinToString("") { "%02x".format(it) }
+}.getOrDefault("")
+
+/**
+ * MULTIPLAYER: one phone opens a room and starts playing; it shows the
+ * room's key. Others join with the key (or from the list of rooms nearby),
+ * on the same Wi-Fi or on a phone's hotspot, and watch; COIN or START takes
+ * a free seat. Anyone can leave; the room carries on.
  */
 @Composable
 fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: () -> Unit, onClose: () -> Unit) {
@@ -108,14 +136,21 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
         opening = true
         scope.launch {
             try {
-                Netplay.room = withContext(Dispatchers.IO) {
+                // Never dropped half-made: if the screen's gone by the time
+                // the room is open, it's closed again.
+                val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players)
+                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context))
                 }
+                if (!isActive) {
+                    room.close()
+                    return@launch
+                }
+                Netplay.room = room
                 onStart(game, set)
             } catch (e: Exception) {
-                Toast.makeText(context, "Couldn't open a room: ${e.message}", Toast.LENGTH_LONG).show()
+                if (isActive) Toast.makeText(context, "Couldn't open a room: ${e.message}", Toast.LENGTH_LONG).show()
             }
             opening = false
         }
@@ -140,6 +175,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
 
 @Composable
 private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
+    val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
     var address by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
@@ -148,6 +184,7 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
     val scope = rememberCoroutineScope()
     // Gone from this screen: a join that's let in afterwards leaves at once.
     val left = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+    val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     DisposableEffect(Unit) {
         onDispose { left.set(true) }
     }
@@ -155,10 +192,12 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
     DisposableEffect(Unit) {
         val listener = runCatching {
             BeaconListener { beacon, from ->
-                val found = FoundHost(beacon, from)
-                if (hosts.none { it.address == from && it.beacon == beacon }) {
-                    hosts.removeAll { it.address == from }
-                    hosts += found
+                // On the main thread, and in place: a room's count changing
+                // mustn't move it under a finger about to tap it.
+                main.post {
+                    val found = FoundHost(beacon, from)
+                    val i = hosts.indexOfFirst { it.address == from }
+                    if (i < 0) hosts += found else if (hosts[i] != found) hosts[i] = found
                 }
             }
         }.onFailure { status = "Can't look for games: ${it.message}" }.getOrNull()
@@ -175,23 +214,26 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
             return
         }
         busy = true
-        status = "Waiting for ${found.beacon.name} to let you in…"
+        status = "Joining ${found.beacon.name}'s room…"
         scope.launch {
             try {
-                val room = withContext(Dispatchers.IO) {
+                val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios).also { room ->
+                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context)).also { room ->
                         if (left.get()) room.close()
                     }
                 }
-                if (left.get()) return@launch
+                if (left.get() || !isActive) {
+                    room.close()
+                    return@launch
+                }
                 Netplay.room = room
                 onJoined(game, set)
             } catch (e: Refused) {
                 status = e.message
             } catch (e: Exception) {
-                status = "Couldn't connect: ${e.message}"
+                if (isActive) status = "Couldn't connect: ${e.message}"
             }
             busy = false
         }
@@ -199,7 +241,10 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
 
     JoinScreen(
         hosts = hosts.map {
-            HostChoice(it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip"), it.beacon.players, it.beacon.maxPlayers, it.beacon.code)
+            HostChoice(
+                it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip"), it.beacon.players, it.beacon.maxPlayers,
+                it.beacon.key, it.beacon.watchers,
+            )
         },
         address = address,
         onAddress = { address = it },
@@ -208,19 +253,25 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
         busy = busy,
         onJoinHost = { i -> hosts.getOrNull(i)?.let(::connect) },
         onJoinAddress = {
-            busy = true
-            status = "Looking for $address…"
-            scope.launch {
-                try {
-                    val found = withContext(Dispatchers.IO) {
-                        val ip = InetAddress.getByName(address.trim())
-                        FoundHost(probe(ip, TCP_PORT), ip)
+            val target = parseRoomKey(address)
+            if (target == null) {
+                status = "That's not a room key. It looks like K7Q-2M: in the host's pause menu."
+                needsGame = false
+            } else {
+                busy = true
+                status = "Looking for room ${address.trim().uppercase()}…"
+                scope.launch {
+                    try {
+                        val found = withContext(Dispatchers.IO) {
+                            val (ip, port) = target
+                            FoundHost(probe(ip, port).copy(tcpPort = port), ip)
+                        }
+                        busy = false
+                        connect(found)
+                    } catch (e: Exception) {
+                        status = "No room found for ${address.trim()}. Are both phones on the same Wi-Fi or hotspot? (${e.message})"
+                        busy = false
                     }
-                    busy = false
-                    connect(found)
-                } catch (e: Exception) {
-                    status = "No game found at $address: ${e.message}"
-                    busy = false
                 }
             }
         },
@@ -235,18 +286,18 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
 fun TwoPlayerMenu(onHost: () -> Unit, onJoin: () -> Unit, onBack: () -> Unit) {
     ArcadeScreen(title = "Multiplayer", kicker = "One phone per player", onBack = onBack) {
         Text(
-            "All phones on the same Wi-Fi, or on one phone's hotspot. Each needs the same game " +
+            "All phones on the same Wi-Fi or on one phone's hotspot (no internet needed). Each needs the same game " +
                 "(and BIOS for Neo Geo games): get them from the library on each phone. " +
-                "Join any time there's a free seat, leave any time: the game goes on for the others. " +
-                "Most games take 2 players; Cadillacs and Dinosaurs takes 3.",
+                "Join with the room's key and watch; press COIN or START to take a free seat. Leave any time: " +
+                "the game goes on for the others. Most games take 2 players; Cadillacs and Dinosaurs takes 3.",
             color = Palette.muted,
             fontSize = 14.sp,
             lineHeight = 20.sp,
         )
         Spacer(Modifier.height(18.dp))
-        BigChoice("Open a room", "Pick the game and start playing; friends join as you play.", badge = "1P", gold = true, onClick = onHost)
+        BigChoice("Open a room", "Pick the game and play; you get a room key for friends.", badge = "1P", gold = true, onClick = onHost)
         Spacer(Modifier.height(12.dp))
-        BigChoice("Join a room", "Find the room a friend is playing in.", badge = "2P+", onClick = onJoin)
+        BigChoice("Join a room", "Type a friend's room key, or pick a room nearby.", badge = "2P+", onClick = onJoin)
     }
 }
 
@@ -314,6 +365,14 @@ fun JoinScreen(
     onBack: () -> Unit,
 ) {
     ArcadeScreen(title = "Join a room", kicker = "One phone per player", onBack = onBack) {
+        Panel(highlight = true) {
+            ArcadeField(address, onAddress, "Room key", placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
+            Spacer(Modifier.height(12.dp))
+            GoldButton("Join", onJoinAddress, Modifier.fillMaxWidth(), enabled = !busy && address.isNotBlank())
+            Spacer(Modifier.height(8.dp))
+            Text("The host sees it when the room opens, and in its pause menu.", color = Palette.muted, fontSize = 13.sp)
+        }
+        Spacer(Modifier.height(4.dp))
         status?.let {
             Panel(highlight = !needsGame) {
                 Text(it, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -324,7 +383,7 @@ fun JoinScreen(
             }
             Spacer(Modifier.height(4.dp))
         }
-        SectionLabel("Rooms on this network")
+        SectionLabel("Or a room nearby")
         if (hosts.isEmpty()) {
             Panel {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -333,7 +392,7 @@ fun JoinScreen(
                     Text("Looking for rooms…", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text("On a friend's phone: Multiplayer → Open a room.", color = Palette.muted, fontSize = 13.sp)
+                Text("Not showing up? Type the room key above.", color = Palette.muted, fontSize = 13.sp)
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -343,26 +402,21 @@ fun JoinScreen(
                         Column(Modifier.weight(1f)) {
                             Text(h.title, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
                             Text(
-                                (if (h.code.isNotEmpty()) "Room ${h.code} · " else "") +
-                                    "${h.hostName} · ${h.players} of ${h.maxPlayers} in",
+                                (if (h.key.isNotEmpty()) "Room ${h.key} · " else "") +
+                                    "${h.hostName} · ${h.players} of ${h.maxPlayers} playing" +
+                                    if (h.watchers > 0) " · ${h.watchers} watching" else "",
                                 color = Palette.muted,
                                 fontSize = 13.sp,
                             )
                         }
                         when {
                             !h.have -> Tag("Need game", Palette.red)
-                            h.players >= h.maxPlayers -> Tag("Full", Palette.muted)
+                            h.players >= h.maxPlayers -> Tag("Watch", Palette.gold)
                             else -> Tag("Join", Palette.gold, filled = true)
                         }
                     }
                 }
             }
-        }
-        SectionLabel("Or join by address")
-        Panel {
-            ArcadeField(address, onAddress, "Address shown on the host", placeholder = "192.168.43.1", keyboardType = KeyboardType.Uri)
-            Spacer(Modifier.height(12.dp))
-            GoldButton("Join", onJoinAddress, Modifier.fillMaxWidth(), enabled = !busy && address.isNotBlank())
         }
         Spacer(Modifier.height(24.dp))
     }

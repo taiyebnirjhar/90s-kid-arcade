@@ -29,7 +29,7 @@
 
         <activity
             android:name=".GameActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|fontScale|density|locale|layoutDirection"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.Kof.Game" />
     </application>

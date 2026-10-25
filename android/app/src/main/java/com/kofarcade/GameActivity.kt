@@ -43,7 +43,6 @@ import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
-import com.kofarcade.core.net.localAddresses
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.fighterBase
@@ -69,8 +68,8 @@ sealed interface GameDialog {
     data object Controls : GameDialog
     data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
 
-    /** Multiplayer: someone asks to join your room. */
-    class JoinRequest(val name: String, val answer: (Boolean) -> Unit) : GameDialog
+    /** Multiplayer: the room just opened, with its key to share. */
+    data class RoomOpen(val key: String) : GameDialog
 }
 
 /** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
@@ -126,12 +125,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var stalledFrames = 0
     private var lastSumFrame = -1L
     private var lastWait = 0L
+    private var lastResyncAsk = 0L
+    private var netStartRequested = false
+    // Watching: the COIN or START that asked for a seat, pressed for real once
+    // seated (so the coin drops); then pressed for this many more frames.
+    private var askedWith: Key? = null
+    private var tapKey: Key? = null
+    private var tapFrames = 0
     // Two players: the game waits while either menu is open.
     private var localPaused = false
     private var remotePaused = false
     // While the room seats everyone (someone joined or left, a rematch): the game waits.
     @Volatile private var seating = true
     private lateinit var netStatus: TextView
+    private lateinit var roomBanner: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
 
@@ -169,10 +176,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         // Before the emulator starts: in a room, frames run from every phone's
         // inputs (rollback netcode, see LibretroDroid::setNetplay). Until the
-        // first seating it's this phone alone.
-        room.let { r ->
-            LibretroDroid.setNetplay(r != null, r?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 1 shl (r?.localPlayer ?: 0))
-        }
+        // first seating the game runs on its own (watching nobody).
+        LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
         if (room != null) holdWifi()
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
@@ -216,7 +221,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setPadding(36, 20, 36, 20)
             visibility = if (room != null) View.VISIBLE else View.GONE
-            text = room?.let { r -> if (r.isOwner) "Opening room ${r.code}…" else "Joining ${r.nameOf(r.owner)}'s room…" }
+            text = room?.let { r -> if (r.isOwner) "Opening the room…" else "Joining ${r.nameOf(r.owner)}'s room…" }
+        }
+        roomBanner = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(170, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(28, 10, 28, 10)
+            visibility = View.GONE
         }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
@@ -226,6 +238,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
                 addView(detectInfo, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
                 addView(netStatus, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
+                addView(
+                    roomBanner,
+                    FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                        bottomMargin = (12 * resources.displayMetrics.density).toInt()
+                    },
+                )
                 // Full width so the layout editor's bar can centre itself; it
                 // takes no space (and no touches) when nothing is shown.
                 addView(dialogs, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
@@ -254,7 +272,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         hud.onFrame(frame)
                     }
-                    is GLRetroView.GLRetroEvents.SurfaceCreated -> room?.let(::startNetplay)
+                    // Once: the surface is made again if the GL context is lost.
+                    is GLRetroView.GLRetroEvents.SurfaceCreated -> if (!netStartRequested) {
+                        netStartRequested = true
+                        room?.let(::startNetplay)
+                    }
                 }
             }
         }
@@ -312,7 +334,19 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun sendKey(key: Key, down: Boolean) {
         if (retroId(key) < 0) return // a button this game doesn't have
-        if (room != null) {
+        room?.let { r ->
+            if (r.watching) {
+                // Watching: COIN or START asks for a free seat.
+                if (down && netStarted && (key == Key.COIN || key == Key.START) && askedWith == null) {
+                    // A free seat, or an idle player's: the host decides (first come).
+                    askedWith = key
+                    sendNet { it.requestSeat() }
+                    showBanner("Asking for a seat…")
+                    // No answer (the host was changing, say): ask again freely.
+                    roomBanner.postDelayed({ if (askedWith == key && r.watching) askedWith = null }, 5_000)
+                }
+                return
+            }
             val bit = 1 shl retroId(key)
             localMask = if (down) localMask or bit else localMask and bit.inv()
             return
@@ -388,15 +422,56 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val isNetplay: Boolean get() = room != null
 
-    /** The room, for the pause menu: its code and who's in. */
+    /** The room, for the pause menu: its key and who's in. */
     val roomInfo: String?
         get() = room?.let { r ->
-            "Room ${r.code} · ${r.seats.size} of ${r.maxPlayers} players" +
-                // The host's address, for joining by typing it.
-                if (r.isOwner) " · you host it at ${localAddresses().firstOrNull() ?: "?"}" else ""
+            (if (r.key.isNotEmpty()) "Room key ${r.key} · " else "") +
+                "${r.seats.size} of ${r.maxPlayers} playing" +
+                if (r.watcherCount > 0) " · ${r.watcherCount} watching" else ""
         }
 
-    /** This phone's player: 0 alone or hosting, 1 and up when joined. */
+    /** How the room's connection is doing, for the pause menu. */
+    val roomStatus: String? get() = room?.status()
+
+    /** This phone watches the room's game rather than plays. */
+    val isWatching: Boolean get() = room?.watching == true
+
+    /** The room's key, to copy (pause menu); null if there's none. */
+    val roomKey: String? get() = room?.key?.takeIf { it.isNotEmpty() }
+
+    /** Copies the room's key, to send to friends. */
+    fun copyRoomKey() {
+        val key = roomKey ?: return
+        val clipboard = getSystemService(android.content.ClipboardManager::class.java) ?: return
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Room key", key))
+        Toast.makeText(this, "Room key $key copied", Toast.LENGTH_SHORT).show()
+    }
+
+    // Watching: a short hint along the bottom on how to play, then out of the way.
+    private var bannerShown: String? = null
+
+    private fun updateBanner() {
+        val r = room ?: return
+        if (!netStarted || !r.watching) {
+            roomBanner.visibility = View.GONE
+            bannerShown = null
+            return
+        }
+        val text = if (r.hasFreeSeat) "Watching · press COIN or START to play" else "Watching · COIN or START takes a seat when its player is idle"
+        if (text != bannerShown) showBanner(text)
+        bannerShown = text
+    }
+
+    private val hideBanner = Runnable { roomBanner.visibility = View.GONE }
+
+    private fun showBanner(text: String) {
+        roomBanner.text = text
+        roomBanner.visibility = View.VISIBLE
+        roomBanner.removeCallbacks(hideBanner)
+        roomBanner.postDelayed(hideBanner, 4_000)
+    }
+
+    /** This phone's player: 0 alone, its seat in a room (-1 while watching). */
     private val localPlayer: Int get() = room?.localPlayer ?: 0
 
     // The room runs on its own threads; it seats this phone (from the owner's
@@ -406,10 +481,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             if (room.isOwner) {
                 // The state the room starts from, for rematches and newcomers.
                 room.startState = withContext(Dispatchers.IO) { retroView.serializeState() }
+                // The key to share; the game waits until it's closed.
+                if (room.members.isEmpty()) show(GameDialog.RoomOpen(room.key))
             }
             room.start(object : RoomListener {
                 override fun onRemote(player: Int, start: Int, masks: IntArray) {
-                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(player, start + i, m) }
+                    var taken = true
+                    masks.forEachIndexed { i, m -> taken = LibretroDroid.pushRemoteInput(player, start + i, m) && taken }
+                    // A watcher's game too far behind to take more (it was in
+                    // the background, say): the game again, from now.
+                    if (!taken && room.watching) sendNet { it.requestResync() }
                 }
 
                 // The room puts everyone back in step from the host's game by
@@ -423,12 +504,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     applyNetFreeze()
                 }
 
-                override fun onJoinRequest(name: String, answer: (Boolean) -> Unit) = runOnUiThread {
-                    show(GameDialog.JoinRequest(name, answer))
-                }
-
                 override fun onNews(message: String) = runOnUiThread {
                     Toast.makeText(this@GameActivity, message, Toast.LENGTH_SHORT).show()
+                    // "All seats are in use": asking again is allowed.
+                    if (room.watching) askedWith = null
+                }
+
+                override fun onRoster() = runOnUiThread { updateBanner() }
+
+                // A newcomer watches from the newest frame every input is in for.
+                override fun snapshot(): Pair<Int, ByteArray>? {
+                    val raw = LibretroDroid.getNetState()
+                    if (raw.size <= 4) return null
+                    val frame = java.nio.ByteBuffer.wrap(raw, 0, 4).int
+                    return frame to raw.copyOfRange(4, raw.size)
                 }
 
                 // The owner's game, to seat everyone from: stop it first.
@@ -438,10 +527,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     return retroView.serializeState()
                 }
 
-                override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?) {
+                override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?, startFrame: Int) {
                     seating = true
                     LibretroDroid.setFrozen(true)
                     LibretroDroid.setNetplay(true, room.localPlayer, game.players, MAX_ROLLBACK, activeMask)
+                    if (startFrame > 0) LibretroDroid.netStartAt(startFrame)
                     if (state != null) retroView.unserializeState(state)
                     runOnUiThread {
                         lastSumFrame = -1
@@ -449,9 +539,23 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         remotePaused = room.partnerPaused
                         hud.releaseAll()
                         pad.releaseAll()
+                        localMask = 0
+                        // Seated from watching: the COIN or START that asked goes in now.
+                        tapKey = askedWith?.takeIf { !room.watching }
+                        tapFrames = if (tapKey != null) 6 else 0
+                        // Seated, or a seating that didn't seat us: ask again freely.
+                        askedWith = null
+                        // A player now, with the menu open: everyone waits for it.
+                        when {
+                            room.watching -> localPaused = false
+                            dialog != null && !localPaused -> pauseEmulation()
+                            // A seating clears everyone's pauses: ours still holds.
+                            localPaused -> sendNet { it.sendPause(true) }
+                        }
                         netStarted = true
                         seating = false
                         applyNetFreeze()
+                        updateBanner()
                     }
                 }
             })
@@ -463,13 +567,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun onNetFrame() {
         val room = room ?: return
         if (!netStarted || seating || localPaused || remotePaused) return
-        val emulated = LibretroDroid.getNetFrame()
-        val sample = room.sample(emulated) {
-            padFrame++
-            pad.onFrame()
-            localMask
-        }
-        sample.masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(sample.start + i, m) }
+        val sample = room.sample(
+            emulated = { LibretroDroid.getNetFrame() },
+            input = {
+                padFrame++
+                pad.onFrame()
+                val tap = tapKey
+                if (tap != null && tapFrames > 0) {
+                    tapFrames--
+                    localMask or (1 shl retroId(tap))
+                } else {
+                    localMask
+                }
+            },
+            push = { start, masks -> masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) } },
+        )
+        val emulated = sample.emulated
         // Time sync: when this phone's game runs ahead of a partner's (see
         // Room.lead), wait a frame so it catches up. Every phone then guesses
         // as little as possible, and none stalls at the rollback limit.
@@ -488,8 +601,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lastNetFrame = emulated
         val waiting = stalledFrames > 30
         if (waiting != (netStatus.visibility == View.VISIBLE)) {
-            netStatus.text = "Waiting for ${room.peerName}…"
+            netStatus.text = if (room.watching) "Waiting for the players…" else "Waiting for ${room.peerName}…"
             netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+        }
+        // Stuck for 3 seconds with nobody paused: back in step from the host's
+        // game (a watcher alone; players with a moment's pause). A watcher
+        // that fell far behind the players gets the game again, too.
+        val behind = room.watching && room.watchedUpTo.toLong() - emulated > 600
+        if ((stalledFrames > 180 || behind) && frame - lastResyncAsk > 300) {
+            lastResyncAsk = frame
+            netStatus.text = "Reconnecting…"
+            sendNet { it.requestResync() }
         }
     }
 
@@ -549,13 +671,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        wifiLock?.let { if (it.isHeld) it.release() }
+        // The room first: its threads may still ask the emulator for its
+        // state, which the emulator can't answer once it's gone.
         room?.let {
             it.close()
             if (Netplay.room === it) Netplay.room = null
             LibretroDroid.setNetplay(false, 0, 2, 0, 0)
         }
+        super.onDestroy()
+        wifiLock?.let { if (it.isHeld) it.release() }
+    }
+
+    override fun onPause() {
+        // Leaving the app mid-game: the others wait, as for the menu.
+        if (room != null && !isWatching && dialog == null && !editing && !isFinishing) show(GameDialog.Pause)
+        super.onPause()
     }
 
     // ----- Fighter detection -----
@@ -581,9 +711,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         continue
                     }
+                    // Watching: no fighter of our own to follow.
+                    val me = localPlayer
+                    if (me < 0) continue
                     val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
-                    groundBase = fighterBase(spec, ram, localPlayer)
-                    onDetected(detect(spec, ram, localPlayer))
+                    val found = runCatching { fighterBase(spec, ram, me) to detect(spec, ram, me) }.getOrNull() ?: continue
+                    groundBase = found.first
+                    onDetected(found.second)
                 }
             }
         }
@@ -814,11 +948,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun pauseEmulation() {
-        if (room != null) {
-            // Everyone waits while any menu is open.
+        room?.let { r ->
+            // Everyone waits while a player's menu is open (a watcher's stops nobody).
             hud.releaseAll()
             pad.releaseAll()
-            if (!localPaused) {
+            localMask = 0
+            if (!localPaused && !r.watching) {
                 localPaused = true
                 sendNet { it.sendPause(true) }
                 applyNetFreeze()
