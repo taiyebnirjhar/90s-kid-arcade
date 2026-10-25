@@ -101,11 +101,18 @@ opacity, move names, vibration, left-handed layout, move timing.
 
 One phone per player, as many as the game takes: 2 for most games, 3 for
 Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
-hotspot. Home → **Multiplayer**: one phone hosts a game (player 1), the others
-join; they find the host by themselves, or type the address it shows. The
-host accepts each player, and the game starts when it's full or when the host
-taps **Start**. Every phone needs the same game zip (and the BIOS for Neo Geo
-games; the library has them).
+hotspot (no internet needed). Every phone needs the same game zip (and the
+BIOS for Neo Geo games; the library has them).
+
+- **Open a room** (Home → **Multiplayer**): pick the game and start playing.
+  The room has a code (like `K7Q2`) so friends can tell rooms apart.
+- **Join a room**: rooms on the network show up with their code and free
+  seats; tap one and the host gets "<name> wants to join" with Let them
+  in / No. You take a free seat and get the game exactly as it stands.
+  Or type the host's address (in its pause menu).
+- **Leave any time**: your seat empties and the game goes on for the others;
+  someone else can take it. If the host leaves, the next player takes the
+  room over. A phone that goes quiet for 5 seconds is treated as gone.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every phone runs the game, sending only its button states over UDP,
@@ -124,17 +131,18 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   game, not a delay.
 - A phone that runs ahead of a partner waits a frame now and then (time
   sync). A phone stops only if a partner falls 8 frames behind.
-- Phones start identical because the host sends its emulator state to each
-  when the game opens. Without that, the Neo Geo clock, which starts from each
-  phone's time, would differ.
+- Phones play the same game because whenever who sits where changes
+  (someone joins or leaves, a rematch), the room's owner stops the game for a
+  moment and sends everyone its emulator state and the new seats; all carry
+  on from that state. An empty seat plays no input and nobody waits for it.
 - A RAM checksum of confirmed frames every 2 seconds catches drift.
 - The pause menu pauses every phone; **Rematch** restarts them all from the
-  same start.
+  state the room started from.
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run, with two
   players in KOF and three in Cadillacs and Dinosaurs.
 - Native side: `android/libretrodroid` (LibretroDroid::setNetplay).
-  Protocol and tests: `android/core/.../net`.
+  Rooms, protocol and tests: `android/core/.../net` (`Room` in `Session.kt`).
 
 ## Move lists
 

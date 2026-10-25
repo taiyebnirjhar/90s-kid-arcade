@@ -125,7 +125,8 @@ public class LibretroDroid {
     public static native byte[] readMemory(int id, int offset, int length);
 
     // Multiplayer, rollback netcode: see LibretroDroid::setNetplay in libretrodroid.h.
-    public static native void setNetplay(boolean enabled, int localPlayer, int players, int maxRollback);
+    // activeMask: bit p set = seat p has a phone (empty seats play no input and aren't waited for).
+    public static native void setNetplay(boolean enabled, int localPlayer, int players, int maxRollback, int activeMask);
     public static native boolean pushLocalInput(int frame, int mask);
     public static native boolean pushRemoteInput(int player, int frame, int mask);
     public static native long[] getNetStats();

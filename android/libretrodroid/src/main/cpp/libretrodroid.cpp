@@ -682,11 +682,12 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
     }
 }
 
-void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int maxRollback) {
+void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int maxRollback, int activeMask) {
     std::lock_guard<std::mutex> lock(netMutex);
     netplay = enabled;
     netPlayers = std::max(2, std::min(players, NET_MAX_PLAYERS));
     netLocalPlayer = std::max(0, std::min(localPlayer, netPlayers - 1));
+    netActive = ((uint32_t) activeMask | (1u << netLocalPlayer)) & ((1u << netPlayers) - 1);
     netMaxRollback = std::max(0, std::min(maxRollback, NET_RING - 8));
     netFrame = 0;
     for (int p = 0; p < NET_MAX_PLAYERS; p++) {
@@ -706,7 +707,8 @@ void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int m
 int32_t LibretroDroid::netRemoteKnown() const {
     int32_t known = INT32_MAX;
     for (int p = 0; p < netPlayers; p++) {
-        if (p != netLocalPlayer) known = std::min(known, netKnown[p]);
+        // An empty seat is never waited for.
+        if (p != netLocalPlayer && (netActive & (1u << p))) known = std::min(known, netKnown[p]);
     }
     return known;
 }
@@ -724,6 +726,7 @@ bool LibretroDroid::pushLocalInput(int32_t frame, int32_t mask) {
 bool LibretroDroid::pushRemoteInput(int player, int32_t frame, int32_t mask) {
     std::lock_guard<std::mutex> lock(netMutex);
     if (!netplay || player < 0 || player >= netPlayers || player == netLocalPlayer) return false;
+    if (!(netActive & (1u << player))) return false;
     if (frame != netKnown[player]) return false;
     netInput[player][frame % NET_RING] = (uint16_t) mask;
     // Already run with a wrong guess: replay from there on the next step.
@@ -766,7 +769,9 @@ void LibretroDroid::netSimulate(int32_t frame, bool replay) {
     // Each player's input for the frame, or their last one as the guess.
     for (int p = 0; p < netPlayers; p++) {
         uint16_t mask = 0;
-        if (frame < netKnown[p]) {
+        if (!(netActive & (1u << p))) {
+            // An empty seat: nobody's pressing anything.
+        } else if (frame < netKnown[p]) {
             mask = netInput[p][frame % NET_RING];
         } else if (netKnown[p] > 0) {
             mask = netInput[p][(netKnown[p] - 1) % NET_RING];
@@ -841,7 +846,8 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
     if (localKnown - netFrame > 4) wanted++;
     for (unsigned i = 0; i < wanted; i++) {
         if (netFrame >= localKnown) return;                     // our input isn't sampled yet
-        if (netFrame >= remoteKnown + netMaxRollback) return;   // too far ahead of the slowest partner
+        // Too far ahead of the slowest partner (none: alone in the room).
+        if ((int64_t) netFrame >= (int64_t) remoteKnown + netMaxRollback) return;
         netSimulate(netFrame, false);
         netFrame++;
     }

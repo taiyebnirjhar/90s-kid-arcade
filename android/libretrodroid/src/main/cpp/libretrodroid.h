@@ -89,7 +89,9 @@ public:
     // back to that frame and replays to now, silently. A frame runs only up
     // to maxRollback frames past the slowest partner's last input (0 = strict
     // lockstep). Inputs replace the touch input for ports 0 to players - 1.
-    void setNetplay(bool enabled, int localPlayer, int players, int maxRollback);
+    // [activeMask] (bit p = port p) says which seats have a phone: an empty
+    // seat plays no input and is never waited for (someone left the room).
+    void setNetplay(bool enabled, int localPlayer, int players, int maxRollback, int activeMask);
     bool pushLocalInput(int32_t frame, int32_t mask);
     bool pushRemoteInput(int player, int32_t frame, int32_t mask);
     int32_t getNetFrame();
@@ -216,6 +218,7 @@ private:
     static constexpr int NET_RING = 32;
     static constexpr int NET_MAX_PLAYERS = 4;
     int netPlayers = 2;
+    uint32_t netActive = 0x3;
     int netLocalPlayer = 0;
     int netMaxRollback = 0;
     int32_t netFrame = 0;                          // next frame to run

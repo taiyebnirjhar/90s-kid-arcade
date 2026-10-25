@@ -234,9 +234,10 @@ JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setNetplay
     jboolean enabled,
     jint localPlayer,
     jint players,
-    jint maxRollback
+    jint maxRollback,
+    jint activeMask
 ) {
-    LibretroDroid::getInstance().setNetplay(enabled, localPlayer, players, maxRollback);
+    LibretroDroid::getInstance().setNetplay(enabled, localPlayer, players, maxRollback, activeMask);
 }
 
 JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushLocalInput(

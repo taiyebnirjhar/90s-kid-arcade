@@ -80,6 +80,25 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
         }
+        is GameDialog.JoinRequest -> {
+            // Answered once: a tap, or closing the sheet (no).
+            var answered by remember(d) { mutableStateOf(false) }
+            fun reply(yes: Boolean) {
+                if (answered) return
+                answered = true
+                d.answer(yes)
+                game.close()
+            }
+            Sheet(onDismiss = { reply(false) }) {
+                Title("${d.name} wants to join")
+                Text("They take a free seat and the game carries on for everyone.", color = Palette.muted)
+                Spacer(Modifier.size(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(onClick = { reply(true) }, modifier = Modifier.weight(1f)) { Text("Let them in") }
+                    OutlinedButton(onClick = { reply(false) }, modifier = Modifier.weight(1f)) { Text("No") }
+                }
+            }
+        }
     }
 }
 
@@ -169,6 +188,7 @@ private fun PauseMenu(game: GameActivity) {
             title = game.gameTitle,
             fighter = c?.name,
             netplay = game.isNetplay,
+            roomInfo = game.roomInfo,
             onResume = { game.close() },
             onRematch = { game.rematch() },
             onSave = { game.saveState() },
@@ -195,17 +215,19 @@ fun PauseContent(
     onLayout: () -> Unit,
     onControls: () -> Unit,
     onQuit: () -> Unit,
+    /** Multiplayer: the room's code and who's in. */
+    roomInfo: String? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Kicker(if (netplay) "Paused for both players" else "Paused")
+            Kicker(if (netplay) "Paused for everyone" else "Paused")
             Text(title, color = Color.White, fontSize = 46.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
             if (netplay) {
                 Spacer(Modifier.size(8.dp))
-                Tag("2 players", Palette.gold)
+                Tag(roomInfo ?: "Multiplayer", Palette.gold)
             }
             if (fighter != null) {
                 Spacer(Modifier.size(14.dp))
@@ -224,7 +246,7 @@ fun PauseContent(
             modifier = Modifier.width(320.dp).verticalScroll(rememberScrollState()),
         ) {
             BigButton("Resume", primary = true, onClick = onResume)
-            // Two players: restart together. (A saved state can't be loaded on one phone of two.)
+            // Multiplayer: restart together. (A saved state can't be loaded on one phone of several.)
             if (netplay) {
                 BigButton("Rematch", onClick = onRematch)
             } else {

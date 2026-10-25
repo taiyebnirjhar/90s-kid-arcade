@@ -8,13 +8,13 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 
-// The wire format. TCP connections (each guest to the host) carry the
-// handshake, the start state and pause / rematch / leaving, which the host
-// passes on to the other guests; UDP carries the inputs, straight from every
-// phone to every other (small, frequent, and resent until acknowledged, so a
-// lost packet costs nothing).
+// The wire format. TCP connections (each player's phone to the room's owner)
+// carry joining, who sits where, the game state when that changes, and
+// pause / rematch / leaving, which the owner passes on to the others; UDP
+// carries the inputs, straight from every phone to every other (small,
+// frequent, and resent until acknowledged, so a lost packet costs nothing).
 
-const val PROTOCOL = 6
+const val PROTOCOL = 7
 const val TCP_PORT = 7845
 const val BEACON_PORT = 7846
 
@@ -28,9 +28,11 @@ data class Hello(
     val rom: Long,
     val bios: Long,
     val udpPort: Int,
+    /** Where a new owner can call this phone (should the owner leave). */
+    val tcpPort: Int = 0,
 )
 
-/** The host's answer: accepted (with the session settings) or not, and why. */
+/** The owner's answer: accepted (with the room's settings and your seat) or not, and why. */
 @Serializable
 data class Welcome(
     val accepted: Boolean,
@@ -43,22 +45,29 @@ data class Welcome(
     val set: String = "",
     val title: String = "",
     val rom: Long = 0,
-    /** The guest's player number (host 0) and how many can play this game. */
+    /** The guest's seat (player number, 0 = player 1) and how many can play this game. */
     val player: Int = 1,
     val maxPlayers: Int = 2,
+    /** Who owns the room (their seat), and its code. */
+    val owner: Int = 0,
+    val code: String = "",
 )
 
-/** One player of a starting game: where its inputs come from ([host] null: the host's TCP address). */
+/** A seat of a room (a player, 0 = player 1) and the phone in it: where its inputs and TCP connections come from. */
 @Serializable
-data class RosterEntry(val player: Int, val name: String, val host: String?, val udpPort: Int)
+data class Seat(val player: Int, val name: String, val host: String, val udpPort: Int, val tcpPort: Int)
 
-/** Sent by the host to every guest when it starts the game: who plays, and where to send inputs. */
+/**
+ * The owner's word on who plays from now on: game [epoch] starts from the
+ * state that follows ([Msg.STATE]), with these [seats]. Sent to everyone
+ * whenever someone joins or leaves, and for a rematch.
+ */
 @Serializable
-data class Roster(
-    val players: List<RosterEntry>,
-    /** The receiving guest's player number (a guest who left the lobby closes the gap). */
-    val you: Int = -1,
-)
+data class Seating(val epoch: Int, val owner: Int, val seats: List<Seat>)
+
+/** A new owner taking over the room (the old one left): it connects to each player with this. */
+@Serializable
+data class Takeover(val session: Int, val owner: Int)
 
 /** A [Hello] with this set asks only which game the host is running (joining by address). */
 const val PROBE = "?"
@@ -75,6 +84,8 @@ data class Beacon(
     /** Players in so far (the host counts) and how many the game takes. */
     val players: Int = 1,
     val maxPlayers: Int = 2,
+    /** The room's code, to tell rooms apart. */
+    val code: String = "",
 )
 
 internal val json = Json { ignoreUnknownKeys = true }
@@ -88,7 +99,9 @@ internal object Msg {
     const val PAUSE: Byte = 6
     const val RESUME: Byte = 7
     const val REMATCH: Byte = 8
-    const val ROSTER: Byte = 9
+    const val SEATING: Byte = 9
+    const val TAKEOVER: Byte = 10
+    const val START_STATE: Byte = 11
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {

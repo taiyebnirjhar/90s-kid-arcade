@@ -13,15 +13,24 @@ package com.kofarcade.core.net
 // Each phone picks its own delay ([DelayTuner]); the partner needn't match.
 
 /**
- * Inputs exchanged between [players] phones (2 to 4), thread-safe: the network
- * thread receives, the game samples. Each partner acknowledges our inputs on
- * its own, and we send each one only what it hasn't got.
+ * Inputs exchanged between the phones in a game of [players] seats (2 to 4),
+ * thread-safe: the network thread receives, the game samples. [partners] are
+ * the other seats with a phone in them (all of them by default; none when
+ * alone in a room). Each partner acknowledges our inputs on its own, and we
+ * send each one only what it hasn't got.
  */
-class Lockstep(delay: Int, val localPlayer: Int, val players: Int = 2) {
+class Lockstep(
+    delay: Int,
+    val localPlayer: Int,
+    val players: Int = 2,
+    /** The other players. */
+    val partners: List<Int> = (0 until players).filter { it != localPlayer },
+) {
     init {
         require(delay >= 1) { "delay must be at least one frame" }
         require(players in 2..4) { "2 to 4 players" }
         require(localPlayer in 0 until players)
+        require(partners.all { it in 0 until players && it != localPlayer }) { "bad partners $partners" }
     }
 
     /** May change mid-game: the next [sampleUpTo] then reads one input more, or one fewer. */
@@ -30,9 +39,6 @@ class Lockstep(delay: Int, val localPlayer: Int, val players: Int = 2) {
             require(value >= 1) { "delay must be at least one frame" }
             field = value
         }
-
-    /** The other players. */
-    val partners: List<Int> = (0 until players).filter { it != localPlayer }
 
     private val local = HashMap<Int, Int>()
     private val remote = Array(players) { HashMap<Int, Int>() }
@@ -48,15 +54,15 @@ class Lockstep(delay: Int, val localPlayer: Int, val players: Int = 2) {
     @Synchronized
     fun known(player: Int): Int = known[player]
 
-    /** Every partner's frames below this are known. */
-    val remoteKnown: Int @Synchronized get() = partners.minOf { known[it] }
+    /** Every partner's frames below this are known (alone: all of them). */
+    val remoteKnown: Int @Synchronized get() = partners.minOfOrNull { known[it] } ?: Int.MAX_VALUE
 
     /** [player]'s frames below this have been handed out by [takeRemote]. */
     @Synchronized
     fun taken(player: Int): Int = taken[player]
 
-    /** Every partner has all our frames below this. */
-    val localAcked: Int @Synchronized get() = partners.minOf { acked[it] }
+    /** Every partner has all our frames below this (alone: everything sampled). */
+    val localAcked: Int @Synchronized get() = partners.minOfOrNull { acked[it] } ?: nextLocal
 
     /**
      * Samples local input for every frame up to [emulated] + [delay] not yet
@@ -73,6 +79,8 @@ class Lockstep(delay: Int, val localPlayer: Int, val players: Int = 2) {
             out += m
             nextLocal++
         }
+        // Alone: nobody to send them to, so nothing to keep.
+        if (partners.isEmpty()) local.clear()
         return start to out.toIntArray()
     }
 

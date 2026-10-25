@@ -41,8 +41,9 @@ import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
-import com.kofarcade.core.net.Link
-import com.kofarcade.core.net.LinkListener
+import com.kofarcade.core.net.Room
+import com.kofarcade.core.net.RoomListener
+import com.kofarcade.core.net.localAddresses
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.fighterBase
@@ -67,6 +68,9 @@ sealed interface GameDialog {
     data class Editor(val character: Character) : GameDialog
     data object Controls : GameDialog
     data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
+
+    /** Multiplayer: someone asks to join your room. */
+    class JoinRequest(val name: String, val answer: (Boolean) -> Unit) : GameDialog
 }
 
 /** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
@@ -90,7 +94,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     companion object {
         const val EXTRA_GAME = "game"
         const val EXTRA_SET = "set"
-        /** Two-player: play over [Netplay.link] instead of alone. */
+        /** Multiplayer: play in [Netplay.room] instead of alone. */
         const val EXTRA_NETPLAY = "netplay"
         private const val MAX_MOVES = 6
         private const val CORE = "libfbneo_libretro_android.so"
@@ -113,8 +117,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private var frame = 0L
 
-    // Two-player: the connection, and this phone's buttons as a RetroPad mask.
-    private var link: Link? = null
+    // Multiplayer: the room, and this phone's buttons as a RetroPad mask.
+    private var room: Room? = null
     private var localMask = 0
     private var padFrame = 0L
     private var netStarted = false
@@ -126,9 +130,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // Two players: the game waits while either menu is open.
     private var localPaused = false
     private var remotePaused = false
-    private var restarting = false
-    // The state both phones started from, kept for rematches.
-    private var netStartState: ByteArray? = null
+    // While the room seats everyone (someone joined or left, a rematch): the game waits.
+    @Volatile private var seating = true
     private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
@@ -160,15 +163,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         roster = game.roster?.let(::loadRoster)
         if (game.layout == Layout.FIGHTER) ramMap = detectSpec(game.roster)
         val roms = RomStore(this)
-        link = if (intent.getBooleanExtra(EXTRA_NETPLAY, false)) Netplay.link else null
-        if (intent.getBooleanExtra(EXTRA_NETPLAY, false) && link == null) {
+        room = if (intent.getBooleanExtra(EXTRA_NETPLAY, false)) Netplay.room else null
+        if (intent.getBooleanExtra(EXTRA_NETPLAY, false) && room == null) {
             finish()
             return
         }
-        // Before the emulator starts: in two-player mode frames run from both
-        // phones' inputs (rollback netcode, see LibretroDroid::setNetplay).
-        LibretroDroid.setNetplay(link != null, link?.localPlayer ?: 0, link?.players ?: 2, MAX_ROLLBACK)
-        if (link != null) holdWifi()
+        // Before the emulator starts: in a room, frames run from every phone's
+        // inputs (rollback netcode, see LibretroDroid::setNetplay). Until the
+        // first seating it's this phone alone.
+        room.let { r ->
+            LibretroDroid.setNetplay(r != null, r?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 1 shl (r?.localPlayer ?: 0))
+        }
+        if (room != null) holdWifi()
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
         LibretroDroid.setFrozen(false)
@@ -187,7 +193,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             systemDirectory = File(filesDir, "system").apply { mkdirs() }.absolutePath
             // Two-player games start from the host's state, saves included;
             // keep them apart from your own.
-            savesDirectory = File(filesDir, if (link != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
+            savesDirectory = File(filesDir, if (room != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
         }
@@ -210,8 +216,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             setBackgroundColor(Color.argb(190, 0, 0, 0))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setPadding(36, 20, 36, 20)
-            visibility = if (link != null) View.VISIBLE else View.GONE
-            text = if (link?.isHost == true) "Starting the game…" else "Getting the game from ${link?.nameOf(0)}…"
+            visibility = if (room != null) View.VISIBLE else View.GONE
+            text = room?.let { r -> if (r.isOwner) "Opening room ${r.code}…" else "Joining ${r.nameOf(r.owner)}'s room…" }
         }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
@@ -241,7 +247,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 when (it) {
                     is GLRetroView.GLRetroEvents.FrameRendered -> {
                         frame++
-                        if (link != null) {
+                        if (room != null) {
                             onNetFrame()
                         } else {
                             padFrame++
@@ -249,7 +255,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         hud.onFrame(frame)
                     }
-                    is GLRetroView.GLRetroEvents.SurfaceCreated -> link?.let(::startNetplay)
+                    is GLRetroView.GLRetroEvents.SurfaceCreated -> room?.let(::startNetplay)
                 }
             }
         }
@@ -307,7 +313,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun sendKey(key: Key, down: Boolean) {
         if (retroId(key) < 0) return // a button this game doesn't have
-        if (link != null) {
+        if (room != null) {
             val bit = 1 shl retroId(key)
             localMask = if (down) localMask or bit else localMask and bit.inv()
             return
@@ -381,34 +387,28 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // ----- Two players -----
 
-    val isNetplay: Boolean get() = link != null
+    val isNetplay: Boolean get() = room != null
+
+    /** The room, for the pause menu: its code and who's in. */
+    val roomInfo: String?
+        get() = room?.let { r ->
+            "Room ${r.code} · ${r.seats.size} of ${r.maxPlayers} players" +
+                // The host's address, for joining by typing it.
+                if (r.isOwner) " · you host it at ${localAddresses().firstOrNull() ?: "?"}" else ""
+        }
 
     /** This phone's player: 0 alone or hosting, 1 and up when joined. */
-    private val localPlayer: Int get() = link?.localPlayer ?: 0
+    private val localPlayer: Int get() = room?.localPlayer ?: 0
 
-    // Every phone must start from the same state: the host sends its own
-    // (right after loading, before any frame has run), the guests load it.
-    private fun startNetplay(link: Link) {
+    // The room runs on its own threads; it seats this phone (from the owner's
+    // game) whenever someone joins or leaves, and the game waits meanwhile.
+    private fun startNetplay(room: Room) {
         lifecycleScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    if (link.isHost) {
-                        val state = retroView.serializeState()
-                        netStartState = state
-                        link.sendState(state)
-                        link.awaitReady()
-                    } else {
-                        val state = link.receiveState()
-                        netStartState = state
-                        check(retroView.unserializeState(state)) { "Couldn't load the host's game" }
-                        link.sendReady()
-                    }
-                }
-            } catch (e: Exception) {
-                netEnded("Couldn't start the game: ${e.message}")
-                return@launch
+            if (room.isOwner) {
+                // The state the room starts from, for rematches and newcomers.
+                room.startState = withContext(Dispatchers.IO) { retroView.serializeState() }
             }
-            link.start(object : LinkListener {
+            room.start(object : RoomListener {
                 override fun onRemote(player: Int, start: Int, masks: IntArray) {
                     masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(player, start + i, m) }
                 }
@@ -425,60 +425,86 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
 
                 override fun onPartnerPaused(player: Int, paused: Boolean) = runOnUiThread {
-                    remotePaused = link.partnerPaused
+                    remotePaused = room.partnerPaused
                     applyNetFreeze()
                 }
 
-                override fun onRematch(player: Int) = runOnUiThread {
-                    Toast.makeText(this@GameActivity, "${link.nameOf(player)} started a rematch", Toast.LENGTH_SHORT).show()
-                    restartNet()
+                override fun onJoinRequest(name: String, answer: (Boolean) -> Unit) = runOnUiThread {
+                    show(GameDialog.JoinRequest(name, answer))
+                }
+
+                override fun onNews(message: String) = runOnUiThread {
+                    Toast.makeText(this@GameActivity, message, Toast.LENGTH_SHORT).show()
+                }
+
+                // The owner's game, to seat everyone from: stop it first.
+                override fun captureState(): ByteArray {
+                    seating = true
+                    LibretroDroid.setFrozen(true)
+                    return retroView.serializeState()
+                }
+
+                override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?) {
+                    seating = true
+                    LibretroDroid.setFrozen(true)
+                    LibretroDroid.setNetplay(true, room.localPlayer, game.players, MAX_ROLLBACK, activeMask)
+                    if (state != null) retroView.unserializeState(state)
+                    runOnUiThread {
+                        lastSumFrame = -1
+                        lastNetFrame = -1
+                        desyncShown = false
+                        remotePaused = room.partnerPaused
+                        hud.releaseAll()
+                        pad.releaseAll()
+                        netStarted = true
+                        seating = false
+                        applyNetFreeze()
+                    }
                 }
             })
-            netStarted = true
-            netStatus.visibility = View.GONE
         }
     }
 
     // Each displayed frame: read our buttons for the frames the game will
     // need next, one macro step per frame, and send them.
     private fun onNetFrame() {
-        val link = link ?: return
-        if (!netStarted || restarting || localPaused || remotePaused) return
+        val room = room ?: return
+        if (!netStarted || seating || localPaused || remotePaused) return
         val emulated = LibretroDroid.getNetFrame()
-        val (start, masks) = link.sample(emulated) {
+        val sample = room.sample(emulated) {
             padFrame++
             pad.onFrame()
             localMask
         }
-        masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) }
+        sample.masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(sample.start + i, m) }
         // Time sync: when this phone's game runs ahead of a partner's (see
-        // Link.lead), wait a frame so it catches up. Every phone then guesses
+        // Room.lead), wait a frame so it catches up. Every phone then guesses
         // as little as possible, and none stalls at the rollback limit.
-        link.updateAdvantage(emulated)
-        if (link.lead >= 2 && frame - lastWait > 20) {
+        room.updateAdvantage(emulated)
+        if (room.lead >= 2 && frame - lastWait > 20) {
             lastWait = frame
             LibretroDroid.netWait(1)
         }
         val sum = LibretroDroid.getNetSum()
         if (sum[0] >= 0 && sum[0] != lastSumFrame) {
             lastSumFrame = sum[0]
-            link.reportSum(sum[0].toInt(), sum[1])
+            room.reportSum(sum[0].toInt(), sum[1])
         }
-        // Say so when the partner's inputs stop arriving for a moment.
+        // Say so when a partner's inputs stop arriving for a moment.
         stalledFrames = if (emulated == lastNetFrame) stalledFrames + 1 else 0
         lastNetFrame = emulated
         val waiting = stalledFrames > 30
         if (waiting != (netStatus.visibility == View.VISIBLE)) {
-            netStatus.text = "Waiting for ${link.peerName}…"
+            netStatus.text = "Waiting for ${room.peerName}…"
             netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
         }
     }
 
-    // The game runs only while neither player has the menu open.
+    // The game runs only while no player has the menu open, and not while seating.
     private fun applyNetFreeze() {
-        LibretroDroid.setFrozen(restarting || localPaused || remotePaused)
+        LibretroDroid.setFrozen(seating || localPaused || remotePaused)
         if (remotePaused && !localPaused) {
-            netStatus.text = "${link?.pausedName ?: "Someone"} paused the game"
+            netStatus.text = "${room?.pausedName ?: "Someone"} paused the game"
             netStatus.visibility = View.VISIBLE
         } else if (netStarted) {
             netStatus.visibility = View.GONE
@@ -486,48 +512,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         stalledFrames = 0
     }
 
-    private fun sendNet(action: (Link) -> Unit) {
-        val l = link ?: return
-        lifecycleScope.launch(Dispatchers.IO) { action(l) }
+    private fun sendNet(action: (Room) -> Unit) {
+        val r = room ?: return
+        lifecycleScope.launch(Dispatchers.IO) { action(r) }
     }
 
-    /** Pause menu: restart the game on every phone, from the start state they shared. */
+    /** Pause menu: restart the game on every phone, from the state the room started from. */
     fun rematch() {
-        val target = link?.nextRematch() ?: return
-        sendNet { it.sendRematch(target) }
+        sendNet { it.requestRematch() }
         close()
-        restartNet()
-    }
-
-    private fun restartNet() {
-        val link = link ?: return
-        val state = netStartState ?: return
-        // Already restarting: the loop below catches up with any newer request.
-        if (restarting) return
-        restarting = true
-        applyNetFreeze()
-        hud.releaseAll()
-        pad.releaseAll()
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                while (link.epoch < link.wantedEpoch) {
-                    link.restart { LibretroDroid.setNetplay(true, link.localPlayer, link.players, MAX_ROLLBACK) }
-                    retroView.unserializeState(state)
-                }
-            }
-            lastSumFrame = -1
-            lastNetFrame = -1
-            desyncShown = false
-            restarting = false
-            applyNetFreeze()
-            // A request that came in just as the loop finished.
-            if (link.epoch < link.wantedEpoch) restartNet()
-        }
     }
 
     private fun netEnded(reason: String) {
         if (isFinishing) return
-        link?.close(sendBye = false)
+        room?.close()
         netStatus.visibility = View.GONE
         show(GameDialog.Error(reason, title = "Multiplayer game ended"))
     }
@@ -556,10 +554,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     override fun onDestroy() {
         super.onDestroy()
         wifiLock?.let { if (it.isHeld) it.release() }
-        link?.let {
+        room?.let {
             it.close()
-            if (Netplay.link === it) Netplay.link = null
-            LibretroDroid.setNetplay(false, 0, 2, 0)
+            if (Netplay.room === it) Netplay.room = null
+            LibretroDroid.setNetplay(false, 0, 2, 0, 0)
         }
     }
 
@@ -819,8 +817,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun pauseEmulation() {
-        if (link != null) {
-            // Both phones wait while either menu is open.
+        if (room != null) {
+            // Everyone waits while any menu is open.
             hud.releaseAll()
             pad.releaseAll()
             if (!localPaused) {
@@ -841,7 +839,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun resumeEmulation() {
-        if (link != null) {
+        if (room != null) {
             if (localPaused) {
                 localPaused = false
                 sendNet { it.sendPause(false) }
@@ -859,14 +857,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // Save states run on the emulation thread, so they're done with the game running.
     fun saveState() = close {
-        if (link != null) return@close
+        if (room != null) return@close
         val bytes = withContext(Dispatchers.IO) { retroView.serializeState() }
         withContext(Dispatchers.IO) { stateFile.writeBytes(bytes) }
         Toast.makeText(this, "State saved", Toast.LENGTH_SHORT).show()
     }
 
     fun loadState() = close {
-        if (link != null) return@close
+        if (room != null) return@close
         val file = stateFile
         if (!file.exists()) {
             Toast.makeText(this, "No saved state yet", Toast.LENGTH_SHORT).show()
