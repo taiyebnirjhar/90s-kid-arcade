@@ -90,6 +90,17 @@ jobs:
       # Screenshots of the app's screens (Paparazzi, app/src/test), published
       # to a ui-snapshots-<branch> branch to check the look without a phone. Never
       # holds up the APK.
+      # A real game screen behind the in-game screenshots (pause, controls):
+      # libretro's KOF '97 thumbnail, into build/ (never committed). Without
+      # it the tests draw a plain stand-in.
+      - name: Download a game screen for the in-game screenshots
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          mkdir -p app/build/test-art
+          curl -fsSL --retry 3 -o app/build/test-art/kof97_snap.png \
+            "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Snaps/The%20King%20of%20Fighters%20'97%20(NGM-2320).png"
+
       - name: Render UI screenshots
         if: github.ref != 'refs/heads/main'
         continue-on-error: true

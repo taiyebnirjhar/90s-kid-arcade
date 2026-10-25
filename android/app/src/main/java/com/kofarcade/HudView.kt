@@ -109,6 +109,20 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     /** Whether a control can be resized (groups of pills only move). */
     fun resizable(id: String?) = id != null && id != "top" && id != "team"
 
+    /**
+     * How see-through the controls are (the Opacity setting, 0.3 to 1). The
+     * glass fills fade with it fully; rings, letters and arrows less, so
+     * they stay readable over a busy stage.
+     */
+    var opacity = 1f
+        set(value) {
+            field = value
+            alpha = 0.55f + 0.45f * value
+            // Under the view's alpha, the fill ends up 85% of [value] dark.
+            glassFill.alpha = (255 * 0.85f * value / alpha).toInt().coerceIn(0, 255)
+            invalidate()
+        }
+
     /** Everything the HUD shows; set by the game screen, then call [refresh]. */
     data class State(
         val layout: Layout = Layout.FIGHTER,
@@ -153,6 +167,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val index: Int = -1,
         val glyph: Path? = null,
         val buttons: String = "",
+        // Words worked out at layout, so drawing makes no strings: the
+        // button's letter, the move's (shortened) name or the slot's name.
+        val label: String = "",
+        /** A sequence move's inputs, in one or two lines, facing right [0] and left [1]. */
+        val seq: Array<List<String>>? = null,
+        /** The names on [buttons]' chips. */
+        val chips: List<String> = emptyList(),
     ) {
         val cx get() = rect.centerX()
         val cy get() = rect.centerY()
@@ -178,11 +199,27 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     // ----- Paints -----
 
-    private val glassFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(92, 12, 14, 24) }
+    // Glass: a dark see-through fill with a thin light ring; pressed, it glows.
+    private val glassFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(215, 8, 8, 14) }
     private val glassStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.2f * d
-        color = Color.argb(56, 255, 255, 255)
+        color = Color.argb(220, 255, 255, 255)
+    }
+    // Behind words that sit on the game picture itself (slot names, pills).
+    private val labelFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(170, 8, 8, 14) }
+    private val bold = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    private val boldItalic = Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
+    // Reused while drawing, so a frame allocates nothing.
+    private val scratch = Path()
+    private val tileRect = RectF()
+    private val slotRect = RectF()
+    // A small arrow mark at the stick ring's right, in units of its radius; turned for the other three.
+    private val stickMark = Path().apply {
+        moveTo(0.86f, 0f)
+        lineTo(0.74f, -0.1f)
+        lineTo(0.74f, 0.1f)
+        close()
     }
     private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -193,7 +230,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private val faceSrc = Rect()
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        typeface = bold
         textAlign = Paint.Align.CENTER
     }
     private val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -202,7 +239,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         strokeJoin = Paint.Join.ROUND
     }
 
-    private val accent = Color.rgb(255, 207, 77)
+    private val accent = Color.rgb(232, 178, 26) // Palette.gold
     private val superColor = Color.rgb(255, 179, 71)
     private val keyColors = mapOf(
         'A' to Color.rgb(255, 90, 95),
@@ -219,7 +256,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     init {
         isHapticFeedbackEnabled = true
+        softShadow()
     }
+
+    // Every label carries a small dark shadow, so it reads on a bright stage too.
+    private fun softShadow() = text.setShadowLayer(2f * d, 0f, 0.5f * d, Color.argb(230, 0, 0, 0))
 
     fun refresh() {
         if (width > 0) layoutElements()
@@ -313,9 +354,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
 
         // Team bar
-        st.slots.forEachIndexed { i, _ ->
+        st.slots.indices.forEach { i ->
             val y = 54 * d + i * 40 * d
-            els += El("team", Kind.SLOT, placed("team", RectF(safeL + 12 * d, y, safeL + 12 * d + 96 * d, y + 34 * d)), false, index = i)
+            val name = st.slots[i].name
+            els += El(
+                "team", Kind.SLOT, placed("team", RectF(safeL + 12 * d, y, safeL + 12 * d + 96 * d, y + 34 * d)), false,
+                index = i, label = name?.substringBefore(" ") ?: "Pick",
+            )
         }
 
         // Button cluster: A B C D, moves on an outer ring, system on an inner one.
@@ -355,7 +400,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
             val r = faceR * (faceScale[c] ?: 1f)
-            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c)
+            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = c.toString())
         }
         val skillR = 26 * d * sc
         // Moves on an outer ring; Sengoku 3's first three sit higher and bigger.
@@ -371,12 +416,17 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         ring.forEachIndexed { i, p ->
             val m = st.moves[i]
             val rect = placed("move:$i", ax + p.x * mirror, ay + p.y, skillR * if (brawler && i < 3) 1.15f else 1f)
+            val glyph = glyphPath(m.cmd, rect.centerX(), rect.centerY(), rect.width() / 2 * 0.84f)
+            // Sequences show their inputs as text, so no separate button chips.
+            val buttons = runCatching { parseCommand(m.cmd) }.getOrNull()?.takeUnless { it.isSequence }?.buttons.orEmpty()
+            text.textSize = rect.width() / 2 * 0.32f
             els += El(
                 "move:$i", Kind.SKILL, rect, true, move = m,
-                glyph = glyphPath(m.cmd, rect.centerX(), rect.centerY(), rect.width() / 2 * 0.84f),
-                // Sequences show their inputs as text, so no separate button chips.
-                buttons = runCatching { parseCommand(m.cmd) }.getOrNull()
-                    ?.takeUnless { it.isSequence }?.buttons.orEmpty(),
+                glyph = glyph,
+                buttons = buttons,
+                label = ellipsize(m.shortName, rect.width() / 2 * 2.7f),
+                seq = if (glyph == null) arrayOf(sequenceLines(m.cmd), sequenceLines(mirrored(m.cmd))) else null,
+                chips = buttons.map(::buttonName),
             )
         }
         // Block: left of the bottom row, where the thumb already is. Slide down for low block.
@@ -460,6 +510,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     override fun onDraw(canvas: Canvas) {
         val st = state
+        if (editing) {
+            // Dim the game well (under the controls), so they and their outlines read on any stage.
+            fill.color = Color.argb(150, 0, 0, 0)
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fill)
+        }
         drawStick(canvas)
         for (el in elements) {
             when (el.kind) {
@@ -481,7 +536,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             text.textAlign = Paint.Align.LEFT
             text.setShadowLayer(4 * d, 0f, 1 * d, Color.BLACK)
             canvas.drawText("Tap a slot to pick your fighter and get their moves", safeInsets().first + 132 * d, 78 * d, text)
-            text.clearShadowLayer()
+            softShadow()
             text.textAlign = Paint.Align.CENTER
         }
     }
@@ -494,8 +549,6 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     // Outlines every control (gold for the picked one) and a hint line.
     private fun drawEditor(canvas: Canvas) {
-        fill.color = Color.argb(70, 0, 0, 0)
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fill)
         val outlines = elements.groupBy { it.id }.map { (id, els) ->
             id to RectF(els.first().rect).apply { els.forEach { union(it.rect) } }
         } + ("stick" to circle(homeX, homeY, stickRadius()))
@@ -507,26 +560,68 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             canvas.drawRoundRect(r.left - pad, r.top - pad, r.right + pad, r.bottom + pad, 12 * d, 12 * d, dashed)
         }
         text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
-        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, height - 18 * d, 12 * d)
-        text.clearShadowLayer()
+        // Names under the buttons, here only: in play the buttons stay clean.
+        for (el in elements) {
+            if (!el.round) continue
+            val name = when (el.kind) {
+                // A B C D already show their letter; only a longer name ("Attack") goes under.
+                Kind.FACE -> state.labels[el.letter]?.takeIf { it.length > 2 } ?: continue
+                Kind.SKILL -> el.move!!.shortName
+                Kind.SYS -> el.sys!!.name
+                Kind.BLOCK -> "Block"
+                else -> continue
+            }
+            text.textSize = 10 * d
+            text.color = if (el.id == selected) accent else Color.WHITE
+            // Under the control, or over it when that would leave the screen.
+            val below = el.rect.bottom + 13 * d
+            canvas.drawText(ellipsize(name, el.r * 2.8f), el.cx, if (below > height - 3 * d) el.rect.top - 6 * d else below, text)
+        }
+        text.textSize = 10 * d
+        text.color = if (selected == "stick") accent else Color.WHITE
+        canvas.drawText("Stick", homeX, homeY + stickRadius() + 14 * d, text)
+        text.color = Color.WHITE
+        // Under the editor's bar, where no control sits by default.
+        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, 84 * d, 12 * d)
+        softShadow()
     }
 
-    private fun glass(canvas: Canvas, el: El, stroke: Int? = null, strokeWidth: Float = 1.5f * d) {
+    private fun glass(canvas: Canvas, el: El, stroke: Int? = null, strokeWidth: Float = 1.2f * d, glow: Int = accent) {
+        val down = el in pressed
         if (el.round) {
-            canvas.drawCircle(el.cx, el.cy, el.r, if (el in pressed) pressedFill() else glassFill)
-            ring.color = stroke ?: glassStroke.color
-            ring.strokeWidth = strokeWidth
-            canvas.drawCircle(el.cx, el.cy, el.r - strokeWidth / 2, ring)
+            if (down) halo(canvas, el.cx, el.cy, el.r, glow)
+            canvas.drawCircle(el.cx, el.cy, el.r, if (down) pressedFill(glow) else glassFill)
+            // A faint dark edge outside the light ring keeps the button's shape on a bright stage.
+            ring.color = Color.argb(110, 0, 0, 0)
+            ring.strokeWidth = d
+            canvas.drawCircle(el.cx, el.cy, el.r + 0.5f * d, ring)
+            ring.color = if (down) glow else stroke ?: glassStroke.color
+            ring.strokeWidth = if (down) 2 * d else strokeWidth
+            canvas.drawCircle(el.cx, el.cy, el.r - ring.strokeWidth / 2, ring)
         } else {
             val rr = el.rect.height() / 2
-            canvas.drawRoundRect(el.rect, rr, rr, if (el in pressed) pressedFill() else glassFill)
-            ring.color = stroke ?: glassStroke.color
+            canvas.drawRoundRect(el.rect, rr, rr, if (down) pressedFill(glow) else glassFill)
+            ring.color = if (down) glow else stroke ?: glassStroke.color
             ring.strokeWidth = strokeWidth
             canvas.drawRoundRect(el.rect, rr, rr, ring)
         }
     }
 
-    private fun pressedFill() = fill.apply { color = Color.argb(90, 255, 255, 255) }
+    // Pressed glass: lit from inside in the glow's colour.
+    private fun pressedFill(c: Int) = fill.apply { color = Color.argb(110, Color.red(c) / 2, Color.green(c) / 2, Color.blue(c) / 2) }
+
+    // A soft glow round a pressed button: rings fading outwards.
+    private fun halo(canvas: Canvas, cx: Float, cy: Float, r: Float, c: Int) {
+        ring.color = withAlpha(c, 120)
+        ring.strokeWidth = 3 * d
+        canvas.drawCircle(cx, cy, r + 2.5f * d, ring)
+        ring.color = withAlpha(c, 60)
+        ring.strokeWidth = 4 * d
+        canvas.drawCircle(cx, cy, r + 6 * d, ring)
+        ring.color = withAlpha(c, 25)
+        ring.strokeWidth = 5 * d
+        canvas.drawCircle(cx, cy, r + 10.5f * d, ring)
+    }
 
     private fun centeredText(canvas: Canvas, s: String, cx: Float, cy: Float, size: Float, color: Int = Color.WHITE) {
         text.textSize = size
@@ -536,7 +631,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun drawPause(canvas: Canvas, el: El) {
-        glass(canvas, el)
+        glass(canvas, el, glow = Color.WHITE)
         fill.color = Color.WHITE
         val bw = 3.4f * d
         val bh = 11 * d
@@ -546,7 +641,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun drawPill(canvas: Canvas, el: El) {
         val facing = el.kind == Kind.FACING
-        glass(canvas, el, stroke = if (facing) Color.argb(150, 255, 207, 77) else null)
+        if (el !in pressed) {
+            val rr = el.rect.height() / 2
+            canvas.drawRoundRect(el.rect, rr, rr, labelFill)
+        }
+        glass(canvas, el, stroke = if (facing) withAlpha(accent, 170) else null, glow = Color.WHITE)
         val label = when (el.kind) {
             Kind.COIN -> "COIN"
             Kind.START -> "START"
@@ -559,14 +658,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             val dir = if (state.facingLeft) -1f else 1f
             glyphPaint.color = accent
             glyphPaint.strokeWidth = 2.2f * d
-            val p = Path().apply {
-                moveTo(ax - 6 * d * dir, el.cy)
-                lineTo(ax + 6 * d * dir, el.cy)
-                moveTo(ax + 2 * d * dir, el.cy - 4 * d)
-                lineTo(ax + 6 * d * dir, el.cy)
-                lineTo(ax + 2 * d * dir, el.cy + 4 * d)
-            }
-            canvas.drawPath(p, glyphPaint)
+            scratch.reset()
+            scratch.moveTo(ax - 6 * d * dir, el.cy)
+            scratch.lineTo(ax + 6 * d * dir, el.cy)
+            scratch.moveTo(ax + 2 * d * dir, el.cy - 4 * d)
+            scratch.lineTo(ax + 6 * d * dir, el.cy)
+            scratch.lineTo(ax + 2 * d * dir, el.cy + 4 * d)
+            canvas.drawPath(scratch, glyphPaint)
             centeredText(canvas, label, el.cx + 9 * d, el.cy, 10 * d, accent)
         } else {
             centeredText(canvas, label, el.cx, el.cy, 10 * d)
@@ -575,7 +673,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun drawSlot(canvas: Canvas, el: El, slot: Slot?) {
-        val tile = RectF(el.rect.left, el.rect.top, el.rect.left + 34 * d, el.rect.bottom)
+        val tile = tileRect.apply { set(el.rect.left, el.rect.top, el.rect.left + 34 * d, el.rect.bottom) }
         val name = slot?.name
         val active = slot?.active == true
         if (name == null) {
@@ -587,7 +685,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         } else {
             val hue = nameHue(name)
             val inset = if (active) 0f else 3 * d
-            val t = RectF(tile.left + inset, tile.top + inset, tile.right - inset, tile.bottom - inset)
+            val t = slotRect.apply { set(tile.left + inset, tile.top + inset, tile.right - inset, tile.bottom - inset) }
             fill.shader = LinearGradient(
                 t.left, t.top, t.right, t.bottom,
                 Color.HSVToColor(floatArrayOf(hue, 0.7f, if (active) 0.8f else 0.45f)),
@@ -612,19 +710,22 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.color = if (active) accent else Color.argb(76, 255, 255, 255)
             ring.strokeWidth = (if (active) 2f else 1.5f) * d
             canvas.drawRoundRect(t, 10 * d, 10 * d, ring)
-            text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
+            text.typeface = boldItalic
             if (face == null) centeredText(canvas, initials(name), t.centerX(), t.centerY(), 12.5f * d)
-            text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            text.typeface = bold
         }
         // Only the fighter in play (or an empty slot) gets a name, to keep the corner quiet.
+        // On a dark glass pill, so it reads on a bright stage.
         if (active || name == null) {
             text.textAlign = Paint.Align.LEFT
-            text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
             text.textSize = 10 * d
-            text.color = if (active) accent else Color.argb(200, 255, 255, 255)
-            canvas.drawText(name?.substringBefore(" ") ?: "Pick", tile.right + 6 * d, tile.centerY() + 3.5f * d, text)
+            val x = tile.right + 5 * d
+            val w = text.measureText(el.label)
+            slotRect.set(x, tile.centerY() - 8 * d, x + w + 12 * d, tile.centerY() + 8 * d)
+            canvas.drawRoundRect(slotRect, 8 * d, 8 * d, labelFill)
+            text.color = if (active) accent else Color.WHITE
+            canvas.drawText(el.label, x + 6 * d, tile.centerY() + 3.5f * d, text)
             text.color = Color.WHITE
-            text.clearShadowLayer()
             text.textAlign = Paint.Align.CENTER
         }
     }
@@ -632,10 +733,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private fun drawFace(canvas: Canvas, el: El) {
         val c = keyColors.getValue(el.letter!!)
         val down = el in pressed
-        canvas.drawCircle(el.cx, el.cy, el.r, if (down) fill.apply { color = withAlpha(c, 200) } else glassFill)
-        ring.color = withAlpha(c, 200)
-        ring.strokeWidth = 2.5f * d
-        canvas.drawCircle(el.cx, el.cy, el.r - 1.25f * d, ring)
+        // Glass with the key's colour in a thin inner ring (the move chips use the same colours).
+        glass(canvas, el)
+        if (!down) {
+            ring.color = withAlpha(c, 150)
+            ring.strokeWidth = 1.5f * d
+            canvas.drawCircle(el.cx, el.cy, el.r - 4.5f * d, ring)
+        }
+        text.typeface = boldItalic
         val label = state.labels[el.letter]
         if (label != null && label.length <= 2) {
             // A short name ("LP") is the button's name.
@@ -645,18 +750,18 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             centeredText(canvas, label.uppercase(), el.cx, el.cy, el.r * 0.36f)
             text.letterSpacing = 0f
         } else {
-            centeredText(canvas, el.letter.toString(), el.cx, el.cy - if (label != null && label.length > 1) el.r * 0.16f else 0f, el.r * 0.74f)
+            centeredText(canvas, el.label, el.cx, el.cy - if (label != null && label.length > 1) el.r * 0.16f else 0f, el.r * 0.74f)
             if (label != null && label.length > 1) {
                 centeredText(canvas, label, el.cx, el.cy + el.r * 0.42f, el.r * 0.27f, Color.argb(200, 255, 255, 255))
             }
         }
+        text.typeface = bold
     }
 
     private fun drawSkill(canvas: Canvas, el: El) {
         val move = el.move!!
         val tint = if (move.isSuper) superColor else accent
-        glass(canvas, el, stroke = withAlpha(if (move.isSuper) Color.rgb(255, 120, 60) else accent, 150))
-        if (el in pressed) canvas.drawCircle(el.cx, el.cy, el.r, fill.apply { color = Color.argb(80, 255, 207, 77) })
+        glass(canvas, el, stroke = withAlpha(if (move.isSuper) Color.rgb(255, 120, 60) else Color.WHITE, if (move.isSuper) 210 else 175))
         val glyph = el.glyph
         if (glyph != null) {
             canvas.save()
@@ -667,16 +772,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             canvas.restore()
         } else {
             // A button sequence ("D B C C ↑"): its inputs, on two lines if long.
-            val tokens = toArrows(mirrored(move.cmd)).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
-            val lines = if (tokens.size > 3) {
-                listOf(tokens.take((tokens.size + 1) / 2), tokens.drop((tokens.size + 1) / 2))
-            } else {
-                listOf(tokens)
-            }
+            val lines = el.seq!![if (state.facingLeft) 1 else 0]
             val size = el.r * 0.375f
-            lines.forEachIndexed { i, line ->
+            for (i in lines.indices) {
                 val dy = (i - (lines.size - 1) / 2f) * size * 1.15f
-                centeredText(canvas, line.joinToString(" "), el.cx, el.cy + dy, size, tint)
+                centeredText(canvas, lines[i], el.cx, el.cy + dy, size, tint)
             }
         }
         // Chips for the buttons the move ends on, top-left.
@@ -688,10 +788,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.color = Color.argb(215, 10, 10, 20)
             ring.strokeWidth = 1.5f * d
             canvas.drawCircle(cx, cy, chipR, ring)
-            val name = buttonName(b)
+            val name = el.chips[i]
             centeredText(canvas, name, cx, cy, el.r * if (name.length > 1) 0.22f else 0.32f, if (b == 'B') Color.rgb(58, 44, 0) else Color.WHITE)
         }
-        val showLabel = when (state.labelMode) {
+        val showLabel = !editing && when (state.labelMode) {
             LabelMode.ALL -> true
             LabelMode.SUPERS -> move.isSuper
             LabelMode.OFF -> false
@@ -699,9 +799,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (showLabel) {
             text.setShadowLayer(4 * d, 0f, d, Color.BLACK)
             text.textSize = el.r * 0.32f
-            val label = ellipsize(move.shortName, el.r * 2.7f)
-            canvas.drawText(label, el.cx, el.rect.bottom + el.r * 0.39f, text)
-            text.clearShadowLayer()
+            canvas.drawText(el.label, el.cx, el.rect.bottom + el.r * 0.39f, text)
+            softShadow()
         }
         drawSweep(canvas, el)
     }
@@ -730,7 +829,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun drawBlock(canvas: Canvas, el: El) {
         val active = blockPointer != -1
-        glass(canvas, el, stroke = if (active) Color.argb(220, 120, 200, 255) else Color.argb(120, 160, 210, 255))
+        if (active) halo(canvas, el.cx, el.cy, el.r, Color.rgb(120, 200, 255))
+        glass(canvas, el, stroke = if (active) Color.rgb(120, 200, 255) else Color.argb(120, 160, 210, 255), strokeWidth = (if (active) 2f else 1.2f) * d)
         if (active) canvas.drawCircle(el.cx, el.cy, el.r, fill.apply { color = Color.argb(70, 120, 200, 255) })
         val tint = Color.rgb(190, 225, 255)
         centeredText(canvas, if (active && blockLow) "LOW" else "BLOCK", el.cx, el.cy - el.r * 0.12f, el.r * 0.34f, tint)
@@ -753,37 +853,64 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val alpha = when {
             active || editing -> 1f
             st.stick == StickMode.FIXED -> 0.8f
-            else -> 0.35f
+            else -> 0.4f
         }
+        // Like the buttons: the fill fades (a floating stick waiting for a thumb
+        // most), the ring and arrows hardly, so it reads on any stage.
+        val lines = maxOf(alpha, 0.85f)
         val r = stickRadius()
-        fill.color = Color.argb((115 * alpha).toInt(), 14, 16, 28)
+        // A see-through ring...
+        fill.color = Color.argb((glassFill.alpha * 0.9f * maxOf(alpha, 0.6f)).toInt(), 8, 8, 14)
         canvas.drawCircle(stickCx, stickCy, r, fill)
-        ring.color = Color.argb((70 * alpha).toInt(), 255, 255, 255)
-        ring.strokeWidth = 1.5f * d
+        ring.color = Color.argb(110, 0, 0, 0)
+        ring.strokeWidth = d
+        canvas.drawCircle(stickCx, stickCy, r + 0.5f * d, ring)
+        ring.color = Color.argb((220 * lines).toInt(), 255, 255, 255)
+        ring.strokeWidth = 1.2f * d
         canvas.drawCircle(stickCx, stickCy, r, ring)
-        // ‹ › hints either side, like KOF Arena.
-        glyphPaint.color = Color.argb((190 * alpha).toInt(), 255, 255, 255)
-        glyphPaint.strokeWidth = 3 * d
-        val cx = r * 1.12f
-        val ch = r * 0.094f
-        canvas.drawPath(Path().apply {
-            moveTo(stickCx - cx + ch / 2, stickCy - ch)
-            lineTo(stickCx - cx - ch / 2, stickCy)
-            lineTo(stickCx - cx + ch / 2, stickCy + ch)
-            moveTo(stickCx + cx - ch / 2, stickCy - ch)
-            lineTo(stickCx + cx + ch / 2, stickCy)
-            lineTo(stickCx + cx - ch / 2, stickCy + ch)
-        }, glyphPaint)
-        fill.color = Color.argb((225 * alpha).toInt(), 225, 226, 236)
-        canvas.drawCircle(stickCx + knobDx, stickCy + knobDy, r * 0.42f, fill)
+        ring.color = Color.argb((60 * lines).toInt(), 255, 255, 255)
+        canvas.drawCircle(stickCx, stickCy, r * 0.62f, ring)
+        // ...with an arrow mark each way, gold for where it's pushed.
+        val dir = if (active) lastDir else 5
+        canvas.save()
+        canvas.translate(stickCx, stickCy)
+        canvas.scale(r, r)
+        for (i in 0 until 4) {
+            val lit = when (i) {
+                0 -> dir == 3 || dir == 6 || dir == 9
+                1 -> dir == 1 || dir == 2 || dir == 3
+                2 -> dir == 1 || dir == 4 || dir == 7
+                else -> dir == 7 || dir == 8 || dir == 9
+            }
+            fill.color = if (lit) accent else Color.argb((200 * lines).toInt(), 255, 255, 255)
+            canvas.drawPath(stickMark, fill)
+            canvas.rotate(90f)
+        }
+        canvas.restore()
+        // The knob: glass, glowing while held.
+        val kx = stickCx + knobDx
+        val ky = stickCy + knobDy
+        val kr = r * 0.42f
+        if (active) halo(canvas, kx, ky, kr, accent)
+        fill.color = if (active) Color.argb(150, 116, 89, 13) else Color.argb((160 * lines).toInt(), 20, 20, 30)
+        canvas.drawCircle(kx, ky, kr, fill)
+        ring.color = if (active) accent else Color.argb((200 * lines).toInt(), 255, 255, 255)
+        ring.strokeWidth = (if (active) 2f else 1.2f) * d
+        canvas.drawCircle(kx, ky, kr - ring.strokeWidth / 2, ring)
+    }
+
+    // A sequence's inputs as text lines: "D B C C ↑", split in two if long.
+    private fun sequenceLines(cmd: String): List<String> {
+        val tokens = toArrows(cmd).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
+        return if (tokens.size > 3) {
+            listOf(tokens.take((tokens.size + 1) / 2).joinToString(" "), tokens.drop((tokens.size + 1) / 2).joinToString(" "))
+        } else {
+            listOf(tokens.joinToString(" "))
+        }
     }
 
     // Sequences are drawn as text, so mirror their forward/back by hand.
-    private fun mirrored(cmd: String) = if (state.facingLeft) {
-        cmd.map { ch -> if (ch in '1'..'9') ('0' + mirrorDir(ch - '0')) else ch }.joinToString("")
-    } else {
-        cmd
-    }
+    private fun mirrored(cmd: String) = cmd.map { ch -> if (ch in '1'..'9') ('0' + mirrorDir(ch - '0')) else ch }.joinToString("")
 
     private fun ellipsize(s: String, maxWidth: Float): String {
         if (text.measureText(s) <= maxWidth) return s

@@ -1005,7 +1005,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         applyScreen()
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
         game.rapid?.let { pad.setRapid(it, l.rapidFire) }
-        hud.alpha = l.opacity
+        hud.opacity = l.opacity
         updateHud()
     }
 
