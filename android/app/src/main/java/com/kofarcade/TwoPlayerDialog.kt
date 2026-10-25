@@ -175,6 +175,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
 
 @Composable
 private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
+    val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
     var address by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
