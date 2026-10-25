@@ -278,6 +278,28 @@ JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getN
     return result;
 }
 
+JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetState(
+    JNIEnv* env,
+    jclass obj
+) {
+    // The frame (4 bytes, big-endian), then the state; just the frame if it's gone.
+    auto [frame, state] = LibretroDroid::getInstance().getNetState();
+    jsize size = (jsize) (4 + state.size());
+    jbyteArray result = env->NewByteArray(size);
+    jbyte head[4] = {(jbyte) (frame >> 24), (jbyte) (frame >> 16), (jbyte) (frame >> 8), (jbyte) frame};
+    env->SetByteArrayRegion(result, 0, 4, head);
+    if (!state.empty()) env->SetByteArrayRegion(result, 4, (jsize) state.size(), (const jbyte*) state.data());
+    return result;
+}
+
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_netStartAt(
+    JNIEnv* env,
+    jclass obj,
+    jint frame
+) {
+    LibretroDroid::getInstance().netStartAt(frame);
+}
+
 JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getNetFrame(
     JNIEnv* env,
     jclass obj

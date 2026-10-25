@@ -77,6 +77,14 @@ data class Member(val id: Int, val name: String, val host: String, val udpPort: 
 @Serializable
 data class Seating(val epoch: Int, val owner: Int, val members: List<Member>)
 
+/**
+ * Owner to a newcomer (or a watcher that fell behind): watch game [epoch]
+ * with these [members] from [frame], whose state follows ([Msg.STATE]);
+ * the players' inputs from that frame on follow as [Msg.INPUTS].
+ */
+@Serializable
+data class Watch(val epoch: Int, val owner: Int, val members: List<Member>, val frame: Int)
+
 /** A new owner taking over the room (the old one left): it connects to each member with this. */
 @Serializable
 data class Takeover(val session: Int, val owner: Int)
@@ -121,6 +129,50 @@ internal object Msg {
     const val SIT: Byte = 13
     /** Owner to one phone: something to tell its player (UTF-8). */
     const val NEWS: Byte = 14
+    /** Owner to a watcher: [Watch], then the state. */
+    const val WATCH: Byte = 15
+    /** Owner to a watcher: the players' inputs for some frames ([RelayedInputs]). */
+    const val INPUTS: Byte = 16
+    /** Either way, every second: still here. */
+    const val PING: Byte = 17
+    /** A watcher to the owner: send me the game again (I fell behind or out of step). */
+    const val REWATCH: Byte = 18
+    /** Owner to everyone: who's in now (a [Seating] of the same game: someone came to watch or left). */
+    const val ROSTER: Byte = 19
+}
+
+/**
+ * The players' inputs for frames [start] until start + count, as the owner
+ * relays them to watchers: for each frame, each seat of [seats] (a bit
+ * mask) in order. And the owner's latest checksum ([sumFrame] -1: none).
+ */
+class RelayedInputs(val epoch: Int, val start: Int, val seats: Int, val masks: Array<IntArray>, val sumFrame: Int = -1, val sum: Long = 0) {
+    val count: Int get() = masks.firstOrNull()?.size ?: 0
+
+    fun encode(): ByteArray {
+        val order = (0 until 4).filter { seats and (1 shl it) != 0 }
+        val n = count
+        val b = ByteBuffer.allocate(4 + 4 + 1 + 2 + 4 + 8 + n * order.size * 2)
+        b.putInt(epoch).putInt(start).put(seats.toByte()).putShort(n.toShort()).putInt(sumFrame).putLong(sum)
+        for (i in 0 until n) for (k in order.indices) b.putShort(masks[k][i].toShort())
+        return b.array()
+    }
+
+    companion object {
+        fun decode(data: ByteArray): RelayedInputs {
+            val b = ByteBuffer.wrap(data)
+            val epoch = b.int
+            val start = b.int
+            val seats = b.get().toInt() and 0xFF
+            val n = b.short.toInt() and 0xFFFF
+            val sumFrame = b.int
+            val sum = b.long
+            val order = (0 until 4).filter { seats and (1 shl it) != 0 }
+            val masks = Array(order.size) { IntArray(n) }
+            for (i in 0 until n) for (k in order.indices) masks[k][i] = b.short.toInt() and 0xFFFF
+            return RelayedInputs(epoch, start, seats, masks, sumFrame, sum)
+        }
+    }
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {

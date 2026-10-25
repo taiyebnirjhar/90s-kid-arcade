@@ -35,6 +35,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -348,23 +352,68 @@ fun ArcadeField(
     password: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
 ) {
+    // A password can be shown, to check what's typed.
+    var shown by remember { mutableStateOf(false) }
     Column(modifier.fillMaxWidth()) {
         Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
         Spacer(Modifier.height(6.dp))
-        Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.bg)
-                .border(1.dp, Palette.line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 14.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.bg)
+                .border(1.dp, Palette.line, RoundedCornerShape(14.dp))
+                .padding(start = 14.dp, end = if (password) 6.dp else 14.dp, top = 14.dp, bottom = 14.dp),
         ) {
-            if (value.isEmpty()) Text(placeholder, color = Palette.muted.copy(alpha = 0.6f), fontSize = 16.sp)
-            BasicTextField(
-                value = value,
-                onValueChange = onChange,
-                singleLine = true,
-                textStyle = TextStyle(color = Palette.text, fontSize = 16.sp),
-                cursorBrush = SolidColor(Palette.gold),
-                visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
-                keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
-                modifier = Modifier.fillMaxWidth(),
+            Box(Modifier.weight(1f)) {
+                if (value.isEmpty()) Text(placeholder, color = Palette.muted.copy(alpha = 0.6f), fontSize = 16.sp)
+                BasicTextField(
+                    value = value,
+                    onValueChange = onChange,
+                    singleLine = true,
+                    textStyle = TextStyle(color = Palette.text, fontSize = 16.sp),
+                    cursorBrush = SolidColor(Palette.gold),
+                    visualTransformation = if (password && !shown) PasswordVisualTransformation() else VisualTransformation.None,
+                    keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (password) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(start = 6.dp).size(32.dp).clip(CircleShape).clickable { shown = !shown },
+                ) {
+                    EyeIcon(Modifier.size(20.dp), crossed = !shown)
+                }
+            }
+        }
+    }
+}
+
+/** A drawn eye: tap it to show what's typed; crossed out while it's hidden. */
+@Composable
+fun EyeIcon(modifier: Modifier = Modifier, crossed: Boolean = false, color: Color = Palette.muted) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = Stroke(width = w * 0.09f, cap = StrokeCap.Round)
+        // The lids: two arcs meeting at the corners.
+        drawPath(
+            Path().apply {
+                moveTo(w * 0.04f, h * 0.5f)
+                quadraticBezierTo(w * 0.5f, h * 0.02f, w * 0.96f, h * 0.5f)
+                quadraticBezierTo(w * 0.5f, h * 0.98f, w * 0.04f, h * 0.5f)
+                close()
+            },
+            color,
+            style = stroke,
+        )
+        drawCircle(color, radius = w * 0.14f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.5f))
+        if (crossed) {
+            drawLine(
+                color,
+                androidx.compose.ui.geometry.Offset(w * 0.12f, h * 0.1f),
+                androidx.compose.ui.geometry.Offset(w * 0.88f, h * 0.9f),
+                w * 0.09f,
+                StrokeCap.Round,
             )
         }
     }

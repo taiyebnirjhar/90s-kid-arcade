@@ -102,6 +102,13 @@ public:
     // Skip running new frames for the next [frames] steps: the phone that's
     // ahead lets its partner catch up, so neither keeps hitting maxRollback.
     void netWait(int frames);
+    // The game at the newest frame every player's input is in for (nothing
+    // guessed), without stopping it: {frame, state}, or an empty state if
+    // that frame's no longer kept. What a newcomer starts watching from.
+    std::pair<int32_t, std::vector<uint8_t>> getNetState();
+    // Watching from [frame] on (after setNetplay and loading that frame's
+    // state): the inputs pushed next are that frame's.
+    void netStartAt(int32_t frame);
 
     // Frozen: no game frames run, but the last one is still drawn, so the
     // picture follows size changes while the game is paused (90s Kid Arcade).

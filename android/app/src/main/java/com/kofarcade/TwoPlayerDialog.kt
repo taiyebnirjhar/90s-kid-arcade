@@ -221,7 +221,7 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
         onJoinAddress = {
             val target = parseRoomKey(address)
             if (target == null) {
-                status = "That's not a room key. It looks like K7Q-2M: on the host's screen, and in its pause menu."
+                status = "That's not a room key. It looks like K7Q-2M: in the host's pause menu."
                 needsGame = false
             } else {
                 busy = true
@@ -336,7 +336,7 @@ fun JoinScreen(
             Spacer(Modifier.height(12.dp))
             GoldButton("Join", onJoinAddress, Modifier.fillMaxWidth(), enabled = !busy && address.isNotBlank())
             Spacer(Modifier.height(8.dp))
-            Text("On the host's screen while it waits, and in its pause menu.", color = Palette.muted, fontSize = 13.sp)
+            Text("The host sees it when the room opens, and in its pause menu.", color = Palette.muted, fontSize = 13.sp)
         }
         Spacer(Modifier.height(4.dp))
         status?.let {

@@ -104,27 +104,35 @@ Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
 hotspot (no internet needed). Every phone needs the same game zip (and the
 BIOS for Neo Geo games; the library has them).
 
-- **Open a room** (Home → **Multiplayer**): pick the game and start playing
-  at once. The room has a key (like `K7Q-2M`), shown along the bottom while
-  you're alone and in the pause menu. It holds the host phone's address on
-  the Wi-Fi or hotspot, so typing it connects straight there: no server, no
-  internet, no searching.
+- **Open a room** (Home → **Multiplayer**): pick the game and it starts. The
+  room's key (like `K7Q-2M`) shows as it opens, with a **Copy** button, and
+  stays in the pause menu. It holds the host phone's address on the Wi-Fi or
+  hotspot, so typing it connects straight there: no server, no internet, no
+  searching.
 - **Join a room**: type the key, or tap the room in the list of rooms nearby.
   Nobody has to let you in. You come in watching the game as it stands
-  (up to 8 phones in a room).
-- **Take a seat**: while watching, press **COIN** or **START**. If a seat is
-  free it's yours (the first to press gets it) and the press goes in, so the
-  coin drops. When all seats are taken you keep watching until one empties.
-- **Leave any time**: your seat empties and the game goes on for the others;
-  a watcher can take it. If the host leaves, the next phone takes the room
-  over (and the key changes to its address). A phone that goes quiet for 5
-  seconds is treated as gone.
+  (up to 8 phones in a room), and watching never slows the players down.
+- **Take a seat**: while watching, press **COIN** or **START**. You get a free
+  seat, or the seat of a player who has pressed nothing for 20 seconds (say,
+  the challenger who lost): they go back to watching. If two ask at once, the
+  first request to reach the host wins; the other is told. The press goes in
+  once you're seated, so in KOF COIN then START brings you in as the
+  challenger. The host follows the same rule.
+- **Leave any time**: your seat empties and the game goes on for the others.
+  If the host leaves, the next phone takes the room over (and the key
+  changes to its address). A phone that goes quiet for 5-10 seconds is
+  treated as gone.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
-- Every phone runs the game, sending only its button states over UDP,
-  straight to every other phone (watchers send none, and run only on
-  confirmed inputs). Pause, taking a seat, restarting and leaving go
-  through the host.
+- Every player's phone runs the game, sending only its button states over
+  UDP, straight to the other players. Pause, taking a seat, restarting and
+  leaving go through the host.
+- Watchers never hold the players up: the host gives a newcomer the game at
+  the newest frame every input is in for (from the emulator's rollback
+  states, without stopping it), then passes on the players' inputs from
+  there, over that watcher's own connection and thread. Watchers run only
+  frames whose inputs are all in, so they never guess; one that falls
+  behind or out of step gets the game again, and nobody else notices.
 - Your own presses take effect after one frame. The partner's input is
   guessed (their last one) until it arrives, ~1-2 frames later on Wi-Fi;
   each partner's separately.
@@ -138,11 +146,11 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   game, not a delay.
 - A phone that runs ahead of a partner waits a frame now and then (time
   sync). A phone stops only if a partner falls 8 frames behind.
-- Phones play the same game because whenever who's in or who sits where
-  changes (someone joins, leaves or takes a seat), the room's owner stops
-  the game for a moment and sends everyone its emulator state (compressed)
-  and the new seats; all carry on from that state. An empty seat plays no
-  input and nobody waits for it.
+- Phones play the same game because whenever who plays changes (someone
+  takes a seat, or a player leaves), the room's owner stops the game for a
+  moment and sends everyone its emulator state (compressed) and the new
+  seats; all carry on from that state. An empty seat plays no input and
+  nobody waits for it.
 - A RAM checksum of confirmed frames every 2 seconds catches drift; if two
   phones ever differ, the owner re-sends its game to everyone in the same
   way, and play goes on from there (nothing restarts). A game stuck for 3

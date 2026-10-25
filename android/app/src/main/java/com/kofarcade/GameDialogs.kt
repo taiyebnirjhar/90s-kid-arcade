@@ -80,6 +80,44 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
         }
+        is GameDialog.RoomOpen -> Sheet(onDismiss = { game.close() }) {
+            RoomOpenContent(d.key, onCopy = { game.copyRoomKey() }, onPlay = { game.close() })
+        }
+    }
+}
+
+/** The room just opened: its key, to share. From plain data (so it can be previewed). */
+@Composable
+fun RoomOpenContent(key: String, onCopy: () -> Unit, onPlay: () -> Unit) {
+    Title("Your room is open")
+    if (key.isEmpty()) {
+        Text(
+            "This phone isn't on Wi-Fi or running a hotspot, so friends can't reach it. Turn on the hotspot " +
+                "(or join Wi-Fi), then open the room again.",
+            color = Palette.muted,
+        )
+    } else {
+        Text("Friends type this in Multiplayer → Join a room. It's in the pause menu too.", color = Palette.muted)
+        Spacer(Modifier.size(14.dp))
+        KeyRow(key, onCopy)
+    }
+    Spacer(Modifier.size(16.dp))
+    Button(onClick = onPlay, modifier = Modifier.fillMaxWidth()) { Text("Play") }
+}
+
+/** A room key, big, with a button to copy it. */
+@Composable
+fun KeyRow(key: String, onCopy: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            key,
+            color = Palette.gold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 3.sp,
+            modifier = Modifier.weight(1f),
+        )
+        OutlinedButton(onClick = onCopy) { Text("Copy") }
     }
 }
 
@@ -172,6 +210,8 @@ private fun PauseMenu(game: GameActivity) {
             roomInfo = game.roomInfo,
             roomStatus = game.roomStatus,
             watching = game.isWatching,
+            roomKey = game.roomKey,
+            onCopyKey = { game.copyRoomKey() },
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },
@@ -204,6 +244,9 @@ fun PauseContent(
     roomStatus: String? = null,
     /** Multiplayer: this phone watches (its menu stops nobody). */
     watching: Boolean = false,
+    /** Multiplayer: the room's key, with a button to copy it. */
+    roomKey: String? = null,
+    onCopyKey: () -> Unit = {},
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -214,7 +257,13 @@ fun PauseContent(
             Text(title, color = Color.White, fontSize = 46.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
             if (netplay) {
                 Spacer(Modifier.size(8.dp))
-                Tag(roomInfo ?: "Multiplayer", Palette.gold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Tag(roomInfo ?: "Multiplayer", Palette.gold)
+                    if (roomKey != null) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onCopyKey) { Text("Copy key", color = Palette.gold) }
+                    }
+                }
                 roomStatus?.let {
                     Spacer(Modifier.size(6.dp))
                     Text(it, color = Palette.muted, fontSize = 11.sp, lineHeight = 14.sp)

@@ -134,6 +134,10 @@ public class LibretroDroid {
     // Paused, but still drawing the last frame (see LibretroDroid::setFrozen).
     public static native void setFrozen(boolean frozen);
     public static native int getNetFrame();
+    // The newest frame with every input in, and the game then: 4 bytes of frame (big-endian), then the state (none if gone).
+    public static native byte[] getNetState();
+    // Watching from this frame on (after setNetplay and loading its state).
+    public static native void netStartAt(int frame);
     public static native long[] getNetSum();
     public static native boolean unserializeState(byte[] state);
 

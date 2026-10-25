@@ -156,6 +156,7 @@ class UiSnapshots {
                 PauseContent(
                     "Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {},
                     roomInfo = "Room key K7Q-2M · 2 of 2 playing · 1 watching",
+                    roomKey = "K7Q-2M",
                     roomStatus = "Game 3 · you: P1, frame 2214 · P2 2210 in, heard 12 ms · watcher heard 30 ms",
                 )
             }

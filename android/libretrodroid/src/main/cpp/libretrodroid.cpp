@@ -752,6 +752,31 @@ std::array<int64_t, 2> LibretroDroid::getNetSum() {
     return netSum;
 }
 
+std::pair<int32_t, std::vector<uint8_t>> LibretroDroid::getNetState() {
+    // The order step() takes them in.
+    std::lock_guard<std::mutex> core(coreLock);
+    std::lock_guard<std::mutex> lock(netMutex);
+    int32_t frame = std::min(std::min(netRemoteKnown(), netFirstWrong), netFrame);
+    if (frame == netFrame) {
+        // Nothing run on a guess: the game as it is now.
+        std::vector<uint8_t> state(core->retro_serialize_size());
+        core->retro_serialize(state.data(), state.size());
+        return {frame, std::move(state)};
+    }
+    // The state saved before running [frame] (replays save it again).
+    if (frame <= netFrame - NET_RING || netStates.size() != NET_RING) return {frame, {}};
+    return {frame, netStates[frame % NET_RING]};
+}
+
+void LibretroDroid::netStartAt(int32_t frame) {
+    std::lock_guard<std::mutex> lock(netMutex);
+    netFrame = frame;
+    for (int p = 0; p < NET_MAX_PLAYERS; p++) netKnown[p] = frame;
+    netFirstWrong = INT32_MAX;
+    netSum = {-1, 0};
+    netPendingSums.clear();
+}
+
 void LibretroDroid::netWait(int frames) {
     std::lock_guard<std::mutex> lock(netMutex);
     netWaitFrames = std::max(netWaitFrames, std::min(frames, 4));
