@@ -166,10 +166,26 @@
   .sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 40px; margin-bottom: 34px; }
 
   /* Game cards */
-  .gcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  @media (max-width: 700px) { .gcards { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 701px) and (max-width: 960px) { .gcards { gap: 12px; } .gcard .meta { padding: 12px; } }
-  @media (max-width: 480px) { .gcards { gap: 12px; } }
+  /* All the games, in two rows sliding opposite ways (each row is there
+     twice, so the loop never shows a gap) */
+  .lineup { display: grid; gap: 4px; }
+  .marquee {
+    --card: clamp(200px, 20vw, 270px); --gap: 16px; overflow: hidden; padding: 12px 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  }
+  .track { display: flex; width: max-content; animation: slide 70s linear infinite; }
+  .marquee.rev .track { animation-direction: reverse; animation-duration: 62s; }
+  .marquee:hover .track { animation-play-state: paused; }
+  .set { display: flex; gap: var(--gap); padding: 0 var(--gap) 0 0; margin: 0; list-style: none; }
+  @keyframes slide { to { transform: translateX(-50%); } }
+  .lineup .gcard { flex: 0 0 var(--card); }
+  @media (max-width: 600px) { .marquee { --card: 190px; --gap: 12px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+    .track { animation: none; }
+    .set[aria-hidden] { display: none; }
+  }
   .gcard {
     position: relative; display: flex; flex-direction: column; border-radius: var(--radius); overflow: hidden;
     background: var(--panel); border: 1px solid var(--line);
@@ -179,17 +195,14 @@
   .gcard img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: pixelated; transition: transform .4s ease; }
   .gcard .meta { padding: 14px 16px 16px; border-top: 1px solid var(--line); }
   .gcard .tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--gold); text-transform: uppercase; }
-  .gcard h3 { margin: 4px 0 4px; font-size: clamp(20px, 2.2vw, 28px); line-height: .95; }
+  .gcard h3 { margin: 4px 0 4px; font-size: clamp(20px, 2vw, 26px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: .95; }
   .gcard p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
-  .gcard:hover, .gcard:focus-visible { transform: translateY(-6px); border-color: rgba(232, 178, 26, .7); box-shadow: 0 0 0 1px rgba(232, 178, 26, .5), 0 18px 50px rgba(232, 178, 26, .28); }
+  .gcard:hover { transform: translateY(-6px); border-color: rgba(232, 178, 26, .7); box-shadow: 0 0 0 1px rgba(232, 178, 26, .5), 0 18px 50px rgba(232, 178, 26, .28); }
   .gcard:hover img { transform: scale(1.05); }
   @media (max-width: 480px) {
     .gcard .meta { padding: 10px 12px 12px; }
     .gcard p { font-size: 12px; }
   }
-  .more { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; padding: 0; list-style: none; }
-  .more li { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
-  .more li b { color: var(--text); font-weight: 700; }
 
   /* Feature blocks */
   .feature { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; padding: 40px 0; }
@@ -283,7 +296,7 @@
   footer a:hover { color: var(--text); }
 
   /* Focus and reveal */
-  a:focus-visible, summary:focus-visible, .gcard:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .btn.gold:focus-visible { outline-color: var(--text); }
   .js .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
   .js .reveal.in { opacity: 1; transform: none; }
@@ -324,7 +337,7 @@
         <a class="btn" href="#install">How to install</a>
       </div>
       <ul class="stats">
-        <li><b>15+</b> arcade classics</li>
+        <li><b>17</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
         <li><b>Free</b> · no ads</li>
@@ -361,23 +374,60 @@
         <div class="kicker">The lineup</div>
         <h2 class="head"><span class="thin">Insert</span> <span class="gold">coin</span></h2>
       </div>
-      <p class="sub">Neo Geo and Capcom classics on FBNeo, the arcade emulator, each with controls made for it. Bring your own games.</p>
+      <p class="sub">All 17 games in the app: Neo Geo and Capcom classics on FBNeo, the arcade emulator, each with controls made for it. Bring your own games.</p>
     </div>
-    <div class="gcards reveal">
-      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="The King of Fighters '97 title screen" loading="lazy"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF '97</h3><p>Every super in one tap</p></div></article>
-      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="Metal Slug 3 title screen" loading="lazy"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 3</h3><p>Hold to rapid fire</p></div></article>
-      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="Street Fighter III 3rd Strike title screen" loading="lazy"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">SF III 3rd Strike</h3><p>Knows your Super Art</p></div></article>
-      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="Cadillacs and Dinosaurs title screen" loading="lazy"></div><div class="meta"><span class="tag">Beat 'em up</span><h3 class="head">Cadillacs &amp; Dinos</h3><p>Up to 3 players</p></div></article>
+  </div>
+  <div class="lineup reveal">
+    <div class="marquee">
+      <div class="track">
+        <ul class="set">
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="KOF &#x27;97 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF &#x27;97</h3><p>Every super in one tap</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20Plus%20%28bootleg%29.png" alt="KOF &#x27;97 Plus title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF &#x27;97 Plus</h3><p>&#x27;97 with moves remixed</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20%28NGM-2650%20~%20NGH-2650%29.png" alt="KOF 2002 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2002</h3><p>3-on-3 teams</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20Magic%20Plus%20%28bootleg%2C%20set%201%29.png" alt="KOF 2002 Magic Plus title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2002 Magic Plus</h3><p>2002, supercharged</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%2010th%20Anniversary%202005%20Unique%20%28bootleg%20of%20The%20King%20of%20Fighters%202002%29.png" alt="KOF 2005 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2005</h3><p>10th Anniversary</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="Street Fighter III title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Street Fighter III</h3><p>3rd Strike · knows your Super Art</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Marvel%20Vs.%20Capcom_%20Clash%20of%20Super%20Heroes%20%28Europe%20980123%29.png" alt="Marvel vs Capcom title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Marvel vs Capcom</h3><p>Follows your tag team</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Double%20Dragon%20%28Neo-Geo%29.png" alt="Double Dragon title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Double Dragon</h3><p>Neo Geo, 1995</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Sengoku%203%20_%20Sengoku%20Densho%202001%20%28set%201%29.png" alt="Sengoku 3 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Beat &#x27;em up</span><h3 class="head">Sengoku 3</h3><p>All the Ninja Arts</p></div></li>
+        </ul>
+        <ul class="set" aria-hidden="true">
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF &#x27;97</h3><p>Every super in one tap</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20Plus%20%28bootleg%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF &#x27;97 Plus</h3><p>&#x27;97 with moves remixed</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20%28NGM-2650%20~%20NGH-2650%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2002</h3><p>3-on-3 teams</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20Magic%20Plus%20%28bootleg%2C%20set%201%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2002 Magic Plus</h3><p>2002, supercharged</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%2010th%20Anniversary%202005%20Unique%20%28bootleg%20of%20The%20King%20of%20Fighters%202002%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF 2005</h3><p>10th Anniversary</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Street Fighter III</h3><p>3rd Strike · knows your Super Art</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Marvel%20Vs.%20Capcom_%20Clash%20of%20Super%20Heroes%20%28Europe%20980123%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Marvel vs Capcom</h3><p>Follows your tag team</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Double%20Dragon%20%28Neo-Geo%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">Double Dragon</h3><p>Neo Geo, 1995</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Sengoku%203%20_%20Sengoku%20Densho%202001%20%28set%201%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Beat &#x27;em up</span><h3 class="head">Sengoku 3</h3><p>All the Ninja Arts</p></div></li>
+        </ul>
+      </div>
     </div>
-    <ul class="more">
-      <li><b>KOF 2002</b> &amp; Magic Plus</li>
-      <li><b>KOF 2005</b> 10th Anniversary</li>
-      <li><b>Metal Slug</b> 1, 2, X, 4, 5</li>
-      <li><b>Marvel vs Capcom</b></li>
-      <li><b>Sengoku 3</b></li>
-      <li><b>Double Dragon</b> (Neo Geo)</li>
-      <li><b>Nightmare in the Dark</b></li>
-    </ul>
+    <div class="marquee rev">
+      <div class="track">
+        <ul class="set">
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20-%20Super%20Vehicle-001.png" alt="Metal Slug title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%202%20-%20Super%20Vehicle-001_II%20%28NGM-2410%20~%20NGH-2410%29.png" alt="Metal Slug 2 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 2</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20X%20-%20Super%20Vehicle-001%20%28NGM-2500%20~%20NGH-2500%29.png" alt="Metal Slug X title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug X</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="Metal Slug 3 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 3</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%204%20%28NGM-2630%29.png" alt="Metal Slug 4 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 4</h3><p>Slug Attack button</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%205%20%28NGM-2680%29.png" alt="Metal Slug 5 title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 5</h3><p>Slide and Slug Attack</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="Cadillacs and Dinosaurs title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Beat &#x27;em up</span><h3 class="head">Cadillacs and Dinosaurs</h3><p>Up to 3 players</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Nightmare%20in%20the%20Dark.png" alt="Nightmare in the Dark title screen" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Platformer</span><h3 class="head">Nightmare in the Dark</h3><p>Rapid-fire flames</p></div></li>
+        </ul>
+        <ul class="set" aria-hidden="true">
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20-%20Super%20Vehicle-001.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%202%20-%20Super%20Vehicle-001_II%20%28NGM-2410%20~%20NGH-2410%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 2</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20X%20-%20Super%20Vehicle-001%20%28NGM-2500%20~%20NGH-2500%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug X</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 3</h3><p>Hold to rapid fire</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%204%20%28NGM-2630%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 4</h3><p>Slug Attack button</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%205%20%28NGM-2680%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 5</h3><p>Slide and Slug Attack</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Beat &#x27;em up</span><h3 class="head">Cadillacs and Dinosaurs</h3><p>Up to 3 players</p></div></li>
+        <li class="gcard"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Nightmare%20in%20the%20Dark.png" alt="" loading="lazy" decoding="async"></div><div class="meta"><span class="tag">Platformer</span><h3 class="head">Nightmare in the Dark</h3><p>Rapid-fire flames</p></div></li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
