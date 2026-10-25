@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -81,7 +82,7 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
         }
-        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = 440) {
+        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 760 else 440) {
             val ui = game.roomUi
             if (ui != null) {
                 RoomSheetContent(
@@ -93,6 +94,7 @@ fun GameDialogs(game: GameActivity) {
                     onWatch = { game.watchInstead() },
                     onLeave = { game.finish() },
                     onClose = { game.close() },
+                    onFree = { game.freeHeldSeat(it) },
                 )
             }
         }

@@ -36,6 +36,8 @@ data class Hello(
     val tcpPort: Int = 0,
     /** Which emulator build runs the game: phones must match to play the same game ("": unknown). */
     val build: String = "",
+    /** This phone, the same every time (a random id kept by the app): it gets its seat back if it dropped. */
+    val device: String = "",
 )
 
 /** The owner's answer: let in (with the room's settings and your member [id]) or not, and why. */
@@ -68,7 +70,19 @@ data class Welcome(
  * connections come from.
  */
 @Serializable
-data class Member(val id: Int, val name: String, val host: String, val udpPort: Int, val tcpPort: Int, val seat: Int = -1)
+data class Member(
+    val id: Int,
+    val name: String,
+    val host: String,
+    val udpPort: Int,
+    val tcpPort: Int,
+    val seat: Int = -1,
+    /** The phone's own id ([Hello.device]). */
+    val device: String = "",
+    /** Dropped out: its seat is held for it, for [holdLeft] seconds more (as of this seating). */
+    val away: Boolean = false,
+    val holdLeft: Int = 0,
+)
 
 /**
  * The owner's word on who plays from now on: game [epoch] starts from the

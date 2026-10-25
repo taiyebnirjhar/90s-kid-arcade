@@ -139,7 +139,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context))
+                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
                 }
                 if (!isActive) {
                     room.close()
@@ -215,7 +215,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context)).also { room ->
+                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId).also { room ->
                         if (left.get()) room.close()
                     }
                 }

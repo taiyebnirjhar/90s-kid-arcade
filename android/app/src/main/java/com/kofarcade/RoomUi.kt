@@ -31,7 +31,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -45,13 +49,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kofarcade.core.Art
 import com.kofarcade.core.Game
+import kotlinx.coroutines.delay
 
 // The multiplayer look, shared by the Multiplayer screen and the game
 // screen: who's in a room and where, its key, and what's happening, in the
 // app's own style rather than Android's grey toasts.
 
-/** A phone in a room, as the screens show it. [seat] -1: watching. */
-data class RoomPerson(val name: String, val seat: Int, val you: Boolean = false, val host: Boolean = false)
+/**
+ * A phone in a room, as the screens show it. [seat] -1: watching. [away]:
+ * it dropped out and its seat is kept for it until [holdEnds] (wall clock, ms).
+ */
+data class RoomPerson(
+    val name: String,
+    val seat: Int,
+    val you: Boolean = false,
+    val host: Boolean = false,
+    val away: Boolean = false,
+    val holdEnds: Long = 0L,
+)
 
 /** What the game screen shows of its room. */
 data class RoomUi(
@@ -60,6 +75,8 @@ data class RoomUi(
     val people: List<RoomPerson>,
     /** This phone watches. */
     val watching: Boolean,
+    /** This phone runs the room: it can free a seat held for someone who dropped out. */
+    val canFree: Boolean = false,
 ) {
     val players: List<RoomPerson> get() = people.filter { it.seat >= 0 }.sortedBy { it.seat }
     val watchers: List<RoomPerson> get() = people.filter { it.seat < 0 }
@@ -113,7 +130,7 @@ fun RoomPill(ui: RoomUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
                 Text(ui.key, color = Palette.gold, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
                 Spacer(Modifier.width(8.dp))
             }
-            SeatDots(ui.maxPlayers, ui.players.map { it.seat }.toSet())
+            SeatDots(ui.maxPlayers, ui.players.filter { !it.away }.map { it.seat }.toSet(), held = ui.players.filter { it.away }.map { it.seat }.toSet())
             if (ui.watchers.isNotEmpty()) {
                 Spacer(Modifier.width(8.dp))
                 EyeIcon(Modifier.size(12.dp), color = Palette.muted)
@@ -140,15 +157,21 @@ fun RoomPill(ui: RoomUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** A dot per seat: gold when someone sits there. */
+/** A dot per seat: gold when someone sits there, gold ring when it's [held] for someone coming back. */
 @Composable
-fun SeatDots(seats: Int, taken: Set<Int>, size: Int = 9) {
+fun SeatDots(seats: Int, taken: Set<Int>, size: Int = 9, held: Set<Int> = emptySet()) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         for (s in 0 until seats) {
             Box(
                 Modifier.size(size.dp).clip(CircleShape)
-                    .background(if (s in taken) Palette.gold else Color.Transparent)
-                    .border(1.5.dp, if (s in taken) Palette.gold else Palette.muted, CircleShape),
+                    .background(
+                        when (s) {
+                            in taken -> Palette.gold
+                            in held -> Palette.gold.copy(alpha = 0.25f)
+                            else -> Color.Transparent
+                        },
+                    )
+                    .border(1.5.dp, if (s in taken || s in held) Palette.gold else Palette.muted, CircleShape),
             )
         }
     }
@@ -203,7 +226,30 @@ fun RoomSheetContent(
     onWatch: () -> Unit,
     onLeave: () -> Unit,
     onClose: () -> Unit,
+    onFree: (Int) -> Unit = {},
 ) {
+    // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
+    BoxWithConstraints {
+        if (maxWidth > 560.dp) {
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(Modifier.weight(1f)) {
+                    RoomHeader(ui, first, onCopy, onShare)
+                    RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+                }
+                Column(Modifier.weight(1f)) { RoomPeople(ui, onFree) }
+            }
+        } else {
+            Column {
+                RoomHeader(ui, first, onCopy, onShare)
+                RoomPeople(ui, onFree)
+                RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: () -> Unit) {
     Kicker(if (first) "Room open" else "Room")
     Text(
         if (first) "Invite your friends" else "Who's playing",
@@ -231,10 +277,15 @@ fun RoomSheetContent(
             }
         }
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit) {
     SectionLabel("Players")
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (seat in 0 until ui.maxPlayers) {
-            SeatRow(seat, ui.players.find { it.seat == seat })
+            SeatRow(seat, ui.players.find { it.seat == seat }, ui.canFree, onFree)
         }
     }
     SectionLabel("Watching")
@@ -245,6 +296,10 @@ fun RoomSheetContent(
             for (w in ui.watchers) Tag(w.name + if (w.you) " (you)" else "", if (w.you) Palette.gold else Palette.muted)
         }
     }
+}
+
+@Composable
+private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
     Spacer(Modifier.height(18.dp))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (ui.watching) {
@@ -264,7 +319,7 @@ fun RoomSheetContent(
 }
 
 @Composable
-private fun SeatRow(seat: Int, who: RoomPerson?) {
+private fun SeatRow(seat: Int, who: RoomPerson?, canFree: Boolean, onFree: (Int) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
@@ -285,6 +340,24 @@ private fun SeatRow(seat: Int, who: RoomPerson?) {
             Column(Modifier.weight(1f)) {
                 Text("Free seat", color = Palette.muted, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Text("A watcher takes it with COIN or START", color = Palette.muted, fontSize = 11.sp)
+            }
+        } else if (who.away) {
+            // Dropped out: the seat waits for them, counting down.
+            var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+            LaunchedEffect(who.holdEnds) {
+                while (now < who.holdEnds) {
+                    delay(1_000)
+                    now = System.currentTimeMillis()
+                }
+            }
+            val left = ((who.holdEnds - now + 999) / 1000).coerceAtLeast(0)
+            Column(Modifier.weight(1f)) {
+                Text(who.name, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Reconnecting… seat kept %d:%02d".format(left / 60, left % 60), color = Palette.gold, fontSize = 11.sp)
+            }
+            if (canFree) {
+                Spacer(Modifier.width(8.dp))
+                GhostButton("Free seat", { onFree(seat) })
             }
         } else {
             Text(who.name, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))

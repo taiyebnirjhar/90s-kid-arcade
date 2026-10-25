@@ -446,9 +446,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             // The host before its first game: just itself, in seat 1.
             listOf(RoomPerson("You", if (r.isOwner) 0 else -1, you = true, host = r.isOwner))
         } else {
-            members.map { RoomPerson(if (it.id == r.localId) "You" else it.name, it.seat, you = it.id == r.localId, host = it.id == r.owner) }
+            members.map {
+                RoomPerson(
+                    if (it.id == r.localId) "You" else it.name,
+                    it.seat,
+                    you = it.id == r.localId,
+                    host = it.id == r.owner,
+                    away = it.away,
+                    holdEnds = if (it.away) r.holdEnds(it.id) else 0L,
+                )
+            }
         }
-        roomUi = RoomUi(r.key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching)
+        roomUi = RoomUi(r.key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner)
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -475,6 +484,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         sendNet { it.requestSeat() }
         announce("Asking for a seat…")
         close()
+    }
+
+    /** The host lets go of a seat kept for a player that dropped out: a watcher can take it now. */
+    fun freeHeldSeat(seat: Int) {
+        sendNet { it.freeHeldSeat(seat) }
     }
 
     /** Playing: gives the seat up, to watch. */
@@ -591,6 +605,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         if (before == true && !room.watching) announce("You're player ${room.localPlayer + 1}!", big = true)
                         if (before == false && room.watching) announce("You're watching now")
                         if (before == null && room.watching) announce("You're watching. Press COIN or START to play")
+                        // Came back to a seat that was kept for this phone.
+                        if (before == null && !room.watching && !room.isOwner) announce("You're player ${room.localPlayer + 1}!", big = true)
                         wasWatching = room.watching
                     }
                 }

@@ -130,10 +130,16 @@ BIOS for Neo Geo games; the library has them).
   the other is told. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.
-- **Leave any time**: your seat empties and the game goes on for the others.
-  If the host leaves, the next phone takes the room over (and the key
-  changes to its address). A phone that goes quiet for 5-10 seconds is
-  treated as gone.
+- **Leave any time**: tapping **Leave** empties your seat at once and the
+  game goes on for the others. If the host leaves, the next phone takes the
+  room over (and the key changes to its address).
+- **Dropped out? Your seat waits 60 seconds.** A phone that goes quiet for
+  10 seconds (Wi-Fi blip, app closed by accident) is treated as gone, but
+  its seat is kept for it: the room sheet shows "Reconnecting… seat kept
+  0:42", watchers who press COIN are told the seat is held, and the phone
+  that comes back (the same phone, by its own id) sits straight back down.
+  The host can tap **Free seat** to let a watcher have it right away; after
+  60 seconds it frees itself.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over

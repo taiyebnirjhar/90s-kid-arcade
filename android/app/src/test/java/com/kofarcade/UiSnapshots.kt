@@ -94,10 +94,17 @@ class UiSnapshots {
         )
     }
 
+    // Player 2 dropped out: their seat is kept for them, and the host can free it.
     private val roomUi = RoomUi(
-        "K7Q-2M", 2,
-        listOf(RoomPerson("You", 0, you = true, host = true), RoomPerson("Galaxy A54", 1), RoomPerson("Pixel 8", -1), RoomPerson("SM-S918B", -1)),
+        "K7Q-2M", 3,
+        listOf(
+            RoomPerson("You", 0, you = true, host = true),
+            RoomPerson("Galaxy A54", 1, away = true, holdEnds = System.currentTimeMillis() + 42_400),
+            RoomPerson("Pixel 8", -1),
+            RoomPerson("SM-S918B", -1),
+        ),
         watching = false,
+        canFree = true,
     )
 
     @Test
@@ -106,10 +113,23 @@ class UiSnapshots {
         shot("room_sheet") {
             OverGame {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(440.dp)) {
+                    Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(760.dp)) {
                         Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
                             RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {})
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomSheetPortrait() = shot("room_sheet_portrait") {
+        OverGame {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(400.dp)) {
+                    Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
+                        RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {})
                     }
                 }
             }
@@ -123,7 +143,7 @@ class UiSnapshots {
             OverGame {
                 Box(Modifier.fillMaxSize().padding(top = 12.dp, end = 14.dp)) {
                     RoomPill(
-                        RoomUi("K7Q-2M", 2, listOf(RoomPerson("Rafi", 0, host = true), RoomPerson("You", -1, you = true), RoomPerson("Pixel 8", -1)), watching = true),
+                        RoomUi("K7Q-2M", 3, listOf(RoomPerson("Rafi", 0, host = true), RoomPerson("Mim", 1, away = true), RoomPerson("You", -1, you = true), RoomPerson("Pixel 8", -1)), watching = true),
                         {}, Modifier.align(Alignment.TopEnd),
                     )
                     AnnouncementBanner(Announcement("You're player 2!", big = true), Modifier.align(Alignment.TopCenter).padding(top = 60.dp))

@@ -35,8 +35,8 @@ class RoomTest {
     private fun host(set: String = "kof97", seats: Int = 2) =
         Room.host("Host", set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1).also { open += it }
 
-    private fun join(room: Room, name: String, set: String = "kof97", rom: Long = 1) =
-        Room.join(localhost, port(room), name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1).also { open += it }
+    private fun join(room: Room, name: String, set: String = "kof97", rom: Long = 1, device: String = "") =
+        Room.join(localhost, port(room), name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1, device = device).also { open += it }
 
     private fun port(room: Room): Int {
         val f = Room::class.java.getDeclaredField("server").apply { isAccessible = true }
@@ -290,6 +290,85 @@ class RoomTest {
         // The host can too.
         h.requestWatch()
         waitFor("host watching") { a.epoch == 4 && h.watching && h.seats.isEmpty() }
+    }
+
+    @Test
+    fun aDroppedPlayersSeatIsHeldAndTheyGetItBack() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", device = "phone-rafi")
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch == 1 }
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 2 && g.localPlayer == 1 }
+        val w = join(h, "Watcher", device = "phone-w")
+        val c = FakeGame(w).apply { play() }
+        waitFor("watching") { c.epoch == 2 && h.watcherCount == 1 }
+
+        // Wi-Fi drops: no goodbye. The seat is held, not free.
+        b.running = false
+        g.vanish()
+        waitFor("held") { h.held.keys == setOf(1) && w.held.keys == setOf(1) }
+        assertEquals(setOf(0), h.seats.keys)
+        assertTrue(w.holdEnds(h.held[1]!!.id) > System.currentTimeMillis())
+        // A watcher can't take it, and is told why.
+        w.requestSeat()
+        waitFor("told") { c.news.any { "held for Rafi" in it } }
+        assertTrue(w.watching)
+        // The host plays on meanwhile.
+        val before = a.emulated
+        waitFor("host plays on") { a.emulated > before + 20 }
+
+        // Rafi's phone comes back: straight into player 2, no COIN needed.
+        val g2 = join(h, "Rafi", device = "phone-rafi")
+        val b2 = FakeGame(g2).apply { play() }
+        waitFor("back") { g2.localPlayer == 1 && b2.epoch == a.epoch && h.held.isEmpty() }
+        assertTrue(a.news.any { "Rafi is back as player 2" in it }, a.news.toString())
+        waitFor("frames") { a.framesOf(1) >= 60 && b2.framesOf(0) >= 60 }
+        assertTrue(a.matches(1, b2, 60) && b2.matches(0, a, 60))
+    }
+
+    @Test
+    fun aHeldSeatGoesFreeWhenTheHoldEndsOrTheHostFreesIt() {
+        val h = host("dino", seats = 3)
+        h.holdMs = 1_500
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g1 = join(h, "One", "dino", device = "one")
+        val g2 = join(h, "Two", "dino", device = "two")
+        val b = FakeGame(g1).apply { play() }
+        val c = FakeGame(g2).apply { play() }
+        waitFor("watching") { h.watcherCount == 2 }
+        g1.requestSeat()
+        waitFor("one seated") { g1.localPlayer == 1 }
+        g2.requestSeat()
+        waitFor("two seated") { g2.localPlayer == 2 }
+
+        // One drops and doesn't come back: free after the hold.
+        b.running = false
+        g1.vanish()
+        waitFor("held") { h.held.keys == setOf(1) }
+        waitFor("free after the hold") { h.held.isEmpty() && h.hasFreeSeat }
+        assertTrue(a.news.any { "didn't come back" in it }, a.news.toString())
+
+        // Two drops; the host frees the seat at once.
+        h.holdMs = 60_000
+        c.running = false
+        g2.vanish()
+        waitFor("held") { h.held.keys == setOf(2) }
+        h.freeHeldSeat(2)
+        waitFor("freed") { h.held.isEmpty() && h.seats.keys == setOf(0) }
+
+        // Leaving on purpose holds nothing.
+        val g3 = join(h, "Three", "dino", device = "three")
+        val d = FakeGame(g3).apply { play() }
+        waitFor("watching") { d.epoch >= 1 && h.watcherCount == 1 }
+        g3.requestSeat()
+        waitFor("three seated") { g3.localPlayer >= 0 }
+        d.running = false
+        g3.close()
+        waitFor("gone, not held") { h.seats.keys == setOf(0) && h.held.isEmpty() && h.members.size == 1 }
     }
 
     @Test
