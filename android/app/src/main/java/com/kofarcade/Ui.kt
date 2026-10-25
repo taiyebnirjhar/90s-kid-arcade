@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -137,26 +138,33 @@ fun Panel(
     )
 }
 
-/** The main action: a gold pill. */
+/** The main action: a gold pill. [compact] for one on a game card. */
 @Composable
-fun GoldButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, play: Boolean = false) {
+fun GoldButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    play: Boolean = false,
+    compact: Boolean = false,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
-            .height(46.dp)
+            .height(if (compact) 36.dp else 46.dp)
             .clip(RoundedCornerShape(50))
             // Disabled: a quiet grey pill, not a dimmed (muddy) gold one.
             .background(if (enabled) Palette.gold else Palette.line)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 22.dp),
+            .padding(horizontal = if (compact) 16.dp else 22.dp),
     ) {
         val ink = if (enabled) OnGold else Palette.muted
         if (play) {
-            PlayIcon(Modifier.size(12.dp), ink)
-            Spacer(Modifier.width(10.dp))
+            PlayIcon(Modifier.size(if (compact) 10.dp else 12.dp), ink)
+            Spacer(Modifier.width(if (compact) 8.dp else 10.dp))
         }
-        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 14.sp, letterSpacing = 1.sp)
     }
 }
 
@@ -192,6 +200,22 @@ fun Tag(text: String, color: Color = Palette.muted, filled: Boolean = false) {
             .background(if (filled) color else color.copy(alpha = 0.12f))
             .padding(horizontal = 9.dp, vertical = 4.dp),
     )
+}
+
+/** A tag on a game picture: a dark pill with a coloured dot, readable on any picture. */
+@Composable
+fun PictureTag(text: String, color: Color = Palette.gold, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.Black.copy(alpha = 0.72f))
+            .padding(start = 8.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
+    ) {
+        Box(Modifier.size(7.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(6.dp))
+        Text(text.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+    }
 }
 
 enum class Tone(val color: Color) { INFO(Palette.gold), GOOD(Palette.green), BAD(Palette.red) }
@@ -421,9 +445,9 @@ fun EyeIcon(modifier: Modifier = Modifier, crossed: Boolean = false, color: Colo
 
 /** A thin progress bar in gold. */
 @Composable
-fun ProgressBar(fraction: Float, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(Palette.line)) {
-        Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(6.dp).clip(RoundedCornerShape(50)).background(Palette.gold))
+fun ProgressBar(fraction: Float, modifier: Modifier = Modifier, thickness: Dp = 6.dp, track: Color = Palette.line) {
+    Box(modifier.fillMaxWidth().height(thickness).clip(RoundedCornerShape(50)).background(track)) {
+        Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(thickness).clip(RoundedCornerShape(50)).background(Palette.gold))
     }
 }
 

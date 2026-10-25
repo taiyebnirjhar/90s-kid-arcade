@@ -114,13 +114,14 @@ class MainActivity : ComponentActivity() {
             hero = hero,
             heroLabel = when {
                 needsBios(hero) -> "Get started"
-                hero == last && sets[hero.id] != null -> "Continue"
+                hero == last && sets[hero.id] != null -> "Last played"
                 sets[hero.id] != null -> "Ready to play"
                 else -> "Get started"
             },
             heroAction = when {
                 needsBios(hero) -> "Add BIOS"
                 sets[hero.id] == null -> "Add ROM"
+                hero == last -> "Continue"
                 else -> "Play"
             },
         )

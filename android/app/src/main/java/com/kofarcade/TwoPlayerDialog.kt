@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -304,15 +306,13 @@ fun MultiplayerHub(
         // Host.
         Panel(highlight = true, onClick = onHost) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Palette.gold),
-                ) { PlayIcon(Modifier.size(16.dp)) }
-                Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Host a game", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                    Kicker("Your room")
+                    Text("Host a game", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
                     Text("Pick the game and play. Share the room key with friends.", color = Palette.muted, fontSize = 13.sp)
                 }
+                Spacer(Modifier.width(12.dp))
+                GoldButton("Host", onHost, play = true)
             }
         }
         // Join with a key.
@@ -371,16 +371,15 @@ fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>)
                 GoldButton("Open the library", onLibrary)
             }
         } else {
+            // Wide picture cards: one a row in portrait, two side by side in landscape.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth > 600.dp) 3 else 2
-                val gap = 12.dp
+                val columns = if (maxWidth > 600.dp) 2 else 1
+                val gap = 14.dp
                 val cardWidth = (maxWidth - gap * (columns - 1)) / columns
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                     ready.chunked(columns).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                            row.forEach { pick ->
-                                GameCard(pick.first, pick.second, onClick = { onPick(pick) }, onLongClick = {}, width = cardWidth)
-                            }
+                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth)) { onPick(pick) } }
                         }
                     }
                 }
@@ -388,4 +387,19 @@ fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>)
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+/** A game to host: its picture filling a wide card, how many can play, and a gold Host button. */
+@Composable
+private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> Unit) {
+    WideGameCard(
+        game,
+        set,
+        game.title,
+        modifier.aspectRatio(16f / 9f),
+        onClick = onHost,
+        tag = { PictureTag("${game.players} players", Palette.green) },
+        info = { Text(game.subtitle ?: game.series, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1) },
+        action = { GoldButton("Host", onHost, play = true, compact = true) },
+    )
 }

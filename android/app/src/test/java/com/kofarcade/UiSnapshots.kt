@@ -36,12 +36,15 @@ class UiSnapshots {
 
     private val sets = mapOf("kof97" to "kof97", "kof2002" to "kof2002", "sengoku3" to "sengoku3")
 
+    private val homeUi get() = HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Last played", "Continue")
+
     @Test
-    fun home() = shot("home") {
-        HomeScreen(
-            HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Continue", "Play"),
-            {}, {}, {}, {}, {}, {},
-        )
+    fun home() = shot("home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
+
+    @Test
+    fun homeLandscape() {
+        landscape()
+        shot("home_landscape") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
     }
 
     @Test
@@ -54,22 +57,36 @@ class UiSnapshots {
         LibraryScreen(LibraryUi(askKey = true, error = "Wrong key. Check it and try again."), "secret", {}, Library.DEFAULT_URL, {}, false, {}, {}, {}, {}, {}, {}, {})
     }
 
+    private val libraryUi = LibraryUi(
+        askKey = false,
+        rows = listOf(
+            LibraryRowUi("neogeo (1).zip", "Neo Geo BIOS", "neogeo (1).zip · 1.9 MB", RowState.OnPhone),
+            LibraryRowUi("kf2k5uni.zip", "KOF 2005", "kf2k5uni.zip · 41.1 MB", RowState.Downloading(0.42f), gameById("kof2005"), "kf2k5uni"),
+            LibraryRowUi("kof97.zip", "KOF '97", "kof97.zip · 27.4 MB", RowState.Done("Added KOF '97: The King of Fighters '97 (NGM-2320).", true), gameById("kof97"), "kof97"),
+            LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false), gameById("sengoku3"), "sengoku3"),
+            LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle, GAMES.find { "mslug3" in it.sets }, "mslug3"),
+            LibraryRowUi("dino.zip", "Cadillacs and Dinosaurs", "dino.zip · 6.2 MB", RowState.OnPhone, gameById("dino"), "dino"),
+        ),
+        busy = true,
+    )
+
     @Test
     fun libraryList() = shot("library_list") {
+        LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryIdle() = shot("library_idle") {
         LibraryScreen(
-            LibraryUi(
-                askKey = false,
-                rows = listOf(
-                    LibraryRowUi("neogeo (1).zip", "Neo Geo BIOS", "neogeo (1).zip · 1.9 MB", RowState.OnPhone),
-                    LibraryRowUi("kf2k5uni.zip", "KOF 2005", "kf2k5uni.zip · 41.1 MB", RowState.Downloading(0.42f)),
-                    LibraryRowUi("kof97.zip", "KOF '97", "kof97.zip · 27.4 MB", RowState.Done("Added KOF '97: The King of Fighters '97 (NGM-2320).", true)),
-                    LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false)),
-                    LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle),
-                ),
-                busy = true,
-            ),
+            libraryUi.copy(rows = libraryUi.rows.map { if (it.state is RowState.OnPhone) it else it.copy(state = RowState.Idle) }, busy = false),
             "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {},
         )
+    }
+
+    @Test
+    fun libraryLandscape() {
+        landscape()
+        shot("library_landscape") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) }
     }
 
     @Test
@@ -77,9 +94,15 @@ class UiSnapshots {
         MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {})
     }
 
+    private val picks get() = listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }
+
     @Test
-    fun pickGame() = shot("twoplayer_pick") {
-        PickGameScreen(listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }, {}, {}, {})
+    fun pickGame() = shot("twoplayer_pick") { PickGameScreen(picks, {}, {}, {}) }
+
+    @Test
+    fun pickGameLandscape() {
+        landscape()
+        shot("twoplayer_pick_landscape") { PickGameScreen(picks, {}, {}, {}) }
     }
 
     @Test

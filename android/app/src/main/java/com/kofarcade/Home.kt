@@ -6,6 +6,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,15 +16,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -30,9 +37,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -66,8 +74,10 @@ data class HomeUi(
 )
 
 /**
- * Home: the logo and what you can do (multiplayer, library, BIOS), a banner for
- * the game you played last, then a shelf of title-screen cards per series.
+ * Home, like a console's: the game you played last fills the top (its
+ * gameplay picture, the title, a gold button), then what you can do
+ * (multiplayer, library, BIOS), then a row of game cards per series. The
+ * banner's game is outlined in its row, like a console's selected tile.
  */
 @Composable
 fun HomeScreen(
@@ -79,48 +89,68 @@ fun HomeScreen(
     onGame: (Game) -> Unit,
     onLongGame: (Game) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(Palette.bg).verticalScroll(rememberScrollState()).systemBarsPadding()) {
-        Row(Modifier.padding(start = 20.dp, top = 16.dp, end = 20.dp)) {
-            Text("90s KID ", fontSize = 30.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
-            Text("ARCADE", fontSize = 30.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 14.dp),
-        ) {
-            HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
-            HeaderChip("Library", onClick = onLibrary)
-            HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
-        }
-        Hero(ui.hero, ui.sets[ui.hero.id], ui.heroLabel, ui.heroAction, onHero)
-        for ((series, games) in GAMES.groupBy { it.series }) {
-            SectionLabel(series, Modifier.padding(start = 20.dp, top = 8.dp))
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(games, key = { it.id }) { game ->
-                    GameCard(game, ui.sets[game.id], onClick = { onGame(game) }, onLongClick = { onLongGame(game) })
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
+        val landscape = maxWidth > maxHeight
+        // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
+        val heroHeight = if (landscape) maxHeight * 0.8f else (maxHeight * 0.5f).coerceIn(320.dp, 460.dp)
+        val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Hero(ui.hero, ui.sets[ui.hero.id], ui.heroLabel, ui.heroAction, heroHeight, landscape, onHero)
+            Column(Modifier.windowInsetsPadding(sides)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 6.dp),
+                ) {
+                    HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
+                    HeaderChip("Library", onClick = onLibrary)
+                    HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
                 }
+                val cardWidth = if (landscape) 230.dp else 196.dp
+                for ((series, games) in GAMES.groupBy { it.series }) {
+                    Text(
+                        series,
+                        color = Palette.text,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        fontStyle = FontStyle.Italic,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp),
+                    )
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(games, key = { it.id }) { game ->
+                            GameCard(
+                                game,
+                                ui.sets[game.id],
+                                onClick = { onGame(game) },
+                                onLongClick = { onLongGame(game) },
+                                width = cardWidth,
+                                selected = game == ui.hero,
+                            )
+                        }
+                    }
+                }
+                Text(
+                    "ROMs are copied into this app's private storage. Long-press a game to remove it. " +
+                        "Game pictures: libretro thumbnails.",
+                    color = Palette.muted.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 24.dp),
+                )
             }
         }
-        Text(
-            "ROMs are copied into this app's private storage. Long-press a game to remove it. " +
-                "Game pictures: libretro thumbnails.",
-            color = Palette.muted.copy(alpha = 0.7f),
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
-        )
     }
 }
 
 @Composable
 private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, onClick: () -> Unit) {
+    // The hero's button is the gold one: Multiplayer is gold-edged beside it, not filled.
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(38.dp)
+            .height(40.dp)
             .clip(RoundedCornerShape(50))
-            .background(if (gold) Palette.gold else if (warn) Palette.red.copy(alpha = 0.15f) else Palette.panel)
-            .border(1.dp, if (gold) Palette.gold else if (warn) Palette.red.copy(alpha = 0.5f) else Palette.line, RoundedCornerShape(50))
+            .background(if (gold) Palette.gold.copy(alpha = 0.1f) else if (warn) Palette.red.copy(alpha = 0.15f) else Palette.panel)
+            .border(1.dp, if (gold) Palette.gold.copy(alpha = 0.8f) else if (warn) Palette.red.copy(alpha = 0.5f) else Palette.line, RoundedCornerShape(50))
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
     ) {
@@ -130,7 +160,7 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
         }
         Text(
             text.uppercase(),
-            color = if (gold) OnGold else Palette.text,
+            color = if (gold) Palette.gold else Palette.text,
             fontSize = 12.sp,
             fontWeight = FontWeight.Black,
             letterSpacing = 1.sp,
@@ -138,106 +168,113 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
     }
 }
 
+// The banner: the game's gameplay picture across the whole width, fading into
+// the page, with the logo on top and the title and button at the bottom.
 @Composable
-private fun Hero(game: Game, set: String?, label: String, action: String, onClick: () -> Unit) {
-    BoxWithConstraints(
-        Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .height(210.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(Palette.panel)
-            .clickable(onClick = onClick),
-    ) {
-        // Gameplay, blurred and darkened behind the banner.
-        ArtImage(game, set, Art.SNAP, Modifier.matchParentSize().blur(14.dp), contentScale = ContentScale.Crop)
+private fun Hero(game: Game, set: String?, label: String, action: String, height: Dp, landscape: Boolean, onClick: () -> Unit) {
+    Box(Modifier.fillMaxWidth().height(height).clickable(onClick = onClick)) {
+        ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+        // Dark at the top for the logo, then clear, then into the page's background.
         Box(
             Modifier.matchParentSize().background(
-                Brush.horizontalGradient(
-                    0f to Palette.bg.copy(alpha = 0.92f),
-                    0.65f to Palette.bg.copy(alpha = 0.55f),
-                    1f to Palette.bg.copy(alpha = 0.25f),
+                Brush.verticalGradient(
+                    0f to Palette.bg.copy(alpha = 0.8f),
+                    0.22f to Color.Transparent,
+                    0.5f to Color.Transparent,
+                    0.82f to Palette.bg.copy(alpha = 0.85f),
+                    1f to Palette.bg,
                 ),
             ),
         )
-        val wide = maxWidth > 520.dp
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxSize().padding(20.dp)) {
-            Column(Modifier.weight(1f)) {
-                Kicker(label)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    game.title,
-                    color = Palette.text,
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(game.subtitle ?: game.series, color = Palette.muted, fontSize = 14.sp)
-                Spacer(Modifier.height(16.dp))
-                GoldButton(action, onClick, play = action == "Play")
-            }
-            if (wide) {
-                Spacer(Modifier.width(16.dp))
-                ArtImage(
-                    game,
-                    set,
-                    Art.TITLE,
-                    Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(4f / 3f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(14.dp)),
-                    contentScale = ContentScale.Crop,
-                )
-            }
+        // And from the left, so the title reads on any picture.
+        Box(Modifier.matchParentSize().background(Brush.horizontalGradient(0f to Palette.bg.copy(alpha = 0.6f), 0.7f to Color.Transparent)))
+        val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+        Row(Modifier.windowInsetsPadding(safe).padding(start = 20.dp, top = 14.dp)) {
+            Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
+            Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
+        }
+        Column(
+            Modifier
+                .align(Alignment.BottomStart)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                .fillMaxWidth(if (landscape) 0.6f else 1f)
+                .padding(start = 20.dp, end = 20.dp, bottom = 14.dp),
+        ) {
+            Kicker(label)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                game.title,
+                color = Palette.text,
+                fontSize = if (landscape) 46.sp else 40.sp,
+                lineHeight = if (landscape) 48.sp else 42.sp,
+                fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(game.subtitle ?: game.series, color = Palette.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(14.dp))
+            GoldButton(action, onClick, play = action == "Play" || action == "Continue")
         }
     }
 }
 
+/**
+ * A game in a row: its title-screen picture, in full colour, with its name
+ * under it. Outlined in gold when [selected], pressed or focused (a TV
+ * remote or gamepad moves the focus), like a console's tiles; a tag on the
+ * picture says when its ROM still has to be added.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick: () -> Unit, width: Dp = 210.dp) {
-    val ready = set != null
-    Box(
+fun GameCard(
+    game: Game,
+    set: String?,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    width: Dp = 210.dp,
+    selected: Boolean = false,
+) {
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val focused by source.collectIsFocusedAsState()
+    val lit = selected || pressed || focused
+    Column(
         Modifier
             .width(width)
-            .aspectRatio(4f / 3f)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Palette.panel)
-            .border(1.dp, if (ready) Color.White.copy(alpha = 0.14f) else Palette.line, RoundedCornerShape(16.dp))
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .clip(RoundedCornerShape(20.dp))
+            .combinedClickable(interactionSource = source, indication = null, onClick = onClick, onLongClick = onLongClick),
     ) {
-        ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-        // Bottom shade so the title reads on any picture.
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
-        // Title and play button share a row, so the button is centred on the title.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(12.dp),
+        // The outline sits a few dp off the picture, so it reads as a frame, not a border.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f)
+                .border(2.5.dp, if (lit) Palette.gold else Color.Transparent, RoundedCornerShape(20.dp))
+                .padding(5.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(Palette.panel),
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    game.title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontStyle = FontStyle.Italic,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                game.subtitle?.let { Text(it, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp) }
-            }
-            if (ready) {
-                Spacer(Modifier.width(8.dp))
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(34.dp).clip(CircleShape).background(Palette.gold)) {
-                    PlayIcon(Modifier.size(12.dp))
-                }
-            }
+            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+            if (set == null) PictureTag("Add ROM", Palette.red, Modifier.align(Alignment.TopStart).padding(8.dp))
         }
-        if (!ready) {
-            Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) { Tag("Add ROM", Color.White) }
+        Column(Modifier.padding(start = 6.dp, end = 6.dp, bottom = 4.dp)) {
+            Text(
+                game.title,
+                color = if (lit) Palette.gold else Palette.text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontStyle = FontStyle.Italic,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                game.subtitle ?: if (set != null) "Ready to play" else "Not on this phone",
+                color = Palette.muted,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
