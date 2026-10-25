@@ -398,6 +398,13 @@ class RoomTest {
         assertTrue("differs" in other.message!!, other.message)
         val game = assertFailsWith<Refused> { join(h, "Other", set = "kof98") }
         assertTrue("different game" in game.message!!, game.message)
+        // Another emulator build: told to update.
+        val built = Room.host("Host", "kof97", "Game", rom = 1, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1, build = "aaaa").also { open += it }
+        FakeGame(built).play()
+        val build = assertFailsWith<Refused> {
+            Room.join(localhost, port(built), "Old", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, build = "bbbb").also { open += it }
+        }
+        assertTrue("different app builds" in build.message!!, build.message)
         repeat(MAX_MEMBERS - 1) { join(h, "Watcher $it") }
         val full = assertFailsWith<Refused> { join(h, "One too many") }
         assertTrue("full" in full.message!!, full.message)

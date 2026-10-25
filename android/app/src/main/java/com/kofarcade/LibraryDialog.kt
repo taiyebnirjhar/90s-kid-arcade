@@ -100,24 +100,27 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
     suspend fun download(entry: Library.Entry) {
         downloads[entry.name] = Download()
         try {
-            val check = withContext(Dispatchers.IO) {
+            val (check, set) = withContext(Dispatchers.IO) {
                 // Its own scratch file: a download left running by a rotated
                 // screen can't trip over the next one.
-                val tmp = roms.partFile("library-${entry.name.hashCode().toUInt()}")
+                val tmp = roms.partFile("library")
                 try {
                     library().download(entry.name, tmp) { downloads[entry.name] = Download(it) }
                 } catch (e: Exception) {
                     tmp.delete()
                     throw e
                 }
-                roms.add(tmp)
+                val check = roms.add(tmp)
+                val set = when (check) {
+                    RomCheck.Bios -> "neogeo"
+                    is RomCheck.Game -> check.set.name
+                    else -> null
+                }
+                // Noted here, so a download that finishes after the screen
+                // was rotated still shows as on the phone.
+                prefs.setLibrarySet(entry.name, set)
+                check to set
             }
-            val set = when (check) {
-                RomCheck.Bios -> "neogeo"
-                is RomCheck.Game -> check.set.name
-                else -> null
-            }
-            prefs.setLibrarySet(entry.name, set)
             downloads[entry.name] = Download(entry.size, check.message(), ok = set != null)
             onChanged()
         } catch (e: Exception) {

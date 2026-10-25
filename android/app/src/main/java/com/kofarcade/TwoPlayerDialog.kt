@@ -85,6 +85,24 @@ data class HostChoice(
 private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
 
 /**
+ * Which FBNeo build this app runs (a hash of the core library), so phones
+ * with different builds don't join a game they'd play a little differently.
+ */
+private fun emulatorBuild(context: Context): String = runCatching {
+    val core = java.io.File(context.applicationInfo.nativeLibraryDir, "libfbneo_libretro_android.so")
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+    core.inputStream().use { input ->
+        val buf = ByteArray(1 shl 16)
+        while (true) {
+            val n = input.read(buf)
+            if (n < 0) break
+            digest.update(buf, 0, n)
+        }
+    }
+    digest.digest().take(8).joinToString("") { "%02x".format(it) }
+}.getOrDefault("")
+
+/**
  * MULTIPLAYER: one phone opens a room and starts playing; it shows the
  * room's key. Others join with the key (or from the list of rooms nearby),
  * on the same Wi-Fi or on a phone's hotspot, and watch; COIN or START takes
@@ -119,7 +137,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
                 Netplay.room = withContext(Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players)
+                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context))
                 }
                 onStart(game, set)
             } catch (e: Exception) {
@@ -189,7 +207,7 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
                 val room = withContext(Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios).also { room ->
+                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context)).also { room ->
                         if (left.get()) room.close()
                     }
                 }

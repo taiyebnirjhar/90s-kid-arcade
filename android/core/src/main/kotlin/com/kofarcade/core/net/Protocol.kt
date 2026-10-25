@@ -34,6 +34,8 @@ data class Hello(
     val udpPort: Int,
     /** Where a new owner can call this phone (should the owner leave). */
     val tcpPort: Int = 0,
+    /** Which emulator build runs the game: phones must match to play the same game ("": unknown). */
+    val build: String = "",
 )
 
 /** The owner's answer: let in (with the room's settings and your member [id]) or not, and why. */

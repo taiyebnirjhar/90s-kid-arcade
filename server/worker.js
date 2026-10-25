@@ -3,9 +3,20 @@
 //
 // Setup (Cloudflare dashboard): an R2 bucket with public access off, this
 // Worker with an R2 binding named ROMS to it, and a secret named ARCADE_KEY.
+// Compares in constant time, so response timing gives away nothing of the key.
+async function sameKey(given, key) {
+  const enc = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(given)),
+    crypto.subtle.digest("SHA-256", enc.encode(key)),
+  ]);
+  return crypto.subtle.timingSafeEqual(a, b);
+}
+
 export default {
   async fetch(request, env) {
-    if (!env.ARCADE_KEY || request.headers.get("Authorization") !== `Bearer ${env.ARCADE_KEY}`) {
+    const given = request.headers.get("Authorization") || "";
+    if (!env.ARCADE_KEY || !(await sameKey(given, `Bearer ${env.ARCADE_KEY}`))) {
       return new Response("Wrong key", { status: 401 });
     }
     if (request.method !== "GET" && request.method !== "HEAD") {

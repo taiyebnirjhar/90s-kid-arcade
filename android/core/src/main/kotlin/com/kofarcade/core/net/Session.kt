@@ -125,6 +125,7 @@ class Room private constructor(
     owner: Int,
     private val startDelay: Int,
     private val beaconPort: Int,
+    private val build: String,
 ) : Closeable {
     /** The member id of the phone that runs the room: it seats everyone and runs every change. */
     @Volatile var owner: Int = owner
@@ -840,6 +841,10 @@ class Room private constructor(
             hello.set != set -> return refuse("The room is playing a different game.")
             hello.rom != rom -> return refuse("Your copy of the game differs from the host's. Download it from the library on every phone.")
             hello.bios != bios -> return refuse("Your Neo Geo BIOS differs from the host's. Download it from the library on every phone.")
+            // Another emulator build can run the same game a little differently,
+            // and the phones would drift apart.
+            hello.build.isNotEmpty() && build.isNotEmpty() && hello.build != build ->
+                return refuse("This phone and the host have different app builds. Install the latest app on every phone.")
         }
         val id = synchronized(lines) {
             freeId()?.also { id ->
@@ -1290,10 +1295,11 @@ class Room private constructor(
          */
         fun host(
             name: String, set: String, title: String, rom: Long, bios: Long, maxPlayers: Int,
-            delay: Int = 1, port: Int = TCP_PORT, beaconPort: Int = BEACON_PORT,
+            delay: Int = 1, port: Int = TCP_PORT, beaconPort: Int = BEACON_PORT, build: String = "",
         ): Room = Room(
             name, set, title, rom, bios, maxPlayers, localId = 0, session = Random.nextInt(),
             server = openServer(port), udp = DatagramSocket(0), owner = 0, startDelay = delay, beaconPort = beaconPort,
+            build = build,
         ).also { it.key = it.keyNow() }
 
         /**
@@ -1303,7 +1309,7 @@ class Room private constructor(
          */
         fun join(
             host: InetAddress, port: Int, name: String, set: String, rom: Long, bios: Long,
-            listenPort: Int = TCP_PORT, beaconPort: Int = BEACON_PORT,
+            listenPort: Int = TCP_PORT, beaconPort: Int = BEACON_PORT, build: String = "",
         ): Room {
             val udp = DatagramSocket(0)
             // Where a new owner would call this phone, should the owner leave.
@@ -1314,7 +1320,7 @@ class Room private constructor(
                 socket.tcpNoDelay = true
                 socket.soTimeout = 30_000
                 val line = Line(socket, 0, "Host")
-                line.output.message(Msg.HELLO, encode(Hello(PROTOCOL, name, set, rom, bios, udp.localPort, server.localPort)))
+                line.output.message(Msg.HELLO, encode(Hello(PROTOCOL, name, set, rom, bios, udp.localPort, server.localPort, build)))
                 val (t, payload) = line.input.message()
                 if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
                 val w = decode<Welcome>(payload)
@@ -1329,6 +1335,7 @@ class Room private constructor(
                 val room = Room(
                     name, set, "", rom, bios, w.maxPlayers, localId = w.id, session = w.session,
                     server = server, udp = udp, owner = w.owner, startDelay = w.delay, beaconPort = beaconPort,
+                    build = build,
                 )
                 room.ownerLine = line
                 room.startState = unpack(start.second).takeIf { it.isNotEmpty() }

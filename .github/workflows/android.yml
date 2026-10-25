@@ -17,7 +17,9 @@ permissions:
 
 concurrency:
   group: android-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer push replaces a branch build; on main, builds queue instead, so a
+  # release is never cut off half-published.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -74,12 +76,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest 90s-Kid-Arcade.apk \
-            --latest \
-            --target "$GITHUB_SHA" \
-            --title "90s Kid Arcade (latest build)" \
-            --notes "Built from ${GITHUB_SHA::7}. Download 90s-Kid-Arcade.apk on your phone and open it to install."
+          notes="Built from ${GITHUB_SHA::7}. Download 90s-Kid-Arcade.apk on your phone and open it to install."
+          if gh release view latest >/dev/null 2>&1; then
+            # In place: the release is never missing, even for a moment.
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/latest" -f sha="$GITHUB_SHA" -F force=true
+            gh release upload latest 90s-Kid-Arcade.apk --clobber
+            gh release edit latest --latest --title "90s Kid Arcade (latest build)" --notes "$notes"
+          else
+            gh release create latest 90s-Kid-Arcade.apk --latest --target "$GITHUB_SHA" \
+              --title "90s Kid Arcade (latest build)" --notes "$notes"
+          fi
 
       # Screenshots of the app's screens (Paparazzi, app/src/test), published
       # to the ui-snapshots branch to check the look without a phone. Never

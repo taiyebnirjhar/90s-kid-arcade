@@ -43,7 +43,7 @@ and settings.
 
 ## Playing
 
-1. Tap **Neo Geo BIOS** and pick your `neogeo.zip` (once).
+1. Tap **Add BIOS** and pick your `neogeo.zip` (once).
 2. Tap a game. The first time it asks for that game's zip: pick it from the
    phone (any file name is fine) or download it from your library (below).
    Long-press a game to remove its ROM.
@@ -202,7 +202,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 ## Your ROM library (optional)
 
 Keep your zips in a private Cloudflare R2 bucket and download them on any
-phone with one tap (home screen → **LIBRARY**). The library address is built
+phone with one tap (home screen → **Library**). The library address is built
 into the app (`Library.DEFAULT_URL`); it asks only for the key, once.
 
 1. Create an R2 bucket (public access off) and upload your zips.
