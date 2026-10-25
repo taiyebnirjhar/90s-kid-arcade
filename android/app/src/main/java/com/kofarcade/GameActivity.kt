@@ -744,7 +744,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         "${game.layout.name}${if (game.pad == PadMap.CAPCOM_6) "6" else ""}.${if (look.leftHanded) "L" else "R"}"
 
     /** What's on screen now: the saved settings, or a preview from Controls. */
-    private var look: Look = Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4)
+    private var look: Look = Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4)
 
     /** Applies the saved settings. */
     fun applyPrefs() = applyLook(prefs.look())

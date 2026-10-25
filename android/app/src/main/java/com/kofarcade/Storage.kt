@@ -187,7 +187,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putFloat("size", v).apply()
 
     var opacity: Float
-        get() = sp.getFloat("opacity", 0.8f)
+        get() = sp.getFloat("opacity", 0.46f)
         set(v) = sp.edit().putFloat("opacity", v).apply()
 
     var haptics: Boolean
@@ -241,7 +241,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putBoolean("detectInfo", v).apply()
 
     var screen: ScreenMode
-        get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.SLIGHT)
+        get() = runCatching { ScreenMode.valueOf(sp.getString("screen", null)!!) }.getOrDefault(ScreenMode.WIDE)
         set(v) = sp.edit().putString("screen", v.name).apply()
 
     /** Your control layout for a kind of game (fighter / shooter / brawler) and hand. */
