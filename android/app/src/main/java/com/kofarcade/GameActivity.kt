@@ -342,6 +342,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     askedWith = key
                     sendNet { it.requestSeat() }
                     showBanner("Asking for a seat…")
+                    // No answer (the host was changing, say): ask again freely.
+                    roomBanner.postDelayed({ if (askedWith == key && r.watching) askedWith = null }, 5_000)
                 }
                 return
             }
@@ -484,7 +486,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
             room.start(object : RoomListener {
                 override fun onRemote(player: Int, start: Int, masks: IntArray) {
-                    masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(player, start + i, m) }
+                    var taken = true
+                    masks.forEachIndexed { i, m -> taken = LibretroDroid.pushRemoteInput(player, start + i, m) && taken }
+                    // A watcher's game too far behind to take more (it was in
+                    // the background, say): the game again, from now.
+                    if (!taken && room.watching) sendNet { it.requestResync() }
                 }
 
                 // The room puts everyone back in step from the host's game by
