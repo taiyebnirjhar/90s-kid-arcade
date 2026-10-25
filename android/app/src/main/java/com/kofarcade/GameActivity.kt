@@ -37,6 +37,7 @@ import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
 import com.kofarcade.core.Pad
+import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
@@ -743,7 +744,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     // Layouts are saved per kind of game and per hand.
-    private fun layoutKey() = "${game.layout.name}.${if (look.leftHanded) "L" else "R"}"
+    // Six-button games have their own: a four-button layout's moves don't fit them.
+    private fun layoutKey() =
+        "${game.layout.name}${if (game.pad == PadMap.CAPCOM_6) "6" else ""}.${if (look.leftHanded) "L" else "R"}"
 
     /** What's on screen now: the saved settings, or a preview from Controls. */
     private var look: Look = Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4)

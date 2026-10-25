@@ -17,6 +17,7 @@ import android.view.View
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
+import com.kofarcade.core.Pt
 import com.kofarcade.core.angleToDir
 import com.kofarcade.core.arcPositions
 import com.kofarcade.core.mirrorDir
@@ -312,31 +313,53 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val mirror = if (st.leftHanded) -1f else 1f
         val ax = if (st.leftHanded) safeL + 1.3f * s + 16 * d else w - safeR - 1.3f * s - 16 * d
         val ay = h - s - 16 * d
-        val faceR = s / 2 * if (st.layout == Layout.SHOOTER) 1.12f else 1f
+        val six = st.faceButtons.size == 6
+        val faceR = s / 2 * when {
+            st.layout == Layout.SHOOTER -> 1.12f
+            six -> 0.92f
+            else -> 1f
+        }
         val hh = s / 2 + 5 * d
-        val facePos = if (st.faceButtons.size == 6) {
-            // Capcom's arcade layout: punches on top, kicks below, light to heavy.
-            val sx = 0.98f * s
-            mapOf(
-                'A' to (-1.2f * sx to -hh), 'B' to (-0.2f * sx to -hh * 1.12f), 'C' to (0.8f * sx to -hh * 1.12f),
-                'D' to (-1.0f * sx to hh), 'E' to (0f to hh * 0.88f), 'F' to (1.0f * sx to hh * 0.88f),
+        // Default spots, in button sizes from the cluster's centre (x right,
+        // y down). Laid out by hand on a phone for each kind of game.
+        val facePos: Map<Char, Pair<Float, Float>> = when {
+            // Capcom: punches over kicks, light to heavy, in straight columns.
+            six -> mapOf(
+                'A' to (-1.2f to -0.58f), 'B' to (-0.2f to -0.58f), 'C' to (0.8f to -0.58f),
+                'D' to (-1.2f to 0.55f), 'E' to (-0.2f to 0.55f), 'F' to (0.8f to 0.55f),
             )
-        } else {
-            mapOf(
-                'C' to (-0.3f * s - 5 * d to -hh),
-                'D' to (0.7f * s + 5 * d to -hh),
-                'A' to (-0.7f * s - 5 * d to hh),
-                'B' to (0.3f * s + 5 * d to hh),
+            // Metal Slug, Nightmare in the Dark: Shoot and Jump low, Bomb above Jump.
+            st.layout == Layout.SHOOTER -> mapOf(
+                'A' to (-0.98f to 0.35f), 'B' to (0.71f to 0.38f), 'C' to (0.63f to -1.3f), 'D' to (-1.15f to -0.95f),
+            )
+            // Sengoku 3, Cadillacs and Dinosaurs: big buttons, spread out.
+            st.layout == Layout.BRAWLER -> mapOf(
+                'A' to (-0.85f to 0.19f), 'B' to (0.87f to 0.4f), 'C' to (-0.92f to -1.17f), 'D' to (0.84f to -1.27f),
+            )
+            // Fighters: A B C D in a square, C D on top.
+            else -> mapOf(
+                'C' to (-0.42f to -0.61f), 'D' to (0.76f to -0.61f), 'A' to (-0.44f to 0.6f), 'B' to (0.76f to 0.6f),
             )
         }
+        val faceScale = if (st.layout == Layout.BRAWLER) mapOf('A' to 1.14f, 'B' to 1.14f, 'C' to 1.14f) else emptyMap()
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
-            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * mirror, ay + fy, faceR), true, key = keyFor[c], letter = c)
+            val r = faceR * (faceScale[c] ?: 1f)
+            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c)
         }
         val skillR = 26 * d * sc
-        arcPositions(st.moves.size, 3 * s, 72f, 23f).forEachIndexed { i, p ->
+        // Moves on an outer ring; Sengoku 3's first three sit higher and bigger.
+        val brawler = st.layout == Layout.BRAWLER
+        val ring = arcPositions(st.moves.size, 3 * s, 72f, 23f).mapIndexed { i, p ->
+            when {
+                brawler && i == 1 -> Pt(-0.52f * s, -2.98f * s)
+                brawler && i == 2 -> Pt(-1.93f * s, -2.94f * s)
+                else -> p
+            }
+        }
+        ring.forEachIndexed { i, p ->
             val m = st.moves[i]
-            val rect = placed("move:$i", ax + p.x * mirror, ay + p.y, skillR)
+            val rect = placed("move:$i", ax + p.x * mirror, ay + p.y, skillR * if (brawler && i < 3) 1.15f else 1f)
             els += El(
                 "move:$i", Kind.SKILL, rect, true, move = m,
                 glyph = glyphPath(m.cmd, rect.centerX(), rect.centerY(), rect.width() / 2 * 0.84f),
@@ -345,17 +368,29 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                     ?.takeUnless { it.isSequence }?.buttons.orEmpty(),
             )
         }
-        // Block: left of A, where the thumb already is. Slide down for low block.
-        // Six buttons reach further out (LP and LK sit wider than A and C):
-        // Block and the system chips move out with them so nothing overlaps.
-        val six = st.faceButtons.size == 6
+        // Block: left of the bottom row, where the thumb already is. Slide down for low block.
         if (st.block) {
-            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.0f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
+            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.15f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
         }
+        // System chips (MAX, Roll, Tag...): above the buttons, the third to the left.
         val sysR = 22 * d * sc
-        val sysArc = if (six) arcPositions(st.system.size, 2.15f * s, 95f, 34f) else arcPositions(st.system.size, 1.72f * s, 104f, 34f)
-        sysArc.forEachIndexed { i, p ->
-            els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
+        val sysSpots = if (six) {
+            listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
+        } else {
+            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, -0.68f * s))
+        }
+        val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
+        st.system.indices.forEach { i ->
+            val sys = st.system[i]
+            if (brawler && sys.hold) {
+                // Run: big, right above the stick, for the thumb that steers.
+                val sx = if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc
+                val rect = placed("sys:$i", sx, h - 104 * d * sc - 2.13f * s, sysR * 1.4f)
+                els += El("sys:$i", Kind.SYS, rect, true, sys = sys)
+                return@forEach
+            }
+            val p = if (st.layout == Layout.FIGHTER) sysSpots.getOrNull(i) ?: sysArc[i] else sysArc[i]
+            els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = sys)
         }
 
         // Stick home

@@ -170,6 +170,8 @@ enum class ScreenMode(val label: String, val aspect: Float?, val short: String) 
     FULL("The whole screen, most stretch", null, "Full"),
 }
 
+private const val LAYOUT_VERSION = 2
+
 /** Settings, teams and custom move lists. */
 class Prefs(context: Context) {
     // Keeps its original file name (from when the app was "KOF Arcade") so
@@ -244,6 +246,7 @@ class Prefs(context: Context) {
 
     /** Your control layout for a kind of game (fighter / shooter / brawler) and hand. */
     fun tweaks(key: String): Map<String, HudView.Tweak> {
+        forgetOldLayouts()
         val raw = sp.getString("layout.$key", null) ?: return emptyMap()
         return runCatching {
             val o = JSONObject(raw)
@@ -254,7 +257,21 @@ class Prefs(context: Context) {
         }.getOrDefault(emptyMap())
     }
 
+    /**
+     * Saved layouts are offsets from the default spots. Version 2 moved the
+     * defaults to the layouts arranged on a phone (KOF's square, Metal Slug,
+     * Sengoku 3), so offsets saved against the old ones would move everything
+     * twice: they're dropped once.
+     */
+    private fun forgetOldLayouts() {
+        if (sp.getInt("layoutVersion", 1) >= LAYOUT_VERSION) return
+        val edit = sp.edit()
+        sp.all.keys.filter { it.startsWith("layout.") }.forEach(edit::remove)
+        edit.putInt("layoutVersion", LAYOUT_VERSION).apply()
+    }
+
     fun setTweaks(key: String, tweaks: Map<String, HudView.Tweak>) {
+        forgetOldLayouts()
         val o = JSONObject()
         tweaks.forEach { (id, t) -> o.put(id, JSONArray().put(t.dx.toDouble()).put(t.dy.toDouble()).put(t.scale.toDouble())) }
         sp.edit().putString("layout.$key", o.toString()).apply()
