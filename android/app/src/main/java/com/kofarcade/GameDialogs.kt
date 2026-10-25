@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,6 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
@@ -364,13 +367,25 @@ fun Portrait(name: String?, size: Int = 38, selected: Boolean = false) {
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            if (name == null) "+" else initials(name),
-            color = Color.White,
-            fontWeight = FontWeight.Black,
-            fontStyle = FontStyle.Italic,
-            fontSize = (size * 0.36f).sp,
-        )
+        // The fighter's face from the game once it's been on screen; till then, initials.
+        val face = name?.let { LocalFaces.current[it] }
+        if (face != null) {
+            Image(
+                face,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Text(
+                if (name == null) "+" else initials(name),
+                color = Color.White,
+                fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic,
+                fontSize = (size * 0.36f).sp,
+            )
+        }
     }
 }
 

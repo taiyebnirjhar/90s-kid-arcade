@@ -18,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,8 @@ import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
 import com.kofarcade.core.Pad
+import com.kofarcade.core.Picture
+import com.kofarcade.core.PortraitSpec
 import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
@@ -46,6 +49,7 @@ import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
+import com.kofarcade.core.portraitSpec
 import com.kofarcade.core.fighterBase
 import com.kofarcade.core.gameById
 import com.kofarcade.core.loadRoster
@@ -100,6 +104,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libfbneo_libretro_android.so"
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
+        private const val FACE_GRAB_MS = 40L
         /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
         private const val MAX_ROLLBACK = 8
     }
@@ -112,6 +117,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private lateinit var root: FrameLayout
     private lateinit var pad: Pad
     private var roster: Roster? = null
+
+    /** Fighters' faces taken from the game's screen (null: a game without fighters). */
+    var faces: Faces? = null
+        private set
+    private var faceSpec: PortraitSpec? = null
     private var ramMap: DetectSpec? = null
     private lateinit var detectInfo: TextView
 
@@ -167,7 +177,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         prefs = Prefs(this)
         prefs.lastGame = game.id
         roster = game.roster?.let(::loadRoster)
-        if (game.layout == Layout.FIGHTER) ramMap = detectSpec(game.roster)
+        if (game.layout == Layout.FIGHTER) {
+            ramMap = detectSpec(game.roster)
+            faceSpec = portraitSpec(game.roster)
+            faces = Faces(this, game.id, roster)
+        }
         val roms = RomStore(this)
         room = if (intent.getBooleanExtra(EXTRA_NETPLAY, false)) Netplay.room else null
         if (intent.getBooleanExtra(EXTRA_NETPLAY, false) && room == null) {
@@ -206,6 +220,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
         pad = Pad(send = ::sendKey, clock = { padFrame })
         hud = HudView(this, this)
+        hud.faceOf = { name -> faces?.bitmap(name) }
 
         detectInfo = TextView(this).apply {
             setTextColor(Color.WHITE)
@@ -223,7 +238,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             visibility = if (room != null) View.VISIBLE else View.GONE
             text = room?.let { r -> if (r.isOwner) "Opening the room…" else "Joining ${r.nameOf(r.owner)}'s room…" }
         }
-        val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
+        val dialogs = ComposeView(this).apply {
+            setContent {
+                KofTheme {
+                    CompositionLocalProvider(LocalFaces provides (faces?.byName ?: emptyMap())) { GameDialogs(this@GameActivity) }
+                }
+            }
+        }
         root = FrameLayout(this)
         setContentView(
             root.apply {
@@ -770,7 +791,47 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     val found = runCatching { fighterBase(spec, ram, me) to detect(spec, ram, me) }.getOrNull() ?: continue
                     groundBase = found.first
                     onDetected(found.second)
+                    takeFaces(spec)
                 }
+            }
+        }
+    }
+
+    // A face read once, waiting to be seen the same again before it's kept.
+    private val faceSeen = HashMap<String, IntArray>()
+
+    /**
+     * Takes the faces of the fighters on screen that we haven't got yet, from
+     * the game's own picture: only while its HUD shows them (Portraits.kt), and
+     * only a face seen the same twice in a row, so a passing flash or a
+     * fighter changing over is never kept.
+     */
+    private suspend fun takeFaces(spec: DetectSpec) {
+        val faceSpec = faceSpec ?: return
+        val faces = faces ?: return
+        fun wanted(ram: Ram): List<Pair<Int, String>> = (0..1).mapNotNull { side ->
+            val d = runCatching { detect(spec, ram, side) }.getOrNull() ?: return@mapNotNull null
+            val id = if (faceSpec.selectScreen) d.team.firstOrNull() else d.active.takeIf { d.inRound }
+            id?.takeIf { !faces.has(it) }?.let { side to it }
+        }
+        val before = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: return
+        if (wanted(before).isEmpty()) return
+        // The first grab asks for the next frame; the second, a moment later, gets it.
+        LibretroDroid.grabFrame()
+        delay(FACE_GRAB_MS)
+        val raw = LibretroDroid.grabFrame() ?: return
+        val after = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: return
+        // Who's on screen must be the same either side of the picture.
+        val now = wanted(after).takeIf { it == wanted(before) } ?: return
+        val picture = Picture(raw[0], raw[1], raw.copyOfRange(2, raw.size))
+        for ((side, id) in now) {
+            if (!faceSpec.showing(picture, side)) continue
+            val face = faceSpec.crop(picture, side)
+            if (faceSeen.remove(id)?.contentEquals(face) == true) {
+                faces.save(id, face, faceSpec.w, faceSpec.h)
+                hud.invalidate()
+            } else {
+                faceSeen[id] = face
             }
         }
     }

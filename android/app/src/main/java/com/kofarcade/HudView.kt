@@ -2,12 +2,14 @@ package com.kofarcade
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
@@ -97,6 +99,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     /** Told when the editor's selection changes, so the size slider can follow. */
     var onSelect: ((String?) -> Unit)? = null
 
+    /** A fighter's face from the game, by name, once it has been on screen (else initials). */
+    var faceOf: (String) -> Bitmap? = { null }
+
     fun setScale(id: String, scale: Float) {
         tweaks = tweaks + (id to (tweaks[id] ?: Tweak()).copy(scale = scale))
     }
@@ -181,6 +186,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
     private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Faces are pixel art: drawn without smoothing, clipped to the tile's rounded corners.
+    private val facePaint = Paint().apply { isFilterBitmap = false }
+    private val faceClip = Path()
+    private val faceSrc = Rect()
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -586,11 +596,24 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             )
             canvas.drawRoundRect(t, 10 * d, 10 * d, fill)
             fill.shader = null
+            val face = faceOf(name)
+            if (face != null) {
+                // Centre-crop the face to the square tile.
+                val side = minOf(face.width, face.height)
+                faceSrc.set((face.width - side) / 2, (face.height - side) / 2, (face.width + side) / 2, (face.height + side) / 2)
+                faceClip.reset()
+                faceClip.addRoundRect(t, 10 * d, 10 * d, Path.Direction.CW)
+                canvas.save()
+                canvas.clipPath(faceClip)
+                facePaint.alpha = if (active) 255 else 150
+                canvas.drawBitmap(face, faceSrc, t, facePaint)
+                canvas.restore()
+            }
             ring.color = if (active) accent else Color.argb(76, 255, 255, 255)
             ring.strokeWidth = (if (active) 2f else 1.5f) * d
             canvas.drawRoundRect(t, 10 * d, 10 * d, ring)
             text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
-            centeredText(canvas, initials(name), t.centerX(), t.centerY(), 12.5f * d)
+            if (face == null) centeredText(canvas, initials(name), t.centerX(), t.centerY(), 12.5f * d)
             text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
         // Only the fighter in play (or an empty slot) gets a name, to keep the corner quiet.
