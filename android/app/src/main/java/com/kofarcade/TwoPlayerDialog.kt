@@ -79,8 +79,9 @@ data class HostChoice(
     val maxPlayers: Int = 2,
     val key: String = "",
     val watchers: Int = 0,
-    /** The game, for its picture. */
+    /** The game and the host's version of it, for its picture. */
     val game: Game? = null,
+    val set: String? = null,
 )
 
 private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
@@ -269,7 +270,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
         rooms = hosts.map {
             HostChoice(
                 it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip"), it.beacon.players, it.beacon.maxPlayers,
-                it.beacon.key, it.beacon.watchers, gameForSet(it.beacon.set),
+                it.beacon.key, it.beacon.watchers, gameForSet(it.beacon.set), it.beacon.set,
             )
         },
         key = key,

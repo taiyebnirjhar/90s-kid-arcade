@@ -420,9 +420,12 @@ fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
         val game = room.game
         Box(Modifier.width(96.dp).height(72.dp).clip(RoundedCornerShape(12.dp))) {
             if (game != null) {
-                ArtImage(game, null, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, dim = !room.have)
+                ArtImage(game, room.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
             } else {
-                Box(Modifier.matchParentSize().background(Palette.bg))
+                // A game this app doesn't know: its name on a tile, like a picture still loading.
+                Box(Modifier.matchParentSize().background(Palette.bg).padding(6.dp), contentAlignment = Alignment.Center) {
+                    Text(room.title, color = Palette.muted, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
         Spacer(Modifier.width(12.dp))
