@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -112,7 +113,7 @@ fun HomeScreen(
                 // First run: what's left to do before the first game, in order.
                 val anyReady = ui.sets.values.any { it != null }
                 if (!ui.hasBios || !anyReady) {
-                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 560.dp))
                 }
                 // Portrait: two cards and a peek of the third, so the row reads as scrollable.
                 val cardWidth = if (landscape) 232.dp else ((screenWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
@@ -309,7 +310,7 @@ fun GameCard(
 
 /**
  * First run: the steps before the first game (the BIOS, a game), each ticked
- * off once done, with the next one's button gold.
+ * off once done, the next one's number in gold.
  */
 @Composable
 private fun SetupCard(hasBios: Boolean, anyReady: Boolean, onBios: () -> Unit, onLibrary: () -> Unit, modifier: Modifier) {
@@ -346,7 +347,8 @@ private fun SetupStep(number: Int, title: String, sub: String, done: Boolean, ac
         }
         if (!done) {
             Spacer(Modifier.width(8.dp))
-            if (next) GoldButton(action, onAction, compact = true) else GhostButton(action, onAction, compact = true)
+            // Outlined: the banner's gold button is the screen's one main action.
+            GhostButton(action, onAction, compact = true)
         }
     }
 }
