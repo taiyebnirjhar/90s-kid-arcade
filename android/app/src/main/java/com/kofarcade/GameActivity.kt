@@ -126,6 +126,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var lastSumFrame = -1L
     private var lastWait = 0L
     private var lastResyncAsk = 0L
+    private var netStartRequested = false
     // Watching: the COIN or START that asked for a seat, pressed for real once
     // seated (so the coin drops); then pressed for this many more frames.
     private var askedWith: Key? = null
@@ -271,7 +272,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         hud.onFrame(frame)
                     }
-                    is GLRetroView.GLRetroEvents.SurfaceCreated -> room?.let(::startNetplay)
+                    // Once: the surface is made again if the GL context is lost.
+                    is GLRetroView.GLRetroEvents.SurfaceCreated -> if (!netStartRequested) {
+                        netStartRequested = true
+                        room?.let(::startNetplay)
+                    }
                 }
             }
         }
@@ -332,7 +337,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         room?.let { r ->
             if (r.watching) {
                 // Watching: COIN or START asks for a free seat.
-                if (down && (key == Key.COIN || key == Key.START) && askedWith == null) {
+                if (down && netStarted && (key == Key.COIN || key == Key.START) && askedWith == null) {
                     // A free seat, or an idle player's: the host decides (first come).
                     askedWith = key
                     sendNet { it.requestSeat() }
@@ -464,7 +469,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         roomBanner.postDelayed(hideBanner, 4_000)
     }
 
-    /** This phone's player: 0 alone or hosting, 1 and up when joined. */
+    /** This phone's player: 0 alone, its seat in a room (-1 while watching). */
     private val localPlayer: Int get() = room?.localPlayer ?: 0
 
     // The room runs on its own threads; it seats this phone (from the owner's
@@ -532,9 +537,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         // Seated from watching: the COIN or START that asked goes in now.
                         tapKey = askedWith?.takeIf { !room.watching }
                         tapFrames = if (tapKey != null) 6 else 0
-                        if (!room.watching) askedWith = null
+                        // Seated, or a seating that didn't seat us: ask again freely.
+                        askedWith = null
                         // A player now, with the menu open: everyone waits for it.
-                        if (room.watching) localPaused = false else if (dialog != null && !localPaused) pauseEmulation()
+                        when {
+                            room.watching -> localPaused = false
+                            dialog != null && !localPaused -> pauseEmulation()
+                            // A seating clears everyone's pauses: ours still holds.
+                            localPaused -> sendNet { it.sendPause(true) }
+                        }
                         netStarted = true
                         seating = false
                         applyNetFreeze()
@@ -654,13 +665,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        wifiLock?.let { if (it.isHeld) it.release() }
+        // The room first: its threads may still ask the emulator for its
+        // state, which the emulator can't answer once it's gone.
         room?.let {
             it.close()
             if (Netplay.room === it) Netplay.room = null
             LibretroDroid.setNetplay(false, 0, 2, 0, 0)
         }
+        super.onDestroy()
+        wifiLock?.let { if (it.isHeld) it.release() }
+    }
+
+    override fun onPause() {
+        // Leaving the app mid-game: the others wait, as for the menu.
+        if (room != null && !isWatching && dialog == null && !editing && !isFinishing) show(GameDialog.Pause)
+        super.onPause()
     }
 
     // ----- Fighter detection -----
@@ -686,9 +705,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         continue
                     }
+                    // Watching: no fighter of our own to follow.
+                    val me = localPlayer
+                    if (me < 0) continue
                     val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
-                    groundBase = fighterBase(spec, ram, localPlayer)
-                    onDetected(detect(spec, ram, localPlayer))
+                    val found = runCatching { fighterBase(spec, ram, me) to detect(spec, ram, me) }.getOrNull() ?: continue
+                    groundBase = found.first
+                    onDetected(found.second)
                 }
             }
         }

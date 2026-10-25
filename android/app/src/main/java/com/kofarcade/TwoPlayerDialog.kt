@@ -50,6 +50,8 @@ import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
 import com.kofarcade.core.net.probe
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
@@ -134,14 +136,21 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
         opening = true
         scope.launch {
             try {
-                Netplay.room = withContext(Dispatchers.IO) {
+                // Never dropped half-made: if the screen's gone by the time
+                // the room is open, it's closed again.
+                val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
                     Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context))
                 }
+                if (!isActive) {
+                    room.close()
+                    return@launch
+                }
+                Netplay.room = room
                 onStart(game, set)
             } catch (e: Exception) {
-                Toast.makeText(context, "Couldn't open a room: ${e.message}", Toast.LENGTH_LONG).show()
+                if (isActive) Toast.makeText(context, "Couldn't open a room: ${e.message}", Toast.LENGTH_LONG).show()
             }
             opening = false
         }
@@ -174,6 +183,7 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
     val scope = rememberCoroutineScope()
     // Gone from this screen: a join that's let in afterwards leaves at once.
     val left = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+    val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     DisposableEffect(Unit) {
         onDispose { left.set(true) }
     }
@@ -181,10 +191,12 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
     DisposableEffect(Unit) {
         val listener = runCatching {
             BeaconListener { beacon, from ->
-                val found = FoundHost(beacon, from)
-                if (hosts.none { it.address == from && it.beacon == beacon }) {
-                    hosts.removeAll { it.address == from }
-                    hosts += found
+                // On the main thread, and in place: a room's count changing
+                // mustn't move it under a finger about to tap it.
+                main.post {
+                    val found = FoundHost(beacon, from)
+                    val i = hosts.indexOfFirst { it.address == from }
+                    if (i < 0) hosts += found else if (hosts[i] != found) hosts[i] = found
                 }
             }
         }.onFailure { status = "Can't look for games: ${it.message}" }.getOrNull()
@@ -204,20 +216,23 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
         status = "Joining ${found.beacon.name}'s room…"
         scope.launch {
             try {
-                val room = withContext(Dispatchers.IO) {
+                val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
                     Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context)).also { room ->
                         if (left.get()) room.close()
                     }
                 }
-                if (left.get()) return@launch
+                if (left.get() || !isActive) {
+                    room.close()
+                    return@launch
+                }
                 Netplay.room = room
                 onJoined(game, set)
             } catch (e: Refused) {
                 status = e.message
             } catch (e: Exception) {
-                status = "Couldn't connect: ${e.message}"
+                if (isActive) status = "Couldn't connect: ${e.message}"
             }
             busy = false
         }
