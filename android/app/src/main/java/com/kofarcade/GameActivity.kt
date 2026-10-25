@@ -523,19 +523,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun onNetFrame() {
         val room = room ?: return
         if (!netStarted || seating || localPaused || remotePaused) return
-        val emulated = LibretroDroid.getNetFrame()
-        val sample = room.sample(emulated) {
-            padFrame++
-            pad.onFrame()
-            val tap = tapKey
-            if (tap != null && tapFrames > 0) {
-                tapFrames--
-                localMask or (1 shl retroId(tap))
-            } else {
-                localMask
-            }
-        }
-        sample.masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(sample.start + i, m) }
+        val sample = room.sample(
+            emulated = { LibretroDroid.getNetFrame() },
+            input = {
+                padFrame++
+                pad.onFrame()
+                val tap = tapKey
+                if (tap != null && tapFrames > 0) {
+                    tapFrames--
+                    localMask or (1 shl retroId(tap))
+                } else {
+                    localMask
+                }
+            },
+            push = { start, masks -> masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) } },
+        )
+        val emulated = sample.emulated
         // Time sync: when this phone's game runs ahead of a partner's (see
         // Room.lead), wait a frame so it catches up. Every phone then guesses
         // as little as possible, and none stalls at the rollback limit.

@@ -371,23 +371,34 @@ class Room private constructor(
         }
     }
 
-    /** New local inputs from [sample], for game [epoch]: frames from [start]. */
-    class Sample(val epoch: Int, val start: Int, val masks: IntArray)
+    /** New local inputs from [sample], for game [epoch]: frames from [start]; [emulated]: the game's next frame. */
+    class Sample(val epoch: Int, val start: Int, val masks: IntArray, val emulated: Int = 0)
 
     /**
      * Samples our input for every frame up to [emulated] + delay and sends
      * it (watching: none). Under the seating lock: the inputs are all of one
      * game, either the one before a seating or the one after.
      */
-    fun sample(emulated: Int, input: () -> Int): Sample {
-        val (game, new) = synchronized(deliverLock) {
+    fun sample(emulated: Int, input: () -> Int): Sample = sample({ emulated }, input) { _, _ -> }
+
+    /**
+     * The game screen's [sample]: reads the emulator's next frame ([emulated])
+     * and hands it the new inputs ([push]) under the seating lock too. A
+     * seating resets the emulator to frame 0; read outside, an old game's
+     * frame (thousands) against the new game would sample thousands of
+     * inputs at once, which the emulator can't take, and it would stall.
+     */
+    fun sample(emulated: () -> Int, input: () -> Int, push: (start: Int, masks: IntArray) -> Unit): Sample {
+        val s = synchronized(deliverLock) {
             val ls = lockstep
-            val new = ls.sampleUpTo(emulated, input)
+            val frame = emulated()
+            val new = ls.sampleUpTo(frame, input)
+            if (new.second.isNotEmpty()) push(new.first, new.second)
             ls.delay = tuner.update(ls.delay, partnerAdvantage)
-            epoch to new
+            Sample(epoch, new.first, new.second, frame)
         }
-        if (new.second.isNotEmpty()) flush()
-        return Sample(game, new.first, new.second)
+        if (s.masks.isNotEmpty()) flush()
+        return s
     }
 
     // ----- Pause, restart, seats, leaving (network calls: off the main thread) -----

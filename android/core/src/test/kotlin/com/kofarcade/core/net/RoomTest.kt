@@ -188,12 +188,14 @@ class RoomTest {
         waitFor("one seated") { a.epoch == 4 && b.epoch == 4 && c.epoch == 4 }
         Thread.sleep(300)
         assertEquals(4, a.epoch)
-        assertEquals(1, g1.localPlayer)
-        assertTrue(g2.watching)
-        waitFor("told") { c.news.any { "No free seat" in it } }
+        // Whichever asked first plays; the other is told and keeps watching.
+        val (player, watcher) = if (g1.watching) c to b else b to c
+        assertEquals(1, player.room.localPlayer)
+        assertTrue(watcher.room.watching)
+        waitFor("told") { watcher.news.any { "No free seat" in it } }
         // The watcher sees both players.
-        waitFor("watcher gets both") { c.framesOf(0) >= 60 && c.framesOf(1) >= 60 }
-        assertTrue(c.matches(0, a, 60) && c.matches(1, b, 60))
+        waitFor("watcher gets both") { watcher.framesOf(0) >= 60 && watcher.framesOf(1) >= 60 }
+        assertTrue(watcher.matches(0, a, 60) && watcher.matches(1, player, 60))
         assertEquals(null, a.error ?: b.error ?: c.error)
     }
 
