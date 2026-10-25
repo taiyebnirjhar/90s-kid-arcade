@@ -89,6 +89,7 @@ fun HomeScreen(
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
+        val screenWidth = maxWidth
         // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
         val heroHeight = if (landscape) maxHeight * 0.68f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
@@ -114,7 +115,7 @@ fun HomeScreen(
                     SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                 }
                 // Portrait: two cards and a peek of the third, so the row reads as scrollable.
-                val cardWidth = if (landscape) 232.dp else ((maxWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
+                val cardWidth = if (landscape) 232.dp else ((screenWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
                 for ((series, games) in GAMES.groupBy { it.series }) {
                     Text(
                         series,
