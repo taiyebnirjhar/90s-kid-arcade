@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0B0B12">
 <meta property="og:title" content="90s Kid Arcade">
 <meta property="og:description" content="Arcade classics on Android with one-tap specials and hotspot multiplayer.">
-<meta property="og:image" content="img/home.png">
+<meta property="og:image" content="https://taiyebnirjhar.github.io/90s-kid-arcade/img/home.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B12'/%3E%3Ctext x='32' y='42' font-family='Arial Black,Arial' font-weight='900' font-style='italic' font-size='26' text-anchor='middle' fill='%23E8B21A'%3E90s%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -67,18 +67,54 @@
   .btn.gold:hover { filter: brightness(1.08); }
   .btn:not(.gold):hover { border-color: var(--muted); }
   .fine { color: var(--muted); font-size: 13px; margin-top: 12px; }
-  /* A phone showing the top of a screen (the rest fades out). */
+  /* The phone in the hero: the app's home screen, drawn here with the
+     games' real pictures (libretro's thumbnails, as the app shows them). */
   .phone {
-    justify-self: center; width: min(290px, 78vw); border-radius: 34px; padding: 10px;
-    background: #050508; border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
-    position: relative;
+    justify-self: center; width: min(300px, 82vw); aspect-ratio: 9 / 19.5;
+    border-radius: 44px; padding: 9px; background: #1c1c26; position: relative;
+    box-shadow: 0 0 0 2px #2a2a38, 0 40px 90px rgba(0, 0, 0, .65), inset 0 0 0 2px #000;
   }
-  .phone .screen { border-radius: 26px; overflow: hidden; aspect-ratio: 9 / 15; }
-  .phone .screen::after {
-    content: ""; position: absolute; left: 10px; right: 10px; bottom: 10px; height: 70px;
-    border-radius: 0 0 26px 26px; background: linear-gradient(transparent, #050508);
+  .phone::before { /* side button */
+    content: ""; position: absolute; right: -4px; top: 22%; width: 4px; height: 64px; border-radius: 0 3px 3px 0; background: #2a2a38;
   }
-  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .screen {
+    position: relative; height: 100%; border-radius: 36px; overflow: hidden; background: var(--bg);
+    font-size: 10px; line-height: 1.25; user-select: none;
+  }
+  .screen .cam { position: absolute; top: 9px; left: 50%; width: 11px; height: 11px; margin-left: -5px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #15151d; z-index: 2; }
+  .status { display: flex; justify-content: space-between; align-items: center; padding: 8px 20px 0; height: 26px; font-size: 11px; font-weight: 700; color: var(--text); }
+  .status .icons { display: flex; gap: 4px; align-items: center; }
+  .status .bar { width: 3px; background: var(--text); border-radius: 1px; display: inline-block; }
+  .app { padding: 6px 0 0; }
+  .app .brand { padding: 4px 14px 0; font-size: 21px; font-weight: 900; font-style: italic; letter-spacing: -.5px; }
+  .app .brand span { color: var(--gold); }
+  .chips { display: flex; gap: 5px; padding: 9px 14px 10px; white-space: nowrap; }
+  .chip { height: 25px; padding: 0 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 5px; font-size: 8px; font-weight: 900; letter-spacing: .6px; background: var(--panel); border: 1px solid var(--line); }
+  .chip.gold { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+  .chip i { width: 6px; height: 6px; border-radius: 50%; background: #3fbf6f; display: inline-block; }
+  .banner { position: relative; margin: 0 11px; height: 138px; border-radius: 15px; overflow: hidden; background: var(--panel); }
+  .banner .bg { position: absolute; inset: -12px; background-size: cover; background-position: center; filter: blur(9px); }
+  .banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11, 11, 18, .92), rgba(11, 11, 18, .55) 65%, rgba(11, 11, 18, .25)); }
+  .banner .info { position: absolute; inset: 0; z-index: 1; padding: 14px; display: flex; flex-direction: column; justify-content: center; }
+  .banner .k { color: var(--gold); font-size: 7.5px; font-weight: 800; letter-spacing: 1.4px; }
+  .banner .t { font-size: 23px; font-weight: 900; font-style: italic; margin-top: 3px; }
+  .banner .st { color: var(--muted); font-size: 9.5px; }
+  .play { margin-top: 10px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; background: var(--gold); color: var(--on-gold); border-radius: 99px; padding: 8px 15px; font-weight: 900; font-size: 9.5px; letter-spacing: .6px; }
+  .play::before, .go::before { content: ""; border-left: 7px solid var(--on-gold); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+  .shelf-label { padding: 13px 14px 7px; color: var(--muted); font-size: 7.5px; font-weight: 800; letter-spacing: 1.4px; }
+  .shelf { display: flex; gap: 8px; padding: 0 11px; overflow: hidden; }
+  .card { position: relative; flex: 0 0 140px; aspect-ratio: 4 / 3; border-radius: 11px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .14); background: var(--panel); }
+  .card img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: pixelated; }
+  .card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgba(0, 0, 0, .85)); }
+  .card .row { position: absolute; left: 8px; right: 8px; bottom: 7px; z-index: 1; display: flex; align-items: center; gap: 6px; }
+  .card .n { flex: 1; font-size: 10.5px; font-weight: 800; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .n small { display: block; font-style: normal; font-weight: 500; font-size: 7px; color: rgba(255, 255, 255, .7); }
+  .go { width: 22px; height: 22px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; flex: none; }
+  .go::before { margin-left: 2px; border-left-width: 6px; border-top-width: 4px; border-bottom-width: 4px; }
+  .screen::after { /* the screen goes on below */
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46px; background: linear-gradient(transparent, var(--bg)); pointer-events: none;
+  }
+  .screen .home-bar { position: absolute; bottom: 7px; left: 50%; width: 92px; margin-left: -46px; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, .55); z-index: 3; }
 
   /* Sections */
   section { padding: 56px 0; border-top: 1px solid var(--line); }
@@ -95,11 +131,6 @@
   .game { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-weight: 700; font-style: italic; }
   .game small { display: block; color: var(--muted); font-style: normal; font-weight: 500; font-size: 12px; }
 
-  .shot { border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; background: var(--panel); }
-  .wide { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-  @media (max-width: 720px) { .wide { grid-template-columns: 1fr; } }
-  .split { display: grid; grid-template-columns: 1fr 260px; gap: 32px; align-items: start; }
-  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } .split .phone { display: none; } }
 
   ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
   ol.steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 16px 60px; position: relative; }
@@ -153,7 +184,29 @@
       </div>
       <p class="fine">Free, always the latest version. Games aren't included: use your own copies.<br>Download not starting? <a href="https://github.com/taiyebnirjhar/90s-kid-arcade/releases/latest">Get it from the download page</a>.</p>
     </div>
-    <div class="phone"><div class="screen"><img src="img/home.png" width="450" height="1000" alt="The app's home screen: Continue Sengoku 3, and game cards for KOF and Metal Slug"></div></div>
+<div class="phone" role="img" aria-label="The app's home screen: KOF '97 to continue, and shelves of King of Fighters, Metal Slug and Capcom games">
+      <div class="screen">
+        <span class="cam"></span>
+        <div class="status"><span>9:41</span><span class="icons"><span class="bar" style="height:5px"></span><span class="bar" style="height:7px"></span><span class="bar" style="height:9px"></span><span class="bar" style="height:11px"></span>&nbsp;84%</span></div>
+        <div class="app">
+          <div class="brand">90s KID <span>ARCADE</span></div>
+          <div class="chips"><span class="chip gold">MULTIPLAYER</span><span class="chip">LIBRARY</span><span class="chip"><i></i>BIOS READY</span></div>
+          <div class="banner">
+            <div class="bg" style="background-image:url('https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Snaps/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png')"></div>
+            <div class="info"><span class="k">CONTINUE</span><span class="t">KOF '97</span><span class="st">The King of Fighters</span><span class="play">PLAY</span></div>
+          </div>
+          <div class="shelf-label">THE KING OF FIGHTERS</div>
+          <div class="shelf"><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="" loading="lazy"><div class="row"><div class="n">KOF '97</div><span class="go"></span></div></div><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20%28NGM-2650%20~%20NGH-2650%29.png" alt="" loading="lazy"><div class="row"><div class="n">KOF 2002</div><span class="go"></span></div></div></div>
+          <div class="shelf-label">METAL SLUG</div>
+          <div class="shelf"><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20X%20-%20Super%20Vehicle-001%20%28NGM-2500%20~%20NGH-2500%29.png" alt="" loading="lazy"><div class="row"><div class="n">Metal Slug X</div><span class="go"></span></div></div><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="" loading="lazy"><div class="row"><div class="n">Metal Slug 3</div><span class="go"></span></div></div></div>
+          <div class="shelf-label">CAPCOM</div>
+          <div class="shelf"><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="" loading="lazy"><div class="row"><div class="n">Cadillacs and Dinosaurs</div><span class="go"></span></div></div><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Marvel%20Vs.%20Capcom_%20Clash%20of%20Super%20Heroes%20%28Europe%20980123%29.png" alt="" loading="lazy"><div class="row"><div class="n">Marvel vs Capcom</div><span class="go"></span></div></div></div>
+          <div class="shelf-label">STREET FIGHTER</div>
+          <div class="shelf"><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="" loading="lazy"><div class="row"><div class="n">Street Fighter III<small>3rd Strike</small></div><span class="go"></span></div></div><div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Sengoku%203%20_%20Sengoku%20Densho%202001%20%28set%201%29.png" alt="" loading="lazy"><div class="row"><div class="n">Sengoku 3</div><span class="go"></span></div></div></div>
+        </div>
+        <span class="home-bar"></span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -169,10 +222,6 @@
       <div class="card"><span class="badge">Shooters</span><h3>Rapid fire</h3><p>Hold Shoot in Metal Slug or Fire in Nightmare in the Dark to keep firing, at the rate that fires the most.</p></div>
       <div class="card"><span class="badge">Yours</span><h3>Your layout</h3><p>Floating or fixed stick, size, opacity, left-handed, vibration. Drag any button where your thumbs want it.</p></div>
       <div class="card"><span class="badge">Easy</span><h3>Any file name</h3><p>Pick a game's zip from your phone: the app works out which game and version it is, and says exactly what's missing if anything is.</p></div>
-    </div>
-    <div class="wide">
-      <div class="shot"><img src="img/roster.png" width="1000" height="450" loading="lazy" alt="Picking a KOF team: Iori Yagami and Kyo Kusanagi in slots one and two"></div>
-      <div class="shot"><img src="img/controls.png" width="1000" height="450" loading="lazy" alt="The Controls settings: screen shape, stick style, button size and opacity"></div>
     </div>
   </div>
 </section>
@@ -198,7 +247,7 @@
 </section>
 
 <section id="multiplayer">
-  <div class="wrap split">
+  <div class="wrap">
     <div>
       <div class="kicker">Play together</div>
       <h2>One phone per player.<br>No internet needed.</h2>
@@ -211,9 +260,7 @@
       </ol>
       <p class="fine">Built like online fighting games (rollback netcode): each phone runs the game and only button presses travel, so it feels like playing on one machine. Watchers never slow the players down.</p>
     </div>
-    <div class="phone"><div class="screen"><img src="img/join.png" width="450" height="1000" loading="lazy" alt="Join a room: type the room key, or pick a room nearby"></div></div>
   </div>
-  <div class="wrap"><div class="wide"><div class="shot" style="grid-column: 1 / -1"><img src="img/pause.png" width="1000" height="450" loading="lazy" alt="The pause menu in a room: the room key with Copy key, players and watchers"></div></div></div>
 </section>
 
 <section id="install">
