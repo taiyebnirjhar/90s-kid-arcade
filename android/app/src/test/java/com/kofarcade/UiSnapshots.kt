@@ -13,7 +13,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.ScreenOrientation
@@ -112,13 +115,7 @@ class UiSnapshots {
         landscape()
         shot("room_sheet") {
             OverGame {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(760.dp)) {
-                        Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
-                            RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {})
-                        }
-                    }
-                }
+                SheetFrame(width = 880) { RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {}) }
             }
         }
     }
@@ -187,6 +184,19 @@ class UiSnapshots {
         deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080),
     )
 
+    /** A stand-in for the game's picture, undimmed. */
+    @Composable
+    private fun GameBehind(content: @Composable () -> Unit) {
+        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Palette.blue, Palette.red)))) {
+            Box(
+                Modifier.fillMaxSize().background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(0.7f to androidx.compose.ui.graphics.Color.Transparent, 0.7f to androidx.compose.ui.graphics.Color(0xFF3A2A1E)),
+                ),
+            )
+            content()
+        }
+    }
+
     /** In-game overlays sit on the game; a stand-in picture behind them. */
     @Composable
     private fun OverGame(content: @Composable () -> Unit) {
@@ -200,14 +210,14 @@ class UiSnapshots {
     @Test
     fun pause() {
         landscape()
-        shot("pause") { OverGame { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
+        shot("pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
     }
 
     @Test
     fun pauseTwoPlayers() {
         landscape()
         shot("pause_2p") {
-            OverGame {
+            GameBehind {
                 PauseContent(
                     "Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {},
                     roomInfo = "Room key K7Q-2M · 2 of 2 playing · 1 watching",
@@ -246,20 +256,144 @@ class UiSnapshots {
         }
     }
 
-    @Test
-    fun controls() {
+    private fun controlsShot(name: String, tab: SettingsTab) {
         landscape()
-        shot("controls") {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
-                Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel.copy(alpha = 0.94f), modifier = Modifier.width(420.dp).padding(16.dp)) {
-                    Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
-                        ControlsPanel(
-                            Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.8f, LabelMode.SUPERS, true, false, 2, 4),
-                            onLook = {}, canDetect = true, canRapid = true, autoDetect = true, onAutoDetect = {},
-                            detectInfo = false, onDetectInfo = {}, onCancel = {}, onSave = {},
-                        )
-                    }
+        shot(name) {
+            GameBehind {
+                ControlsPanel(
+                    Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4),
+                    onLook = {}, canDetect = true, canRapid = true, autoDetect = true, onAutoDetect = {},
+                    detectInfo = false, onDetectInfo = {}, onCancel = {}, onSave = {}, startTab = tab,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun controls() = controlsShot("controls", SettingsTab.SCREEN)
+
+    @Test
+    fun controlsButtons() = controlsShot("controls_buttons", SettingsTab.CONTROLS)
+
+    @Test
+    fun controlsMoves() = controlsShot("controls_moves", SettingsTab.MOVES)
+
+    @Test
+    fun gameError() {
+        landscape()
+        shot("game_error") {
+            OverGame {
+                SheetFrame {
+                    androidx.compose.material3.Text("This game won't start", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.Text("The emulator couldn't load the ROM.", color = Palette.muted)
+                    Box(Modifier.padding(top = 16.dp)) { GoldButton("Back to games", {}, Modifier.fillMaxWidth()) }
                 }
+            }
+        }
+    }
+
+    // ----- The on-screen controls (a real HudView) -----
+
+    private val hudListener = object : HudView.Listener {
+        override fun onDir(dir: Int) = Unit
+        override fun onKey(key: com.kofarcade.core.Key, down: Boolean) = Unit
+        override fun onPlay(cmd: String, move: com.kofarcade.core.Move?) = 30
+        override fun onMenu() = Unit
+        override fun onFlip() = Unit
+        override fun onSlot(index: Int) = Unit
+        override fun onRapid() = Unit
+        override fun onBlock(relDir: Int?) = Unit
+        override fun onRun(on: Boolean) = Unit
+    }
+
+    private fun hudState(): HudView.State {
+        val g = gameById("kof97")!!
+        val iori = com.kofarcade.core.loadRoster("kof97")!!.character("iori")!!
+        return HudView.State(
+            layout = g.layout,
+            faceButtons = g.faceButtons,
+            labels = g.labels,
+            moves = iori.moves.take(6),
+            system = buildList {
+                g.power?.let { add(HudView.SysButton(it.name, it.cmd, it.cmd, power = true)) }
+                g.system.forEach { add(HudView.SysButton(it.name, it.cmd, it.cmd)) }
+            },
+            slots = listOf(HudView.Slot("Iori Yagami", true), HudView.Slot("Kyo Kusanagi", false), HudView.Slot(null, false)),
+            block = g.block,
+        )
+    }
+
+    private fun touch(v: android.view.View, action: Int, x: Float, y: Float) {
+        val e = android.view.MotionEvent.obtain(0L, 0L, action, x, y, 0)
+        v.dispatchTouchEvent(e)
+        e.recycle()
+    }
+
+    /** The HUD over the game; [touches] runs once it's laid out, to press things. */
+    @Composable
+    private fun Hud(editing: Boolean = false, touches: (HudView, Float) -> Unit = { _, _ -> }) {
+        GameBehind {
+            androidx.compose.ui.viewinterop.AndroidView(
+                factory = { ctx ->
+                    HudView(ctx, hudListener).apply {
+                        state = hudState()
+                        alpha = 0.46f
+                        this.editing = editing
+                        var done = false
+                        addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                            if (!done && v.width > 0) {
+                                done = true
+                                touches(this, resources.displayMetrics.density)
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+
+    // Where the fighter layout puts a face button (see HudView's layout).
+    private fun facePos(v: HudView, d: Float, fx: Float, fy: Float): Pair<Float, Float> {
+        val s = 62 * d
+        val ax = v.width - 1.3f * s - 16 * d
+        val ay = v.height - s - 16 * d
+        return (ax + fx * s) to (ay + fy * s)
+    }
+
+    @Test
+    fun hud() {
+        landscape()
+        shot("hud") { Hud() }
+    }
+
+    // Thumb on the stick pushing forward, A held: both glow.
+    @Test
+    fun hudPressed() {
+        landscape()
+        shot("hud_pressed") {
+            Hud { v, d ->
+                val sx = 300 * d
+                val sy = v.height - 110 * d
+                touch(v, android.view.MotionEvent.ACTION_DOWN, sx, sy)
+                touch(v, android.view.MotionEvent.ACTION_MOVE, sx + 50 * d, sy - 4 * d)
+                val (ax, ay) = facePos(v, d, -0.44f, 0.6f)
+                touch(v, android.view.MotionEvent.ACTION_DOWN, ax, ay)
+            }
+        }
+    }
+
+    @Test
+    fun hudEdit() {
+        landscape()
+        shot("hud_edit") {
+            Box(Modifier.fillMaxSize()) {
+                Hud(editing = true) { v, d ->
+                    val (bx, by) = facePos(v, d, 0.76f, 0.6f)
+                    touch(v, android.view.MotionEvent.ACTION_DOWN, bx, by)
+                    touch(v, android.view.MotionEvent.ACTION_UP, bx, by)
+                }
+                EditBarContent("B button", 1.1f, true, {}, {}, {}, {})
             }
         }
     }

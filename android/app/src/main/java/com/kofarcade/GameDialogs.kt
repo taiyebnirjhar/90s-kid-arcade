@@ -80,9 +80,9 @@ fun GameDialogs(game: GameActivity) {
             Title(d.title)
             Text(d.message, color = Palette.muted)
             Spacer(Modifier.size(16.dp))
-            Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
+            GoldButton("Back to games", { game.finish() }, Modifier.fillMaxWidth())
         }
-        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 760 else 440) {
+        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 880 else 460) {
             val ui = game.roomUi
             if (ui != null) {
                 RoomSheetContent(
@@ -119,31 +119,24 @@ private fun RoomLayer(game: GameActivity) {
     }
 }
 
+/** A dialog over the game: a slanted black panel, like the pause menu's. */
 @Composable
 private fun Sheet(
     onDismiss: () -> Unit,
     width: Int = 360,
-    /** Docked at the right edge with the game undimmed, for settings you watch take effect. */
-    side: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        if (side) {
-            val window = (LocalView.current.parent as? DialogWindowProvider)?.window
-            SideEffect { window?.setDimAmount(0f) }
-        }
-        Box(
-            Modifier.fillMaxSize(),
-            contentAlignment = if (side) Alignment.CenterEnd else Alignment.Center,
-        ) {
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = Palette.panel.copy(alpha = if (side) 0.94f else 1f),
-                border = BorderStroke(1.dp, Palette.line),
-                modifier = Modifier.widthIn(max = width.dp).padding(16.dp),
-            ) {
-                Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) { content() }
-            }
+        SheetFrame(width, content)
+    }
+}
+
+/** The [Sheet]'s panel, centred (so it can be previewed). */
+@Composable
+fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.widthIn(max = width.dp).padding(horizontal = 16.dp, vertical = 8.dp).slantPanel(left = 22.dp, right = 22.dp, alpha = 0.96f)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 36.dp, vertical = 14.dp)) { content() }
         }
     }
 }
@@ -166,19 +159,35 @@ private fun Title(text: String, sub: String? = null) {
  * empty space around the content.
  */
 @Composable
-private fun Overlay(onDismiss: () -> Unit, dismissOnTap: Boolean = true, content: @Composable () -> Unit) {
+private fun Overlay(
+    onDismiss: () -> Unit,
+    dismissOnTap: Boolean = true,
+    /** Darken the game behind; off when [content] shades it itself. */
+    scrim: Boolean = true,
+    content: @Composable () -> Unit,
+) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
+        if (!scrim) {
+            val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+            SideEffect { window?.setDimAmount(0f) }
+        }
         Box(
             Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.horizontalGradient(
-                        0f to Color.Black.copy(alpha = 0.88f),
-                        1f to Color.Black.copy(alpha = 0.6f),
-                    ),
+                .then(
+                    if (scrim) {
+                        Modifier.background(
+                            Brush.horizontalGradient(
+                                0f to Color.Black.copy(alpha = 0.88f),
+                                1f to Color.Black.copy(alpha = 0.6f),
+                            ),
+                        )
+                    } else {
+                        Modifier
+                    },
                 )
                 .then(
                     if (dismissOnTap) {
@@ -200,7 +209,7 @@ private fun Overlay(onDismiss: () -> Unit, dismissOnTap: Boolean = true, content
 @Composable
 private fun PauseMenu(game: GameActivity) {
     val c = game.activeCharacter()
-    Overlay(onDismiss = { game.close() }) {
+    Overlay(onDismiss = { game.close() }, scrim = false) {
         PauseContent(
             title = game.gameTitle,
             fighter = c?.name,
@@ -217,123 +226,6 @@ private fun PauseMenu(game: GameActivity) {
             onLayout = { game.startEditing() },
             onControls = { game.show(GameDialog.Controls) },
             onQuit = { game.finish() },
-        )
-    }
-}
-
-/** The pause menu's contents, from plain data (so it can be previewed). */
-@Composable
-fun PauseContent(
-    title: String,
-    fighter: String?,
-    netplay: Boolean,
-    onResume: () -> Unit,
-    onRestart: () -> Unit,
-    onSave: () -> Unit,
-    onLoad: () -> Unit,
-    onEditMoves: () -> Unit,
-    onLayout: () -> Unit,
-    onControls: () -> Unit,
-    onQuit: () -> Unit,
-    /** Multiplayer: the room's key and who's in. */
-    roomInfo: String? = null,
-    /** Multiplayer: how the connection is doing (small print). */
-    roomStatus: String? = null,
-    /** Multiplayer: this phone watches (its menu stops nobody). */
-    watching: Boolean = false,
-    /** Multiplayer: the room sheet (key, seats, who watches). */
-    onRoom: () -> Unit = {},
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
-    ) {
-        Column(Modifier.weight(1f)) {
-            Kicker(if (watching) "Watching: the game goes on" else if (netplay) "Paused for everyone" else "Paused")
-            Text(title, color = Color.White, fontSize = 46.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-            if (netplay) {
-                Spacer(Modifier.size(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Tag(roomInfo ?: "Multiplayer", Palette.gold)
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onRoom) { Text("Room & players", color = Palette.gold, fontWeight = FontWeight.Bold) }
-                }
-                // The technical line, for when something's wrong.
-                if (roomStatus != null) {
-                    var details by remember { mutableStateOf(false) }
-                    Text(
-                        if (details) roomStatus else "Connection details",
-                        color = Palette.muted,
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp).clickable { details = !details },
-                    )
-                }
-            }
-            if (fighter != null) {
-                Spacer(Modifier.size(14.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Portrait(fighter, size = 38)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("FIGHTING", color = Palette.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
-                        Text(fighter, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.width(320.dp).verticalScroll(rememberScrollState()),
-        ) {
-            BigButton("Resume", primary = true, onClick = onResume)
-            // Alone: save states. (Multiplayer has none: a state can't be loaded on one phone of several.)
-            if (!netplay) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BigButton("Save state", Modifier.weight(1f), onClick = onSave)
-                    BigButton("Load state", Modifier.weight(1f), onClick = onLoad)
-                }
-            }
-            if (fighter != null) BigButton("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BigButton("Layout", Modifier.weight(1f), onClick = onLayout)
-                BigButton("Controls", Modifier.weight(1f), onClick = onControls)
-            }
-            // Rarely needed: KOF's challenger mode and continues are the rematch.
-            if (netplay && !watching) BigButton("Restart the game for everyone", onClick = onRestart)
-            BigButton(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
-        }
-    }
-}
-
-@Composable
-fun BigButton(
-    text: String,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-    primary: Boolean = false,
-    danger: Boolean = false,
-    onClick: () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .height(50.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (primary) Palette.gold else Color.White.copy(alpha = 0.07f))
-            .border(1.dp, if (primary) Palette.gold else Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-    ) {
-        Text(
-            if (primary) text.uppercase() else text,
-            color = when {
-                primary -> Color(0xFF1D1400)
-                danger -> Palette.red
-                else -> Color.White
-            },
-            fontWeight = if (primary) FontWeight.Black else FontWeight.SemiBold,
-            letterSpacing = if (primary) 1.5.sp else 0.sp,
-            fontSize = 15.sp,
-            maxLines = 1,
         )
     }
 }
@@ -630,7 +522,7 @@ private fun ControlsSettings(game: GameActivity) {
         game.close()
     }
 
-    Sheet(onDismiss = ::cancel, width = 420, side = true) {
+    Overlay(onDismiss = ::cancel, scrim = false) {
         ControlsPanel(
             look = look,
             onLook = { look = it },
@@ -661,87 +553,6 @@ private fun ControlsSettings(game: GameActivity) {
     }
 }
 
-/** The Controls panel's contents, from plain data (so it can be previewed). */
-@Composable
-fun ControlsPanel(
-    look: Look,
-    onLook: (Look) -> Unit,
-    canDetect: Boolean,
-    canRapid: Boolean = false,
-    autoDetect: Boolean,
-    onAutoDetect: (Boolean) -> Unit,
-    detectInfo: Boolean,
-    onDetectInfo: (Boolean) -> Unit,
-    onCancel: () -> Unit,
-    onSave: () -> Unit,
-) {
-    Kicker("Changes show as you make them")
-    Text("Controls", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-
-    SectionLabel("Screen")
-    ChoiceChips(ScreenMode.entries, look.screen, { it.short }) { onLook(look.copy(screen = it)) }
-    Text(look.screen.label, color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-
-    SectionLabel("Stick")
-    ChoiceChips(StickMode.entries, look.stick, { it.short }) { onLook(look.copy(stick = it)) }
-    Text(look.stick.label, color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-
-    SectionLabel("Buttons")
-    SliderRow("Size", look.size, 0.7f..1.4f, "${(look.size * 100).toInt()}%") { onLook(look.copy(size = it)) }
-    SliderRow("Opacity", look.opacity, 0.3f..1f, "${(look.opacity * 100).toInt()}%") { onLook(look.copy(opacity = it)) }
-    Text("Move names", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp, bottom = 8.dp))
-    ChoiceChips(LabelMode.entries, look.labelMode, { it.label }) { onLook(look.copy(labelMode = it)) }
-    Spacer(Modifier.size(6.dp))
-    SwitchRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
-    SwitchRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
-
-    if (canRapid) {
-        SectionLabel("Shooting")
-        SwitchRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot or Fire to keep firing")
-    }
-
-    if (canDetect) {
-        SectionLabel("Fighters")
-        SwitchRow("Detect automatically", autoDetect, onAutoDetect, sub = "Team, fighter and facing from the game")
-        SwitchRow("Show detection readout", detectInfo, onDetectInfo, sub = "For checking it works")
-    }
-
-    SectionLabel("Move timing")
-    StepperRow("Frames per direction", look.stepFrames, 1..6, { onLook(look.copy(stepFrames = it)) }, sub = "Raise if specials don't come out")
-    StepperRow("Frames button held", look.pressFrames, 1..12, { onLook(look.copy(pressFrames = it)) })
-
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-        GhostButton("Cancel", onCancel, Modifier.weight(1f))
-        GoldButton("Save", onSave, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun Labeled(label: String, content: @Composable () -> Unit) {
-    Column(Modifier.padding(top = 6.dp)) {
-        Text(label, color = Palette.text, fontSize = 14.sp)
-        content()
-    }
-}
-
-@Composable
-private fun Toggle(label: String, value: Boolean, onChange: (Boolean) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-        Text(label, color = Palette.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        Switch(checked = value, onCheckedChange = onChange)
-    }
-}
-
-@Composable
-private fun Stepper(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text(label, color = Palette.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        TextButton(onClick = { if (value > range.first) onChange(value - 1) }) { Text("−", fontSize = 18.sp) }
-        Text("$value", color = Palette.text, modifier = Modifier.width(28.dp), textAlign = TextAlign.Center)
-        TextButton(onClick = { if (value < range.last) onChange(value + 1) }) { Text("+", fontSize = 18.sp) }
-    }
-}
-
 // ----- Layout editor bar -----
 
 /** Friendly names for the editor: "face:A" -> "A button", "move:0" -> "Move 1". */
@@ -759,36 +570,14 @@ private fun controlName(id: String): String = when {
 
 @Composable
 private fun EditBar(game: GameActivity) {
-    Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Palette.panel.copy(alpha = 0.95f),
-            border = BorderStroke(1.dp, Palette.line),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            ) {
-                val id = game.editSelected
-                Text(
-                    id?.let(::controlName) ?: "Pick a control",
-                    color = if (id != null) Palette.gold else Palette.muted,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    modifier = Modifier.width(150.dp),
-                )
-                Text("Size", color = Palette.muted, fontSize = 12.sp)
-                Slider(
-                    value = game.editScale,
-                    onValueChange = { game.changeEditScale(it) },
-                    valueRange = 0.6f..1.8f,
-                    enabled = id != null && id != "top" && id != "team",
-                    modifier = Modifier.width(170.dp),
-                )
-                TextButton(onClick = { game.resetLayout() }) { Text("Reset all") }
-                TextButton(onClick = { game.finishEditing(save = false) }) { Text("Cancel") }
-                Button(onClick = { game.finishEditing(save = true) }) { Text("Save") }
-            }
-        }
-    }
+    val id = game.editSelected
+    EditBarContent(
+        picked = id?.let(::controlName),
+        scale = game.editScale,
+        canResize = id != null && id != "top" && id != "team",
+        onScale = { game.changeEditScale(it) },
+        onReset = { game.resetLayout() },
+        onCancel = { game.finishEditing(save = false) },
+        onSave = { game.finishEditing(save = true) },
+    )
 }
