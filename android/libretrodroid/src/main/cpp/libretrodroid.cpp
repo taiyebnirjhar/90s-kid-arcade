@@ -686,8 +686,10 @@ void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int m
     std::lock_guard<std::mutex> lock(netMutex);
     netplay = enabled;
     netPlayers = std::max(2, std::min(players, NET_MAX_PLAYERS));
-    netLocalPlayer = std::max(0, std::min(localPlayer, netPlayers - 1));
-    netActive = ((uint32_t) activeMask | (1u << netLocalPlayer)) & ((1u << netPlayers) - 1);
+    // -1: this phone watches; it has no input of its own.
+    netLocalPlayer = localPlayer < 0 ? -1 : std::min(localPlayer, netPlayers - 1);
+    netActive = (uint32_t) activeMask & ((1u << netPlayers) - 1);
+    if (netLocalPlayer >= 0) netActive |= 1u << netLocalPlayer;
     netMaxRollback = std::max(0, std::min(maxRollback, NET_RING - 8));
     netFrame = 0;
     for (int p = 0; p < NET_MAX_PLAYERS; p++) {
@@ -715,10 +717,11 @@ int32_t LibretroDroid::netRemoteKnown() const {
 
 bool LibretroDroid::pushLocalInput(int32_t frame, int32_t mask) {
     std::lock_guard<std::mutex> lock(netMutex);
+    if (!netplay || netLocalPlayer < 0) return false;
     // In order, and not so far ahead that the ring would wrap.
     int32_t& known = netKnown[netLocalPlayer];
-    if (!netplay || frame != known || frame >= netFrame + NET_RING / 2) return false;
-    netInput[netLocalPlayer][frame % NET_RING] = (uint16_t) mask;
+    if (frame != known || frame >= netFrame + NET_RING / 2) return false;
+    netInput[netLocalPlayer][frame % NET_INPUT_RING] = (uint16_t) mask;
     known++;
     return true;
 }
@@ -728,7 +731,9 @@ bool LibretroDroid::pushRemoteInput(int player, int32_t frame, int32_t mask) {
     if (!netplay || player < 0 || player >= netPlayers || player == netLocalPlayer) return false;
     if (!(netActive & (1u << player))) return false;
     if (frame != netKnown[player]) return false;
-    netInput[player][frame % NET_RING] = (uint16_t) mask;
+    // A watcher's game fallen a whole ring behind: it'll be put back in step.
+    if (frame >= netFrame + NET_INPUT_RING - 1) return false;
+    netInput[player][frame % NET_INPUT_RING] = (uint16_t) mask;
     // Already run with a wrong guess: replay from there on the next step.
     if (frame < netFrame && netUsed[player][frame % NET_RING] != (uint16_t) mask) {
         netFirstWrong = std::min(netFirstWrong, frame);
@@ -772,9 +777,9 @@ void LibretroDroid::netSimulate(int32_t frame, bool replay) {
         if (!(netActive & (1u << p))) {
             // An empty seat: nobody's pressing anything.
         } else if (frame < netKnown[p]) {
-            mask = netInput[p][frame % NET_RING];
+            mask = netInput[p][frame % NET_INPUT_RING];
         } else if (netKnown[p] > 0) {
-            mask = netInput[p][(netKnown[p] - 1) % NET_RING];
+            mask = netInput[p][(netKnown[p] - 1) % NET_INPUT_RING];
         }
         netUsed[p][frame % NET_RING] = mask;
         netMask[p] = mask;
@@ -839,6 +844,16 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
 
     if (netWaitFrames > 0) {
         netWaitFrames--;
+        return;
+    }
+    if (netLocalPlayer < 0) {
+        // Watching: only frames whose inputs are all in (no guessing, so
+        // nothing to replay), catching up when they've piled up.
+        if ((int64_t) remoteKnown - netFrame > 8) wanted++;
+        for (unsigned i = 0; i < wanted && (int64_t) netFrame < (int64_t) remoteKnown; i++) {
+            netSimulate(netFrame, false);
+            netFrame++;
+        }
         return;
     }
     // Catch up a frame when this phone is behind its own input.

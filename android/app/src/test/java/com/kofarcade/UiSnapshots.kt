@@ -88,7 +88,11 @@ class UiSnapshots {
     @Test
     fun joinFound() = shot("twoplayer_join") {
         JoinScreen(
-            listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q2"), HostChoice("KOF 2005", "SM-S918B", false, code = "M4TX")),
+            listOf(
+                HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M"),
+                HostChoice("KOF '97", "Galaxy A54", true, 2, 2, "M4T-XP", watchers = 1),
+                HostChoice("KOF 2005", "SM-S918B", false, key = "C9H-4R"),
+            ),
             "", {}, "You need KOF 2005 on this phone first.", true, false, {}, {}, {}, {},
         )
     }
@@ -147,7 +151,15 @@ class UiSnapshots {
     @Test
     fun pauseTwoPlayers() {
         landscape()
-        shot("pause_2p") { OverGame { PauseContent("Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {}) } }
+        shot("pause_2p") {
+            OverGame {
+                PauseContent(
+                    "Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {},
+                    roomInfo = "Room key K7Q-2M · 2 of 2 playing · 1 watching",
+                    roomStatus = "Game 3 · you: P1, frame 2214 · P2 2210 in, heard 12 ms · watcher heard 30 ms",
+                )
+            }
+        }
     }
 
     @Test

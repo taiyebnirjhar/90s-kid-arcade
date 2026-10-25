@@ -1,5 +1,6 @@
 package com.kofarcade.core.net
 
+import java.net.Inet4Address
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
@@ -9,6 +10,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RoomTest {
@@ -42,7 +44,7 @@ class RoomTest {
     }
 
     /** A phone's game as the game screen runs it, with a fake emulator. */
-    private inner class FakeGame(val room: Room, @Volatile var accept: Boolean = true) : RoomListener {
+    private inner class FakeGame(val room: Room) : RoomListener {
         private val lock = Any()
         @Volatile var epoch = -1
         val local = ArrayList<Int>()
@@ -59,7 +61,7 @@ class RoomTest {
             games += this
         }
 
-        override fun captureState(): ByteArray = byteArrayOf(7, room.localPlayer.toByte())
+        override fun captureState(): ByteArray = byteArrayOf(7, room.localId.toByte())
 
         override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?) = synchronized(lock) {
             this.epoch = epoch
@@ -89,8 +91,6 @@ class RoomTest {
             partnerPaused = paused
         }
 
-        override fun onJoinRequest(name: String, answer: (Boolean) -> Unit) = answer(accept)
-
         override fun onNews(message: String) {
             news += message
         }
@@ -100,12 +100,17 @@ class RoomTest {
             thread(isDaemon = true) {
                 while (running) {
                     val known = synchronized(lock) { remotes.values.minOfOrNull { it.size } ?: Int.MAX_VALUE }
-                    // Rollback emulator: runs up to 8 frames past the slowest partner.
+                    // Rollback emulator: a player runs up to 8 frames past the
+                    // slowest partner; a watcher only on real inputs.
+                    if (room.watching) {
+                        if (emulated < known) emulated++
+                    } else if (emulated < local.size && emulated.toLong() < known.toLong() + 8) {
+                        emulated++
+                    }
                     // (Like the game screen, the inputs count for the game
                     // [sample] says they're from: a seating may come in between.)
-                    if (emulated < local.size && emulated.toLong() < known.toLong() + 8) emulated++
                     var f = room.lockstep.nextLocal
-                    val s = room.sample(emulated) { (f++ * 13 + room.localPlayer) and 0xFFF }
+                    val s = room.sample(emulated) { (f++ * 13 + room.localId) and 0xFFF }
                     synchronized(lock) { if (s.epoch == epoch) local += s.masks.toList() }
                     room.updateAdvantage(emulated)
                     Thread.sleep(16)
@@ -116,39 +121,50 @@ class RoomTest {
         /** Frames this game has of [player]'s inputs, in the current game. */
         fun framesOf(player: Int) = synchronized(lock) { remotes[player]?.size ?: 0 }
 
-        /** [player]'s inputs as received match what that player sampled (in the same game). */
+        /** [player]'s inputs as received match what [other] sampled (in the same game). */
         fun matches(player: Int, other: FakeGame, frames: Int): Boolean = synchronized(lock) {
             val got = remotes[player]?.take(frames) ?: return false
-            got.size == frames && got.withIndex().all { (i, m) -> m == ((i * 13 + other.room.localPlayer) and 0xFFF) }
+            got.size == frames && got.withIndex().all { (i, m) -> m == ((i * 13 + other.room.localId) and 0xFFF) }
         }
     }
 
     @Test
-    fun aGuestJoinsARunningRoomAndBothPlayTheSameFrames() {
+    fun aNewcomerWatchesThenTakesTheFreeSeat() {
         val h = host()
         h.startState = byteArrayOf(1, 2, 3)
         val a = FakeGame(h).apply { play() }
         // Alone, the host's game runs on its own.
         waitFor("host seated and playing") { a.epoch == 1 && a.emulated > 10 }
-        assertEquals(1, h.seats.size)
+        assertEquals(setOf(0), h.seats.keys)
 
+        // Straight in, no one asked: watching.
         val g = join(h, "Guest")
-        assertEquals(1, g.localPlayer)
-        assertEquals(h.code, g.code)
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(g.startState))
         val b = FakeGame(g).apply { play() }
-        // Seated together from the host's game as it stood.
-        waitFor("both seated") { a.epoch == 2 && b.epoch == 2 }
+        waitFor("watching") { a.epoch == 2 && b.epoch == 2 }
+        assertTrue(g.watching)
+        assertEquals(-1, g.localPlayer)
+        assertEquals(setOf(0), h.seats.keys)
+        assertEquals(1, h.watcherCount)
+        // The watcher sees the host's game as it stood, and every input of it.
         assertTrue(byteArrayOf(7, 0).contentEquals(b.loaded))
+        waitFor("the watcher's game follows") { b.framesOf(0) >= 60 && b.emulated >= 50 }
+        assertTrue(b.matches(0, a, 60))
+        assertTrue(a.news.any { "Guest joined" in it }, a.news.toString())
+
+        // COIN on the watcher's phone: it's player 2.
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 3 && b.epoch == 3 }
+        assertEquals(1, g.localPlayer)
         assertEquals(setOf(0, 1), h.seats.keys)
-        assertEquals(setOf(0, 1), g.seats.keys)
         waitFor("120 frames each way") { a.framesOf(1) >= 120 && b.framesOf(0) >= 120 }
         assertTrue(a.matches(1, b, 120), "host got the guest's inputs")
         assertTrue(b.matches(0, a, 120), "guest got the host's inputs")
-        assertTrue(a.news.any { "Guest joined" in it }, a.news.toString())
+        assertTrue(a.news.any { "Guest is player 2" in it }, a.news.toString())
         assertEquals(null, a.error ?: b.error)
+        assertEquals(h.key, g.key)
 
-        // Pausing reaches the other phone.
+        // Pausing reaches the other player.
         g.sendPause(true)
         waitFor("pause") { a.partnerPaused == true }
         g.sendPause(false)
@@ -156,17 +172,45 @@ class RoomTest {
     }
 
     @Test
-    fun aGuestLeavingLeavesTheHostPlayingAndTheSeatFree() {
+    fun theFirstToAskGetsTheSeatAndTheOthersKeepWatching() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g1 = join(h, "One")
+        val b = FakeGame(g1).apply { play() }
+        waitFor("one watching") { b.epoch >= 2 }
+        val g2 = join(h, "Two")
+        val c = FakeGame(g2).apply { play() }
+        waitFor("both watching") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
+
+        g1.requestSeat()
+        g2.requestSeat()
+        waitFor("one seated") { a.epoch == 4 && b.epoch == 4 && c.epoch == 4 }
+        Thread.sleep(300)
+        assertEquals(4, a.epoch)
+        assertEquals(1, g1.localPlayer)
+        assertTrue(g2.watching)
+        waitFor("told") { c.news.any { "No free seat" in it } }
+        // The watcher sees both players.
+        waitFor("watcher gets both") { c.framesOf(0) >= 60 && c.framesOf(1) >= 60 }
+        assertTrue(c.matches(0, a, 60) && c.matches(1, b, 60))
+        assertEquals(null, a.error ?: b.error ?: c.error)
+    }
+
+    @Test
+    fun aPlayerLeavingFreesTheSeatAndTheGameGoesOn() {
         val h = host()
         val a = FakeGame(h).apply { play() }
         waitFor("host seated") { a.epoch == 1 }
         val g = join(h, "Guest")
         val b = FakeGame(g).apply { play() }
-        waitFor("both seated") { a.epoch == 2 && b.epoch == 2 }
+        waitFor("watching") { b.epoch == 2 }
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 3 && b.epoch == 3 && g.localPlayer == 1 }
 
         b.running = false
         g.close()
-        waitFor("host alone again") { a.epoch == 3 && h.seats.keys == setOf(0) }
+        waitFor("host alone again") { a.epoch == 4 && h.seats.keys == setOf(0) && h.members.size == 1 }
         val before = a.emulated
         waitFor("host plays on") { a.emulated > before + 20 }
         assertEquals(null, a.closedReason)
@@ -174,89 +218,92 @@ class RoomTest {
 
         // The seat is free for someone else.
         val g2 = join(h, "Second")
-        assertEquals(1, g2.localPlayer)
         val c = FakeGame(g2).apply { play() }
-        waitFor("seated with the newcomer") { a.epoch == 4 && c.epoch == 4 }
+        waitFor("watching") { c.epoch == 5 }
+        g2.requestSeat()
+        waitFor("seated with the newcomer") { a.epoch == 6 && c.epoch == 6 && g2.localPlayer == 1 }
         waitFor("frames") { a.framesOf(1) >= 60 && c.framesOf(0) >= 60 }
         assertTrue(a.matches(1, c, 60) && c.matches(0, a, 60))
     }
 
     @Test
-    fun whenTheHostLeavesTheNextPlayerTakesTheRoomOver() {
+    fun whenTheHostLeavesTheNextPhoneTakesTheRoomOver() {
         val h = host("dino", seats = 3)
         val a = FakeGame(h).apply { play() }
         waitFor("host seated") { a.epoch == 1 }
         val g1 = join(h, "Guest A", "dino")
         val b = FakeGame(g1).apply { play() }
-        waitFor("A seated") { b.epoch >= 2 }
+        waitFor("A in") { b.epoch >= 2 }
+        g1.requestSeat()
+        waitFor("A seated") { b.epoch >= 3 && g1.localPlayer == 1 }
         val g2 = join(h, "Guest B", "dino")
         val c = FakeGame(g2).apply { play() }
-        waitFor("all three seated") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
+        waitFor("B in") { a.epoch == 4 && b.epoch == 4 && c.epoch == 4 }
+        g2.requestSeat()
+        waitFor("all three seated") { a.epoch == 5 && b.epoch == 5 && c.epoch == 5 && g2.localPlayer == 2 }
         assertEquals(setOf(0, 1, 2), g2.seats.keys)
 
-        // The host leaves: Guest A (seat 1, the lowest left) takes over.
+        // The host leaves: Guest A (the lowest member id left) takes over.
         a.running = false
         h.close()
-        waitFor("A owns the room") { g1.isOwner && g2.owner == 1 }
-        waitFor("seated without the host") { b.epoch == 4 && c.epoch == 4 && g2.seats.keys == setOf(1, 2) }
+        waitFor("A owns the room") { g1.isOwner && g2.owner == g1.localId }
+        waitFor("seated without the host") { b.epoch == 6 && c.epoch == 6 && g2.seats.keys == setOf(1, 2) }
         // Everyone carries on from the new owner's game.
-        assertTrue(byteArrayOf(7, 1).contentEquals(c.loaded))
+        assertTrue(byteArrayOf(7, g1.localId.toByte()).contentEquals(c.loaded))
         waitFor("frames between the two left") { b.framesOf(2) >= 60 && c.framesOf(1) >= 60 }
         assertTrue(b.matches(2, c, 60) && c.matches(1, b, 60))
         assertTrue(b.news.any { "You're the host now" in it }, b.news.toString())
         assertEquals(null, b.closedReason ?: c.closedReason)
         assertEquals(null, b.error ?: c.error)
 
-        // And the new owner can take someone into the free seat.
+        // And the new owner takes someone in, who takes the free seat.
         val g3 = join(g1, "Guest C", "dino")
-        assertEquals(0, g3.localPlayer)
         val d = FakeGame(g3).apply { play() }
-        waitFor("seated with C") { b.epoch == 5 && c.epoch == 5 && d.epoch == 5 }
+        waitFor("C in") { b.epoch == 7 && c.epoch == 7 && d.epoch == 7 }
+        g3.requestSeat()
+        waitFor("C seated") { b.epoch == 8 && c.epoch == 8 && d.epoch == 8 }
+        assertEquals(0, g3.localPlayer)
         waitFor("C's frames") { b.framesOf(0) >= 30 && c.framesOf(0) >= 30 }
         assertTrue(c.matches(0, d, 30))
     }
 
     @Test
-    fun theHostCanSayNoAndAFullRoomTurnsPeopleAway() {
+    fun theWrongGameOrAFullRoomIsTurnedAway() {
         val h = host()
-        val a = FakeGame(h, accept = false).apply { play() }
-        waitFor("host seated") { a.epoch == 1 }
-        val no = assertFailsWith<Refused> { join(h, "Guest") }
-        assertEquals("The host said no.", no.message)
-
-        a.accept = true
-        val g = join(h, "Guest")
-        FakeGame(g).play()
-        waitFor("seated") { h.seats.size == 2 }
-        val full = assertFailsWith<Refused> { join(h, "Third") }
-        assertTrue("full" in full.message!!, full.message)
+        FakeGame(h).play()
+        waitFor("host seated") { h.epoch == 1 }
         val other = assertFailsWith<Refused> { join(h, "Other", rom = 9) }
         assertTrue("differs" in other.message!!, other.message)
+        val game = assertFailsWith<Refused> { join(h, "Other", set = "kof98") }
+        assertTrue("different game" in game.message!!, game.message)
+        repeat(MAX_MEMBERS - 1) { join(h, "Watcher $it") }
+        val full = assertFailsWith<Refused> { join(h, "One too many") }
+        assertTrue("full" in full.message!!, full.message)
     }
 
     @Test
-    fun aRematchStartsEveryoneFromTheStartState() {
+    fun aRestartStartsEveryoneFromTheStartState() {
         val h = host()
         h.startState = byteArrayOf(9, 9)
         val a = FakeGame(h).apply { play() }
         waitFor("host seated") { a.epoch == 1 }
         val g = join(h, "Guest")
         val b = FakeGame(g).apply { play() }
-        waitFor("both seated") { a.epoch == 2 && b.epoch == 2 }
+        waitFor("both in") { a.epoch == 2 && b.epoch == 2 }
         g.requestRematch()
-        waitFor("rematch") { a.epoch == 3 && b.epoch == 3 }
+        waitFor("restart") { a.epoch == 3 && b.epoch == 3 }
         assertTrue(byteArrayOf(9, 9).contentEquals(a.loaded))
         assertTrue(byteArrayOf(9, 9).contentEquals(b.loaded))
     }
 
     @Test
-    fun goingOutOfSyncPutsEveryoneBackInStepFromTheHostsGame() {
+    fun goingOutOfStepPutsEveryoneBackInStepFromTheHostsGame() {
         val h = host()
         val a = FakeGame(h).apply { play() }
         waitFor("host seated") { a.epoch == 1 }
         val g = join(h, "Guest")
         val b = FakeGame(g).apply { play() }
-        waitFor("both seated") { a.epoch == 2 && b.epoch == 2 }
+        waitFor("both in") { a.epoch == 2 && b.epoch == 2 }
         b.loaded = null
         // The two games' checksums for the same frame differ.
         h.reportSum(600, 1)
@@ -264,10 +311,21 @@ class RoomTest {
         waitFor("resynced") { a.epoch == 3 && b.epoch == 3 }
         // The guest took the host's game as it stood; nothing restarted.
         assertTrue(byteArrayOf(7, 0).contentEquals(b.loaded))
-        assertTrue(a.news.any { "Back in sync" in it }, a.news.toString())
         // One difference, one resync.
         Thread.sleep(500)
         assertEquals(3, a.epoch)
+    }
+
+    @Test
+    fun aStalledPhoneCanAskToBePutBackInStep() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Guest")
+        val b = FakeGame(g).apply { play() }
+        waitFor("both in") { a.epoch == 2 && b.epoch == 2 }
+        g.requestResync()
+        waitFor("resynced") { a.epoch == 3 && b.epoch == 3 }
     }
 
     @Test
@@ -277,14 +335,37 @@ class RoomTest {
         val b = probe(localhost, port(h))
         assertEquals("kf2k5uni", b.set)
         assertEquals("KOF 2005", b.title)
-        assertEquals(h.code, b.code)
+        assertEquals(h.key, b.key)
     }
 
     @Test
-    fun roomCodesAreFourEasyCharacters() {
-        val codes = (0 until 200).map { roomCode(it * 7919 + 13) }
-        assertTrue(codes.all { it.length == 4 && it.none { c -> c in "01OI" } })
-        assertTrue(codes.toSet().size > 190)
+    fun roomKeysHoldTheAddressAndPort() {
+        fun v4(s: String) = InetAddress.getByName(s) as Inet4Address
+        for ((ip, length) in listOf("192.168.43.1" to 6, "192.168.255.254" to 6, "172.20.10.1" to 6, "10.42.0.1" to 7, "8.8.4.4" to 10)) {
+            for (port in listOf(TCP_PORT, TCP_PORT + 7)) {
+                val key = roomKey(v4(ip), port)!!
+                assertEquals(length, key.length, key) // with its dashes
+                assertTrue(key.none { it in "01OI" }, key)
+                assertEquals(v4(ip) to port, parseRoomKey(key))
+                assertEquals(v4(ip) to port, parseRoomKey(" " + key.lowercase().replace("-", "") + " "))
+            }
+        }
+        assertNull(roomKey(v4("192.168.43.1"), 1234))
+        assertNull(parseRoomKey("hello"))
+        assertNull(parseRoomKey("K7Q"))
+        assertNull(parseRoomKey(""))
+        assertEquals(v4("192.168.43.1") to TCP_PORT, parseRoomKey("192.168.43.1"))
+        // Different hotspots, different keys.
+        assertTrue(roomKey(v4("192.168.43.1"), TCP_PORT) != roomKey(v4("192.168.44.1"), TCP_PORT))
+    }
+
+    @Test
+    fun statesPackSmallAndComeBackTheSame() {
+        val state = ByteArray(300_000).also { for (i in 0 until it.size step 97) it[i] = (i % 251).toByte() }
+        val packed = pack(state)
+        assertTrue(packed.size < state.size / 10, "${packed.size}")
+        assertTrue(state.contentEquals(unpack(packed)))
+        assertEquals(0, unpack(pack(ByteArray(0))).size)
     }
 
     @Test
@@ -294,7 +375,7 @@ class RoomTest {
         BeaconListener(port = 0) { b, _ -> got = b; heard.countDown() }.use { listener ->
             val field = BeaconListener::class.java.getDeclaredField("socket").apply { isAccessible = true }
             val port = (field.get(listener) as java.net.DatagramSocket).localPort
-            val beacon = Beacon(PROTOCOL, "Host", "kof97", "KOF '97", 1, 7845, code = "K7Q2")
+            val beacon = Beacon(PROTOCOL, "Host", "kof97", "KOF '97", 1, 7845, key = "K7Q-2M", watchers = 2)
             val bytes = encode(beacon)
             java.net.DatagramSocket().use { it.send(java.net.DatagramPacket(bytes, bytes.size, localhost, port)) }
             assertTrue(heard.await(5, TimeUnit.SECONDS))

@@ -2,6 +2,7 @@ package com.kofarcade.core.net
 
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -20,46 +21,52 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.zip.Deflater
+import java.util.zip.Inflater
 import kotlin.random.Random
 
-// Rooms: one phone per player, on the same Wi-Fi or hotspot. A room has a
-// seat per player the game takes (Cadillacs and Dinosaurs: three). Anyone
-// may join a running room while a seat is free (the owner says yes), and
-// anyone may leave: their seat empties and the game goes on for the others.
-// If the owner leaves, the next player takes the room over.
+// Rooms: phones on the same Wi-Fi or hotspot playing one game. The room has
+// a seat per player the game takes (Cadillacs and Dinosaurs: three), and up
+// to MAX_MEMBERS phones in all: the rest watch. Anyone with the room's key
+// comes in and watches; a watcher takes a free seat with COIN or START (the
+// first to ask gets it). Anyone may leave: their seat empties and the game
+// goes on. If the owner (the phone that runs the room) leaves, the next one
+// takes the room over.
 //
-// Whoever sits where changes only at a "seating": the owner stops the game,
-// sends everyone its state and the new seats, and all carry on from that
-// state as the next game (epoch). Between seatings the seats are fixed, so
-// the rollback netcode stays as simple as for a fixed match.
+// Who is in and who sits where changes only at a "seating": the owner stops
+// the game, sends everyone its state and the new seats, and all carry on
+// from that state as the next game (epoch). Between seatings nothing changes,
+// so the rollback netcode stays as simple as for a fixed match. A seating
+// also puts phones whose games went out of step back in step.
 
 class Refused(reason: String) : IOException(reason)
 
+/** Phones in a room at most: players and watchers. */
+const val MAX_MEMBERS = 8
+
 /** What the game screen hears from its room. Called on network threads. */
 interface RoomListener {
-    /** [player]'s inputs for frames [start] onwards, in order and without gaps: feed them to the emulator. */
+    /** [player]'s inputs (a seat) for frames [start] onwards, in order and without gaps: feed them to the emulator. */
     fun onRemote(player: Int, start: Int, masks: IntArray)
 
-    /** The games differed at [frame]: the room puts everyone back in sync from the owner's game (a seating). */
+    /** The games differed at [frame]: the room puts everyone back in step from the owner's game (a seating). */
     fun onDesync(frame: Int)
 
     /** This phone is out of the room (it lost everyone): the game can't go on together. */
     fun onClosed(reason: String)
 
-    /** [player] opened (true) or closed (false) their menu: the game waits for everyone. */
+    /** A player opened (true) or closed (false) their menu: the game waits for them. */
     fun onPartnerPaused(player: Int, paused: Boolean) {}
-
-    /** Owner: [name] asks to join. Call [answer] (any thread) with true to let them in. */
-    fun onJoinRequest(name: String, answer: (Boolean) -> Unit) = answer(false)
 
     /** Owner: stop the game and return its state, to seat everyone from. [onSeating] follows. */
     fun captureState(): ByteArray
 
     /**
      * Game [epoch] starts: the game restarts its rollback from frame 0 with
-     * these seats ([activeMask]: bit p = seat p taken), from [state] (null:
-     * the game as it stands, on the owner). Runs before any of the new game's
-     * inputs are handed out; return once loaded.
+     * these seats ([activeMask]: bit p = seat p taken; [Room.localPlayer]:
+     * this phone's, -1 if it watches), from [state] (null: the game as it
+     * stands, on the owner). Runs before any of the new game's inputs are
+     * handed out; return once loaded.
      */
     fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?)
 
@@ -67,23 +74,12 @@ interface RoomListener {
     fun onNews(message: String) {}
 }
 
-/** Another phone in the game: its seat, name, and where its inputs come from. */
-class Peer(val player: Int, val name: String, val address: InetSocketAddress)
-
-/** A TCP connection to another phone of the room ([player]: its seat, -1 before it has one). */
-internal class Line(val socket: Socket, @Volatile var player: Int, @Volatile var name: String) {
+/** A TCP connection to another phone of the room ([id]: its member id, -1 before it has one). */
+internal class Line(val socket: Socket, @Volatile var id: Int, @Volatile var name: String) {
     val input = DataInputStream(BufferedInputStream(socket.getInputStream()))
     val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
 
     fun close() = runCatching { socket.close() }
-}
-
-/** A room's code from its session number: four letters and digits that can't be misread. */
-fun roomCode(session: Int): String {
-    val alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-    var n = session.toLong() and 0xFFFFFFFFL
-    val size = alphabet.length.toLong()
-    return buildString { repeat(4) { append(alphabet[(n % size).toInt()]); n /= size } }
 }
 
 /**
@@ -98,8 +94,8 @@ class Room private constructor(
     private val bios: Long,
     /** Seats: how many play this game. */
     val maxPlayers: Int,
-    /** This phone's seat (0 = player 1). It keeps it for as long as it's in the room. */
-    val localPlayer: Int,
+    /** This phone's member id: it keeps it for as long as it's in the room. */
+    val localId: Int,
     private val session: Int,
     private val server: ServerSocket,
     private val udp: DatagramSocket,
@@ -107,24 +103,40 @@ class Room private constructor(
     private val startDelay: Int,
     private val beaconPort: Int,
 ) : Closeable {
-    /** The room's code, shown to tell rooms apart. */
-    val code: String = roomCode(session)
-
-    /** The seat of the phone that owns the room: it seats newcomers and runs every change. */
+    /** The member id of the phone that runs the room: it seats everyone and runs every change. */
     @Volatile var owner: Int = owner
         private set
 
-    val isOwner: Boolean get() = owner == localPlayer
+    val isOwner: Boolean get() = owner == localId
 
-    /** Who sits where now, this phone included. */
-    @Volatile var seats: Map<Int, Seat> = emptyMap()
+    /** Everyone in the room, this phone included, by member id. */
+    @Volatile var members: Map<Int, Member> = emptyMap()
         private set
 
-    /** The state the session started from, for a rematch (the owner sends it to newcomers). */
+    /** The players, by seat (0 = player 1). */
+    val seats: Map<Int, Member> get() = members.values.filter { it.seat >= 0 }.associateBy { it.seat }
+
+    /** This phone's seat (0 = player 1); -1 while it watches. */
+    val localPlayer: Int get() = members[localId]?.seat ?: -1
+
+    /** This phone watches rather than plays. */
+    val watching: Boolean get() = localPlayer < 0
+
+    /** Phones watching. */
+    val watcherCount: Int get() = members.values.count { it.seat < 0 }
+
+    /** A seat nobody's in. */
+    val hasFreeSeat: Boolean get() = seats.size < maxPlayers
+
+    /** What friends type to join ("K7Q-2M"); empty if the owner's address can't make one. */
+    @Volatile var key: String = ""
+        private set
+
+    /** The state the room started from, for a restart (the owner sends it to newcomers). */
     @Volatile var startState: ByteArray? = null
 
     /** This game's inputs; replaced at each seating. */
-    @Volatile var lockstep = Lockstep(startDelay, localPlayer, maxOf(2, maxPlayers), emptyList())
+    @Volatile var lockstep = Lockstep(startDelay, -1, players(), emptyList())
         private set
 
     /** Which game of the room this is: +1 at each seating. */
@@ -135,34 +147,28 @@ class Room private constructor(
     val delay: Int get() = lockstep.delay
     private val tuner = DelayTuner()
 
-    /** Everyone else, as of the last seating. */
-    val peers: List<Peer>
-        get() = seats.values.filter { it.player != localPlayer }
-            .map { Peer(it.player, it.name, InetSocketAddress(it.host, it.udpPort)) }
-
     /** Seats taken, as a bit mask (bit p = seat p). */
     val activeMask: Int get() = seats.keys.fold(0) { m, p -> m or (1 shl p) }
 
     @Volatile private var closed = false
-    @Volatile private var started = false
     @Volatile private var listener: RoomListener? = null
-    private val lastHeard = LongArray(4)
+    private val lastHeard = LongArray(MAX_IDS)
     @Volatile private var lastSent = 0L
     private val mySums = HashMap<Int, Long>()
     private val theirSums = HashMap<Int, MutableList<Long>>()
     @Volatile private var latestSum: Pair<Int, Long>? = null
-    private val advantage = IntArray(4)
-    private val theirAdvantage = IntArray(4)
-    private val theirDelay = IntArray(4) { startDelay }
-    private val paused = BooleanArray(4)
+    private val advantage = IntArray(MAX_IDS)
+    private val theirAdvantage = IntArray(MAX_IDS)
+    private val theirDelay = IntArray(MAX_IDS) { startDelay }
+    private val paused = BooleanArray(MAX_IDS)
     private val threads = ArrayList<Thread>()
 
-    // The owner's connections, one per other player (and newcomers before they're seated).
+    // The owner's connections, one per other phone (newcomers too, before they're seated).
     private val lines = HashMap<Int, Line>()
-    // Accepted newcomers waiting to be seated (once their game is ready to load the state).
+    // Newcomers waiting to be seated (once their game is ready to load the state).
     private class Arriving(val line: Line, val hello: Hello, @Volatile var ready: Boolean = false)
     private val arriving = HashMap<Int, Arriving>()
-    // A player's connection to the owner.
+    // A member's connection to the owner.
     @Volatile private var ownerLine: Line? = null
     // Seatings, joins and takeovers happen one at a time, here.
     private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "net-room").apply { isDaemon = true } }
@@ -173,21 +179,24 @@ class Room private constructor(
     private val ownerLock = Any()
     @Volatile private var takenOver = CountDownLatch(1)
 
-    val isHost: Boolean get() = isOwner
+    private fun players() = maxPlayers.coerceIn(2, 4)
 
-    fun nameOf(player: Int): String = seats[player]?.name ?: "Player ${player + 1}"
+    fun nameOf(id: Int): String = members[id]?.name ?: "Player"
 
-    /** Everyone else's names, for messages: "Pixel 7" or "Pixel 7 & Galaxy S21". */
-    val peerName: String get() = peers.joinToString(" & ") { it.name }
+    // The other players.
+    private val partners: List<Member> get() = members.values.filter { it.seat >= 0 && it.id != localId }
+
+    /** The other players' names, for messages: "Pixel 7" or "Pixel 7 & Galaxy S21". */
+    val peerName: String get() = partners.joinToString(" & ") { it.name }.ifEmpty { "the others" }
 
     /** The partner furthest ahead of our inputs (they guess the most): what the delay tuner watches. */
-    val partnerAdvantage: Int get() = peers.maxOfOrNull { theirAdvantage[it.player] } ?: 0
+    private val partnerAdvantage: Int get() = lockstep.partners.maxOfOrNull { theirAdvantage[it] } ?: 0
 
-    /** Someone else has their menu open. */
-    val partnerPaused: Boolean get() = peers.any { paused[it.player] }
+    /** Another player has their menu open. */
+    val partnerPaused: Boolean get() = partners.any { paused[it.id] }
 
     /** Who has their menu open, for "X paused the game". */
-    val pausedName: String? get() = peers.firstOrNull { paused[it.player] }?.name
+    val pausedName: String? get() = partners.firstOrNull { paused[it.id] }?.name
 
     /** Notes how far this phone ([emulated]: its next frame) runs ahead of each partner's inputs. */
     fun updateAdvantage(emulated: Int) {
@@ -202,9 +211,23 @@ class Room private constructor(
      * adding it back compares the games themselves, whatever the delays.
      */
     val lead: Int
-        get() = lockstep.partners.maxOfOrNull { p ->
+        get() = if (!lockstep.playing) 0 else lockstep.partners.maxOfOrNull { p ->
             (advantage[p] + theirDelay[p]) - (theirAdvantage[p] + delay)
         } ?: 0
+
+    /** How the connection is doing, for the pause menu: this game, and each other phone's inputs. */
+    fun status(): String {
+        val ls = lockstep
+        val now = System.nanoTime()
+        val me = if (watching) "watching" else "P${localPlayer + 1}"
+        val others = members.values.filter { it.id != localId }.sortedBy { it.id }.joinToString(" · ") { m ->
+            val who = if (m.seat >= 0) "P${m.seat + 1}" else "watcher"
+            val heard = lastHeard[m.id].takeIf { it != 0L }?.let { "${(now - it) / 1_000_000} ms" } ?: "never"
+            val inputs = if (m.id in ls.partners) " ${ls.known(m.id)} in," else ""
+            "$who$inputs heard $heard"
+        }
+        return "Game ${epoch} · you: $me, frame ${ls.nextLocal}" + if (others.isNotEmpty()) " · $others" else ""
+    }
 
     /**
      * Starts playing: the owner seats itself (and opens the room to others);
@@ -212,7 +235,6 @@ class Room private constructor(
      */
     fun start(listener: RoomListener) {
         this.listener = listener
-        started = true
         thread("net-udp") { receiveLoop() }
         thread("net-send") { sendLoop() }
         thread("net-accept") { acceptLoop() }
@@ -222,7 +244,13 @@ class Room private constructor(
         } else {
             val line = ownerLine ?: return
             thread("net-tcp-owner") { memberLoop(line) }
-            runCatching { line.output.message(Msg.READY, byteArrayOf(localPlayer.toByte())) }
+            // Until it's seated, now and then: the owner may have missed it.
+            thread("net-ready") {
+                while (!closed && epoch == 0) {
+                    runCatching { ownerLine?.output?.message(Msg.READY, byteArrayOf(localId.toByte())) }
+                    Thread.sleep(READY_MS)
+                }
+            }
         }
     }
 
@@ -239,24 +267,26 @@ class Room private constructor(
     private val sendSignal = Object()
     private var sendNow = false
 
-    // Only ever on the send thread: each partner gets what it's missing.
+    // Only ever on the send thread: every other phone of the game gets what
+    // it's missing of our inputs (a watcher has none to send: it acknowledges,
+    // and keeps the line alive).
     private fun send() {
         // The game and its number together: a seating between reading one and
         // the other would label the old game's inputs as the new one's.
         val (ls, game, sum) = synchronized(deliverLock) { Triple(lockstep, epoch, latestSum) }
-        val now = seats
-        for (p in ls.partners) {
-            val seat = now[p] ?: continue
-            val (start, masks) = ls.outgoing(p, InputPacket.MAX_MASKS)
+        val now = members
+        for (id in ls.partners + ls.watchers) {
+            val m = now[id] ?: continue
+            val (start, masks) = ls.outgoing(id, InputPacket.MAX_MASKS)
             val packet = InputPacket(
-                session, ls.known(p), start, masks, sum?.first ?: -1, sum?.second ?: 0,
-                advantage[p], game and 0xFF, ls.delay, localPlayer,
+                session, ls.known(id), start, masks, sum?.first ?: -1, sum?.second ?: 0,
+                advantage[id], game and 0xFF, ls.delay, localId,
             )
             val bytes = packet.encode()
             // A Wi-Fi hiccup can fail one send: the inputs go again with the
-            // next packet, and a partner gone for good shows as silence.
+            // next packet, and a phone gone for good shows as silence.
             try {
-                udp.send(DatagramPacket(bytes, bytes.size, InetSocketAddress(seat.host, seat.udpPort)))
+                udp.send(DatagramPacket(bytes, bytes.size, InetSocketAddress(m.host, m.udpPort)))
             } catch (e: Exception) {
                 if (closed) return
             }
@@ -264,7 +294,7 @@ class Room private constructor(
         lastSent = System.nanoTime()
     }
 
-    /** Our game's state checksum after [frame], compared with the partners'. */
+    /** Our game's state checksum after [frame], compared with the others'. */
     fun reportSum(frame: Int, sum: Long) = synchronized(deliverLock) {
         latestSum = frame to sum
         check(frame, sum, from = null)
@@ -282,7 +312,7 @@ class Room private constructor(
             listener?.onDesync(frame)
             // Everyone takes the owner's game as it stands: back in step
             // without restarting anything. (On a thread: this can be the game's.)
-            runCatching { worker.execute { if (isOwner) resync() else control(Msg.RESYNC) } }
+            runCatching { worker.execute { requestResync() } }
         }
     }
 
@@ -304,34 +334,36 @@ class Room private constructor(
                 continue
             }
             val p = InputPacket.decode(buf, packet.length) ?: continue
-            if (p.session != session || p.from !in seats || p.from == localPlayer) continue
+            if (p.session != session || p.from !in members || p.from == localId || p.from >= MAX_IDS) continue
             lastHeard[p.from] = System.nanoTime()
-            val current = synchronized(deliverLock) {
+            val player = synchronized(deliverLock) {
                 // From the previous game (still in flight) or the next one
                 // (that phone was seated first): not this game's inputs.
-                if (p.epoch != (epoch and 0xFF) || p.from !in lockstep.partners) return@synchronized false
+                val ls = lockstep
+                val inGame = p.from in ls.partners || p.from in ls.watchers
+                if (p.epoch != (epoch and 0xFF) || !inGame) return@synchronized false
                 theirAdvantage[p.from] = p.advantage
                 theirDelay[p.from] = p.delay
-                lockstep.receive(p.from, p.start, p.masks, p.ack)
+                ls.receive(p.from, p.start, p.masks, p.ack)
                 if (p.sumFrame >= 0) check(p.sumFrame, p.sum, from = p.from)
-                true
+                p.from in ls.partners
             }
-            if (!current) continue
-            deliver(p.from)
+            if (player) deliver(p.from)
             checkQuiet()
         }
     }
 
-    // A partner silent for long is gone: the owner unseats them; a player
-    // whose owner went quiet looks for the next one.
+    // A phone silent for long is gone: the owner lets it go; a member whose
+    // owner went quiet looks for the next one.
     private fun checkQuiet() {
         val now = System.nanoTime()
-        val gone = lockstep.partners.filter { now - lastHeard[it] > QUIET_NS }
+        val ls = lockstep
+        val gone = (ls.partners + ls.watchers).filter { now - lastHeard[it] > QUIET_NS }
         if (gone.isEmpty()) return
         if (isOwner) {
-            for (p in gone) {
-                lastHeard[p] = now
-                worker.execute { unseat(p, "${nameOf(p)} lost the connection") }
+            for (id in gone) {
+                lastHeard[id] = now
+                worker.execute { unseat(id, "${nameOf(id)} lost the connection") }
             }
         } else if (owner in gone) {
             lastHeard[owner] = now
@@ -344,8 +376,8 @@ class Room private constructor(
 
     /**
      * Samples our input for every frame up to [emulated] + delay and sends
-     * it. Under the seating lock: the inputs are all of one game, either the
-     * one before a seating or the one after.
+     * it (watching: none). Under the seating lock: the inputs are all of one
+     * game, either the one before a seating or the one after.
      */
     fun sample(emulated: Int, input: () -> Int): Sample {
         val (game, new) = synchronized(deliverLock) {
@@ -358,18 +390,31 @@ class Room private constructor(
         return Sample(game, new.first, new.second)
     }
 
-    // ----- Pause, rematch, leaving -----
+    // ----- Pause, restart, seats, leaving (network calls: off the main thread) -----
 
-    /** Tells everyone our menu opened or closed. */
-    fun sendPause(paused: Boolean) = control(if (paused) Msg.PAUSE else Msg.RESUME)
+    /** Tells everyone our menu opened or closed (players only: a watcher's menu stops nobody). */
+    fun sendPause(paused: Boolean) {
+        if (!watching) control(if (paused) Msg.PAUSE else Msg.RESUME)
+    }
 
-    /** Restarts the game for everyone from the state the room started from (a network call: off the main thread). */
+    /** Restarts the game for everyone from the state the room started from. */
     fun requestRematch() {
         if (isOwner) worker.execute { rematch() } else control(Msg.REMATCH)
     }
 
+    /** Watching: asks for a free seat (the first to ask gets it). */
+    fun requestSeat() {
+        if (!watching) return
+        if (isOwner) worker.execute { sit(localId) } else control(Msg.SIT)
+    }
+
+    /** Puts everyone back in step from the owner's game: for a game that stopped. */
+    fun requestResync() {
+        if (isOwner) worker.execute { resync() } else control(Msg.RESYNC)
+    }
+
     private fun control(type: Byte) {
-        val payload = byteArrayOf(localPlayer.toByte())
+        val payload = byteArrayOf(localId.toByte())
         if (isOwner) {
             synchronized(lines) { lines.values.toList() }.forEach { runCatching { it.output.message(type, payload) } }
         } else {
@@ -377,14 +422,13 @@ class Room private constructor(
         }
     }
 
-    /** Leaves the room: the others carry on. Safe on the main thread (the goodbyes go on a thread of their own). */
     override fun close() {
         if (closed) return
         closed = true
         beacon?.close()
         worker.shutdownNow()
         synchronized(threads) { threads.toList() }.forEach { it.interrupt() }
-        val bye = byteArrayOf(localPlayer.toByte())
+        val bye = byteArrayOf(localId.toByte())
         val all = synchronized(lines) { lines.values.toList() } + listOfNotNull(ownerLine)
         Thread({
             for (line in all) {
@@ -405,24 +449,28 @@ class Room private constructor(
         if (beaconPort < 0 || beacon != null) return
         beacon = runCatching {
             BeaconSender(beaconPort) {
-                Beacon(PROTOCOL, name, set, title, rom, server.localPort, players = seats.size.coerceAtLeast(1), maxPlayers = maxPlayers, code = code)
+                Beacon(
+                    PROTOCOL, name, set, title, rom, server.localPort,
+                    players = seats.size.coerceAtLeast(1), maxPlayers = maxPlayers, key = key, watchers = watcherCount,
+                )
             }
         }.getOrNull()
     }
 
-    // Everyone the owner talks to: seated players and newcomers.
+    // Everyone the owner talks to: members and newcomers.
     private fun ownerLines(): List<Line> = synchronized(lines) { lines.values.toList() }
 
-    /** Messages from one player to the owner (on the owner). */
+    /** Messages from one member to the owner (on the owner). */
     private fun ownerLoop(line: Line) {
         try {
             while (!closed) {
                 val (t, payload) = line.input.message()
-                val from = line.player
+                val from = line.id
                 when (t) {
                     Msg.READY -> {
-                        synchronized(lines) { arriving[from]?.ready = true }
-                        worker.execute { seat(news = "${line.name} joined as player ${from + 1}") }
+                        val waiting = synchronized(lines) { arriving[from]?.also { it.ready = true } != null }
+                        // Seated already but it didn't hear: once more, for everyone.
+                        worker.execute { if (waiting) seat(news = "${line.name} joined") else if (from in members) resync() }
                     }
                     Msg.BYE -> {
                         worker.execute { unseat(from, "${line.name} left") }
@@ -431,78 +479,111 @@ class Room private constructor(
                     Msg.PAUSE, Msg.RESUME -> {
                         paused[from] = t == Msg.PAUSE
                         for (other in ownerLines()) if (other !== line) runCatching { other.output.message(t, payload) }
-                        listener?.onPartnerPaused(from, t == Msg.PAUSE)
+                        members[from]?.let { listener?.onPartnerPaused(it.seat, t == Msg.PAUSE) }
                     }
                     Msg.REMATCH -> worker.execute { rematch() }
                     Msg.RESYNC -> worker.execute { resync() }
+                    Msg.SIT -> worker.execute { sit(from) }
                 }
             }
         } catch (e: IOException) {
-            if (!closed) worker.execute { unseat(line.player, "${line.name} left") }
+            if (!closed) worker.execute { unseat(line.id, "${line.name} left") }
         }
     }
 
-    /** Seats everyone: newcomers in, [gone] out; everyone carries on from the owner's game (on the worker). */
-    private fun seat(news: String?, gone: Int? = null, fromStart: Boolean = false) {
+    /**
+     * Seats everyone (on the worker): newcomers in (watching), [gone] out,
+     * [sit] (member id to seat) into a seat; everyone carries on from the
+     * owner's game, or from the start for a restart.
+     */
+    private fun seat(news: String?, gone: Int? = null, sit: Pair<Int, Int>? = null, fromStart: Boolean = false) {
         if (closed || !isOwner) return
         val ln = listener ?: return
         val newcomers = synchronized(lines) {
             arriving.filterValues { it.ready }.also { ready -> ready.keys.forEach(arriving::remove) }
         }
-        val next = seats.toMutableMap()
+        val next = members.toMutableMap()
         if (gone != null) next.remove(gone)
-        next[localPlayer] = Seat(localPlayer, name, "", udp.localPort, server.localPort)
-        for ((p, a) in newcomers) {
-            next[p] = Seat(p, a.line.name, a.line.socket.inetAddress.hostAddress, a.hello.udpPort, a.hello.tcpPort)
+        // The room's first seating: its owner is player 1.
+        next[localId] = (members[localId] ?: Member(localId, name, "", 0, 0, seat = 0))
+            .copy(name = name, host = "", udpPort = udp.localPort, tcpPort = server.localPort)
+        for ((id, a) in newcomers) {
+            next[id] = Member(id, a.line.name, a.line.socket.inetAddress.hostAddress, a.hello.udpPort, a.hello.tcpPort)
         }
-        // Players whose connection is gone aren't seated.
-        val live = ownerLines().associateBy { it.player }
-        next.keys.retainAll { it == localPlayer || it in live }
+        if (sit != null) next[sit.first]?.let { next[sit.first] = it.copy(seat = sit.second) }
+        // Phones whose connection is gone aren't in.
+        val live = ownerLines().associateBy { it.id }
+        next.keys.retainAll { it == localId || it in live }
         val state = if (fromStart) startState else null
         val sent = state ?: runCatching { ln.captureState() }.getOrElse { return }
+        val packed = pack(sent)
         val nextEpoch = epoch + 1
-        for (p in next.keys) {
-            if (p == localPlayer) continue
-            val line = live[p] ?: continue
-            // Each player sees the owner at the address it reaches it on.
-            val seatsFor = next.values.map {
-                if (it.player == localPlayer) it.copy(host = line.socket.localAddress.hostAddress) else it
+        for (id in next.keys) {
+            if (id == localId) continue
+            val line = live[id] ?: continue
+            // Each phone sees the owner at the address it reaches it on.
+            val membersFor = next.values.map {
+                if (it.id == localId) it.copy(host = line.socket.localAddress.hostAddress) else it
             }
             try {
-                line.output.message(Msg.SEATING, encode(Seating(nextEpoch, localPlayer, seatsFor)))
-                line.output.message(Msg.STATE, sent)
+                line.output.message(Msg.SEATING, encode(Seating(nextEpoch, localId, membersFor)))
+                line.output.message(Msg.STATE, packed)
             } catch (e: IOException) {
                 line.close()
             }
         }
-        apply(Seating(nextEpoch, localPlayer, next.values.toList()), if (fromStart) state else null)
+        apply(Seating(nextEpoch, localId, next.values.toList()), if (fromStart) state else null)
         if (news != null) ln.onNews(news)
     }
 
-    private fun unseat(player: Int, news: String) {
-        if (player == localPlayer || closed) return
+    /** A watcher asks for a seat: the lowest free one, if any (on the worker, so the first to ask gets it). */
+    private fun sit(id: Int) {
+        if (closed || !isOwner) return
+        val m = members[id] ?: return
+        if (m.seat >= 0) return
+        val taken = members.values.map { it.seat }.toSet()
+        val free = (0 until maxPlayers).firstOrNull { it !in taken }
+        if (free == null) {
+            tell(id, "No free seat: someone took it first")
+            return
+        }
+        seat("${m.name} is player ${free + 1}", sit = id to free)
+    }
+
+    // Tells one member something.
+    private fun tell(id: Int, message: String) {
+        if (id == localId) {
+            listener?.onNews(message)
+            return
+        }
+        val line = synchronized(lines) { lines[id] } ?: return
+        runCatching { line.output.message(Msg.NEWS, message.toByteArray()) }
+    }
+
+    private fun unseat(id: Int, news: String) {
+        if (id == localId || closed) return
         val line = synchronized(lines) {
-            arriving.remove(player)
-            lines.remove(player)
+            arriving.remove(id)
+            lines.remove(id)
         }
         line?.close()
-        if (player in seats) seat(news, gone = player) else if (line != null) listener?.onNews(news)
+        if (id in members) seat(news, gone = id)
     }
 
     private fun resync() {
-        // Both sides notice the same difference: one seating fixes it.
+        // Every phone notices the same difference: one seating fixes it.
         val now = System.nanoTime()
         if (now - lastResync < 3_000_000_000L) return
         lastResync = now
-        seat("Back in sync")
+        seat(null)
     }
 
     private fun rematch() {
-        // Two players tapping Rematch at once mean one rematch.
+        // Two players tapping Restart at once mean one restart.
         val now = System.nanoTime()
         if (now - lastRematch < 2_000_000_000L || startState == null) return
         lastRematch = now
-        seat("Rematch", fromStart = true)
+        seat("Restarted", fromStart = true)
     }
 
     private fun acceptLoop() {
@@ -520,7 +601,7 @@ class Room private constructor(
     private fun greet(socket: Socket) {
         try {
             socket.tcpNoDelay = true
-            socket.soTimeout = 120_000
+            socket.soTimeout = 30_000
             val line = Line(socket, -1, "")
             val (t, payload) = line.input.message()
             when (t) {
@@ -533,6 +614,7 @@ class Room private constructor(
         }
     }
 
+    // Anyone with the room's game comes in, to watch until they take a seat.
     private fun welcome(line: Line, hello: Hello) {
         val out = line.output
         fun refuse(reason: String) {
@@ -540,7 +622,15 @@ class Room private constructor(
             line.close()
         }
         if (hello.set == PROBE) {
-            out.message(Msg.WELCOME, encode(Welcome(false, PROBE, name = name, set = set, title = title, rom = rom, maxPlayers = maxPlayers, code = code)))
+            out.message(
+                Msg.WELCOME,
+                encode(
+                    Welcome(
+                        false, PROBE, name = name, set = set, title = title, rom = rom, maxPlayers = maxPlayers, key = key,
+                        players = seats.size, watchers = watcherCount,
+                    ),
+                ),
+            )
             line.close()
             return
         }
@@ -550,50 +640,47 @@ class Room private constructor(
             hello.set != set -> return refuse("The room is playing a different game.")
             hello.rom != rom -> return refuse("Your copy of the game differs from the host's. Download it from the library on every phone.")
             hello.bios != bios -> return refuse("Your Neo Geo BIOS differs from the host's. Download it from the library on every phone.")
-            freeSeat() == null -> return refuse("The room is full.")
         }
-        // Ask on the owner's screen; the newcomer waits.
-        val answer = CountDownLatch(1)
-        var yes = false
-        listener?.onJoinRequest(hello.name) { yes = it; answer.countDown() } ?: return refuse("The room isn't ready yet.")
-        if (!answer.await(120, TimeUnit.SECONDS) || !yes) return refuse("The host said no.")
-        val seat = synchronized(lines) {
-            freeSeat()?.also { p ->
-                line.player = p
+        val id = synchronized(lines) {
+            freeId()?.also { id ->
+                line.id = id
                 line.name = hello.name
-                lines[p] = line
-                arriving[p] = Arriving(line, hello)
+                lines[id] = line
+                arriving[id] = Arriving(line, hello)
             }
-        } ?: return refuse("The room is full.")
+        } ?: return refuse("The room is full: $MAX_MEMBERS phones at most.")
         line.socket.soTimeout = 0
-        out.message(Msg.WELCOME, encode(Welcome(true, name = name, delay = startDelay, session = session, player = seat, maxPlayers = maxPlayers, owner = localPlayer, code = code)))
-        out.message(Msg.START_STATE, startState ?: ByteArray(0))
-        thread("net-tcp-${seat}") { ownerLoop(line) }
+        out.message(Msg.WELCOME, encode(Welcome(true, name = name, delay = startDelay, session = session, id = id, maxPlayers = maxPlayers, owner = localId, key = key)))
+        out.message(Msg.START_STATE, pack(startState ?: ByteArray(0)))
+        thread("net-tcp-$id") { ownerLoop(line) }
     }
 
-    private fun freeSeat(): Int? = synchronized(lines) {
-        (0 until maxPlayers).firstOrNull { it != localPlayer && it !in seats && it !in lines }
+    // A member id for a newcomer, if the room has space.
+    private fun freeId(): Int? = synchronized(lines) {
+        val used = members.keys + lines.keys + localId
+        if (used.size >= MAX_MEMBERS) null else (0 until MAX_IDS).firstOrNull { it !in used }
     }
 
-    // ----- A player's side -----
+    // ----- A member's side -----
 
-    /** Messages from the owner (on a player). */
+    /** Messages from the owner (on a member). */
     private fun memberLoop(line: Line) {
         try {
             while (!closed) {
                 val (t, payload) = line.input.message()
-                val from = payload.firstOrNull()?.toInt() ?: owner
                 when (t) {
                     Msg.SEATING -> {
                         val seating = decode<Seating>(payload)
                         val (t2, state) = line.input.message()
                         if (t2 != Msg.STATE) throw IOException("Expected the game state")
-                        apply(seating, state)
+                        apply(seating, unpack(state))
                     }
                     Msg.PAUSE, Msg.RESUME -> {
-                        paused[from] = t == Msg.PAUSE
-                        listener?.onPartnerPaused(from, t == Msg.PAUSE)
+                        val from = payload.firstOrNull()?.toInt() ?: owner
+                        if (from in 0 until MAX_IDS) paused[from] = t == Msg.PAUSE
+                        members[from]?.let { listener?.onPartnerPaused(it.seat, t == Msg.PAUSE) }
                     }
+                    Msg.NEWS -> listener?.onNews(String(payload))
                     Msg.BYE -> {
                         ownerGone(line)
                         return
@@ -605,17 +692,20 @@ class Room private constructor(
         }
     }
 
-    /** Game [Seating.epoch] starts with these seats, from [state] (null: the game as it stands). */
+    /** Game [Seating.epoch] starts with these members, from [state] (null: the game as it stands). */
     private fun apply(seating: Seating, state: ByteArray?) {
         synchronized(deliverLock) {
             val ln = listener
-            val next = seating.seats.associateBy { it.player }
-            seats = next
+            val next = seating.members.associateBy { it.id }
+            members = next
             owner = seating.owner
             epoch = seating.epoch
-            val partners = next.keys.filter { it != localPlayer }.sorted()
-            ln?.onSeating(epoch, next.keys.fold(0) { m, p -> m or (1 shl p) }, state)
-            lockstep = Lockstep(lockstep.delay, localPlayer, maxOf(2, maxPlayers), partners)
+            val others = next.values.filter { it.id != localId }
+            val partners = others.filter { it.seat >= 0 }.map { it.id }.sorted()
+            val watchers = others.filter { it.seat < 0 }.map { it.id }.sorted()
+            val playing = (next[localId]?.seat ?: -1) >= 0
+            ln?.onSeating(epoch, activeMask, state)
+            lockstep = Lockstep(lockstep.delay, if (playing) localId else -1, players(), partners, watchers)
             latestSum = null
             synchronized(mySums) {
                 mySums.clear()
@@ -625,11 +715,21 @@ class Room private constructor(
             theirAdvantage.fill(0)
             paused.fill(false)
             val now = System.nanoTime()
-            for (p in partners) lastHeard[p] = now
+            for (m in others) lastHeard[m.id] = now
         }
+        key = keyNow()
     }
 
-    /** The owner's [line] ended: the player in the lowest seat takes the room over. */
+    // The room's key: the owner's address as this phone reaches it.
+    private fun keyNow(): String = runCatching {
+        if (isOwner) {
+            lanAddress()?.let { roomKey(it, server.localPort) }
+        } else {
+            members[owner]?.let { o -> (InetAddress.getByName(o.host) as? Inet4Address)?.let { roomKey(it, o.tcpPort) } }
+        }
+    }.getOrNull() ?: ""
+
+    /** The owner's [line] ended: the member with the lowest id takes the room over. */
     private fun ownerGone(line: Line, why: String = "left") {
         val old: Int
         val rest: List<Int>
@@ -639,14 +739,14 @@ class Room private constructor(
             old = owner
             line.close()
             ownerLine = null
-            rest = seats.keys.filter { it != old }.sorted()
-            if (rest.firstOrNull().let { it != null && it != localPlayer }) takenOver = CountDownLatch(1)
+            rest = members.keys.filter { it != old }.sorted()
+            if (rest.firstOrNull().let { it != null && it != localId }) takenOver = CountDownLatch(1)
         }
         val news = "${nameOf(old)} $why"
         val next = rest.firstOrNull()
-        if (next == null || next == localPlayer) {
+        if (next == null || next == localId) {
             worker.execute {
-                becomeOwner(old, rest.filter { it != localPlayer }, news)
+                becomeOwner(old, rest.filter { it != localId }, news)
                 migrating.set(false)
             }
         } else {
@@ -662,19 +762,19 @@ class Room private constructor(
 
     /** This phone owns the room now: it calls the others and seats everyone without [old]. */
     private fun becomeOwner(old: Int, others: List<Int>, news: String) {
-        owner = localPlayer
-        for (p in others) {
-            val seat = seats[p] ?: continue
+        owner = localId
+        for (id in others) {
+            val m = members[id] ?: continue
             try {
                 val socket = Socket()
-                socket.connect(InetSocketAddress(seat.host, seat.tcpPort), 5_000)
+                socket.connect(InetSocketAddress(m.host, m.tcpPort), 5_000)
                 socket.tcpNoDelay = true
-                val line = Line(socket, p, seat.name)
-                line.output.message(Msg.TAKEOVER, encode(Takeover(session, localPlayer)))
-                synchronized(lines) { lines[p] = line }
-                thread("net-tcp-$p") { ownerLoop(line) }
+                val line = Line(socket, id, m.name)
+                line.output.message(Msg.TAKEOVER, encode(Takeover(session, localId)))
+                synchronized(lines) { lines[id] = line }
+                thread("net-tcp-$id") { ownerLoop(line) }
             } catch (e: IOException) {
-                // Unreachable: not seated in the next game.
+                // Unreachable: not in the next game.
             }
         }
         startBeacon()
@@ -687,7 +787,7 @@ class Room private constructor(
             line.close()
             return
         }
-        line.player = takeover.owner
+        line.id = takeover.owner
         line.name = nameOf(takeover.owner)
         line.socket.soTimeout = 0
         synchronized(ownerLock) {
@@ -704,11 +804,13 @@ class Room private constructor(
 
     private val deliverLock = Any()
 
-    // One lock keeps each partner's inputs reaching the emulator in order.
+    // One lock keeps each player's inputs reaching the emulator in order.
     private fun deliver(from: Int) {
         synchronized(deliverLock) {
+            val seat = members[from]?.seat ?: return
+            if (seat < 0) return
             val (start, masks) = lockstep.takeRemote(from)
-            if (masks.isNotEmpty()) listener?.onRemote(from, start, masks)
+            if (masks.isNotEmpty()) listener?.onRemote(seat, start, masks)
         }
     }
 
@@ -726,7 +828,7 @@ class Room private constructor(
                 sendNow.also { sendNow = false }
             }
             val ls = lockstep
-            val pending = ls.partners.any { ls.outgoing(it, 1).second.isNotEmpty() }
+            val pending = (ls.partners + ls.watchers).any { ls.outgoing(it, 1).second.isNotEmpty() }
             val idle = System.nanoTime() - lastSent
             if (now || (pending && idle > RESEND_NS) || idle > KEEPALIVE_NS) send()
         }
@@ -757,33 +859,41 @@ class Room private constructor(
         private const val KEEPALIVE_NS = 100_000_000L
         private const val QUIET_NS = 5_000_000_000L
         private const val TAKEOVER_MS = 8_000L
+        private const val READY_MS = 3_000L
 
-        private fun openServer(port: Int): ServerSocket = try {
-            ServerSocket().apply {
-                reuseAddress = true
-                bind(InetSocketAddress(port))
+        // The first free room port from [port] (0: any, for tests).
+        private fun openServer(port: Int): ServerSocket {
+            if (port != 0) {
+                for (p in port until port + TCP_PORTS) {
+                    try {
+                        return ServerSocket().apply {
+                            reuseAddress = true
+                            bind(InetSocketAddress(p))
+                        }
+                    } catch (e: IOException) {
+                        // Taken: the next one.
+                    }
+                }
             }
-        } catch (e: IOException) {
-            // Taken (another app, or a test): any free port; beacons say which.
-            ServerSocket(0)
+            return ServerSocket(0)
         }
 
         /**
          * Opens a room for [set] with [maxPlayers] seats, this phone in seat
-         * 0. Others find it by its beacon ([beaconPort] -1: none, for tests).
+         * 0. Others find it by its key, or its beacon ([beaconPort] -1: none, for tests).
          */
         fun host(
             name: String, set: String, title: String, rom: Long, bios: Long, maxPlayers: Int,
             delay: Int = 1, port: Int = TCP_PORT, beaconPort: Int = BEACON_PORT,
         ): Room = Room(
-            name, set, title, rom, bios, maxPlayers, localPlayer = 0, session = Random.nextInt(),
+            name, set, title, rom, bios, maxPlayers, localId = 0, session = Random.nextInt(),
             server = openServer(port), udp = DatagramSocket(0), owner = 0, startDelay = delay, beaconPort = beaconPort,
-        )
+        ).also { it.key = it.keyNow() }
 
         /**
-         * Asks to join the room at [host]:[port]; blocks until the owner says
-         * yes (then the room's start state is in [Room.startState]) or no
-         * ([Refused], with the reason).
+         * Joins the room at [host]:[port], to watch until a seat is taken
+         * ([requestSeat]); the room's start state is then in
+         * [Room.startState]. [Refused] (with the reason) if it can't.
          */
         fun join(
             host: InetAddress, port: Int, name: String, set: String, rom: Long, bios: Long,
@@ -796,26 +906,27 @@ class Room private constructor(
             try {
                 socket.connect(InetSocketAddress(host, port), 5_000)
                 socket.tcpNoDelay = true
+                socket.soTimeout = 30_000
                 val line = Line(socket, 0, "Host")
                 line.output.message(Msg.HELLO, encode(Hello(PROTOCOL, name, set, rom, bios, udp.localPort, server.localPort)))
-                // The owner may take a while to tap Accept.
-                socket.soTimeout = 0
                 val (t, payload) = line.input.message()
                 if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
                 val w = decode<Welcome>(payload)
                 if (!w.accepted) throw Refused(w.reason)
-                line.player = w.owner
-                line.name = w.name
                 val start = line.input.message()
                 if (start.first != Msg.START_STATE) throw IOException("Expected the start state")
+                socket.soTimeout = 0
+                line.id = w.owner
+                line.name = w.name
                 val room = Room(
-                    name, set, "", rom, bios, w.maxPlayers, localPlayer = w.player, session = w.session,
+                    name, set, "", rom, bios, w.maxPlayers, localId = w.id, session = w.session,
                     server = server, udp = udp, owner = w.owner, startDelay = w.delay, beaconPort = beaconPort,
                 )
                 room.ownerLine = line
-                room.startState = start.second.takeIf { it.isNotEmpty() }
+                room.startState = unpack(start.second).takeIf { it.isNotEmpty() }
                 // Until the first seating: who's who, for messages.
-                room.seats = mapOf(w.owner to Seat(w.owner, w.name, host.hostAddress, 0, port))
+                room.members = mapOf(w.owner to Member(w.owner, w.name, host.hostAddress, 0, port, seat = 0))
+                room.key = w.key
                 return room
             } catch (e: IOException) {
                 runCatching { socket.close() }
@@ -825,6 +936,37 @@ class Room private constructor(
             }
         }
     }
+}
+
+// Game states are mostly zeros: squeezed, they cross Wi-Fi many times faster.
+internal fun pack(data: ByteArray): ByteArray {
+    val deflater = Deflater(Deflater.BEST_SPEED)
+    deflater.setInput(data)
+    deflater.finish()
+    val out = ByteArrayOutputStream(data.size / 4 + 64)
+    DataOutputStream(out).writeInt(data.size)
+    val buf = ByteArray(64 * 1024)
+    while (!deflater.finished()) out.write(buf, 0, deflater.deflate(buf))
+    deflater.end()
+    return out.toByteArray()
+}
+
+internal fun unpack(data: ByteArray): ByteArray {
+    if (data.size < 4) return ByteArray(0)
+    val size = DataInputStream(data.inputStream()).readInt()
+    if (size < 0 || size > 64 shl 20) throw IOException("Bad state size $size")
+    val inflater = Inflater()
+    inflater.setInput(data, 4, data.size - 4)
+    val out = ByteArray(size)
+    var n = 0
+    while (n < size && !inflater.finished()) {
+        val got = inflater.inflate(out, n, size - n)
+        if (got == 0 && (inflater.needsInput() || inflater.needsDictionary())) break
+        n += got
+    }
+    inflater.end()
+    if (n != size) throw IOException("Bad game state")
+    return out
 }
 
 /** Asks the room at [host]:[port] which game it's running, as a [Beacon]. */
@@ -838,7 +980,8 @@ fun probe(host: InetAddress, port: Int = TCP_PORT): Beacon {
         val (t, payload) = input.message()
         if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
         val w = decode<Welcome>(payload)
-        return Beacon(PROTOCOL, w.name, w.set, w.title, w.rom, port, maxPlayers = w.maxPlayers, code = w.code)
+        if (w.reason != PROBE) throw Refused(w.reason)
+        return Beacon(PROTOCOL, w.name, w.set, w.title, w.rom, port, players = w.players, maxPlayers = w.maxPlayers, key = w.key, watchers = w.watchers)
     }
 }
 
@@ -914,12 +1057,3 @@ fun broadcastAddresses(): List<InetAddress> {
     out += InetAddress.getByName("255.255.255.255")
     return out.toList()
 }
-
-/** This phone's addresses on local networks, to show for joining by address. */
-fun localAddresses(): List<String> = runCatching {
-    NetworkInterface.getNetworkInterfaces().toList()
-        .filter { it.isUp && !it.isLoopback }
-        .flatMap { it.inetAddresses.toList() }
-        .filterIsInstance<Inet4Address>()
-        .map { it.hostAddress }
-}.getOrDefault(emptyList())

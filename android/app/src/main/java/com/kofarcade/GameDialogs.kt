@@ -80,25 +80,6 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
         }
-        is GameDialog.JoinRequest -> {
-            // Answered once: a tap, or closing the sheet (no).
-            var answered by remember(d) { mutableStateOf(false) }
-            fun reply(yes: Boolean) {
-                if (answered) return
-                answered = true
-                d.answer(yes)
-                game.close()
-            }
-            Sheet(onDismiss = { reply(false) }) {
-                Title("${d.name} wants to join")
-                Text("They take a free seat and the game carries on for everyone.", color = Palette.muted)
-                Spacer(Modifier.size(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { reply(true) }, modifier = Modifier.weight(1f)) { Text("Let them in") }
-                    OutlinedButton(onClick = { reply(false) }, modifier = Modifier.weight(1f)) { Text("No") }
-                }
-            }
-        }
     }
 }
 
@@ -189,6 +170,8 @@ private fun PauseMenu(game: GameActivity) {
             fighter = c?.name,
             netplay = game.isNetplay,
             roomInfo = game.roomInfo,
+            roomStatus = game.roomStatus,
+            watching = game.isWatching,
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },
@@ -215,19 +198,27 @@ fun PauseContent(
     onLayout: () -> Unit,
     onControls: () -> Unit,
     onQuit: () -> Unit,
-    /** Multiplayer: the room's code and who's in. */
+    /** Multiplayer: the room's key and who's in. */
     roomInfo: String? = null,
+    /** Multiplayer: how the connection is doing (small print). */
+    roomStatus: String? = null,
+    /** Multiplayer: this phone watches (its menu stops nobody). */
+    watching: Boolean = false,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Kicker(if (netplay) "Paused for everyone" else "Paused")
+            Kicker(if (watching) "Watching: the game goes on" else if (netplay) "Paused for everyone" else "Paused")
             Text(title, color = Color.White, fontSize = 46.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
             if (netplay) {
                 Spacer(Modifier.size(8.dp))
                 Tag(roomInfo ?: "Multiplayer", Palette.gold)
+                roomStatus?.let {
+                    Spacer(Modifier.size(6.dp))
+                    Text(it, color = Palette.muted, fontSize = 11.sp, lineHeight = 14.sp)
+                }
             }
             if (fighter != null) {
                 Spacer(Modifier.size(14.dp))
@@ -259,7 +250,7 @@ fun PauseContent(
                 BigButton("Controls", Modifier.weight(1f), onClick = onControls)
             }
             // Rarely needed: KOF's challenger mode and continues are the rematch.
-            if (netplay) BigButton("Restart the game for everyone", onClick = onRestart)
+            if (netplay && !watching) BigButton("Restart the game for everyone", onClick = onRestart)
             BigButton(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
         }
     }

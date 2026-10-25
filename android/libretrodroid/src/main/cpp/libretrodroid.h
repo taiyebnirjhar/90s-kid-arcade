@@ -215,7 +215,8 @@ private:
     std::atomic<bool> frozen{false};
     std::mutex netMutex;
     bool netplay = false;
-    static constexpr int NET_RING = 32;
+    static constexpr int NET_RING = 32;            // states kept to roll back to
+    static constexpr int NET_INPUT_RING = 1024;    // inputs kept: a watcher may trail the players
     static constexpr int NET_MAX_PLAYERS = 4;
     int netPlayers = 2;
     uint32_t netActive = 0x3;
@@ -224,7 +225,7 @@ private:
     int32_t netFrame = 0;                          // next frame to run
     int32_t netKnown[NET_MAX_PLAYERS] = {};        // each player's inputs below this are in
     int32_t netFirstWrong = INT32_MAX;
-    uint16_t netInput[NET_MAX_PLAYERS][NET_RING] = {};
+    uint16_t netInput[NET_MAX_PLAYERS][NET_INPUT_RING] = {};
     uint16_t netUsed[NET_MAX_PLAYERS][NET_RING] = {};  // what each frame ran with
     std::vector<std::vector<uint8_t>> netStates;
     std::vector<std::pair<int32_t, int64_t>> netPendingSums;

@@ -43,7 +43,6 @@ import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
-import com.kofarcade.core.net.localAddresses
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.fighterBase
@@ -68,9 +67,6 @@ sealed interface GameDialog {
     data class Editor(val character: Character) : GameDialog
     data object Controls : GameDialog
     data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
-
-    /** Multiplayer: someone asks to join your room. */
-    class JoinRequest(val name: String, val answer: (Boolean) -> Unit) : GameDialog
 }
 
 /** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
@@ -126,12 +122,19 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var stalledFrames = 0
     private var lastSumFrame = -1L
     private var lastWait = 0L
+    private var lastResyncAsk = 0L
+    // Watching: the COIN or START that asked for a seat, pressed for real once
+    // seated (so the coin drops); then pressed for this many more frames.
+    private var askedWith: Key? = null
+    private var tapKey: Key? = null
+    private var tapFrames = 0
     // Two players: the game waits while either menu is open.
     private var localPaused = false
     private var remotePaused = false
     // While the room seats everyone (someone joined or left, a rematch): the game waits.
     @Volatile private var seating = true
     private lateinit var netStatus: TextView
+    private lateinit var roomBanner: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
 
@@ -169,10 +172,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         // Before the emulator starts: in a room, frames run from every phone's
         // inputs (rollback netcode, see LibretroDroid::setNetplay). Until the
-        // first seating it's this phone alone.
-        room.let { r ->
-            LibretroDroid.setNetplay(r != null, r?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 1 shl (r?.localPlayer ?: 0))
-        }
+        // first seating the game runs on its own (watching nobody).
+        LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
         if (room != null) holdWifi()
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
@@ -216,7 +217,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setPadding(36, 20, 36, 20)
             visibility = if (room != null) View.VISIBLE else View.GONE
-            text = room?.let { r -> if (r.isOwner) "Opening room ${r.code}…" else "Joining ${r.nameOf(r.owner)}'s room…" }
+            text = room?.let { r -> if (r.isOwner) "Opening the room…" else "Joining ${r.nameOf(r.owner)}'s room…" }
+        }
+        roomBanner = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(170, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(28, 10, 28, 10)
+            visibility = View.GONE
         }
         val dialogs = ComposeView(this).apply { setContent { KofTheme { GameDialogs(this@GameActivity) } } }
         root = FrameLayout(this)
@@ -226,6 +234,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
                 addView(detectInfo, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
                 addView(netStatus, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
+                addView(
+                    roomBanner,
+                    FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                        bottomMargin = (12 * resources.displayMetrics.density).toInt()
+                    },
+                )
                 // Full width so the layout editor's bar can centre itself; it
                 // takes no space (and no touches) when nothing is shown.
                 addView(dialogs, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
@@ -312,7 +326,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun sendKey(key: Key, down: Boolean) {
         if (retroId(key) < 0) return // a button this game doesn't have
-        if (room != null) {
+        room?.let { r ->
+            if (r.watching) {
+                // Watching: COIN or START asks for a free seat.
+                if (down && (key == Key.COIN || key == Key.START) && askedWith == null) {
+                    if (r.hasFreeSeat) {
+                        askedWith = key
+                        sendNet { it.requestSeat() }
+                        showBanner("Taking a seat…")
+                    } else {
+                        showBanner("All seats are taken: watching")
+                    }
+                }
+                return
+            }
             val bit = 1 shl retroId(key)
             localMask = if (down) localMask or bit else localMask and bit.inv()
             return
@@ -388,13 +415,39 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val isNetplay: Boolean get() = room != null
 
-    /** The room, for the pause menu: its code and who's in. */
+    /** The room, for the pause menu: its key and who's in. */
     val roomInfo: String?
         get() = room?.let { r ->
-            "Room ${r.code} · ${r.seats.size} of ${r.maxPlayers} players" +
-                // The host's address, for joining by typing it.
-                if (r.isOwner) " · you host it at ${localAddresses().firstOrNull() ?: "?"}" else ""
+            (if (r.key.isNotEmpty()) "Room key ${r.key} · " else "") +
+                "${r.seats.size} of ${r.maxPlayers} playing" +
+                if (r.watcherCount > 0) " · ${r.watcherCount} watching" else ""
         }
+
+    /** How the room's connection is doing, for the pause menu. */
+    val roomStatus: String? get() = room?.status()
+
+    /** This phone watches the room's game rather than plays. */
+    val isWatching: Boolean get() = room?.watching == true
+
+    // The line along the bottom: the key while the host is alone, and how to
+    // play while watching.
+    private fun updateBanner() {
+        val r = room ?: return
+        val text = when {
+            !netStarted -> null
+            r.watching && r.hasFreeSeat -> "Watching · press COIN or START to play"
+            r.watching -> "Watching · all seats are taken"
+            r.isOwner && r.members.size == 1 && r.key.isNotEmpty() -> "Room key ${r.key} · friends type it in Multiplayer → Join a room"
+            else -> null
+        }
+        roomBanner.text = text
+        roomBanner.visibility = if (text == null) View.GONE else View.VISIBLE
+    }
+
+    private fun showBanner(text: String) {
+        roomBanner.text = text
+        roomBanner.visibility = View.VISIBLE
+    }
 
     /** This phone's player: 0 alone or hosting, 1 and up when joined. */
     private val localPlayer: Int get() = room?.localPlayer ?: 0
@@ -423,12 +476,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     applyNetFreeze()
                 }
 
-                override fun onJoinRequest(name: String, answer: (Boolean) -> Unit) = runOnUiThread {
-                    show(GameDialog.JoinRequest(name, answer))
-                }
-
                 override fun onNews(message: String) = runOnUiThread {
                     Toast.makeText(this@GameActivity, message, Toast.LENGTH_SHORT).show()
+                    // "No free seat": asking again is allowed.
+                    if (room.watching) askedWith = null
+                    updateBanner()
                 }
 
                 // The owner's game, to seat everyone from: stop it first.
@@ -449,9 +501,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         remotePaused = room.partnerPaused
                         hud.releaseAll()
                         pad.releaseAll()
+                        localMask = 0
+                        // Seated from watching: the COIN or START that asked goes in now.
+                        tapKey = askedWith?.takeIf { !room.watching }
+                        tapFrames = if (tapKey != null) 6 else 0
+                        if (!room.watching || !room.hasFreeSeat) askedWith = null
+                        // A player now, with the menu open: everyone waits for it.
+                        if (room.watching) localPaused = false else if (dialog != null && !localPaused) pauseEmulation()
                         netStarted = true
                         seating = false
                         applyNetFreeze()
+                        updateBanner()
                     }
                 }
             })
@@ -467,7 +527,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val sample = room.sample(emulated) {
             padFrame++
             pad.onFrame()
-            localMask
+            val tap = tapKey
+            if (tap != null && tapFrames > 0) {
+                tapFrames--
+                localMask or (1 shl retroId(tap))
+            } else {
+                localMask
+            }
         }
         sample.masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(sample.start + i, m) }
         // Time sync: when this phone's game runs ahead of a partner's (see
@@ -488,8 +554,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lastNetFrame = emulated
         val waiting = stalledFrames > 30
         if (waiting != (netStatus.visibility == View.VISIBLE)) {
-            netStatus.text = "Waiting for ${room.peerName}…"
+            netStatus.text = if (room.watching) "Waiting for the players…" else "Waiting for ${room.peerName}…"
             netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+        }
+        // Stuck for 3 seconds with nobody paused: the room puts everyone back
+        // in step from the host's game (a moment's pause, as when someone joins).
+        if (stalledFrames > 180 && frame - lastResyncAsk > 300) {
+            lastResyncAsk = frame
+            netStatus.text = "Reconnecting…"
+            sendNet { it.requestResync() }
         }
     }
 
@@ -814,11 +887,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun pauseEmulation() {
-        if (room != null) {
-            // Everyone waits while any menu is open.
+        room?.let { r ->
+            // Everyone waits while a player's menu is open (a watcher's stops nobody).
             hud.releaseAll()
             pad.releaseAll()
-            if (!localPaused) {
+            localMask = 0
+            if (!localPaused && !r.watching) {
                 localPaused = true
                 sendNet { it.sendPause(true) }
                 applyNetFreeze()

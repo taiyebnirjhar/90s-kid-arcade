@@ -8,14 +8,18 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 
-// The wire format. TCP connections (each player's phone to the room's owner)
-// carry joining, who sits where, the game state when that changes, and
-// pause / rematch / leaving, which the owner passes on to the others; UDP
-// carries the inputs, straight from every phone to every other (small,
-// frequent, and resent until acknowledged, so a lost packet costs nothing).
+// The wire format. TCP connections (each phone of a room to its owner) carry
+// joining, who sits where, the game state when that changes, and pause /
+// restart / taking a seat / leaving, which the owner passes on to the
+// others; UDP carries the inputs, straight from every phone to every other
+// (small, frequent, and resent until acknowledged, so a lost packet costs
+// nothing).
 
-const val PROTOCOL = 7
+const val PROTOCOL = 8
 const val TCP_PORT = 7845
+
+/** Rooms listen on the first free one of these TCP ports from [TCP_PORT] (the room key says which). */
+const val TCP_PORTS = 8
 const val BEACON_PORT = 7846
 
 /** Who is joining, and with what game files. */
@@ -32,7 +36,7 @@ data class Hello(
     val tcpPort: Int = 0,
 )
 
-/** The owner's answer: accepted (with the room's settings and your seat) or not, and why. */
+/** The owner's answer: let in (with the room's settings and your member [id]) or not, and why. */
 @Serializable
 data class Welcome(
     val accepted: Boolean,
@@ -45,27 +49,35 @@ data class Welcome(
     val set: String = "",
     val title: String = "",
     val rom: Long = 0,
-    /** The guest's seat (player number, 0 = player 1) and how many can play this game. */
-    val player: Int = 1,
+    /** The newcomer's member id, and how many can play this game. */
+    val id: Int = 1,
     val maxPlayers: Int = 2,
-    /** Who owns the room (their seat), and its code. */
+    /** The owner's member id, and the room's key. */
     val owner: Int = 0,
-    val code: String = "",
+    val key: String = "",
+    /** Players and watchers in, for a [PROBE]. */
+    val players: Int = 0,
+    val watchers: Int = 0,
 )
 
-/** A seat of a room (a player, 0 = player 1) and the phone in it: where its inputs and TCP connections come from. */
+/**
+ * A phone in a room: its member [id] (for as long as it's in), the [seat] it
+ * plays in (0 = player 1; -1: it watches), and where its inputs and TCP
+ * connections come from.
+ */
 @Serializable
-data class Seat(val player: Int, val name: String, val host: String, val udpPort: Int, val tcpPort: Int)
+data class Member(val id: Int, val name: String, val host: String, val udpPort: Int, val tcpPort: Int, val seat: Int = -1)
 
 /**
  * The owner's word on who plays from now on: game [epoch] starts from the
- * state that follows ([Msg.STATE]), with these [seats]. Sent to everyone
- * whenever someone joins or leaves, and for a rematch.
+ * state that follows ([Msg.STATE]), with these [members] (in their seats).
+ * Sent to everyone whenever someone joins, leaves or takes a seat, to put
+ * everyone back in step, and for a restart.
  */
 @Serializable
-data class Seating(val epoch: Int, val owner: Int, val seats: List<Seat>)
+data class Seating(val epoch: Int, val owner: Int, val members: List<Member>)
 
-/** A new owner taking over the room (the old one left): it connects to each player with this. */
+/** A new owner taking over the room (the old one left): it connects to each member with this. */
 @Serializable
 data class Takeover(val session: Int, val owner: Int)
 
@@ -84,8 +96,10 @@ data class Beacon(
     /** Players in so far (the host counts) and how many the game takes. */
     val players: Int = 1,
     val maxPlayers: Int = 2,
-    /** The room's code, to tell rooms apart. */
-    val code: String = "",
+    /** The room's key (what friends type to join). */
+    val key: String = "",
+    /** Phones watching. */
+    val watchers: Int = 0,
 )
 
 internal val json = Json { ignoreUnknownKeys = true }
@@ -103,6 +117,10 @@ internal object Msg {
     const val TAKEOVER: Byte = 10
     const val START_STATE: Byte = 11
     const val RESYNC: Byte = 12
+    /** A watcher asks for a free seat (COIN or START). */
+    const val SIT: Byte = 13
+    /** Owner to one phone: something to tell its player (UTF-8). */
+    const val NEWS: Byte = 14
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {
@@ -128,7 +146,7 @@ internal inline fun <reified T> encode(value: T): ByteArray = json.encodeToStrin
 internal inline fun <reified T> decode(bytes: ByteArray): T = json.decodeFromString(String(bytes))
 
 /**
- * One input packet from player [from]: the sender's unacknowledged inputs
+ * One input packet from phone [from] (its member id): the sender's unacknowledged inputs
  * from [start], what it has received from us ([ack]: all frames below it), how many frames it runs
  * ahead of our inputs ([advantage], for time sync) with its input [delay],
  * and optionally a state checksum for frame [sumFrame] (-1: none).
@@ -159,7 +177,7 @@ data class InputPacket(
 
     companion object {
         private const val MAGIC = 0x39304B41 // "90KA"
-        private const val VERSION: Byte = 5
+        private const val VERSION: Byte = 6
         const val MAX_MASKS = 120
 
         fun decode(data: ByteArray, length: Int = data.size): InputPacket? = try {
