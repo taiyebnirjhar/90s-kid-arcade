@@ -170,6 +170,7 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onBack: () -> Unit,
                 // Guests one by one, until the game is full or the host taps Start.
                 while (!left) {
                     h.acceptNext { hello ->
+                        if (left) return@acceptNext "The host left"
                         // Ask on screen; the network thread waits for the tap.
                         val answer = CompletableDeferred<String?>()
                         decision = answer
@@ -209,7 +210,8 @@ private fun Hosting(roms: RomStore, game: Game, set: String, onBack: () -> Unit,
         requestName = request?.name,
         onAccept = { decision?.complete(null) },
         onDecline = { decision?.complete("The host said no") },
-        onStart = if (joined.isNotEmpty() && !starting) ({ begin() }) else null,
+        // Not while someone is asking to join: answer them first.
+        onStart = if (joined.isNotEmpty() && !starting && request == null) ({ begin() }) else null,
         onBack = onBack,
     )
 }

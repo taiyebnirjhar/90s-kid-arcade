@@ -13,13 +13,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import com.kofarcade.core.BIOS
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.Game
 import com.kofarcade.core.RomCheck
 import com.kofarcade.core.gameById
 import com.kofarcade.core.gameForSet
+import com.kofarcade.core.romSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Home: [HomeScreen], plus the dialogs and pages it opens (adding a ROM, the
@@ -64,7 +70,7 @@ class MainActivity : ComponentActivity() {
         var ask by remember { mutableStateOf<Pick?>(null) }
         var remove by remember { mutableStateOf<Game?>(null) }
         var result by remember { mutableStateOf<RomCheck?>(null) }
-        var library by remember { mutableStateOf(false) }
+        var library by rememberSaveable { mutableStateOf(false) }
         var twoPlayer by remember { mutableStateOf(false) }
         var crash by remember { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
@@ -74,12 +80,16 @@ class MainActivity : ComponentActivity() {
 
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
-            try {
-                result = roms.import(uri)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Couldn't add the file: ${e.message}", Toast.LENGTH_LONG).show()
+            // Copying and checking a big zip takes seconds: off the main thread.
+            Toast.makeText(this, "Checking the zip…", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                try {
+                    result = withContext(Dispatchers.IO) { roms.import(uri) }
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Couldn't add the file: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+                refresh++
             }
-            refresh++
         }
         fun launch() {
             picker.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*"))
@@ -209,9 +219,15 @@ class MainActivity : ComponentActivity() {
         }
 
         remove?.let { game ->
+            // A hack stored without the files it shares with the original borrows them from its zip.
+            val borrowers = sets[game.id]?.let { set ->
+                roms.zips().filter { romSet(it)?.parent == set && gameForSet(it) != game }.mapNotNull(::gameForSet)
+            }.orEmpty()
             ArcadeDialog(
                 title = "Remove ${game.fullTitle}?",
-                message = "Deletes the ROM from this app. You can add it again any time.",
+                message = "Deletes the ROM from this app. You can add it again any time." +
+                    if (borrowers.isEmpty()) "" else
+                        " ${borrowers.joinToString(" and ") { it.fullTitle }} uses files from it and won't start without it.",
                 onDismiss = { remove = null },
                 tone = Tone.BAD,
                 primary = "Keep it" to { remove = null },

@@ -37,7 +37,7 @@ class SessionTest {
         // A rematch: back to frame 0 with fresh inputs, as the game screen does.
         fun restart() {
             synchronized(remotes) {
-                link.restart()
+                while (link.epoch < link.wantedEpoch) link.restart()
                 local.clear()
                 remotes.values.forEach { it.clear() }
                 emulated = 0
@@ -129,7 +129,7 @@ class SessionTest {
         waitFor { b.partnerPaused == false }
 
         // A rematch: both restart from frame 0 and play the same inputs again.
-        guestLink.sendRematch()
+        guestLink.sendRematch(guestLink.nextRematch())
         b.restart()
         assertTrue(a.done2.await(20, TimeUnit.SECONDS) && b.done2.await(20, TimeUnit.SECONDS))
         assertEquals(1, h.epoch)
@@ -138,6 +138,19 @@ class SessionTest {
             assertEquals(b.local.take(120), a.remote.take(120))
             a.remote.take(120).forEachIndexed { frame, m -> assertEquals((frame * 13 + 1) and 0xFFF, m) }
         } }
+
+        // Both tap Rematch at once: each request names game 2, so both phones
+        // land on game 2 rather than one on 2 and the other on 3.
+        val ta = h.nextRematch()
+        val tb = guestLink.nextRematch()
+        h.sendRematch(ta)
+        guestLink.sendRematch(tb)
+        a.restart()
+        b.restart()
+        waitFor { h.epoch == 2 && guestLink.epoch == 2 }
+        Thread.sleep(300)
+        assertEquals(2, h.epoch)
+        assertEquals(2, guestLink.epoch)
         a.running = false
         b.running = false
 
@@ -246,7 +259,29 @@ class SessionTest {
         b.close()
         waitFor { games[0].closedReason != null && games[1].closedReason != null }
         assertTrue("Guest B" in games[0].closedReason!!, games[0].closedReason)
+        // The other guest hears who left through the host, not "Host left".
+        assertTrue("Guest B" in games[1].closedReason!!, games[1].closedReason)
         h.close(); a.close(); host.close()
+    }
+
+    @Test
+    fun aGuestWhoLeavesTheLobbyIsDropped() {
+        val host = NetHost("Host", "dino", "Cadillacs and Dinosaurs", rom = 5, bios = 0, maxPlayers = 3, port = 0)
+        val accepting = thread { repeat(2) { host.acceptNext { null } } }
+        val quitter = joinLobby(localhost, host.port, "Quitter", "dino", rom = 5, bios = 0)
+        quitter.close()
+        val stays = joinLobby(localhost, host.port, "Stays", "dino", rom = 5, bios = 0)
+        accepting.join(5000)
+        // Joined second, but the only guest left: it plays as player 2 (number 1).
+        var g: Link? = null
+        val w = thread { g = stays.awaitStart() }
+        val h = host.start()
+        w.join(5000)
+        assertEquals(2, h.players)
+        assertEquals(listOf("Stays"), h.peers.map { it.name })
+        assertEquals(1, g!!.localPlayer)
+        assertEquals(listOf(0), g!!.peers.map { it.player })
+        h.close(); g!!.close(); host.close()
     }
 
     @Test

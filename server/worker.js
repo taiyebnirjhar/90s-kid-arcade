@@ -24,14 +24,20 @@ export default {
       return Response.json({ files });
     }
     // One file, e.g. /kof97.zip
-    const name = decodeURIComponent(url.pathname.slice(1));
+    let name;
+    try {
+      name = decodeURIComponent(url.pathname.slice(1));
+    } catch {
+      return new Response("Bad file name", { status: 400 });
+    }
     const obj = await env.ROMS.get(name);
     if (!obj) return new Response("Not found", { status: 404 });
     return new Response(obj.body, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Length": String(obj.size),
-        "Content-Disposition": `attachment; filename="${name}"`,
+        // RFC 6266: any name (quotes, non-ASCII) survives percent-encoded.
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
       },
     });
   },

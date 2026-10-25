@@ -37,7 +37,10 @@ interface LinkListener {
     /** [player] opened (true) or closed (false) their menu: the game waits for everyone. */
     fun onPartnerPaused(player: Int, paused: Boolean) {}
 
-    /** [player] started a rematch: restart from the session's start state, then [Link.restart]. */
+    /**
+     * [player] started a rematch: restart from the session's start state with
+     * [Link.restart] until [Link.epoch] reaches [Link.wantedEpoch].
+     */
     fun onRematch(player: Int) {}
 }
 
@@ -85,6 +88,14 @@ class Link internal constructor(
 
     /** Which game of the session this is: 0, then +1 per rematch. */
     @Volatile var epoch = 0
+        private set
+
+    /**
+     * The game every phone is heading for. Each rematch request names it, so
+     * two players tapping Rematch at once both mean the same next game, not
+     * two restarts on one phone and one on the other.
+     */
+    @Volatile var wantedEpoch = 0
         private set
 
     @Volatile private var closed = false
@@ -169,26 +180,29 @@ class Link internal constructor(
 
     // Only ever on the send thread: each partner gets what it's missing.
     private fun send() {
-        val sum = latestSum
-        val ls = lockstep
-        try {
-            for (p in peers) {
-                val (start, masks) = ls.outgoing(p.player, InputPacket.MAX_MASKS)
-                val packet = InputPacket(
-                    session, ls.known(p.player), start, masks, sum?.first ?: -1, sum?.second ?: 0,
-                    advantage[p.player], epoch and 0xFF, ls.delay, localPlayer,
-                )
-                val bytes = packet.encode()
+        // The game and its number together: a rematch between reading one and
+        // the other would label the old game's inputs as the new one's.
+        val (ls, game, sum) = synchronized(deliverLock) { Triple(lockstep, epoch, latestSum) }
+        for (p in peers) {
+            val (start, masks) = ls.outgoing(p.player, InputPacket.MAX_MASKS)
+            val packet = InputPacket(
+                session, ls.known(p.player), start, masks, sum?.first ?: -1, sum?.second ?: 0,
+                advantage[p.player], game and 0xFF, ls.delay, localPlayer,
+            )
+            val bytes = packet.encode()
+            // A Wi-Fi hiccup can fail one send: the inputs go again with the
+            // next packet, and a partner gone for good shows as silence.
+            try {
                 udp.send(DatagramPacket(bytes, bytes.size, p.address))
+            } catch (e: IOException) {
+                if (closed) return
             }
-            lastSent = System.nanoTime()
-        } catch (e: IOException) {
-            if (!closed) end("Network error: ${e.message}")
         }
+        lastSent = System.nanoTime()
     }
 
     /** Our game's state checksum after [frame], compared with the partners'. */
-    fun reportSum(frame: Int, sum: Long) {
+    fun reportSum(frame: Int, sum: Long) = synchronized(deliverLock) {
         latestSum = frame to sum
         check(frame, sum, from = null)
     }
@@ -216,8 +230,11 @@ class Link internal constructor(
                 checkQuiet()
                 continue
             } catch (e: IOException) {
-                if (!closed) end("Network error: ${e.message}")
-                return
+                if (closed) return
+                // As for sending: one failure isn't the end; silence is.
+                checkQuiet()
+                Thread.sleep(20)
+                continue
             }
             val p = InputPacket.decode(buf, packet.length) ?: continue
             if (p.session != session || peers.none { it.player == p.from }) continue
@@ -229,10 +246,11 @@ class Link internal constructor(
                 theirAdvantage[p.from] = p.advantage
                 theirDelay[p.from] = p.delay
                 lockstep.receive(p.from, p.start, p.masks, p.ack)
+                // Under the lock too, so a rematch can't clear the sums in between.
+                if (p.sumFrame >= 0) check(p.sumFrame, p.sum, from = p.from)
                 true
             }
             if (!current) continue
-            if (p.sumFrame >= 0) check(p.sumFrame, p.sum, from = p.from)
             deliver(p.from)
             checkQuiet()
         }
@@ -252,17 +270,19 @@ class Link internal constructor(
                 val from = payload.firstOrNull()?.toInt() ?: line.player
                 when (t) {
                     Msg.BYE -> {
-                        end("${nameOf(from)} left the game")
+                        // The host passes on who left, so every phone names them.
+                        end("${nameOf(from)} left the game", leaver = from)
                         return
                     }
                     Msg.PAUSE, Msg.RESUME -> {
                         paused[from] = t == Msg.PAUSE
-                        relay(line, t, from)
+                        relay(line, t, payload)
                         listener?.onPartnerPaused(from, t == Msg.PAUSE)
                     }
                     Msg.REMATCH -> {
-                        relay(line, t, from)
-                        listener?.onRematch(from)
+                        relay(line, t, payload)
+                        val target = payload.getOrNull(1)?.toInt()?.and(0xFF)
+                        if (target == null || wantRematch(target)) listener?.onRematch(from)
                     }
                 }
             }
@@ -271,9 +291,17 @@ class Link internal constructor(
         }
     }
 
-    private fun relay(source: Line, type: Byte, from: Int) {
+    private fun relay(source: Line, type: Byte, payload: ByteArray) {
         if (!isHost) return
-        for (other in lines) if (other !== source) runCatching { other.output.message(type, byteArrayOf(from.toByte())) }
+        for (other in lines) if (other !== source) runCatching { other.output.message(type, payload) }
+    }
+
+    /** A request for game [target] (mod 256): true if it's a game beyond the one we're heading for. */
+    @Synchronized private fun wantRematch(target: Int): Boolean {
+        val ahead = (target - wantedEpoch) and 0xFF
+        if (ahead == 0 || ahead >= 0x80) return false
+        wantedEpoch += ahead
+        return true
     }
 
     // Resends until acknowledged, and keeps the line alive when nothing changes.
@@ -311,11 +339,18 @@ class Link internal constructor(
     /** Tells everyone our menu opened or closed. */
     fun sendPause(paused: Boolean) = sendControl(if (paused) Msg.PAUSE else Msg.RESUME)
 
-    /** Asks everyone to restart too; then restart here (see [LinkListener.onRematch]). */
-    fun sendRematch() = sendControl(Msg.REMATCH)
+    /**
+     * A rematch from this phone: the game after the one we're heading for.
+     * Restart here until [epoch] reaches [wantedEpoch], and tell everyone
+     * with [sendRematch] (a network call: off the main thread).
+     */
+    @Synchronized fun nextRematch(): Int = ++wantedEpoch
 
-    private fun sendControl(type: Byte) {
-        for (line in lines) runCatching { line.output.message(type, byteArrayOf(localPlayer.toByte())) }
+    /** Asks everyone to restart for game [target] too. */
+    fun sendRematch(target: Int) = sendControl(Msg.REMATCH, byteArrayOf(localPlayer.toByte(), target.toByte()))
+
+    private fun sendControl(type: Byte, payload: ByteArray = byteArrayOf(localPlayer.toByte())) {
+        for (line in lines) runCatching { line.output.message(type, payload) }
     }
 
     /**
@@ -349,15 +384,15 @@ class Link internal constructor(
         }
     }
 
-    private fun end(reason: String) {
+    private fun end(reason: String, leaver: Int = localPlayer) {
         if (closed) return
-        // The host tells the others the game is over, rather than leaving
-        // them to time out.
-        close(sendBye = isHost)
+        // Tell the others the game is over, rather than leaving them to time
+        // out: a guest tells the host, which tells everyone.
+        close(sendBye = true, leaver = leaver)
         listener?.onClosed(reason)
     }
 
-    fun close(sendBye: Boolean) {
+    fun close(sendBye: Boolean, leaver: Int = localPlayer) {
         if (closed) return
         closed = true
         threads.forEach { it.interrupt() }
@@ -365,7 +400,7 @@ class Link internal constructor(
         // calls aren't allowed): say goodbye and close on a thread of its own.
         Thread({
             for (line in lines) {
-                if (sendBye) runCatching { line.output.message(Msg.BYE, byteArrayOf(localPlayer.toByte())) }
+                if (sendBye) runCatching { line.output.message(Msg.BYE, byteArrayOf(leaver.toByte())) }
                 runCatching { line.socket.close() }
             }
             runCatching { udp.close() }
@@ -428,6 +463,7 @@ class NetHost(
     private class Guest(val line: Line, val address: InetAddress, val udpPort: Int)
 
     private val guests = ArrayList<Guest>()
+    private var started = false
 
     val port: Int get() = server.localPort
 
@@ -436,6 +472,29 @@ class NetHost(
 
     /** Everyone's in: the game can't take more. */
     val full: Boolean get() = synchronized(guests) { guests.size + 1 >= maxPlayers }
+
+    /**
+     * Drops guests who left before the start: they said goodbye, or their
+     * connection is gone. Nothing else arrives from a guest until then, so a
+     * quick look at each line is enough.
+     */
+    fun prune() = synchronized(guests) {
+        guests.removeAll { g ->
+            val gone = try {
+                g.line.socket.soTimeout = 1
+                g.line.input.message()
+                true // a goodbye (or anything else: not a guest waiting quietly)
+            } catch (e: SocketTimeoutException) {
+                false
+            } catch (e: IOException) {
+                true
+            } finally {
+                runCatching { g.line.socket.soTimeout = 0 }
+            }
+            if (gone) runCatching { g.line.socket.close() }
+            gone
+        }
+    }
 
     /**
      * Blocks until the next guest joins, and returns its name; null once the
@@ -464,6 +523,7 @@ class NetHost(
                     socket.close()
                     continue
                 }
+                prune()
                 val reason = when {
                     hello.protocol != PROTOCOL -> "Different app versions. Update every phone."
                     hello.set != set -> "The host is playing a different game."
@@ -478,11 +538,18 @@ class NetHost(
                     continue
                 }
                 val player = synchronized(guests) {
+                    // The host tapped Start while this one was being asked.
+                    if (started) return@synchronized -1
                     val player = guests.size + 1
                     line.player = player
                     line.name = hello.name
                     guests += Guest(line, socket.inetAddress, hello.udpPort)
                     player
+                }
+                if (player < 0) {
+                    output.message(Msg.WELCOME, encode(Welcome(false, "The game has already started.")))
+                    socket.close()
+                    return null
                 }
                 output.message(
                     Msg.WELCOME,
@@ -504,14 +571,19 @@ class NetHost(
      */
     fun start(): Link {
         runCatching { server.close() }
-        val all = synchronized(guests) { guests.toList() }
+        prune()
+        val all = synchronized(guests) {
+            started = true
+            guests.toList()
+        }
         require(all.isNotEmpty()) { "Nobody has joined yet" }
+        // Numbered again from 1, in case someone left the lobby: each guest is told its number.
+        all.forEachIndexed { i, g -> g.line.player = i + 1 }
         val roster = Roster(
             listOf(RosterEntry(0, name, null, udp.localPort)) +
                 all.mapIndexed { i, g -> RosterEntry(i + 1, g.line.name, g.address.hostAddress, g.udpPort) },
         )
-        val bytes = encode(roster)
-        for (g in all) g.line.output.message(Msg.ROSTER, bytes)
+        all.forEachIndexed { i, g -> g.line.output.message(Msg.ROSTER, encode(roster.copy(you = i + 1))) }
         val peers = all.mapIndexed { i, g -> Peer(i + 1, g.line.name, InetSocketAddress(g.address, g.udpPort)) }
         return Link(all.map { it.line }, udp, peers, localPlayer = 0, startDelay = delay, session = session)
     }
@@ -555,26 +627,29 @@ class Lobby internal constructor(
     private val udp: DatagramSocket,
     private val welcome: Welcome,
 ) : Closeable {
-    /** This phone's player number: 1 for player 2, and so on. */
+    /** This phone's player number for now: 1 for player 2, and so on (final at the start). */
     val player: Int get() = welcome.player
 
     /** Blocks until the host starts the game; throws if the host leaves instead. */
     fun awaitStart(): Link {
         try {
             val roster = decode<Roster>(line.expect(Msg.ROSTER))
+            val me = if (roster.you >= 0) roster.you else welcome.player
             val hostAddress = line.socket.inetAddress
-            val peers = roster.players.filter { it.player != welcome.player }.map { e ->
+            val peers = roster.players.filter { it.player != me }.map { e ->
                 val address = e.host?.let(InetAddress::getByName) ?: hostAddress
                 Peer(e.player, e.name, InetSocketAddress(address, e.udpPort))
             }
-            return Link(listOf(line), udp, peers, localPlayer = welcome.player, startDelay = welcome.delay, session = welcome.session)
+            return Link(listOf(line), udp, peers, localPlayer = me, startDelay = welcome.delay, session = welcome.session)
         } catch (e: IOException) {
             close()
             throw if (e.message?.endsWith("left") == true) Refused("The host left") else e
         }
     }
 
+    /** Leaves the lobby, telling the host (a network call: off the main thread). */
     override fun close() {
+        runCatching { line.output.message(Msg.BYE, byteArrayOf(welcome.player.toByte())) }
         runCatching { line.socket.close() }
         udp.close()
     }
