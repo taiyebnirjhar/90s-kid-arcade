@@ -99,13 +99,14 @@ class RoomTest {
             room.start(this)
             thread(isDaemon = true) {
                 while (running) {
-                    val e = epoch
                     val known = synchronized(lock) { remotes.values.minOfOrNull { it.size } ?: Int.MAX_VALUE }
                     // Rollback emulator: runs up to 8 frames past the slowest partner.
+                    // (Like the game screen, the inputs count for the game
+                    // [sample] says they're from: a seating may come in between.)
                     if (emulated < local.size && emulated.toLong() < known.toLong() + 8) emulated++
                     var f = room.lockstep.nextLocal
                     val s = room.sample(emulated) { (f++ * 13 + room.localPlayer) and 0xFFF }
-                    synchronized(lock) { if (s.epoch == epoch && e == epoch) local += s.masks.toList() }
+                    synchronized(lock) { if (s.epoch == epoch) local += s.masks.toList() }
                     room.updateAdvantage(emulated)
                     Thread.sleep(16)
                 }
@@ -128,7 +129,7 @@ class RoomTest {
         h.startState = byteArrayOf(1, 2, 3)
         val a = FakeGame(h).apply { play() }
         // Alone, the host's game runs on its own.
-        waitFor("host seated") { a.epoch == 1 && a.emulated > 10 }
+        waitFor("host seated and playing") { a.epoch == 1 && a.emulated > 10 }
         assertEquals(1, h.seats.size)
 
         val g = join(h, "Guest")
