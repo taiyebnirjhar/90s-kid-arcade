@@ -126,12 +126,14 @@
   .top { position: relative; height: 46%; overflow: hidden; }
   .top img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: pixelated; }
   .top::after { content: ""; position: absolute; inset: 0;
-    background: linear-gradient(rgba(11, 11, 18, .92), rgba(11, 11, 18, .85) 22%, transparent 42%, transparent 52%, var(--bg)), linear-gradient(90deg, rgba(11, 11, 18, .7), transparent 70%); }
+    background:
+      linear-gradient(rgba(11, 11, 18, .92), rgba(11, 11, 18, .65) 14%, transparent 30%, transparent 42%, rgba(11, 11, 18, .55) 62%, rgba(11, 11, 18, .92) 85%, var(--bg)),
+      linear-gradient(90deg, rgba(11, 11, 18, .7), transparent 75%); }
   .top .brand { position: absolute; z-index: 1; top: 32px; left: 14px; font-size: 19px; font-weight: 900; font-style: italic; letter-spacing: -.4px; }
   .top .brand span { color: var(--gold); }
   .top .info { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 12px; display: flex; flex-direction: column; }
   .top .k { color: var(--gold); font-size: 8px; font-weight: 800; letter-spacing: 1.4px; }
-  .top .t { font-size: 29px; font-weight: 900; font-style: italic; line-height: 1.05; margin-top: 2px; }
+  .top .t { font-size: 29px; font-weight: 900; font-style: italic; line-height: 1.05; margin-top: 2px; text-shadow: 0 2px 10px rgba(0, 0, 0, .6); }
   .top .st { color: var(--muted); font-size: 9.5px; }
   .play { margin-top: 9px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 33px; background: var(--gold); color: #1d1400; border-radius: 99px; padding: 0 16px; font-weight: 900; font-size: 10px; letter-spacing: .6px; }
   .play::before { content: ""; border-left: 7px solid #1d1400; border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
@@ -143,6 +145,7 @@
   .shelf { display: flex; gap: 10px; padding: 4px 14px; overflow: hidden; }
   .card { flex: 0 0 141px; }
   .card .pic { position: relative; aspect-ratio: 4 / 3; border-radius: 11px; overflow: hidden; background: var(--panel); }
+  .card .pic::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 1px solid rgba(255, 255, 255, .1); } /* keeps black title screens edged */
   .card.sel .pic { outline: 2px solid var(--gold); outline-offset: 3px; }
   .card img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: pixelated; }
   .card .n { margin-top: 6px; font-size: 11px; font-weight: 800; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
