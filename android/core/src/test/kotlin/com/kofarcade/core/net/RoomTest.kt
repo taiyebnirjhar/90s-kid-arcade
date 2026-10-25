@@ -32,8 +32,26 @@ class RoomTest {
         }
     }
 
-    private fun host(set: String = "kof97", seats: Int = 2) =
-        Room.host("Host", set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1).also { open += it }
+    private fun host(set: String = "kof97", seats: Int = 2, device: String = "") =
+        Room.host("Host", set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1, device = device).also { open += it }
+
+    // Quick to notice a phone gone, for the outage tests.
+    private fun quick(vararg rooms: Room) = rooms.forEach {
+        it.quietNs = 1_500_000_000L
+        it.lineQuietNs = 2_500_000_000L
+        it.takeoverMs = 4_000L
+        it.holdMs = 25_000L
+    }
+
+    // Tries to get [room] back into its room until it's in.
+    private fun rejoined(room: Room): Room {
+        var back: Room? = null
+        waitFor("back in the room") {
+            back = room.rejoin(connectMs = 500)
+            back != null
+        }
+        return back!!.also { open += it; quick(it) }
+    }
 
     private fun join(room: Room, name: String, set: String = "kof97", rom: Long = 1, device: String = "") =
         Room.join(localhost, port(room), name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1, device = device).also { open += it }
@@ -58,6 +76,7 @@ class RoomTest {
         // Presses nothing.
         @Volatile var idle = false
         @Volatile var closedReason: String? = null
+        @Volatile var lostReason: String? = null
         @Volatile var error: String? = null
         @Volatile var partnerPaused: Boolean? = null
         @Volatile var loaded: ByteArray? = null
@@ -100,6 +119,10 @@ class RoomTest {
 
         override fun onClosed(reason: String) {
             closedReason = reason
+        }
+
+        override fun onLost(reason: String) {
+            lostReason = reason
         }
 
         override fun onPartnerPaused(player: Int, paused: Boolean) {
@@ -369,6 +392,142 @@ class RoomTest {
         d.running = false
         g3.close()
         waitFor("gone, not held") { h.seats.keys == setOf(0) && h.held.isEmpty() && h.members.size == 1 }
+    }
+
+    @Test
+    fun whenTheHostDropsTheNewHostHoldsItsSeatAndItComesBackIntoIt() {
+        val h = host(device = "host")
+        quick(h)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", device = "rafi")
+        val w = join(h, "Mim", device = "mim")
+        quick(g, w)
+        val b = FakeGame(g).apply { play() }
+        val c = FakeGame(w).apply { play() }
+        waitFor("watching") { h.watcherCount == 2 && b.epoch >= 1 && c.epoch >= 1 }
+        g.requestSeat()
+        waitFor("Rafi seated") { g.localPlayer == 1 }
+
+        // The host's Wi-Fi goes: Rafi takes the room over, Mim follows, and the host's seat is held.
+        h.offline = true
+        waitFor("Rafi has the room, holding the host's seat") { g.isOwner && w.owner == g.localId && g.held.keys == setOf(0) }
+        assertEquals(null, b.lostReason ?: c.lostReason)
+        assertTrue(b.news.any { "seat is held" in it }, b.news.toString())
+
+        // Its Wi-Fi back, the old host finds the room has moved on, and rejoins into its seat.
+        h.offline = false
+        waitFor("the host knows it lost the room") { a.lostReason != null }
+        a.running = false
+        val h2 = rejoined(h)
+        val a2 = FakeGame(h2).apply { play() }
+        waitFor("the host back in seat 1") { h2.localPlayer == 0 && g.held.isEmpty() && a2.epoch == b.epoch }
+        assertTrue(g.isOwner)
+        waitFor("playing again") { a2.framesOf(1) >= 60 && b.framesOf(0) >= 60 }
+        assertTrue(a2.matches(1, b, 60) && b.matches(0, a2, 60))
+        assertEquals(null, a2.error ?: b.error ?: c.error)
+    }
+
+    @Test
+    fun aGuestThatLosesTheHostWithNobodyElseDoesntCarryOnAloneAndRejoins() {
+        val h = host(device = "host")
+        quick(h)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", device = "rafi")
+        quick(g)
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch >= 1 }
+        g.requestSeat()
+        waitFor("Rafi seated") { g.localPlayer == 1 }
+
+        // The host's Wi-Fi blips: Rafi has nobody to take over with, so it has
+        // lost the room (it doesn't open one of its own); the host holds its seat.
+        h.offline = true
+        waitFor("Rafi lost the room") { b.lostReason != null }
+        assertTrue(!g.isOwner)
+        waitFor("the host holds Rafi's seat") { h.held.keys == setOf(1) }
+        h.offline = false
+        b.running = false
+
+        val g2 = rejoined(g)
+        val b2 = FakeGame(g2).apply { play() }
+        waitFor("Rafi back as player 2") { g2.localPlayer == 1 && h.held.isEmpty() && b2.epoch == a.epoch }
+        waitFor("playing again") { a.framesOf(1) >= 60 && b2.framesOf(0) >= 60 }
+        assertTrue(a.matches(1, b2, 60) && b2.matches(0, a, 60))
+        assertEquals(null, a.lostReason)
+    }
+
+    @Test
+    fun whenEveryoneDropsAtOnceTheyComeBackToTheHost() {
+        val h = host("dino", seats = 3, device = "host")
+        quick(h)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", "dino", device = "rafi")
+        val w = join(h, "Mim", "dino", device = "mim")
+        quick(g, w)
+        val b = FakeGame(g).apply { play() }
+        val c = FakeGame(w).apply { play() }
+        waitFor("watching") { h.watcherCount == 2 && b.epoch >= 1 && c.epoch >= 1 }
+        g.requestSeat()
+        waitFor("Rafi seated") { g.localPlayer == 1 }
+
+        // The hotspot goes: nobody reaches anybody. Nobody opens a room of its own.
+        h.offline = true
+        g.offline = true
+        w.offline = true
+        waitFor("the guests lost the room") { b.lostReason != null && c.lostReason != null }
+        waitFor("the host holds Rafi's seat") { h.held.keys == setOf(1) && h.watcherCount == 0 }
+        assertTrue(h.isOwner && !g.isOwner && !w.isOwner)
+
+        // It's back: everyone returns to the host, Rafi into its seat.
+        h.offline = false
+        b.running = false
+        c.running = false
+        val g2 = rejoined(g)
+        val w2 = rejoined(w)
+        val b2 = FakeGame(g2).apply { play() }
+        val c2 = FakeGame(w2).apply { play() }
+        waitFor("back") { g2.localPlayer == 1 && w2.watching && h.held.isEmpty() && h.watcherCount == 1 }
+        waitFor("playing again") { a.framesOf(1) >= 60 && b2.framesOf(0) >= 60 && c2.framesOf(1) >= 30 }
+        assertTrue(a.matches(1, b2, 60) && c2.matches(1, b2, 30))
+        assertEquals(null, a.lostReason)
+    }
+
+    @Test
+    fun aHostThatLeavesOnPurposeGivesUpItsSeat() {
+        val h = host(device = "host")
+        quick(h)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", device = "rafi")
+        quick(g)
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch >= 1 }
+        g.requestSeat()
+        waitFor("Rafi seated") { g.localPlayer == 1 }
+        a.running = false
+        h.close()
+        waitFor("Rafi has the room, the host's seat free") { g.isOwner && g.held.isEmpty() && g.seats.keys == setOf(1) }
+        assertEquals(null, b.lostReason ?: b.closedReason)
+    }
+
+    @Test
+    fun aPhoneOnlyRejoinsItsOwnRoom() {
+        val h = host(device = "host")
+        val other = host(device = "other")
+        FakeGame(h).apply { play() }
+        FakeGame(other).apply { play() }
+        val g = join(h, "Rafi", device = "rafi")
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch >= 1 }
+        val e = assertFailsWith<Refused> {
+            Room.join(localhost, port(other), "Rafi", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, device = "rafi", session = 12345)
+        }
+        assertEquals("That room has ended.", e.message)
+        // Only the phone running a room answers for it.
+        assertFailsWith<Refused> { probe(localhost, port(g)) }
     }
 
     @Test

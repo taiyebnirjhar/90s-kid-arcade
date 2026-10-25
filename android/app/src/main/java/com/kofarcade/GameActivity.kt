@@ -59,6 +59,8 @@ import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.LibretroDroid
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -104,6 +106,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libfbneo_libretro_android.so"
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
+        // Looking for a lost room: as long as a seat is held, every couple of seconds.
+        private const val RECONNECT_MS = 65_000L
+        private const val RECONNECT_EVERY_MS = 2_000L
         private const val FACE_GRAB_MS = 40L
         /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
         private const val MAX_ROLLBACK = 8
@@ -148,6 +153,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var remotePaused = false
     // While the room seats everyone (someone joined or left, a rematch): the game waits.
     @Volatile private var seating = true
+
+    // The room was lost (Wi-Fi went): the game waits while this phone finds it again.
+    private var netLost = false
+    private var reconnecting: Job? = null
+
+    // A player dropped out and their seat is held: the game waits for them (the host can free it).
+    private val waitingForHeld: Boolean get() = room?.held?.isNotEmpty() == true
     private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
@@ -563,6 +575,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
                 override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
 
+                override fun onLost(reason: String) = runOnUiThread { reconnect(room, reason) }
+
                 override fun onPartnerPaused(player: Int, paused: Boolean) = runOnUiThread {
                     remotePaused = room.partnerPaused
                     applyNetFreeze()
@@ -599,6 +613,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     if (startFrame > 0) LibretroDroid.netStartAt(startFrame)
                     if (state != null) retroView.unserializeState(state)
                     runOnUiThread {
+                        // In (again): whatever was lost is found.
+                        netLost = false
                         lastSumFrame = -1
                         lastNetFrame = -1
                         remotePaused = room.partnerPaused
@@ -639,7 +655,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // need next, one macro step per frame, and send them.
     private fun onNetFrame() {
         val room = room ?: return
-        if (!netStarted || seating || localPaused || remotePaused) return
+        if (!netStarted || seating || localPaused || remotePaused || netLost || waitingForHeld) return
         val sample = room.sample(
             emulated = { LibretroDroid.getNetFrame() },
             input = {
@@ -688,16 +704,59 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
-    // The game runs only while no player has the menu open, and not while seating.
+    // The game runs only while no player has the menu open, and not while
+    // seating, finding the room again or waiting for a player who dropped out.
     private fun applyNetFreeze() {
-        LibretroDroid.setFrozen(seating || localPaused || remotePaused)
-        if (remotePaused && !localPaused) {
-            netStatus.text = "${room?.pausedName ?: "Someone"} paused the game"
-            netStatus.visibility = View.VISIBLE
-        } else if (netStarted) {
-            netStatus.visibility = View.GONE
+        val held = room?.held?.values.orEmpty()
+        LibretroDroid.setFrozen(seating || localPaused || remotePaused || netLost || held.isNotEmpty())
+        when {
+            netLost -> {
+                netStatus.text = "Connection lost. Reconnecting…"
+                netStatus.visibility = View.VISIBLE
+            }
+            held.isNotEmpty() && !localPaused -> {
+                val who = held.joinToString(" & ") { it.name }
+                netStatus.text = "Waiting for $who to reconnect…" + if (room?.isOwner == true) "\nRoom & players → Free seat to go on" else ""
+                netStatus.visibility = View.VISIBLE
+            }
+            remotePaused && !localPaused -> {
+                netStatus.text = "${room?.pausedName ?: "Someone"} paused the game"
+                netStatus.visibility = View.VISIBLE
+            }
+            netStarted -> netStatus.visibility = View.GONE
         }
         stalledFrames = 0
+    }
+
+    /**
+     * The room was lost ([RoomListener.onLost]: this phone's Wi-Fi went, or
+     * the host's with nobody to take over): the game waits, and this phone
+     * looks for the room again, its host or whoever took it over, every few
+     * seconds while its seat is held. Back in, the room seats it again.
+     */
+    private fun reconnect(lost: Room, reason: String) {
+        if (isFinishing || room !== lost || reconnecting?.isActive == true) return
+        netLost = true
+        applyNetFreeze()
+        announce(reason)
+        reconnecting = lifecycleScope.launch {
+            val until = android.os.SystemClock.elapsedRealtime() + RECONNECT_MS
+            while (isActive && android.os.SystemClock.elapsedRealtime() < until) {
+                val back = withContext(Dispatchers.IO) { runCatching { lost.rejoin() }.getOrNull() }
+                if (back != null) {
+                    room = back
+                    Netplay.room = back
+                    netStarted = false
+                    wasWatching = null
+                    netStatus.text = "Back in the room…"
+                    startNetplay(back)
+                    updateRoomUi()
+                    return@launch
+                }
+                delay(RECONNECT_EVERY_MS)
+            }
+            netEnded("Couldn't get back into the room. Check the Wi-Fi, then join again with the room key.")
+        }
     }
 
     private fun sendNet(action: (Room) -> Unit) {

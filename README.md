@@ -150,13 +150,24 @@ BIOS for Neo Geo games; the library has them).
 - **Leave any time**: tapping **Leave** empties your seat at once and the
   game goes on for the others. If the host leaves, the next phone takes the
   room over (and the key changes to its address).
-- **Dropped out? Your seat waits 60 seconds.** A phone that goes quiet for
-  10 seconds (Wi-Fi blip, app closed by accident) is treated as gone, but
-  its seat is kept for it: the room sheet shows "Reconnecting… seat kept
-  0:42", watchers who press COIN are told the seat is held, and the phone
-  that comes back (the same phone, by its own id) sits straight back down.
-  The host can tap **Free seat** to let a watcher have it right away; after
-  60 seconds it frees itself.
+- **Dropped out? Your seat waits 60 seconds, and so does the game.** A
+  phone that goes quiet (Wi-Fi blip, app closed by accident) is treated as
+  gone after a few seconds, but its seat is kept for it and the game waits:
+  "Waiting for Rafi to reconnect…", with "Reconnecting… seat kept 0:42" in
+  the room sheet. Watchers who press COIN are told the seat is held. The
+  host can tap **Free seat** to go on without them; after 60 seconds it
+  frees itself.
+- **Back by itself.** The phone that dropped shows "Connection lost.
+  Reconnecting…" and keeps looking for its room every couple of seconds;
+  when its Wi-Fi is back it rejoins (the same phone, by its own id) and sits
+  straight back down. Nobody types the key again.
+- **If the host drops**, the next phone takes the room over and holds the
+  host's seat the same way; the host's phone, its Wi-Fi back, finds the room
+  where it went and rejoins into its seat. A phone that can't reach anyone
+  never opens a room of its own: it reconnects instead.
+- **If everyone drops at once** (the hotspot phone or the router went), the
+  host keeps the room and everyone's seats; when the network is back, every
+  phone finds it again and the game goes on.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over

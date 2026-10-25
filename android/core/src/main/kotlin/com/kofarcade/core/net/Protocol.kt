@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 // (small, frequent, and resent until acknowledged, so a lost packet costs
 // nothing).
 
-const val PROTOCOL = 8
+const val PROTOCOL = 9
 const val TCP_PORT = 7845
 
 /** Rooms listen on the first free one of these TCP ports from [TCP_PORT] (the room key says which). */
@@ -38,6 +38,8 @@ data class Hello(
     val build: String = "",
     /** This phone, the same every time (a random id kept by the app): it gets its seat back if it dropped. */
     val device: String = "",
+    /** Coming back to a room it lost: that room's session (0: any room; a new join). */
+    val session: Int = 0,
 )
 
 /** The owner's answer: let in (with the room's settings and your member [id]) or not, and why. */
@@ -124,6 +126,8 @@ data class Beacon(
     val key: String = "",
     /** Phones watching. */
     val watchers: Int = 0,
+    /** The room's session (from a probe), so a phone looking for its room knows it. */
+    val session: Int = 0,
 )
 
 internal val json = Json { ignoreUnknownKeys = true }
