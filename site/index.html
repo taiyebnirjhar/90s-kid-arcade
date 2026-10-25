@@ -25,6 +25,7 @@
     --on-gold: #1a1406;
     --red: #e5484d;
     --radius: 20px;
+    --gap: clamp(64px, 8vw, 104px); /* the one space between sections */
     --head: "Barlow Condensed", "Arial Narrow", "Arial Black", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -70,8 +71,8 @@
   @media (max-width: 760px) { nav .opt { display: none; } }
 
   /* Hero */
-  .hero { position: relative; padding: 18px 0 64px; overflow: hidden; }
-  @media (min-width: 861px) { .hero { padding: 48px 0 88px; } }
+  .hero { position: relative; padding: 18px 0 24px; overflow: hidden; }
+  @media (min-width: 861px) { .hero { padding: 48px 0 32px; } }
   .hero .ghost {
     position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
     font-family: var(--head); font-style: italic; font-weight: 900; text-transform: uppercase;
@@ -153,8 +154,9 @@
   .screen .home-bar { position: absolute; bottom: 7px; left: 50%; width: 92px; margin-left: -46px; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, .55); z-index: 3; }
 
   /* Sections */
-  section { padding: 72px 0; }
-  @media (max-width: 600px) { section { padding: 52px 0; } .feature { padding: 28px 0; } .panel .btn.gold { padding: 16px 24px; font-size: 16px; } }
+  section { padding: var(--gap) 0 0; }
+  footer { margin-top: var(--gap); }
+  @media (max-width: 600px) { .feature { padding: 28px 0; } .panel .btn.gold { padding: 16px 24px; font-size: 16px; } }
   h2 { font-size: clamp(40px, 6.4vw, 68px); line-height: .92; margin: 12px 0 16px; }
   h2 .thin { font-weight: 300; }
   h2 .gold { color: var(--gold); }
@@ -164,25 +166,24 @@
   /* Game cards */
   .gcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
   @media (max-width: 700px) { .gcards { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 701px) and (max-width: 960px) { .gcards { gap: 12px; } .gcard .meta { left: 12px; right: 12px; bottom: 12px; } .gcard p { display: none; } }
+  @media (min-width: 701px) and (max-width: 960px) { .gcards { gap: 12px; } .gcard .meta { padding: 12px; } }
   @media (max-width: 480px) { .gcards { gap: 12px; } }
   .gcard {
-    position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius); overflow: hidden;
+    position: relative; display: flex; flex-direction: column; border-radius: var(--radius); overflow: hidden;
     background: var(--panel); border: 1px solid var(--line);
     transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   }
-  .gcard img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 50% 0; image-rendering: pixelated; transition: transform .4s ease; }
-  .gcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 38%, rgba(11, 11, 18, .78) 60%, rgba(11, 11, 18, .97) 78%); }
-  .gcard .meta { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; }
-  .gcard .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--gold); text-transform: uppercase; }
-  .gcard h3 { margin: 2px 0 2px; font-size: clamp(22px, 2.4vw, 30px); line-height: .95; }
+  .gcard .pic { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #000; }
+  .gcard img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: pixelated; transition: transform .4s ease; }
+  .gcard .meta { padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+  .gcard .tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--gold); text-transform: uppercase; }
+  .gcard h3 { margin: 4px 0 4px; font-size: clamp(20px, 2.2vw, 28px); line-height: .95; }
   .gcard p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
-  .gcard:hover, .gcard:focus-within { transform: translateY(-6px); border-color: rgba(232, 178, 26, .7); box-shadow: 0 0 0 1px rgba(232, 178, 26, .5), 0 18px 50px rgba(232, 178, 26, .28); }
-  .gcard:hover img { transform: scale(1.06); }
+  .gcard:hover, .gcard:focus-visible { transform: translateY(-6px); border-color: rgba(232, 178, 26, .7); box-shadow: 0 0 0 1px rgba(232, 178, 26, .5), 0 18px 50px rgba(232, 178, 26, .28); }
+  .gcard:hover img { transform: scale(1.05); }
   @media (max-width: 480px) {
-    .gcard { aspect-ratio: 1; }
-    .gcard .meta { left: 12px; right: 12px; bottom: 12px; }
-    .gcard p { display: none; }
+    .gcard .meta { padding: 10px 12px 12px; }
+    .gcard p { font-size: 12px; }
   }
   .more { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; padding: 0; list-style: none; }
   .more li { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
@@ -191,6 +192,8 @@
   /* Feature blocks */
   .feature { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; padding: 40px 0; }
   .feature + .feature { border-top: 1px solid var(--line); }
+  .feature:first-child { padding-top: 0; }
+  .feature:last-child { padding-bottom: 0; }
   .feature.flip .shot { order: 2; }
   @media (max-width: 700px) { .feature { grid-template-columns: 1fr; gap: 28px; } .feature.flip .shot { order: 0; } }
   .shot { position: relative; }
@@ -322,7 +325,7 @@
         <li><b>15+</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
-        <li><b>Free</b> &amp; open source</li>
+        <li><b>Free</b> · no ads</li>
       </ul>
     </div>
     <div class="stage">
@@ -363,10 +366,10 @@
       <p class="sub">Neo Geo and Capcom classics on FBNeo, the arcade emulator, each with controls made for it. Bring your own games.</p>
     </div>
     <div class="gcards reveal">
-      <article class="gcard" tabindex="0"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="The King of Fighters '97 title screen" loading="lazy"><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF '97</h3><p>Every super in one tap</p></div></article>
-      <article class="gcard" tabindex="0"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="Metal Slug 3 title screen" loading="lazy"><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 3</h3><p>Hold to rapid fire</p></div></article>
-      <article class="gcard" tabindex="0"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="Street Fighter III 3rd Strike title screen" loading="lazy"><div class="meta"><span class="tag">Fighting</span><h3 class="head">SF III 3rd Strike</h3><p>Knows your Super Art</p></div></article>
-      <article class="gcard" tabindex="0"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="Cadillacs and Dinosaurs title screen" loading="lazy"><div class="meta"><span class="tag">Beat 'em up</span><h3 class="head">Cadillacs &amp; Dinos</h3><p>Up to 3 players</p></div></article>
+      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt="The King of Fighters '97 title screen" loading="lazy"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">KOF '97</h3><p>Every super in one tap</p></div></article>
+      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt="Metal Slug 3 title screen" loading="lazy"></div><div class="meta"><span class="tag">Run &amp; gun</span><h3 class="head">Metal Slug 3</h3><p>Hold to rapid fire</p></div></article>
+      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Street%20Fighter%20III%203rd%20Strike_%20Fight%20for%20the%20Future%20%28Japan%20990608%2C%20NO%20CD%29.png" alt="Street Fighter III 3rd Strike title screen" loading="lazy"></div><div class="meta"><span class="tag">Fighting</span><h3 class="head">SF III 3rd Strike</h3><p>Knows your Super Art</p></div></article>
+      <article class="gcard" tabindex="0"><div class="pic"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt="Cadillacs and Dinosaurs title screen" loading="lazy"></div><div class="meta"><span class="tag">Beat 'em up</span><h3 class="head">Cadillacs &amp; Dinos</h3><p>Up to 3 players</p></div></article>
     </div>
     <ul class="more">
       <li><b>KOF 2002</b> &amp; Magic Plus</li>
@@ -380,7 +383,7 @@
   </div>
 </section>
 
-<section id="multiplayer" style="padding-top: 24px">
+<section id="multiplayer">
   <div class="wrap">
     <div class="feature reveal">
       <div class="shot">
@@ -465,7 +468,7 @@
   </div>
 </section>
 
-<section id="faq" style="padding-top: 0">
+<section id="faq">
   <div class="wrap">
     <div class="kicker">Questions</div>
     <h2 class="head" style="font-size: clamp(34px, 5vw, 48px)">FAQ</h2>
@@ -475,7 +478,7 @@
       <details><summary>How many can play?</summary><p>As many as the game takes: 2 in most, 3 in Cadillacs and Dinosaurs. Up to 8 phones can be in a room; the rest watch and can take a seat with COIN or START.</p></details>
       <details><summary>Do all phones need the same version?</summary><p>Yes: every phone needs the latest app and the same game files. The app tells you if they differ.</p></details>
       <details><summary>Which phones does it run on?</summary><p>Android 8 or newer. Neo Geo games run on almost any phone; Street Fighter III and Marvel vs Capcom like a recent one.</p></details>
-      <details><summary>Is it open source?</summary><p>Yes, under GPL-3.0, on <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">GitHub</a>. It runs the FBNeo arcade emulator through LibretroDroid.</p></details>
+      <details><summary>Where is the source code?</summary><p>On <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">GitHub</a>. It runs the FBNeo arcade emulator through LibretroDroid.</p></details>
     </div>
   </div>
 </section>
@@ -483,7 +486,7 @@
 <footer>
   <div class="wrap">
     <a class="logo" href="#">90s Kid <span>Arcade</span></a>
-    <div>A tribute to the arcades we grew up in · <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">Source</a> · GPL-3.0 · FBNeo has its own non-commercial license</div>
+    <div>A tribute to the arcades we grew up in · <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">Source</a> · FBNeo has its own non-commercial license</div>
   </div>
 </footer>
 
