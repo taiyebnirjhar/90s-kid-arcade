@@ -526,6 +526,12 @@ class Room private constructor(
         if (isOwner) worker.execute { rematch() } else control(Msg.REMATCH)
     }
 
+    /** Playing: gives up the seat, to watch (it's free for someone else). */
+    fun requestWatch() {
+        if (watching) return
+        if (isOwner) worker.execute { stand(localId) } else control(Msg.STAND)
+    }
+
     /** Watching: asks for a seat (a free one, or an idle player's; the first to ask gets it). */
     fun requestSeat() {
         if (!watching) return
@@ -631,6 +637,7 @@ class Room private constructor(
                     Msg.REMATCH -> worker.execute { rematch() }
                     Msg.RESYNC -> worker.execute { resync() }
                     Msg.SIT -> worker.execute { sit(from) }
+                    Msg.STAND -> worker.execute { stand(from) }
                     Msg.REWATCH -> worker.execute { if (members[from]?.seat == -1) watch(from) }
                 }
             }
@@ -777,6 +784,14 @@ class Room private constructor(
         }
         tell(idle.id, "You were idle, so ${m.name} took your seat. Press COIN or START to play again.")
         seat("${m.name} is player ${idle.seat + 1} (${idle.name} was idle)", moves = mapOf(id to idle.seat, idle.id to -1))
+    }
+
+    /** A player gives up their seat (on the worker). */
+    private fun stand(id: Int) {
+        if (closed || !isOwner) return
+        val m = members[id] ?: return
+        if (m.seat < 0) return
+        seat("${m.name} is watching now", moves = mapOf(id to -1))
     }
 
     // Tells one phone something.

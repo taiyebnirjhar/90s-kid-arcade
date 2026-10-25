@@ -141,6 +141,8 @@ internal object Msg {
     const val REWATCH: Byte = 18
     /** Owner to everyone: who's in now (a [Seating] of the same game: someone came to watch or left). */
     const val ROSTER: Byte = 19
+    /** A player gives up their seat, to watch. */
+    const val STAND: Byte = 20
 }
 
 /**

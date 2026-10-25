@@ -200,7 +200,7 @@ private fun Hero(game: Game, set: String?, label: String, action: String, onClic
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick: () -> Unit, width: Dp = 210.dp) {
+fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick: () -> Unit, width: Dp = 210.dp) {
     val ready = set != null
     Box(
         Modifier

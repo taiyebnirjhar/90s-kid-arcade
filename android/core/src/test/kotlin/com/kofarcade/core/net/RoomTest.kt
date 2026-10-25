@@ -274,6 +274,25 @@ class RoomTest {
     }
 
     @Test
+    fun aPlayerCanGiveUpTheSeatToWatch() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Guest")
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch == 1 }
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 2 && g.localPlayer == 1 }
+        g.requestWatch()
+        waitFor("watching again") { a.epoch == 3 && b.epoch == 3 && g.watching }
+        assertEquals(setOf(0), h.seats.keys)
+        assertTrue(a.news.any { "Guest is watching now" in it }, a.news.toString())
+        // The host can too.
+        h.requestWatch()
+        waitFor("host watching") { a.epoch == 4 && h.watching && h.seats.isEmpty() }
+    }
+
+    @Test
     fun aPlayerLeavingFreesTheSeatAndTheGameGoesOn() {
         val h = host()
         val a = FakeGame(h).apply { play() }
