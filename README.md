@@ -54,7 +54,11 @@ and settings.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Controls to pick by hand). The ring around
+fighter (turn this off in Controls to pick by hand). Each fighter's face
+comes from the game itself: the first time they're on screen the app takes
+the face the game draws by the life bar (Double Dragon: on its select
+screen) and shows it from then on on the team buttons, the pause menu and
+the select screen; the app ships no character art. The ring around
 A B C D shows that fighter's desperation moves and specials, each drawn as
 its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
 tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback. Pause →

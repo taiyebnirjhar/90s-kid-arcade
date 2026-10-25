@@ -82,6 +82,10 @@ public:
     // the app can see which fighter is on screen. Safe from any thread.
     size_t getMemorySize(unsigned id);
     bool readMemory(unsigned id, size_t offset, int8_t* dst, size_t length);
+    // The picture the core drew last, as ARGB: width, height, then the
+    // pixels; empty the first time. Each call asks for the next frame, so
+    // polling costs one copy per call.
+    std::vector<int32_t> grabFrame();
 
     // Multiplayer (90s Kid Arcade), rollback netcode: each frame runs with
     // this phone's input and every partner's, each predicted (their last one)
@@ -218,6 +222,10 @@ private:
     bool dirtyVideo = false;
 
     std::mutex coreLock;
+    std::mutex grabLock;
+    std::atomic<bool> grabWanted = false;
+    std::vector<int32_t> grabbed;
+    void grab(const void* data, unsigned width, unsigned height, size_t pitch);
 
     std::atomic<bool> frozen{false};
     std::mutex netMutex;
