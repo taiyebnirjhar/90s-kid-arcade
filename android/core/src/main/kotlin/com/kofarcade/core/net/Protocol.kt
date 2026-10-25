@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 // phone to every other (small, frequent, and resent until acknowledged, so a
 // lost packet costs nothing).
 
-const val PROTOCOL = 5
+const val PROTOCOL = 6
 const val TCP_PORT = 7845
 const val BEACON_PORT = 7846
 
@@ -54,7 +54,11 @@ data class RosterEntry(val player: Int, val name: String, val host: String?, val
 
 /** Sent by the host to every guest when it starts the game: who plays, and where to send inputs. */
 @Serializable
-data class Roster(val players: List<RosterEntry>)
+data class Roster(
+    val players: List<RosterEntry>,
+    /** The receiving guest's player number (a guest who left the lobby closes the gap). */
+    val you: Int = -1,
+)
 
 /** A [Hello] with this set asks only which game the host is running (joining by address). */
 const val PROBE = "?"

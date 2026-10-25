@@ -47,9 +47,14 @@ class RomStore(private val context: Context) {
     /** Copies the picked file in and checks it. */
     fun import(uri: Uri): RomCheck {
         val tmp = partFile("import")
-        context.contentResolver.openInputStream(uri).use { input ->
-            requireNotNull(input) { "Can't read the picked file" }
-            tmp.outputStream().use { input.copyTo(it) }
+        try {
+            context.contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Can't read the picked file" }
+                tmp.outputStream().use { input.copyTo(it) }
+            }
+        } catch (e: Exception) {
+            tmp.delete()
+            throw e
         }
         return add(tmp)
     }
@@ -60,6 +65,16 @@ class RomStore(private val context: Context) {
      * otherwise pick first; anything else is deleted.
      */
     fun add(tmp: File): RomCheck {
+        try {
+            return checkAndStore(tmp)
+        } finally {
+            // Moved into place, or not wanted: either way no scratch file stays behind.
+            tmp.delete()
+            partFile("repack").delete()
+        }
+    }
+
+    private fun checkAndStore(tmp: File): RomCheck {
         var check = try {
             checkRom(items(tmp)) { set -> file("$set.zip").takeIf { it.isFile }?.let(::items) }
         } catch (e: ZipException) {
@@ -81,11 +96,17 @@ class RomStore(private val context: Context) {
             RomCheck.Bios -> moveIn(tmp, BIOS)
             is RomCheck.Game -> {
                 val set = check.set
-                zips().filter { it != set.name && it != set.parent && romSet(it)?.base == set.base }
-                    .forEach { file("$it.zip").delete() }
                 moveIn(tmp, "${set.name}.zip")
+                // Other versions of the same card would be booted instead of
+                // this one, so they go; a hack with its own card stays, and so
+                // does any zip another one still borrows files from (its parent).
+                val game = gameForSet(set.name)
+                val kept = zips()
+                val parents = kept.mapNotNull { romSet(it)?.parent }.toSet()
+                kept.filter { it != set.name && it != set.parent && it !in parents && gameForSet(it) == game }
+                    .forEach { file("$it.zip").delete() }
             }
-            else -> tmp.delete()
+            else -> Unit
         }
         return check
     }
@@ -264,7 +285,7 @@ class Prefs(context: Context) {
             val arr = JSONArray(raw)
             List(arr.length()) { i ->
                 val o = arr.getJSONObject(i)
-                Move(o.getString("name"), o.getString("cmd"), o.optString("type", "special"))
+                Move(o.getString("name"), o.getString("cmd"), o.optString("type", "special"), o.optString("note"))
             }
         }.getOrNull()
     }
@@ -275,7 +296,7 @@ class Prefs(context: Context) {
             return
         }
         val arr = JSONArray()
-        moves.forEach { arr.put(JSONObject().put("name", it.name).put("cmd", it.cmd).put("type", it.type)) }
+        moves.forEach { arr.put(JSONObject().put("name", it.name).put("cmd", it.cmd).put("type", it.type).put("note", it.note)) }
         sp.edit().putString("moves.$key", arr.toString()).apply()
     }
 }

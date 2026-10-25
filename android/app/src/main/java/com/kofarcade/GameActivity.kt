@@ -325,16 +325,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
 
-    override fun onPlay(cmd: String): Int {
-        val air = activeCharacter()?.let(::movesFor)?.firstOrNull { it.cmd == cmd }?.airOnly == true
+    override fun onPlay(cmd: String, move: Move?): Int {
+        // The move itself, not a lookup by input: Benimaru's Raijin Ken and
+        // its air version share 236+A.
+        val air = move?.airOnly == true
         return pad.play(cmd, jumpFirst = air && onGround())
     }
 
     /** The fighter is on the floor (detection's grounded word is 0; KOF: their height). */
     private fun onGround(): Boolean {
         val spec = ramMap ?: return true
-        val ram = readRam(spec, spec.windows) ?: return true
-        return ram.word(fighterBase(spec, ram, localPlayer) + spec.grounded) == 0
+        // The fighter's block as detection last saw it (tag teams move it):
+        // one small read, as this runs on the touch.
+        val addr = (groundBase ?: (spec.player + spec.playerStride * localPlayer)) + spec.grounded
+        val ram = readRam(spec, listOf((addr and 3.inv()) to 4)) ?: return true
+        return ram.word(addr) == 0
     }
 
     /** Reads [windows] of the game's RAM (start, length: CPU addresses), or null if the core can't. */
@@ -487,7 +492,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     /** Pause menu: restart the game on every phone, from the start state they shared. */
     fun rematch() {
-        sendNet { it.sendRematch() }
+        val target = link?.nextRematch() ?: return
+        sendNet { it.sendRematch(target) }
         close()
         restartNet()
     }
@@ -495,6 +501,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun restartNet() {
         val link = link ?: return
         val state = netStartState ?: return
+        // Already restarting: the loop below catches up with any newer request.
         if (restarting) return
         restarting = true
         applyNetFreeze()
@@ -502,14 +509,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         pad.releaseAll()
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                link.restart { LibretroDroid.setNetplay(true, link.localPlayer, link.players, MAX_ROLLBACK) }
-                retroView.unserializeState(state)
+                while (link.epoch < link.wantedEpoch) {
+                    link.restart { LibretroDroid.setNetplay(true, link.localPlayer, link.players, MAX_ROLLBACK) }
+                    retroView.unserializeState(state)
+                }
             }
             lastSumFrame = -1
             lastNetFrame = -1
             desyncShown = false
             restarting = false
             applyNetFreeze()
+            // A request that came in just as the loop finished.
+            if (link.epoch < link.wantedEpoch) restartNet()
         }
     }
 
@@ -568,9 +579,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     delay(DETECT_MS)
                     if (paused || frame == 0L || !(prefs.autoDetect || prefs.detectInfo)) {
                         detectInfo.visibility = View.GONE
+                        if (!prefs.autoDetect && superArt != null) {
+                            superArt = null
+                            updateHud()
+                        }
                         continue
                     }
                     val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
+                    groundBase = fighterBase(spec, ram, localPlayer)
                     onDetected(detect(spec, ram, localPlayer))
                 }
             }
@@ -636,14 +652,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** Street Fighter III: the Super Art picked this fight (detected), or null to show all three. */
     private var superArt: Int? = null
 
+    /** The block of our fighter on screen, as detection last read it. */
+    @Volatile private var groundBase: Int? = null
+
     fun movesFor(c: Character): List<Move> = (prefs.customMoves(movesKey(c)) ?: c.moves)
         .filter { superArt == null || it.superArt == null || it.superArt == superArt }
         .take(MAX_MOVES)
 
-    fun defaultMoves(c: Character): List<Move> = c.moves.take(MAX_MOVES)
+    fun defaultMoves(c: Character): List<Move> = c.moves
+        .filter { superArt == null || it.superArt == null || it.superArt == superArt }
+        .take(MAX_MOVES)
 
+    /** The editor shows the moves on the ring; the other Super Arts' stay in the list. */
     fun saveMoves(c: Character, moves: List<Move>) {
-        prefs.setCustomMoves(movesKey(c), moves)
+        val hidden = (prefs.customMoves(movesKey(c)) ?: c.moves)
+            .filter { superArt != null && it.superArt != null && it.superArt != superArt }
+        prefs.setCustomMoves(movesKey(c), moves + hidden)
         updateHud()
     }
 

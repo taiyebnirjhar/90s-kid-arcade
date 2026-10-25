@@ -40,8 +40,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         fun onDir(dir: Int)
         fun onKey(key: Key, down: Boolean)
 
-        /** Plays a command; returns how many frames it takes. */
-        fun onPlay(cmd: String): Int
+        /** Plays a command ([move]: the ring's move it came from); returns how many frames it takes. */
+        fun onPlay(cmd: String, move: Move? = null): Int
         fun onMenu()
         fun onFlip()
         fun onSlot(index: Int)
@@ -231,6 +231,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         blockLow = false
         pointerEl.clear()
         pressed.clear()
+        stopRunning()
         stickPointer = -1
         knobDx = 0f
         knobDy = 0f
@@ -345,11 +346,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             )
         }
         // Block: left of A, where the thumb already is. Slide down for low block.
+        // Six buttons reach further out (LP and LK sit wider than A and C):
+        // Block and the system chips move out with them so nothing overlaps.
+        val six = st.faceButtons.size == 6
         if (st.block) {
-            els += El("block", Kind.BLOCK, placed("block", ax + (-1.85f * s) * mirror, ay + hh, 25 * d * sc), true)
+            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.0f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
         }
         val sysR = 22 * d * sc
-        arcPositions(st.system.size, 1.72f * s, 104f, 34f).forEachIndexed { i, p ->
+        val sysArc = if (six) arcPositions(st.system.size, 2.15f * s, 95f, 34f) else arcPositions(st.system.size, 1.72f * s, 104f, 34f)
+        sysArc.forEachIndexed { i, p ->
             els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = st.system[i])
         }
 
@@ -375,6 +380,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         pressed.clear()
         firing.clear()
         pointerEl.clear()
+        stopRunning()
         elements = els
         if (stickPointer == -1) resetStick()
     }
@@ -861,7 +867,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun fire(id: Int, el: El, cmd: String) {
-        val frames = listener.onPlay(cmd)
+        val frames = listener.onPlay(cmd, el.move)
         pointerEl[id] = el
         pressed += el
         firing[el] = frame to frames
@@ -926,6 +932,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // Running from the Run button (how many fingers hold it) and from the stick.
     private var holdRuns = 0
     private var stickRun = false
+
+    /** Every finger lifted at once (pause, a new layout): no Run press is left counted. */
+    private fun stopRunning() {
+        if (holdRuns > 0 || stickRun) listener.onRun(false)
+        holdRuns = 0
+        stickRun = false
+    }
 
     private fun setStickRun(on: Boolean) {
         if (on == stickRun) return

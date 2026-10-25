@@ -101,8 +101,15 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         downloads[entry.name] = Download()
         try {
             val check = withContext(Dispatchers.IO) {
-                val tmp = roms.partFile("library")
-                library().download(entry.name, tmp) { downloads[entry.name] = Download(it) }
+                // Its own scratch file: a download left running by a rotated
+                // screen can't trip over the next one.
+                val tmp = roms.partFile("library-${entry.name.hashCode().toUInt()}")
+                try {
+                    library().download(entry.name, tmp) { downloads[entry.name] = Download(it) }
+                } catch (e: Exception) {
+                    tmp.delete()
+                    throw e
+                }
                 roms.add(tmp)
             }
             val set = when (check) {

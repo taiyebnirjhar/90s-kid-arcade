@@ -445,7 +445,7 @@ fun RosterContent(
     }
 }
 
-private class EditRow(name: String, cmd: String, val type: String) {
+private class EditRow(name: String, cmd: String, val type: String, val note: String = "") {
     var name by mutableStateOf(name)
     var cmd by mutableStateOf(cmd)
 }
@@ -453,7 +453,7 @@ private class EditRow(name: String, cmd: String, val type: String) {
 @Composable
 private fun MoveEditor(game: GameActivity, character: Character) {
     val rows = remember(character.id) {
-        mutableStateListOf<EditRow>().apply { addAll(game.movesFor(character).map { EditRow(it.name, it.cmd, it.type) }) }
+        mutableStateListOf<EditRow>().apply { addAll(game.movesFor(character).map { EditRow(it.name, it.cmd, it.type, it.note) }) }
     }
     Sheet(onDismiss = { game.close() }, width = 680) {
         MoveEditorContent(
@@ -466,13 +466,14 @@ private fun MoveEditor(game: GameActivity, character: Character) {
             onAdd = { rows += EditRow("Super", "236236+A", "dm") },
             onReset = {
                 rows.clear()
-                rows.addAll(game.defaultMoves(character).map { EditRow(it.name, it.cmd, it.type) })
+                rows.addAll(game.defaultMoves(character).map { EditRow(it.name, it.cmd, it.type, it.note) })
             },
             onCancel = { game.close() },
             onSave = {
                 val valid = rows
                     .filter { it.name.isNotBlank() && runCatching { parseCommand(it.cmd) }.isSuccess }
-                    .map { Move(it.name.trim(), it.cmd, it.type) }
+                    // The note goes along: it says "in air" (jump first) and which Super Art.
+                    .map { Move(it.name.trim(), it.cmd, it.type, it.note) }
                 game.saveMoves(character, valid)
                 game.close()
             },
