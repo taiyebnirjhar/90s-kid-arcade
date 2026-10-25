@@ -124,6 +124,10 @@ public class LibretroDroid {
     /** Copies [offset, offset + length) of a core memory area, or null if out of range. */
     public static native byte[] readMemory(int id, int offset, int length);
 
+    // The last picture the core drew: width, height, then ARGB pixels; null
+    // the first time (each call asks for the next frame).
+    public static native int[] grabFrame();
+
     // Multiplayer, rollback netcode: see LibretroDroid::setNetplay in libretrodroid.h.
     // activeMask: bit p set = seat p has a phone (empty seats play no input and aren't waited for).
     public static native void setNetplay(boolean enabled, int localPlayer, int players, int maxRollback, int activeMask);

@@ -188,6 +188,46 @@ bool LibretroDroid::readMemory(unsigned id, size_t offset, int8_t* dst, size_t l
     return true;
 }
 
+std::vector<int32_t> LibretroDroid::grabFrame() {
+    std::lock_guard<std::mutex> lock(grabLock);
+    std::vector<int32_t> result;
+    result.swap(grabbed);
+    grabWanted = true;
+    return result;
+}
+
+void LibretroDroid::grab(const void* data, unsigned width, unsigned height, size_t pitch) {
+    std::lock_guard<std::mutex> lock(grabLock);
+    grabWanted = false;
+    grabbed.resize(2 + (size_t) width * height);
+    grabbed[0] = (int32_t) width;
+    grabbed[1] = (int32_t) height;
+    int format = Environment::getInstance().getPixelFormat();
+    for (unsigned y = 0; y < height; y++) {
+        auto* row = (const uint8_t*) data + y * pitch;
+        int32_t* out = grabbed.data() + 2 + (size_t) y * width;
+        for (unsigned x = 0; x < width; x++) {
+            uint32_t r, g, b;
+            if (format == RETRO_PIXEL_FORMAT_XRGB8888) {
+                uint32_t p = ((const uint32_t*) row)[x];
+                r = (p >> 16) & 0xFF; g = (p >> 8) & 0xFF; b = p & 0xFF;
+            } else {
+                uint32_t p = ((const uint16_t*) row)[x];
+                if (format == RETRO_PIXEL_FORMAT_RGB565) {
+                    r = (p >> 11) & 0x1F; g = (p >> 5) & 0x3F; b = p & 0x1F;
+                    g = (g << 2) | (g >> 4);
+                } else {
+                    r = (p >> 10) & 0x1F; g = (p >> 5) & 0x1F; b = p & 0x1F;
+                    g = (g << 3) | (g >> 2);
+                }
+                r = (r << 3) | (r >> 2);
+                b = (b << 3) | (b >> 2);
+            }
+            out[x] = (int32_t) (0xFF000000u | (r << 16) | (g << 8) | b);
+        }
+    }
+}
+
 std::pair<int8_t*, size_t> LibretroDroid::serializeSRAM() {
     std::lock_guard<std::mutex> lock(coreLock);
 
@@ -555,6 +595,9 @@ void LibretroDroid::handleVideoRefresh(
     unsigned int height,
     size_t pitch
 ) {
+    if (grabWanted && data != nullptr && data != RETRO_HW_FRAME_BUFFER_VALID) {
+        grab(data, width, height, pitch);
+    }
     if (video) {
         video->onNewFrame(data, width, height, pitch);
 

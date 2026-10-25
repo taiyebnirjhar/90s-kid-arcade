@@ -333,6 +333,17 @@ JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_read
     return result;
 }
 
+JNIEXPORT jintArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_grabFrame(
+    JNIEnv* env,
+    jclass obj
+) {
+    std::vector<int32_t> frame = LibretroDroid::getInstance().grabFrame();
+    if (frame.empty()) return nullptr;
+    jintArray result = env->NewIntArray((jsize) frame.size());
+    env->SetIntArrayRegion(result, 0, (jsize) frame.size(), frame.data());
+    return result;
+}
+
 JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setCheat(
     JNIEnv* env,
     jclass obj,

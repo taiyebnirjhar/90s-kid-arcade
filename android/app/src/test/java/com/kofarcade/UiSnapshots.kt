@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -245,6 +246,27 @@ class UiSnapshots {
         shot("pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
     }
 
+    // A fighter's face from the game (here a made-up one) in the pause header and the HUD's team bar.
+    @Test
+    fun faces() {
+        landscape()
+        shot("faces") {
+            val face = remember { syntheticFace().asImageBitmap() }
+            androidx.compose.runtime.CompositionLocalProvider(LocalFaces provides mapOf("Iori Yagami" to face)) {
+                Box(Modifier.fillMaxSize()) {
+                    Hud(faces = true)
+                    PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun hudFaces() {
+        landscape()
+        shot("hud_faces") { Hud(faces = true) }
+    }
+
     @Test
     fun pauseSmall() {
         smallLandscape()
@@ -380,13 +402,36 @@ class UiSnapshots {
         e.recycle()
     }
 
+    /**
+     * A made-up 24 x 24 pixel "face" (no game art): a coloured block head with
+     * hair, eyes and a mouth, like the faces the game shows. Made while rendering.
+     */
+    private fun syntheticFace(): android.graphics.Bitmap {
+        val n = 24
+        val px = IntArray(n * n) { i ->
+            val x = i % n
+            val y = i / n
+            when {
+                y < 7 || x < 3 || x > 20 -> 0xFF2B1A3A.toInt() // hair
+                (y in 10..11) && (x in 7..9 || x in 14..16) -> 0xFF101018.toInt() // eyes
+                y == 17 && x in 9..14 -> 0xFF8A2A2A.toInt() // mouth
+                else -> 0xFFE0A47A.toInt() // skin
+            }
+        }
+        return android.graphics.Bitmap.createBitmap(px, n, n, android.graphics.Bitmap.Config.ARGB_8888)
+    }
+
     /** The HUD over the game; [touches] runs once it's laid out, to press things. */
     @Composable
-    private fun Hud(editing: Boolean = false, touches: (HudView, Float) -> Unit = { _, _ -> }) {
+    private fun Hud(editing: Boolean = false, faces: Boolean = false, touches: (HudView, Float) -> Unit = { _, _ -> }) {
         GameBehind {
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx ->
                     HudView(ctx, hudListener).apply {
+                        if (faces) {
+                            val face = syntheticFace()
+                            faceOf = { if (it == "Iori Yagami") face else null }
+                        }
                         state = hudState()
                         opacity = 0.46f
                         this.editing = editing
