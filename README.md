@@ -35,6 +35,9 @@ chip files on import.
 
 ## Install
 
+The website, [taiyebnirjhar.github.io/90s-kid-arcade](https://taiyebnirjhar.github.io/90s-kid-arcade/)
+(`site/`, published by `.github/workflows/pages.yml`), has the download button and how to install.
+
 Each push to `main` builds the app and publishes it as the
 [latest release](../../releases/latest) (the **Releases** box on the repo page). On your phone, download
 `90s-Kid-Arcade.apk` from there and open it (allow installing from your browser

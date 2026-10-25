@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>90s Kid Arcade</title>
+<meta name="description" content="Neo Geo and Capcom arcade classics on Android, with touch controls made for each game: one-tap specials in KOF, rapid fire in Metal Slug, and multiplayer over a phone's hotspot.">
+<meta name="theme-color" content="#0B0B12">
+<meta property="og:title" content="90s Kid Arcade">
+<meta property="og:description" content="Arcade classics on Android with one-tap specials and hotspot multiplayer.">
+<meta property="og:image" content="img/home.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B12'/%3E%3Ctext x='32' y='42' font-family='Arial Black,Arial' font-weight='900' font-style='italic' font-size='26' text-anchor='middle' fill='%23E8B21A'%3E90s%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0b0b12;
+    --panel: #171724;
+    --line: #2c2c40;
+    --text: #f1f0f7;
+    --muted: #9a98b0;
+    --gold: #e8b21a;
+    --on-gold: #1a1406;
+    --red: #e5484d;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--gold); }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  header { padding: 18px 0; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .logo { font-weight: 900; font-style: italic; font-size: 22px; letter-spacing: -0.5px; text-decoration: none; color: var(--text); white-space: nowrap; }
+  .logo span { color: var(--gold); }
+  nav { display: flex; gap: 18px; font-size: 14px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--text); }
+  @media (max-width: 560px) { nav .opt { display: none; } }
+
+  /* Hero */
+  .hero {
+    background:
+      radial-gradient(900px 420px at 85% 10%, rgba(229, 72, 77, .22), transparent 60%),
+      radial-gradient(700px 380px at 10% 90%, rgba(232, 178, 26, .12), transparent 60%);
+    padding: 36px 0 56px;
+  }
+  .hero .wrap { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: center; }
+  @media (max-width: 820px) { .hero .wrap { grid-template-columns: 1fr; } }
+  .kicker { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  h1 { font-size: clamp(38px, 7vw, 64px); line-height: 1.02; margin: 10px 0 16px; font-weight: 900; font-style: italic; letter-spacing: -1.5px; }
+  h1 span { color: var(--gold); }
+  .lead { color: var(--muted); font-size: 18px; max-width: 34em; margin: 0 0 26px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 15px 24px; border-radius: 999px; font-weight: 800; text-decoration: none;
+    font-size: 16px; letter-spacing: .3px; border: 1px solid var(--line); color: var(--text);
+  }
+  .btn.gold { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+  .btn.gold:hover { filter: brightness(1.08); }
+  .btn:not(.gold):hover { border-color: var(--muted); }
+  .fine { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  /* A phone showing the top of a screen (the rest fades out). */
+  .phone {
+    justify-self: center; width: min(290px, 78vw); border-radius: 34px; padding: 10px;
+    background: #050508; border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+    position: relative;
+  }
+  .phone .screen { border-radius: 26px; overflow: hidden; aspect-ratio: 9 / 15; }
+  .phone .screen::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 10px; height: 70px;
+    border-radius: 0 0 26px 26px; background: linear-gradient(transparent, #050508);
+  }
+  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  /* Sections */
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(26px, 4.5vw, 38px); line-height: 1.12; font-weight: 900; font-style: italic; letter-spacing: -.8px; margin: 6px 0 14px; }
+  .sub { color: var(--muted); max-width: 44em; margin: 0 0 28px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; font-style: italic; font-weight: 800; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+
+  .games { display: flex; flex-wrap: wrap; gap: 10px; }
+  .game { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-weight: 700; font-style: italic; }
+  .game small { display: block; color: var(--muted); font-style: normal; font-weight: 500; font-size: 12px; }
+
+  .shot { border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; background: var(--panel); }
+  .wide { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 720px) { .wide { grid-template-columns: 1fr; } }
+  .split { display: grid; grid-template-columns: 1fr 260px; gap: 32px; align-items: start; }
+  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } .split .phone { display: none; } }
+
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  ol.steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 16px 60px; position: relative; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 16px; top: 14px; width: 30px; height: 30px; border-radius: 9px;
+    background: var(--gold); color: var(--on-gold); font-weight: 900; display: grid; place-items: center; font-style: italic;
+  }
+  ol.steps b { display: block; }
+  ol.steps span { color: var(--muted); font-size: 15px; }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  .key { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--gold); font-weight: 800; letter-spacing: 2px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#">90s Kid <span>Arcade</span></a>
+    <nav>
+      <a class="opt" href="#games">Games</a>
+      <a class="opt" href="#multiplayer">Multiplayer</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <div class="kicker">For everyone who grew up at the arcade</div>
+      <h1>The arcade<br>in your <span>pocket</span></h1>
+      <p class="lead">
+        The King of Fighters, Metal Slug, Cadillacs and Dinosaurs and more on Android, with touch
+        controls made for each game: every special move one tap away, rapid fire, and multiplayer with
+        your friends over one phone's hotspot. No internet needed.
+      </p>
+      <div class="cta">
+        <a class="btn gold" href="https://github.com/taiyebnirjhar/90s-kid-arcade/releases/latest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m6 10 6 6 6-6"/><path d="M4 21h16"/></svg>
+          Download for Android
+        </a>
+        <a class="btn" href="#install">How to install</a>
+      </div>
+      <p class="fine">Free. On the download page, tap <b>90s-Kid-Arcade.apk</b>. Games aren't included: use your own copies.</p>
+    </div>
+    <div class="phone"><div class="screen"><img src="img/home.png" width="450" height="1000" alt="The app's home screen: Continue Sengoku 3, and game cards for KOF and Metal Slug"></div></div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="kicker">What it does</div>
+    <h2>Built for each game, not a generic gamepad</h2>
+    <p class="sub">An on-screen controller that knows the game you're playing, the fighter you picked and which way they face.</p>
+    <div class="grid">
+      <div class="card"><span class="badge">Fighters</span><h3>Specials in one tap</h3><p>Every super and special of your fighter on a ring around the buttons, drawn as its stick motion. One tap plays the whole input, frame-exact.</p></div>
+      <div class="card"><span class="badge">Automatic</span><h3>Knows who you're fighting with</h3><p>Reads the game to see your team, who's on and which way they face, so the ring always matches. Follows tag teams in Marvel vs Capcom and your Super Art in Street Fighter III.</p></div>
+      <div class="card"><span class="badge">Checked</span><h3>Every move tested</h3><p>Each move was played in the real games exactly as the app plays it, and kept only if the fighter really did it.</p></div>
+      <div class="card"><span class="badge">Shooters</span><h3>Rapid fire</h3><p>Hold Shoot in Metal Slug or Fire in Nightmare in the Dark to keep firing, at the rate that fires the most.</p></div>
+      <div class="card"><span class="badge">Yours</span><h3>Your layout</h3><p>Floating or fixed stick, size, opacity, left-handed, vibration. Drag any button where your thumbs want it.</p></div>
+      <div class="card"><span class="badge">Easy</span><h3>Any file name</h3><p>Pick a game's zip from your phone: the app works out which game and version it is, and says exactly what's missing if anything is.</p></div>
+    </div>
+    <div class="wide">
+      <div class="shot"><img src="img/roster.png" width="1000" height="450" loading="lazy" alt="Picking a KOF team: Iori Yagami and Kyo Kusanagi in slots one and two"></div>
+      <div class="shot"><img src="img/controls.png" width="1000" height="450" loading="lazy" alt="The Controls settings: screen shape, stick style, button size and opacity"></div>
+    </div>
+  </div>
+</section>
+
+<section id="games">
+  <div class="wrap">
+    <div class="kicker">The lineup</div>
+    <h2>The games</h2>
+    <p class="sub">Neo Geo and Capcom classics, played on FBNeo, the arcade emulator. Bring your own ROMs (the Neo Geo games also need the Neo Geo BIOS).</p>
+    <div class="games">
+      <div class="game">The King of Fighters '97<small>and '97 Plus</small></div>
+      <div class="game">The King of Fighters 2002<small>and Magic Plus</small></div>
+      <div class="game">KOF 2005<small>10th Anniversary</small></div>
+      <div class="game">Metal Slug<small>1, 2, X, 3, 4, 5</small></div>
+      <div class="game">Cadillacs and Dinosaurs<small>up to 3 players</small></div>
+      <div class="game">Street Fighter III<small>3rd Strike</small></div>
+      <div class="game">Marvel vs Capcom<small>tag teams</small></div>
+      <div class="game">Sengoku 3<small>all the Ninja Arts</small></div>
+      <div class="game">Double Dragon<small>Neo Geo, 1995</small></div>
+      <div class="game">Nightmare in the Dark<small>rapid fire</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="multiplayer">
+  <div class="wrap split">
+    <div>
+      <div class="kicker">Play together</div>
+      <h2>One phone per player.<br>No internet needed.</h2>
+      <p class="sub">Turn on one phone's hotspot and connect the others (or share a Wi-Fi). The phone with the hotspot can play too.</p>
+      <ol class="steps">
+        <li><b>Open a room</b><span>Pick the game and it starts. You get a room key like <span class="key">K7Q-2M</span>, with a Copy button.</span></li>
+        <li><b>Friends join with the key</b><span>Or tap your room in the list of rooms nearby. Nobody has to let them in: they come in watching the match.</span></li>
+        <li><b>COIN, then START to play</b><span>Takes a free seat (in KOF: "Here comes a new challenger!"). A player idle for 20 seconds gives up their seat to the next one. First to press gets it.</span></li>
+        <li><b>Leave any time</b><span>The game goes on for everyone else, even if the host leaves. Up to 8 phones in a room.</span></li>
+      </ol>
+      <p class="fine">Built like online fighting games (rollback netcode): each phone runs the game and only button presses travel, so it feels like playing on one machine. Watchers never slow the players down.</p>
+    </div>
+    <div class="phone"><div class="screen"><img src="img/join.png" width="450" height="1000" loading="lazy" alt="Join a room: type the room key, or pick a room nearby"></div></div>
+  </div>
+  <div class="wrap"><div class="wide"><div class="shot" style="grid-column: 1 / -1"><img src="img/pause.png" width="1000" height="450" loading="lazy" alt="The pause menu in a room: the room key with Copy key, players and watchers"></div></div></div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="kicker">Get it</div>
+    <h2>Install in a minute</h2>
+    <ol class="steps">
+      <li><b>Open the download page on your phone</b><span>Tap <a href="https://github.com/taiyebnirjhar/90s-kid-arcade/releases/latest">Download for Android</a>, then <b>90s-Kid-Arcade.apk</b> under Assets.</span></li>
+      <li><b>Open the downloaded file</b><span>Android asks to allow installing apps from your browser the first time: allow it, then Install. New versions install over the old one and keep your games and settings.</span></li>
+      <li><b>Add the Neo Geo BIOS</b><span>On the home screen, tap <b>Add BIOS</b> and pick your <code>neogeo.zip</code> (once; the Capcom games don't need it).</span></li>
+      <li><b>Tap a game</b><span>The first time, pick its zip from your phone (any file name), or download it from your own library. Then COIN, START, and play.</span></li>
+    </ol>
+    <div class="cta" style="margin-top: 22px">
+      <a class="btn gold" href="https://github.com/taiyebnirjhar/90s-kid-arcade/releases/latest">Download for Android</a>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="kicker">Questions</div>
+    <h2>FAQ</h2>
+    <details><summary>Are the games included?</summary><p>No. The app comes with no games or BIOS: use dumps of games you own. It checks each zip and tells you exactly which files are missing, if any.</p></details>
+    <details><summary>Does multiplayer use mobile data?</summary><p>No. Everything travels over the hotspot or Wi-Fi between the phones. The hotspot phone doesn't even need a SIM with data.</p></details>
+    <details><summary>How many can play?</summary><p>As many as the game takes: 2 in most, 3 in Cadillacs and Dinosaurs. Up to 8 phones can be in a room; the rest watch and can take a seat with COIN or START.</p></details>
+    <details><summary>Do all phones need the same version?</summary><p>Yes: every phone needs the latest app and the same game files. The app tells you if they differ.</p></details>
+    <details><summary>Which phones does it run on?</summary><p>Android 8 or newer. Neo Geo games run on almost any phone; Street Fighter III and Marvel vs Capcom like a recent one.</p></details>
+    <details><summary>Is it open source?</summary><p>Yes, under GPL-3.0, on <a href="https://github.com/taiyebnirjhar/90s-kid-arcade">GitHub</a>. It runs the FBNeo arcade emulator through LibretroDroid.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>90s Kid <span style="color: var(--gold)">Arcade</span> · a tribute to the arcades we grew up in</div>
+    <div><a href="https://github.com/taiyebnirjhar/90s-kid-arcade">Source</a> · GPL-3.0 · FBNeo has its own non-commercial license</div>
+  </div>
+</footer>
+
+</body>
+</html>
