@@ -128,6 +128,8 @@ class MainActivity : ComponentActivity() {
                 hero == last -> "Continue"
                 else -> "Play"
             },
+            heroTitle = if (needsBios(hero)) "Add the Neo Geo BIOS" else null,
+            heroText = if (needsBios(hero)) "neogeo.zip: every Neo Geo game needs it to start." else null,
         )
 
         // Pages fade into each other instead of cutting.

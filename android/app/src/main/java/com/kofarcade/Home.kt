@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,12 +39,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -70,6 +73,9 @@ data class HomeUi(
     val hero: Game,
     val heroLabel: String,
     val heroAction: String,
+    /** The banner's title and line under it, when it's about a step (adding the BIOS) rather than the game. */
+    val heroTitle: String? = null,
+    val heroText: String? = null,
 )
 
 /**
@@ -92,16 +98,17 @@ fun HomeScreen(
         val landscape = maxWidth > maxHeight
         val screenWidth = maxWidth
         // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
-        val heroHeight = if (landscape) maxHeight * 0.68f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
+        val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         val chips: @Composable () -> Unit = {
             HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
-            HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
+            // Without the BIOS, the banner and the setup card already ask for it.
+            if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             // Landscape has room for the chips beside the logo; portrait puts them under the banner.
-            Hero(ui.hero, ui.sets[ui.hero.id], ui.heroLabel, ui.heroAction, heroHeight, landscape, onHero, chips.takeIf { landscape })
+            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { landscape })
             Column(Modifier.windowInsetsPadding(sides)) {
                 if (!landscape) {
                     Row(
@@ -186,31 +193,31 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
 // the page, with the logo on top and the title and button at the bottom.
 @Composable
 private fun Hero(
-    game: Game,
-    set: String?,
-    label: String,
-    action: String,
+    ui: HomeUi,
     height: Dp,
     landscape: Boolean,
     onClick: () -> Unit,
     chips: (@Composable () -> Unit)?,
 ) {
+    val game = ui.hero
+    val action = ui.heroAction
     Box(Modifier.fillMaxWidth().height(height).clickable(onClick = onClick)) {
-        ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
+        ArtImage(game, ui.sets[game.id], Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
         // Dark at the top for the logo, then clear, then into the page's background.
         Box(
             Modifier.matchParentSize().background(
                 Brush.verticalGradient(
-                    0f to Palette.bg.copy(alpha = 0.8f),
-                    0.22f to Color.Transparent,
-                    0.5f to Color.Transparent,
+                    0f to Palette.bg.copy(alpha = 0.88f),
+                    0.12f to Palette.bg.copy(alpha = 0.6f),
+                    0.28f to Color.Transparent,
+                    0.45f to Color.Transparent,
                     0.82f to Palette.bg.copy(alpha = 0.85f),
                     1f to Palette.bg,
                 ),
             ),
         )
         // And from the left, so the title reads on any picture.
-        Box(Modifier.matchParentSize().background(Brush.horizontalGradient(0f to Palette.bg.copy(alpha = 0.6f), 0.7f to Color.Transparent)))
+        Box(Modifier.matchParentSize().background(Brush.horizontalGradient(0f to Palette.bg.copy(alpha = 0.7f), 0.75f to Color.Transparent)))
         val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -230,19 +237,29 @@ private fun Hero(
                 .fillMaxWidth(if (landscape) 0.6f else 1f)
                 .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         ) {
-            Kicker(label)
+            Kicker(ui.heroLabel)
             Spacer(Modifier.height(2.dp))
+            val title = ui.heroTitle ?: game.title
+            // A step's title is a sentence: a size smaller than a game's name.
+            val big = if (ui.heroTitle != null) 32 else if (landscape) 46 else 40
             Text(
-                game.title,
+                title,
                 color = Palette.text,
-                fontSize = if (landscape) 46.sp else 40.sp,
-                lineHeight = if (landscape) 48.sp else 42.sp,
+                fontSize = big.sp,
+                lineHeight = (big + 2).sp,
                 fontWeight = FontWeight.Black,
                 fontStyle = FontStyle.Italic,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(game.subtitle ?: game.series, color = Palette.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                ui.heroText ?: game.subtitle ?: game.series,
+                color = Palette.text.copy(alpha = 0.75f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(16.dp))
             GoldButton(action, onClick, play = action == "Play" || action == "Continue")
         }
@@ -354,6 +371,12 @@ private fun SetupStep(number: Int, title: String, sub: String, done: Boolean, ac
 }
 
 /**
+ * Screenshot tests only: where [ArtImage] gets its pictures from (by URL)
+ * instead of loading them, so the snapshots show the real thumbnails.
+ */
+val LocalArtOverride = staticCompositionLocalOf<((String) -> ImageBitmap?)?> { null }
+
+/**
  * A game picture from libretro's thumbnail collection, scaled without
  * smoothing so the pixel art stays crisp. Until it loads (or offline) a
  * tinted tile (with the game's name, unless [label] is off) shows instead.
@@ -378,8 +401,10 @@ fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentSca
             )
         }
         val url = artUrl(game, kind, set)
-        // Screenshot tests have no network; the tile above stands in.
-        if (url != null && !LocalInspectionMode.current) {
+        val override = LocalArtOverride.current
+        if (url != null && override != null) {
+            override(url)?.let { Image(it, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None) }
+        } else if (url != null && !LocalInspectionMode.current) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
                 contentDescription = null,

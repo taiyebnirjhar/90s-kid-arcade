@@ -1,5 +1,6 @@
 package com.kofarcade
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
@@ -21,6 +25,8 @@ import com.kofarcade.core.GAMES
 import com.kofarcade.core.gameById
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
+import java.net.URL
 
 /**
  * Renders the app's screens with sample data. `gradle :app:recordPaparazziDebug`
@@ -32,7 +38,11 @@ class UiSnapshots {
     val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_6, maxPercentDifference = 0.0)
 
     private fun shot(name: String, content: @Composable () -> Unit) =
-        paparazzi.snapshot(name) { KofTheme { Box(Modifier.fillMaxSize().background(Palette.bg)) { content() } } }
+        paparazzi.snapshot(name) {
+            CompositionLocalProvider(LocalArtOverride provides TestArt::get) {
+                KofTheme { Box(Modifier.fillMaxSize().background(Palette.bg)) { content() } }
+            }
+        }
 
     private val sets = mapOf("kof97" to "kof97", "kof2002" to "kof2002", "sengoku3" to "sengoku3")
 
@@ -47,9 +57,14 @@ class UiSnapshots {
         shot("home_landscape") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
     }
 
+    private val firstRunUi get() = HomeUi(
+        false, emptyMap(), GAMES.first(), "Get started", "Add BIOS",
+        "Add the Neo Geo BIOS", "neogeo.zip: every Neo Geo game needs it to start.",
+    )
+
     @Test
     fun homeFirstRun() = shot("home_first_run") {
-        HomeScreen(HomeUi(false, emptyMap(), GAMES.first(), "Get started", "Add BIOS"), {}, {}, {}, {}, {}, {})
+        HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {})
     }
 
     @Test
@@ -218,7 +233,7 @@ class UiSnapshots {
     @Test
     fun homeFirstRunLandscape() {
         landscape()
-        shot("home_first_run_landscape") { HomeScreen(HomeUi(false, emptyMap(), GAMES.first(), "Get started", "Add BIOS"), {}, {}, {}, {}, {}, {}) }
+        shot("home_first_run_landscape") { HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {}) }
     }
 
     @Test
@@ -341,5 +356,34 @@ class UiSnapshots {
                 }
             }
         }
+    }
+}
+
+/**
+ * The real libretro thumbnails for the snapshots: downloaded once into
+ * build/test-art (never committed: they're the games' own pictures).
+ * Offline, a picture is null and the stand-in tile shows.
+ */
+private object TestArt {
+    private val dir = File("build/test-art").apply { mkdirs() }
+    private val cache = HashMap<String, ImageBitmap?>()
+
+    fun get(url: String): ImageBitmap? {
+        if (url in cache) return cache[url]
+        val picture = runCatching {
+            val file = File(dir, url.substringAfter("/master/").replace('/', '_'))
+            if (!file.exists()) {
+                val conn = URL(url).openConnection().apply {
+                    connectTimeout = 10_000
+                    readTimeout = 20_000
+                }
+                val tmp = File(dir, file.name + ".part")
+                conn.getInputStream().use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                tmp.renameTo(file)
+            }
+            BitmapFactory.decodeFile(file.path)?.asImageBitmap()
+        }.getOrNull()
+        cache[url] = picture
+        return picture
     }
 }

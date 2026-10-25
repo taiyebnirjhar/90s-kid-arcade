@@ -408,10 +408,37 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
         Spacer(Modifier.height(8.dp))
         Text(row.title, color = if (gold) Palette.gold else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(row.detail, color = Palette.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        // What the check found, in full: a broken zip says which files it lacks.
+        // What the check found: two lines on the card (so a grid row stays
+        // even); a long one (a broken zip's missing files) opens in full on tap.
         (row.state as? RowState.Done)?.let { s ->
-            Spacer(Modifier.height(6.dp))
-            Text(s.message, color = if (s.ok) Palette.green else Palette.text, fontSize = 12.sp, lineHeight = 16.sp)
+            var cut by remember { mutableStateOf(false) }
+            var open by remember { mutableStateOf(false) }
+            Spacer(Modifier.height(8.dp))
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable(enabled = cut) { open = true },
+            ) {
+                Text(
+                    s.message,
+                    color = if (s.ok) Palette.green else Palette.text,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { cut = it.hasVisualOverflow },
+                )
+                if (cut) {
+                    Text("Details", color = Palette.gold, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
+                }
+            }
+            if (open) {
+                ArcadeDialog(
+                    title = row.title,
+                    message = s.message,
+                    onDismiss = { open = false },
+                    primary = "OK" to { open = false },
+                    tone = if (s.ok) Tone.GOOD else Tone.BAD,
+                )
+            }
         }
     }
 }
