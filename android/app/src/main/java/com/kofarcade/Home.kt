@@ -36,8 +36,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -200,7 +198,7 @@ private fun Hero(game: Game, set: String?, label: String, action: String, onClic
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick: () -> Unit, width: Dp = 210.dp) {
+fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick: () -> Unit, width: Dp = 210.dp) {
     val ready = set != null
     Box(
         Modifier
@@ -211,7 +209,7 @@ private fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick:
             .border(1.dp, if (ready) Color.White.copy(alpha = 0.14f) else Palette.line, RoundedCornerShape(16.dp))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, dim = !ready)
+        ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         // Bottom shade so the title reads on any picture.
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
         // Title and play button share a row, so the button is centred on the title.
@@ -250,7 +248,7 @@ private fun GameCard(game: Game, set: String?, onClick: () -> Unit, onLongClick:
  * tinted tile with the game's name shows instead.
  */
 @Composable
-fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentScale: ContentScale, dim: Boolean = false) {
+fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentScale: ContentScale) {
     val tint = when (game.layout) {
         Layout.FIGHTER -> Palette.red
         Layout.SHOOTER -> Palette.green
@@ -273,8 +271,6 @@ fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentSca
                 contentDescription = null,
                 contentScale = contentScale,
                 filterQuality = FilterQuality.None,
-                colorFilter = if (dim) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0.15f) }) else null,
-                alpha = if (dim) 0.55f else 1f,
                 modifier = Modifier.matchParentSize(),
             )
         }

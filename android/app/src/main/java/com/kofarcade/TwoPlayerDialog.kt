@@ -1,6 +1,8 @@
 package com.kofarcade
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -8,15 +10,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,21 +31,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
 import com.kofarcade.core.BIOS
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.Game
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.net.Beacon
 import com.kofarcade.core.net.BeaconListener
-import com.kofarcade.core.net.PROTOCOL
 import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
@@ -61,17 +59,16 @@ object Netplay {
     @Volatile var room: Room? = null
 }
 
+/** Where the latest app downloads from (the website's button). */
+const val APP_DOWNLOAD = "https://github.com/taiyebnirjhar/90s-kid-arcade/releases/latest/download/90s-Kid-Arcade.apk"
+
 private sealed interface TwoPlayer {
-    data object Menu : TwoPlayer
+    data object Hub : TwoPlayer
     data object PickGame : TwoPlayer
-    data object Join : TwoPlayer
 }
 
-/** What a found host looks like in the Join list. */
+/** What a found host looks like in the list. */
 private data class FoundHost(val beacon: Beacon, val address: InetAddress)
-
-/** A game in the pick list. */
-data class GameChoice(val title: String, val subtitle: String)
 
 /** A room found on the network: [players] playing of [maxPlayers], [watchers] watching. */
 data class HostChoice(
@@ -82,6 +79,9 @@ data class HostChoice(
     val maxPlayers: Int = 2,
     val key: String = "",
     val watchers: Int = 0,
+    /** The game and the host's version of it, for its picture. */
+    val game: Game? = null,
+    val set: String? = null,
 )
 
 private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
@@ -105,17 +105,16 @@ private fun emulatorBuild(context: Context): String = runCatching {
 }.getOrDefault("")
 
 /**
- * MULTIPLAYER: one phone opens a room and starts playing; it shows the
- * room's key. Others join with the key (or from the list of rooms nearby),
- * on the same Wi-Fi or on a phone's hotspot, and watch; COIN or START takes
- * a free seat. Anyone can leave; the room carries on.
+ * MULTIPLAYER: host a game (pick it; the room's key is shared from the game
+ * screen), or join one: type its key, or tap a room nearby. Joining phones
+ * watch until they take a seat with COIN or START.
  */
 @Composable
 fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: () -> Unit, onClose: () -> Unit) {
-    var screen by remember { mutableStateOf<TwoPlayer>(TwoPlayer.Menu) }
+    var screen by remember { mutableStateOf<TwoPlayer>(TwoPlayer.Hub) }
     val context = LocalContext.current
 
-    // Android drops broadcast packets (how hosts are found) unless asked.
+    // Android drops broadcast packets (how rooms are found) unless asked.
     DisposableEffect(Unit) {
         val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val lock = wifi.createMulticastLock("90s-kid-arcade").apply {
@@ -124,13 +123,13 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
         }
         onDispose { runCatching { lock.release() } }
     }
-    val back = { if (screen == TwoPlayer.Menu) onClose() else screen = TwoPlayer.Menu }
+    val back = { if (screen == TwoPlayer.Hub) onClose() else screen = TwoPlayer.Hub }
     BackHandler(onBack = back)
 
     val scope = rememberCoroutineScope()
     var opening by remember { mutableStateOf(false) }
 
-    // Opens a room for the game and starts playing; others join as it runs.
+    // Opens a room for the game and starts playing; the game screen shows its key.
     fun host(game: Game, set: String) {
         if (opening) return
         opening = true
@@ -141,7 +140,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context))
+                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
                 }
                 if (!isActive) {
                     room.close()
@@ -150,36 +149,30 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
                 Netplay.room = room
                 onStart(game, set)
             } catch (e: Exception) {
-                if (isActive) Toast.makeText(context, "Couldn't open a room: ${e.message}", Toast.LENGTH_LONG).show()
+                if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             }
             opening = false
         }
     }
 
     when (screen) {
-        TwoPlayer.Menu -> TwoPlayerMenu(onHost = { screen = TwoPlayer.PickGame }, onJoin = { screen = TwoPlayer.Join }, onBack = back)
+        TwoPlayer.Hub -> Hub(roms, onHost = { screen = TwoPlayer.PickGame }, onLibrary = onLibrary, onBack = back, onJoined = onStart)
         TwoPlayer.PickGame -> {
             val hasBios = remember { roms.has(BIOS) }
             val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
-            PickGameScreen(
-                games = ready.map { (g, _) -> GameChoice(g.title, g.subtitle ?: g.series) },
-                ready = ready.isNotEmpty(),
-                onPick = { i -> ready[i].let { (g, set) -> host(g, set) } },
-                onLibrary = onLibrary,
-                onBack = back,
-            )
+            PickGameScreen(ready, onPick = { (g, set) -> host(g, set) }, onLibrary = onLibrary, onBack = back)
         }
-        TwoPlayer.Join -> Joining(roms, onLibrary, back) { game, set -> onStart(game, set) }
     }
 }
 
+// The hub: finds rooms nearby, joins by key or by tap.
 @Composable
-private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
+private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
     val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
-    var address by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf<String?>(null) }
-    var needsGame by remember { mutableStateOf(false) }
+    var key by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf<MpStatus?>(null) }
+    var action by remember { mutableStateOf<(() -> Unit)?>(null) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     // Gone from this screen: a join that's let in afterwards leaves at once.
@@ -187,6 +180,11 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
     val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     DisposableEffect(Unit) {
         onDispose { left.set(true) }
+    }
+
+    fun say(text: String, actionLabel: String? = null, bad: Boolean = true, onAction: (() -> Unit)? = null) {
+        status = MpStatus(text, actionLabel, bad = bad)
+        action = onAction
     }
 
     DisposableEffect(Unit) {
@@ -200,27 +198,25 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
                     if (i < 0) hosts += found else if (hosts[i] != found) hosts[i] = found
                 }
             }
-        }.onFailure { status = "Can't look for games: ${it.message}" }.getOrNull()
+        }.onFailure { say("Can't look for rooms nearby (${it.message}). Joining with a key still works.") }.getOrNull()
         onDispose { listener?.close() }
     }
 
     fun connect(found: FoundHost) {
         val set = found.beacon.set
         val game = gameForSet(set)
-        needsGame = false
         if (game == null || !roms.has("$set.zip")) {
-            needsGame = true
-            status = "You need ${found.beacon.title} on this phone first."
+            say("You need ${found.beacon.title} on this phone first.", "Get it from the library", onAction = onLibrary)
             return
         }
         busy = true
-        status = "Joining ${found.beacon.name}'s room…"
+        say("Joining ${found.beacon.name}'s room…", bad = false)
         scope.launch {
             try {
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context)).also { room ->
+                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId).also { room ->
                         if (left.get()) room.close()
                     }
                 }
@@ -229,53 +225,62 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
                     return@launch
                 }
                 Netplay.room = room
+                status = null
                 onJoined(game, set)
             } catch (e: Refused) {
-                status = e.message
+                val m = e.message.orEmpty()
+                when {
+                    "app builds" in m || "app versions" in m -> say(m, "Get the latest app") {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(APP_DOWNLOAD)))
+                    }
+                    "differs" in m -> say(m, "Open the library", onAction = onLibrary)
+                    else -> say(m)
+                }
             } catch (e: Exception) {
-                if (isActive) status = "Couldn't connect: ${e.message}"
+                if (isActive) say("Couldn't join: ${e.message}")
             }
             busy = false
         }
     }
 
-    JoinScreen(
-        hosts = hosts.map {
+    fun joinByKey() {
+        val target = parseRoomKey(key)
+        if (target == null) {
+            say("That's not a room key. It looks like K7Q-2M: the host sees it in the game, under the room's name.")
+            return
+        }
+        busy = true
+        say("Looking for room $key…", bad = false)
+        scope.launch {
+            try {
+                val found = withContext(Dispatchers.IO) {
+                    val (ip, port) = target
+                    FoundHost(probe(ip, port).copy(tcpPort = port), ip)
+                }
+                busy = false
+                connect(found)
+            } catch (e: Exception) {
+                busy = false
+                if (isActive) say("No room $key here. Check the key, and that both phones are on the same Wi-Fi or hotspot.")
+            }
+        }
+    }
+
+    MultiplayerHub(
+        rooms = hosts.map {
             HostChoice(
                 it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip"), it.beacon.players, it.beacon.maxPlayers,
-                it.beacon.key, it.beacon.watchers,
+                it.beacon.key, it.beacon.watchers, gameForSet(it.beacon.set), it.beacon.set,
             )
         },
-        address = address,
-        onAddress = { address = it },
+        key = key,
+        onKey = { key = formatKeyInput(it) },
         status = status,
-        needsGame = needsGame,
         busy = busy,
-        onJoinHost = { i -> hosts.getOrNull(i)?.let(::connect) },
-        onJoinAddress = {
-            val target = parseRoomKey(address)
-            if (target == null) {
-                status = "That's not a room key. It looks like K7Q-2M: in the host's pause menu."
-                needsGame = false
-            } else {
-                busy = true
-                status = "Looking for room ${address.trim().uppercase()}…"
-                scope.launch {
-                    try {
-                        val found = withContext(Dispatchers.IO) {
-                            val (ip, port) = target
-                            FoundHost(probe(ip, port).copy(tcpPort = port), ip)
-                        }
-                        busy = false
-                        connect(found)
-                    } catch (e: Exception) {
-                        status = "No room found for ${address.trim()}. Are both phones on the same Wi-Fi or hotspot? (${e.message})"
-                        busy = false
-                    }
-                }
-            }
-        },
-        onLibrary = onLibrary,
+        onStatusAction = { action?.invoke() },
+        onHost = onHost,
+        onJoinKey = ::joinByKey,
+        onJoinRoom = { i -> hosts.getOrNull(i)?.let(::connect) },
         onBack = onBack,
     )
 }
@@ -283,141 +288,104 @@ private fun Joining(roms: RomStore, onLibrary: () -> Unit, onBack: () -> Unit, o
 // ----- The pages, from plain data (so they can be previewed) -----
 
 @Composable
-fun TwoPlayerMenu(onHost: () -> Unit, onJoin: () -> Unit, onBack: () -> Unit) {
-    ArcadeScreen(title = "Multiplayer", kicker = "One phone per player", onBack = onBack) {
-        Text(
-            "All phones on the same Wi-Fi or on one phone's hotspot (no internet needed). Each needs the same game " +
-                "(and BIOS for Neo Geo games): get them from the library on each phone. " +
-                "Join with the room's key and watch; press COIN or START to take a free seat. Leave any time: " +
-                "the game goes on for the others. Most games take 2 players; Cadillacs and Dinosaurs takes 3.",
-            color = Palette.muted,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-        )
-        Spacer(Modifier.height(18.dp))
-        BigChoice("Open a room", "Pick the game and play; you get a room key for friends.", badge = "1P", gold = true, onClick = onHost)
-        Spacer(Modifier.height(12.dp))
-        BigChoice("Join a room", "Type a friend's room key, or pick a room nearby.", badge = "2P+", onClick = onJoin)
-    }
-}
-
-@Composable
-private fun BigChoice(title: String, sub: String, badge: String, gold: Boolean = false, onClick: () -> Unit) {
-    Panel(highlight = gold, onClick = onClick) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
-                    .background(if (gold) Palette.gold else Palette.bg)
-                    .border(1.dp, if (gold) Palette.gold else Palette.line, RoundedCornerShape(16.dp)),
-            ) {
-                Text(badge, color = if (gold) OnGold else Palette.gold, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, color = Palette.text, fontSize = 19.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                Text(sub, color = Palette.muted, fontSize = 13.sp)
+fun MultiplayerHub(
+    rooms: List<HostChoice>,
+    key: String,
+    onKey: (String) -> Unit,
+    status: MpStatus?,
+    busy: Boolean,
+    onStatusAction: () -> Unit,
+    onHost: () -> Unit,
+    onJoinKey: () -> Unit,
+    onJoinRoom: (Int) -> Unit,
+    onBack: () -> Unit,
+) {
+    ArcadeScreen(title = "Multiplayer", kicker = "Play together", onBack = onBack) {
+        // Host.
+        Panel(highlight = true, onClick = onHost) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Palette.gold),
+                ) { PlayIcon(Modifier.size(16.dp)) }
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Host a game", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                    Text("Pick the game and play. Share the room key with friends.", color = Palette.muted, fontSize = 13.sp)
+                }
             }
         }
+        // Join with a key.
+        SectionLabel("Join with a key")
+        Panel {
+            Row(verticalAlignment = Alignment.Bottom) {
+                ArcadeField(key, onKey, "Room key", Modifier.weight(1f), placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
+                Spacer(Modifier.width(10.dp))
+                GoldButton("Join", onJoinKey, enabled = !busy && key.isNotBlank())
+            }
+        }
+        status?.let {
+            Spacer(Modifier.height(10.dp))
+            StatusPanel(it, onStatusAction)
+        }
+        // Rooms nearby.
+        SectionLabel("Rooms nearby")
+        if (rooms.isEmpty()) {
+            Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot()
+                    Spacer(Modifier.width(10.dp))
+                    Text("Looking on this Wi-Fi or hotspot…", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.height(4.dp))
+                Text("A friend's room shows up here. Not appearing? Type its key above.", color = Palette.muted, fontSize = 13.sp)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
+            }
+        }
+        // How it works.
+        SectionLabel("How it works")
+        StepsStrip()
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "All phones on the same Wi-Fi or one phone's hotspot: no internet needed. Each needs the game (and the " +
+                "Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3.",
+            color = Palette.muted,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(24.dp))
     }
 }
 
+/** Host: the games on this phone, as on the home screen. */
 @Composable
-fun PickGameScreen(games: List<GameChoice>, ready: Boolean, onPick: (Int) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit) {
-    ArcadeScreen(title = "Open a room", kicker = "Pick the game", onBack = onBack) {
-        if (!ready) {
+fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit) {
+    ArcadeScreen(title = "Host a game", kicker = "Pick the game", onBack = onBack) {
+        if (ready.isEmpty()) {
             Panel {
                 Text("Add a game first (Neo Geo games also need the BIOS).", color = Palette.text, fontSize = 15.sp)
                 Spacer(Modifier.height(12.dp))
                 GoldButton("Open the library", onLibrary)
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                games.forEachIndexed { i, g ->
-                    Panel(onClick = { onPick(i) }) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(g.title, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                                Text(g.subtitle, color = Palette.muted, fontSize = 13.sp)
-                            }
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(34.dp).clip(CircleShape).background(Palette.gold)) {
-                                PlayIcon(Modifier.size(12.dp))
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val columns = if (maxWidth > 600.dp) 3 else 2
+                val gap = 12.dp
+                val cardWidth = (maxWidth - gap * (columns - 1)) / columns
+                Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+                    ready.chunked(columns).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                            row.forEach { pick ->
+                                GameCard(pick.first, pick.second, onClick = { onPick(pick) }, onLongClick = {}, width = cardWidth)
                             }
                         }
                     }
                 }
             }
+            Spacer(Modifier.height(24.dp))
         }
-    }
-}
-
-@Composable
-fun JoinScreen(
-    hosts: List<HostChoice>,
-    address: String,
-    onAddress: (String) -> Unit,
-    status: String?,
-    needsGame: Boolean,
-    busy: Boolean,
-    onJoinHost: (Int) -> Unit,
-    onJoinAddress: () -> Unit,
-    onLibrary: () -> Unit,
-    onBack: () -> Unit,
-) {
-    ArcadeScreen(title = "Join a room", kicker = "One phone per player", onBack = onBack) {
-        Panel(highlight = true) {
-            ArcadeField(address, onAddress, "Room key", placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
-            Spacer(Modifier.height(12.dp))
-            GoldButton("Join", onJoinAddress, Modifier.fillMaxWidth(), enabled = !busy && address.isNotBlank())
-            Spacer(Modifier.height(8.dp))
-            Text("The host sees it when the room opens, and in its pause menu.", color = Palette.muted, fontSize = 13.sp)
-        }
-        Spacer(Modifier.height(4.dp))
-        status?.let {
-            Panel(highlight = !needsGame) {
-                Text(it, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                if (needsGame) {
-                    Spacer(Modifier.height(12.dp))
-                    GoldButton("Open the library", onLibrary)
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-        }
-        SectionLabel("Or a room nearby")
-        if (hosts.isEmpty()) {
-            Panel {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot()
-                    Spacer(Modifier.width(10.dp))
-                    Text("Looking for rooms…", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                }
-                Spacer(Modifier.height(6.dp))
-                Text("Not showing up? Type the room key above.", color = Palette.muted, fontSize = 13.sp)
-            }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            hosts.forEachIndexed { i, h ->
-                Panel(onClick = if (busy) null else ({ onJoinHost(i) })) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(h.title, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                            Text(
-                                (if (h.key.isNotEmpty()) "Room ${h.key} · " else "") +
-                                    "${h.hostName} · ${h.players} of ${h.maxPlayers} playing" +
-                                    if (h.watchers > 0) " · ${h.watchers} watching" else "",
-                                color = Palette.muted,
-                                fontSize = 13.sp,
-                            )
-                        }
-                        when {
-                            !h.have -> Tag("Need game", Palette.red)
-                            h.players >= h.maxPlayers -> Tag("Watch", Palette.gold)
-                            else -> Tag("Join", Palette.gold, filled = true)
-                        }
-                    }
-                }
-            }
-        }
-        Spacer(Modifier.height(24.dp))
     }
 }

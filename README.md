@@ -54,7 +54,11 @@ and settings.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Controls to pick by hand). The ring around
+fighter (turn this off in Controls to pick by hand). Each fighter's face
+comes from the game itself: the first time they're on screen the app takes
+the face the game draws by the life bar (Double Dragon: on its select
+screen) and shows it from then on on the team buttons, the pause menu and
+the select screen; the app ships no character art. The ring around
 A B C D shows that fighter's desperation moves and specials, each drawn as
 its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
 tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback. Pause →
@@ -107,24 +111,39 @@ Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
 hotspot (no internet needed). Every phone needs the same game zip (and the
 BIOS for Neo Geo games; the library has them).
 
-- **Open a room** (Home → **Multiplayer**): pick the game and it starts. The
-  room's key (like `K7Q-2M`) shows as it opens, with a **Copy** button, and
-  stays in the pause menu. It holds the host phone's address on the Wi-Fi or
-  hotspot, so typing it connects straight there: no server, no internet, no
-  searching.
-- **Join a room**: type the key, or tap the room in the list of rooms nearby.
-  Nobody has to let you in. You come in watching the game as it stands
-  (up to 8 phones in a room), and watching never slows the players down.
-- **Take a seat**: while watching, press **COIN** or **START**. You get a free
-  seat, or the seat of a player who has pressed nothing for 20 seconds (say,
-  the challenger who lost): they go back to watching. If two ask at once, the
-  first request to reach the host wins; the other is told. The press goes in
-  once you're seated, so in KOF COIN then START brings you in as the
-  challenger. The host follows the same rule.
-- **Leave any time**: your seat empties and the game goes on for the others.
-  If the host leaves, the next phone takes the room over (and the key
-  changes to its address). A phone that goes quiet for 5-10 seconds is
-  treated as gone.
+- **Host a game** (Home → **Multiplayer**): pick the game (its picture, as on
+  the home screen) and it starts. The room sheet shows its key (like
+  `K7Q-2M`) with **Copy** and **Share** (send it through any app). The key
+  holds the host phone's address on the Wi-Fi or hotspot, so typing it
+  connects straight there: no server, no internet, no searching.
+- **Join**: on the same Multiplayer screen, type the key (it formats itself
+  as you type) or tap a room nearby (each shows its game, host and seats).
+  Nobody has to let you in: you watch the game as it stands (up to 8 phones
+  in a room), and watching never slows the players down. A problem says
+  what to do, with a button for it (get the game, update the app).
+- **In the game**, a pill at the top right shows the room: its key, a dot
+  per seat (gold: taken) and how many watch, with **WATCHING** in front
+  while you watch, and "Seat free · press COIN" when there's room. Tap it
+  for the room sheet: who sits where, who watches, **Take a seat** or
+  **Watch instead**, and Leave. News (someone joined, left, took a seat)
+  slides in at the top; getting a seat says "You're player 2!".
+- **Take a seat**: while watching, press **COIN** or **START** (or Take a
+  seat). You get a free seat, or the seat of a player who has pressed
+  nothing for 20 seconds (say, the challenger who lost): they go back to
+  watching. If two ask at once, the first request to reach the host wins;
+  the other is told. The press goes in once you're seated, so in KOF COIN
+  then START brings you in as the challenger. The host follows the same
+  rule, and anyone can give their seat up with **Watch instead**.
+- **Leave any time**: tapping **Leave** empties your seat at once and the
+  game goes on for the others. If the host leaves, the next phone takes the
+  room over (and the key changes to its address).
+- **Dropped out? Your seat waits 60 seconds.** A phone that goes quiet for
+  10 seconds (Wi-Fi blip, app closed by accident) is treated as gone, but
+  its seat is kept for it: the room sheet shows "Reconnecting… seat kept
+  0:42", watchers who press COIN are told the seat is held, and the phone
+  that comes back (the same phone, by its own id) sits straight back down.
+  The host can tap **Free seat** to let a watcher have it right away; after
+  60 seconds it frees itself.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over

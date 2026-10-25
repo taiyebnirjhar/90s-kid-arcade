@@ -307,6 +307,11 @@ class Prefs(context: Context) {
         get() = sp.getString("lastGame", null)
         set(v) = sp.edit().putString("lastGame", v).apply()
 
+    /** This phone's own id in rooms (made once): a player that dropped out gets its seat back. */
+    val deviceId: String
+        get() = sp.getString("deviceId", null)
+            ?: java.util.UUID.randomUUID().toString().also { sp.edit().putString("deviceId", it).apply() }
+
     /** Character ids in each team slot for a game ("" = empty). */
     fun team(gameId: String, size: Int): List<String?> {
         val ids = sp.getString("team.$gameId", "")!!.split(",")

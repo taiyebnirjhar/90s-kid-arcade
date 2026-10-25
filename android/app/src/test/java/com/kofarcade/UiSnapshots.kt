@@ -73,28 +73,83 @@ class UiSnapshots {
     }
 
     @Test
-    fun twoPlayerMenu() = shot("twoplayer_menu") { TwoPlayerMenu({}, {}, {}) }
-
-    @Test
-    fun pickGame() = shot("twoplayer_pick") {
-        PickGameScreen(listOf(GameChoice("KOF '97", "The King of Fighters"), GameChoice("Sengoku 3", "Sengoku")), true, {}, {}, {})
+    fun twoPlayerMenu() = shot("twoplayer_menu") {
+        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {})
     }
 
     @Test
-    fun joinLooking() = shot("twoplayer_join_empty") {
-        JoinScreen(emptyList(), "", {}, null, false, false, {}, {}, {}, {})
+    fun pickGame() = shot("twoplayer_pick") {
+        PickGameScreen(listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }, {}, {}, {})
     }
 
     @Test
     fun joinFound() = shot("twoplayer_join") {
-        JoinScreen(
+        MultiplayerHub(
             listOf(
-                HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M"),
-                HostChoice("KOF '97", "Galaxy A54", true, 2, 2, "M4T-XP", watchers = 1),
-                HostChoice("KOF 2005", "SM-S918B", false, key = "C9H-4R"),
+                HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino")),
+                HostChoice("KOF '97", "Galaxy A54", true, 2, 2, "M4T-XP", watchers = 1, game = gameById("kof97")),
+                HostChoice("KOF 2005", "SM-S918B", false, key = "C9H-4R", game = gameById("kof2005")),
             ),
-            "", {}, "You need KOF 2005 on this phone first.", true, false, {}, {}, {}, {},
+            "K7Q-2M", {}, MpStatus("You need KOF 2005 on this phone first.", "Get it from the library"), false, {}, {}, {}, {}, {},
         )
+    }
+
+    // Player 2 dropped out: their seat is kept for them, and the host can free it.
+    private val roomUi = RoomUi(
+        "K7Q-2M", 3,
+        listOf(
+            RoomPerson("You", 0, you = true, host = true),
+            RoomPerson("Galaxy A54", 1, away = true, holdEnds = System.currentTimeMillis() + 42_400),
+            RoomPerson("Pixel 8", -1),
+            RoomPerson("SM-S918B", -1),
+        ),
+        watching = false,
+        canFree = true,
+    )
+
+    @Test
+    fun roomSheet() {
+        landscape()
+        shot("room_sheet") {
+            OverGame {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(760.dp)) {
+                        Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
+                            RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {})
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomSheetPortrait() = shot("room_sheet_portrait") {
+        OverGame {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Surface(shape = RoundedCornerShape(18.dp), color = Palette.panel, modifier = Modifier.width(400.dp)) {
+                    Column(Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
+                        RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {})
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomOverlay() {
+        landscape()
+        shot("room_overlay") {
+            OverGame {
+                Box(Modifier.fillMaxSize().padding(top = 12.dp, end = 14.dp)) {
+                    RoomPill(
+                        RoomUi("K7Q-2M", 3, listOf(RoomPerson("Rafi", 0, host = true), RoomPerson("Mim", 1, away = true), RoomPerson("You", -1, you = true), RoomPerson("Pixel 8", -1)), watching = true),
+                        {}, Modifier.align(Alignment.TopEnd),
+                    )
+                    AnnouncementBanner(Announcement("You're player 2!", big = true), Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
+                }
+            }
+        }
     }
 
     @Test
@@ -156,7 +211,6 @@ class UiSnapshots {
                 PauseContent(
                     "Sengoku 3", null, true, {}, {}, {}, {}, {}, {}, {}, {},
                     roomInfo = "Room key K7Q-2M · 2 of 2 playing · 1 watching",
-                    roomKey = "K7Q-2M",
                     roomStatus = "Game 3 · you: P1, frame 2214 · P2 2210 in, heard 12 ms · watcher heard 30 ms",
                 )
             }

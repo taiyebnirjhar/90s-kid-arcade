@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,6 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
@@ -56,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +72,7 @@ import com.kofarcade.core.toArrows
 @Composable
 fun GameDialogs(game: GameActivity) {
     if (game.editing) EditBar(game)
+    RoomLayer(game)
     when (val d = game.dialog) {
         null -> Unit
         GameDialog.Pause -> PauseMenu(game)
@@ -80,44 +85,40 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             Button(onClick = { game.finish() }, modifier = Modifier.fillMaxWidth()) { Text("Back to games") }
         }
-        is GameDialog.RoomOpen -> Sheet(onDismiss = { game.close() }) {
-            RoomOpenContent(d.key, onCopy = { game.copyRoomKey() }, onPlay = { game.close() })
+        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 760 else 440) {
+            val ui = game.roomUi
+            if (ui != null) {
+                RoomSheetContent(
+                    ui,
+                    first = d.first,
+                    onCopy = { game.copyRoomKey() },
+                    onShare = { game.shareRoomKey() },
+                    onSeat = { game.takeSeat() },
+                    onWatch = { game.watchInstead() },
+                    onLeave = { game.finish() },
+                    onClose = { game.close() },
+                    onFree = { game.freeHeldSeat(it) },
+                )
+            }
         }
     }
 }
 
-/** The room just opened: its key, to share. From plain data (so it can be previewed). */
+// Over the game in a room: the room pill (top right) and news sliding in at the top.
 @Composable
-fun RoomOpenContent(key: String, onCopy: () -> Unit, onPlay: () -> Unit) {
-    Title("Your room is open")
-    if (key.isEmpty()) {
-        Text(
-            "This phone isn't on Wi-Fi or running a hotspot, so friends can't reach it. Turn on the hotspot " +
-                "(or join Wi-Fi), then open the room again.",
-            color = Palette.muted,
-        )
-    } else {
-        Text("Friends type this in Multiplayer → Join a room. It's in the pause menu too.", color = Palette.muted)
-        Spacer(Modifier.size(14.dp))
-        KeyRow(key, onCopy)
+private fun RoomLayer(game: GameActivity) {
+    val ui = game.roomUi ?: return
+    val news = game.announcement
+    LaunchedEffect(news) {
+        if (news != null) {
+            kotlinx.coroutines.delay(if (news.big) 2_600 else 3_200)
+            game.clearAnnouncement(news)
+        }
     }
-    Spacer(Modifier.size(16.dp))
-    Button(onClick = onPlay, modifier = Modifier.fillMaxWidth()) { Text("Play") }
-}
-
-/** A room key, big, with a button to copy it. */
-@Composable
-fun KeyRow(key: String, onCopy: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            key,
-            color = Palette.gold,
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-            modifier = Modifier.weight(1f),
-        )
-        OutlinedButton(onClick = onCopy) { Text("Copy") }
+    if (game.dialog != null || game.editing) return
+    Box(Modifier.fillMaxWidth().padding(top = 12.dp, end = 14.dp)) {
+        RoomPill(ui, onClick = { game.openRoom() }, Modifier.align(Alignment.TopEnd))
+        AnnouncementBanner(news, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
     }
 }
 
@@ -210,8 +211,7 @@ private fun PauseMenu(game: GameActivity) {
             roomInfo = game.roomInfo,
             roomStatus = game.roomStatus,
             watching = game.isWatching,
-            roomKey = game.roomKey,
-            onCopyKey = { game.copyRoomKey() },
+            onRoom = { game.openRoom() },
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },
@@ -244,9 +244,8 @@ fun PauseContent(
     roomStatus: String? = null,
     /** Multiplayer: this phone watches (its menu stops nobody). */
     watching: Boolean = false,
-    /** Multiplayer: the room's key, with a button to copy it. */
-    roomKey: String? = null,
-    onCopyKey: () -> Unit = {},
+    /** Multiplayer: the room sheet (key, seats, who watches). */
+    onRoom: () -> Unit = {},
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -259,14 +258,19 @@ fun PauseContent(
                 Spacer(Modifier.size(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Tag(roomInfo ?: "Multiplayer", Palette.gold)
-                    if (roomKey != null) {
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = onCopyKey) { Text("Copy key", color = Palette.gold) }
-                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onRoom) { Text("Room & players", color = Palette.gold, fontWeight = FontWeight.Bold) }
                 }
-                roomStatus?.let {
-                    Spacer(Modifier.size(6.dp))
-                    Text(it, color = Palette.muted, fontSize = 11.sp, lineHeight = 14.sp)
+                // The technical line, for when something's wrong.
+                if (roomStatus != null) {
+                    var details by remember { mutableStateOf(false) }
+                    Text(
+                        if (details) roomStatus else "Connection details",
+                        color = Palette.muted,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp).clickable { details = !details },
+                    )
                 }
             }
             if (fighter != null) {
@@ -363,13 +367,25 @@ fun Portrait(name: String?, size: Int = 38, selected: Boolean = false) {
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            if (name == null) "+" else initials(name),
-            color = Color.White,
-            fontWeight = FontWeight.Black,
-            fontStyle = FontStyle.Italic,
-            fontSize = (size * 0.36f).sp,
-        )
+        // The fighter's face from the game once it's been on screen; till then, initials.
+        val face = name?.let { LocalFaces.current[it] }
+        if (face != null) {
+            Image(
+                face,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Text(
+                if (name == null) "+" else initials(name),
+                color = Color.White,
+                fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic,
+                fontSize = (size * 0.36f).sp,
+            )
+        }
     }
 }
 
