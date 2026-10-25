@@ -433,10 +433,12 @@ class Room private constructor(
             if (isOwner) {
                 val all = ownerLines()
                 for (line in all) {
-                    // Watchers hear from their feed.
-                    if (line.id !in feedIds()) runCatching { line.output.message(Msg.PING, ping) }
+                    val newcomer = synchronized(lines) { line.id in arriving }
+                    // Watchers hear from their feed; a newcomer's line carries
+                    // only its welcome until it watches.
+                    if (line.id !in feedIds() && !newcomer) runCatching { line.output.message(Msg.PING, ping) }
                     // A newcomer's phone may take a while to load the game.
-                    val quiet = if (synchronized(lines) { line.id in arriving }) ARRIVING_QUIET_NS else LINE_QUIET_NS
+                    val quiet = if (newcomer) ARRIVING_QUIET_NS else LINE_QUIET_NS
                     if (now - line.lastHeard > quiet) {
                         line.lastHeard = now
                         worker.execute { remove(line.id, "${line.name} lost the connection") }
@@ -1256,6 +1258,7 @@ class Room private constructor(
         private const val QUIET_NS = 5_000_000_000L
         private const val LINE_QUIET_NS = 10_000_000_000L
         private const val ARRIVING_QUIET_NS = 60_000_000_000L
+        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME)
         private const val TAKEOVER_MS = 8_000L
         private const val READY_MS = 3_000L
         private const val PING_MS = 1_000L
@@ -1316,7 +1319,9 @@ class Room private constructor(
                 if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
                 val w = decode<Welcome>(payload)
                 if (!w.accepted) throw Refused(w.reason)
-                val start = line.input.message()
+                // (Anything else first, a ping say, can wait.)
+                var start = line.input.message()
+                while (start.first != Msg.START_STATE && start.first in SKIPPABLE) start = line.input.message()
                 if (start.first != Msg.START_STATE) throw IOException("Expected the start state")
                 socket.soTimeout = 0
                 line.id = w.owner

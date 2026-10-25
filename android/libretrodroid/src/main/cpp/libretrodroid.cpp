@@ -754,7 +754,7 @@ std::array<int64_t, 2> LibretroDroid::getNetSum() {
 
 std::pair<int32_t, std::vector<uint8_t>> LibretroDroid::getNetState() {
     // The order step() takes them in.
-    std::lock_guard<std::mutex> core(coreLock);
+    std::lock_guard<std::mutex> coreGuard(coreLock);
     std::lock_guard<std::mutex> lock(netMutex);
     int32_t frame = std::min(std::min(netRemoteKnown(), netFirstWrong), netFrame);
     if (frame == netFrame) {
