@@ -206,6 +206,62 @@ class UiSnapshots {
         }
     }
 
+    /** A small phone, 360dp wide: nothing may clip. */
+    private fun small() = paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.NEXUS_5)
+
+    @Test
+    fun homeSmall() {
+        small()
+        shot("home_small") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun homeFirstRunLandscape() {
+        landscape()
+        shot("home_first_run_landscape") { HomeScreen(HomeUi(false, emptyMap(), GAMES.first(), "Get started", "Add BIOS"), {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun librarySmall() {
+        small()
+        shot("library_small") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun libraryLoading() = shot("library_loading") {
+        LibraryScreen(LibraryUi(askKey = false, loading = true), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryError() = shot("library_error") {
+        LibraryScreen(LibraryUi(askKey = false, error = "Couldn't reach the library: Unable to resolve host"), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryEmpty() = shot("library_empty") {
+        LibraryScreen(LibraryUi(askKey = false), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun twoPlayerJoinSmall() {
+        small()
+        shot("twoplayer_join_small") {
+            MultiplayerHub(
+                listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino"))),
+                "", {}, null, false, {}, {}, {}, {}, {},
+            )
+        }
+    }
+
+    @Test
+    fun pickGameSmall() {
+        small()
+        shot("twoplayer_pick_small") { PickGameScreen(picks, {}, {}, {}) }
+    }
+
+    @Test
+    fun pickGameEmpty() = shot("twoplayer_pick_empty") { PickGameScreen(emptyList(), {}, {}, {}) }
+
     private fun landscape() = paparazzi.unsafeUpdateConfig(
         deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080),
     )

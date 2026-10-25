@@ -1,9 +1,11 @@
 package com.kofarcade
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,7 +16,9 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,8 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -218,17 +226,37 @@ fun LibraryScreen(
     onDownloadAll: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val listed = !ui.askKey && !ui.loading && ui.error == null && ui.rows.isNotEmpty()
+    val waiting = ui.rows.count { it.state == RowState.Idle }
     ArcadeScreen(
         title = "My Library",
         kicker = "Your games, one tap away",
         onBack = onBack,
-        actions = { if (!ui.askKey) GhostButton("Key", onChangeKey) },
+        actions = { if (!ui.askKey) GhostButton("Key", onChangeKey, compact = true) },
+        // The page's one main action, in thumb reach.
+        bottomBar = if (listed && (waiting > 0 || ui.busy)) {
+            {
+                GoldButton(
+                    if (ui.busy) "Downloading…" else "Get all $waiting",
+                    onDownloadAll,
+                    Modifier.fillMaxWidth(),
+                    enabled = !ui.busy,
+                )
+            }
+        } else {
+            null
+        },
     ) {
         when {
             ui.askKey -> Panel {
-                Kicker("Unlock your library")
-                Spacer(Modifier.height(6.dp))
-                Text("Enter your library key to download your games. It stays on this phone.", color = Palette.muted, fontSize = 14.sp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(56.dp).clip(CircleShape).background(Palette.gold.copy(alpha = 0.14f)),
+                ) { LockIcon(Modifier.size(22.dp)) }
+                Spacer(Modifier.height(16.dp))
+                Text("Unlock your library", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Spacer(Modifier.height(8.dp))
+                Text("Enter your library key to download your games. It stays on this phone.", color = Palette.muted, fontSize = 14.sp, lineHeight = 20.sp)
                 Spacer(Modifier.height(16.dp))
                 ArcadeField(key, onKey, "Key", password = true, placeholder = "••••••••")
                 if (showUrl) {
@@ -236,63 +264,99 @@ fun LibraryScreen(
                     ArcadeField(url, onUrl, "Library address", keyboardType = KeyboardType.Uri)
                 }
                 ui.error?.let {
-                    Spacer(Modifier.height(10.dp))
-                    Text(it, color = Palette.red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StatusDot(Palette.red)
+                        Spacer(Modifier.width(8.dp))
+                        Text(it, color = Palette.red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(24.dp))
                 GoldButton("Unlock", onConnect, Modifier.fillMaxWidth(), enabled = key.isNotBlank() && url.isNotBlank())
                 if (!showUrl) {
                     Text(
                         "Use another library",
                         color = Palette.muted,
                         fontSize = 13.sp,
-                        modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onShowUrl).padding(8.dp),
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp).clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onShowUrl).padding(horizontal = 12.dp, vertical = 12.dp),
                     )
                 }
             }
-            ui.loading -> Panel {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot()
-                    Spacer(Modifier.width(10.dp))
-                    Text("Opening your library…", color = Palette.text, fontSize = 15.sp)
+            // Stand-in cards where the games will be, so the page doesn't jump when they arrive.
+            ui.loading -> {
+                Skeleton(Modifier.width(180.dp).height(20.dp))
+                Spacer(Modifier.height(8.dp))
+                Skeleton(Modifier.width(120.dp).height(14.dp))
+                Spacer(Modifier.height(16.dp))
+                CardGrid(List(6) { it }) { _, m ->
+                    Column(m) {
+                        Skeleton(Modifier.fillMaxWidth().aspectRatio(4f / 3f), RoundedCornerShape(16.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Skeleton(Modifier.fillMaxWidth(0.7f).height(16.dp))
+                        Spacer(Modifier.height(4.dp))
+                        Skeleton(Modifier.fillMaxWidth(0.5f).height(12.dp))
+                    }
                 }
             }
-            ui.error != null -> Panel {
-                Kicker("Can't reach the library", Palette.red)
-                Spacer(Modifier.height(6.dp))
-                Text(ui.error, color = Palette.muted, fontSize = 14.sp)
-                Spacer(Modifier.height(14.dp))
-                GoldButton("Try again", onRetry)
-            }
-            ui.rows.isEmpty() -> Panel {
-                Text("The library is empty. Upload zips to your R2 bucket, then open this again.", color = Palette.muted)
-            }
+            ui.error != null -> EmptyState(
+                "Can't reach the library",
+                ui.error,
+                tone = Tone.BAD,
+                action = "Try again" to onRetry,
+            )
+            ui.rows.isEmpty() -> EmptyState(
+                "Your library is empty",
+                "Upload game zips (and neogeo.zip) to your R2 bucket, then open this page again.",
+                icon = { LockIcon(Modifier.size(24.dp), open = true) },
+            )
             else -> {
-                val waiting = ui.rows.count { it.state == RowState.Idle }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.weight(1f)) {
-                        Text("${ui.rows.size} games and files", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(if (waiting == 0) "All on this phone" else "$waiting not on this phone yet", color = Palette.muted, fontSize = 13.sp)
-                    }
-                    if (waiting > 0) GoldButton("Get all", onDownloadAll, enabled = !ui.busy)
-                }
-                Spacer(Modifier.height(14.dp))
-                // Two cards a row in portrait, more as the screen widens.
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    val gap = 12.dp
-                    val columns = (maxWidth / 190.dp).toInt().coerceAtLeast(2)
-                    val cardWidth = (maxWidth - gap * (columns - 1)) / columns
-                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        ui.rows.chunked(columns).forEach { line ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                                line.forEach { row -> LibraryCard(row, ui.busy, Modifier.width(cardWidth)) { onDownload(row.file) } }
-                            }
-                        }
-                    }
-                }
+                Text("${ui.rows.size} games and files", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Text(if (waiting == 0) "All on this phone" else "$waiting not on this phone yet", color = Palette.muted, fontSize = 13.sp)
+                Spacer(Modifier.height(16.dp))
+                CardGrid(ui.rows) { row, m -> LibraryCard(row, ui.busy, m) { onDownload(row.file) } }
             }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** [items] as a grid: two cards a row in portrait, more as the screen widens. */
+@Composable
+private fun <T> CardGrid(items: List<T>, card: @Composable (T, Modifier) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val gap = 12.dp
+        val columns = (maxWidth / 190.dp).toInt().coerceAtLeast(2)
+        val cardWidth = (maxWidth - gap * (columns - 1)) / columns
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            items.chunked(columns).forEach { line ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    line.forEach { card(it, Modifier.width(cardWidth)) }
+                }
+            }
+        }
+    }
+}
+
+/** A drawn padlock; [open] lifts the shackle. */
+@Composable
+private fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.gold) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        drawRoundRect(color, Offset(w * 0.12f, h * 0.44f), Size(w * 0.76f, h * 0.54f), CornerRadius(w * 0.12f))
+        drawArc(
+            color,
+            180f,
+            180f,
+            useCenter = false,
+            topLeft = Offset(w * 0.26f, if (open) -h * 0.04f else h * 0.06f),
+            size = Size(w * 0.48f, h * 0.56f),
+            style = Stroke(width = w * 0.12f),
+        )
+        drawLine(color, Offset(w * 0.26f, if (open) h * 0.24f else h * 0.34f), Offset(w * 0.26f, h * 0.46f), w * 0.12f)
+        if (!open) drawLine(color, Offset(w * 0.74f, h * 0.34f), Offset(w * 0.74f, h * 0.46f), w * 0.12f)
+        drawCircle(Palette.panel, w * 0.08f, Offset(w * 0.5f, h * 0.68f))
     }
 }
 
@@ -305,15 +369,17 @@ fun LibraryScreen(
 private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, onDownload: () -> Unit) {
     val canGet = row.state == RowState.Idle && !busy
     val shape = RoundedCornerShape(16.dp)
-    Column(modifier) {
+    val source = remember { MutableInteractionSource() }
+    val gold = row.state is RowState.Downloading || lit(source)
+    Column(modifier.pressScale(source)) {
         Box(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(4f / 3f)
                 .clip(shape)
                 .background(Palette.panel)
-                .border(if (row.state is RowState.Downloading) 2.dp else 1.dp, if (row.state is RowState.Downloading) Palette.gold else Color.White.copy(alpha = 0.08f), shape)
-                .clickable(enabled = canGet, onClick = onDownload),
+                .border(if (gold) 2.dp else 1.dp, if (gold) Palette.gold else Color.White.copy(alpha = 0.08f), shape)
+                .clickable(interactionSource = source, indication = null, enabled = canGet, onClick = onDownload),
         ) {
             if (row.game != null) {
                 ArtImage(row.game, row.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
@@ -340,7 +406,7 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             }
         }
         Spacer(Modifier.height(8.dp))
-        Text(row.title, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(row.title, color = if (gold) Palette.gold else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(row.detail, color = Palette.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         // What the check found, in full: a broken zip says which files it lacks.
         (row.state as? RowState.Done)?.let { s ->

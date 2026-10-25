@@ -12,6 +12,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -427,10 +428,12 @@ fun WideGameCard(
     action: @Composable () -> Unit = {},
 ) {
     val shape = RoundedCornerShape(20.dp)
+    val source = remember { MutableInteractionSource() }
+    val outlined = lit(source)
     Box(
-        modifier.fillMaxWidth().clip(shape).background(Palette.panel)
-            .border(1.dp, Color.White.copy(alpha = 0.08f), shape)
-            .clickable(enabled = enabled, onClick = onClick),
+        modifier.pressScale(source).fillMaxWidth().clip(shape).background(Palette.panel)
+            .border(if (outlined) 2.dp else 1.dp, if (outlined) Palette.gold else Color.White.copy(alpha = 0.08f), shape)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, onClick = onClick),
     ) {
         if (game != null) {
             ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
@@ -441,16 +444,16 @@ fun WideGameCard(
             }
         }
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.88f))))
-        if (tag != null) Box(Modifier.align(Alignment.TopStart).padding(10.dp)) { tag() }
+        if (tag != null) Box(Modifier.align(Alignment.TopStart).padding(12.dp)) { tag() }
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 14.dp, end = 12.dp, bottom = 12.dp),
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 12.dp),
         ) {
             Column(Modifier.weight(1f)) {
                 Text(title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 info()
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
             action()
         }
     }

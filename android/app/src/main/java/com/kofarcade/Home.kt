@@ -1,14 +1,13 @@
 package com.kofarcade
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,7 +36,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,10 +105,16 @@ fun HomeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 6.dp),
+                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
                     ) { chips() }
                 }
-                val cardWidth = if (landscape) 230.dp else 196.dp
+                // First run: what's left to do before the first game, in order.
+                val anyReady = ui.sets.values.any { it != null }
+                if (!ui.hasBios || !anyReady) {
+                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                }
+                // Portrait: two cards and a peek of the third, so the row reads as scrollable.
+                val cardWidth = if (landscape) 232.dp else ((maxWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
                 for ((series, games) in GAMES.groupBy { it.series }) {
                     Text(
                         series,
@@ -118,9 +122,11 @@ fun HomeScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         fontStyle = FontStyle.Italic,
-                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
                     )
-                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(games, key = { it.id }) { game ->
                             GameCard(
                                 game,
@@ -138,7 +144,7 @@ fun HomeScreen(
                         "Game pictures: libretro thumbnails.",
                     color = Palette.muted.copy(alpha = 0.7f),
                     fontSize = 12.sp,
-                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 24.dp),
+                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 24.dp),
                 )
             }
         }
@@ -148,14 +154,16 @@ fun HomeScreen(
 @Composable
 private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, onClick: () -> Unit) {
     // The hero's button is the gold one: Multiplayer is gold-edged beside it, not filled.
+    val source = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(40.dp)
+            .pressScale(source)
+            .height(44.dp)
             .clip(RoundedCornerShape(50))
             .background(if (gold) Palette.gold.copy(alpha = 0.1f) else if (warn) Palette.red.copy(alpha = 0.15f) else Palette.panel)
             .border(1.dp, if (gold) Palette.gold.copy(alpha = 0.8f) else if (warn) Palette.red.copy(alpha = 0.5f) else Palette.line, RoundedCornerShape(50))
-            .clickable(onClick = onClick)
+            .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick)
             .padding(horizontal = 16.dp),
     ) {
         if (dot != null) {
@@ -204,7 +212,7 @@ private fun Hero(
         val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp),
+            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp),
         ) {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
@@ -218,7 +226,7 @@ private fun Hero(
                 .align(Alignment.BottomStart)
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                 .fillMaxWidth(if (landscape) 0.6f else 1f)
-                .padding(start = 20.dp, end = 20.dp, bottom = 14.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         ) {
             Kicker(label)
             Spacer(Modifier.height(2.dp))
@@ -232,8 +240,8 @@ private fun Hero(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(game.subtitle ?: game.series, color = Palette.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(14.dp))
+            Text(game.subtitle ?: game.series, color = Palette.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(16.dp))
             GoldButton(action, onClick, play = action == "Play" || action == "Continue")
         }
     }
@@ -256,12 +264,11 @@ fun GameCard(
     selected: Boolean = false,
 ) {
     val source = remember { MutableInteractionSource() }
-    val pressed by source.collectIsPressedAsState()
-    val focused by source.collectIsFocusedAsState()
-    val lit = selected || pressed || focused
+    val outlined = selected || lit(source)
     Column(
         Modifier
             .width(width)
+            .pressScale(source)
             .clip(RoundedCornerShape(20.dp))
             .combinedClickable(interactionSource = source, indication = null, onClick = onClick, onLongClick = onLongClick),
     ) {
@@ -270,7 +277,7 @@ fun GameCard(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(4f / 3f)
-                .border(2.5.dp, if (lit) Palette.gold else Color.Transparent, RoundedCornerShape(20.dp))
+                .border(2.5.dp, if (outlined) Palette.gold else Color.Transparent, RoundedCornerShape(20.dp))
                 .padding(5.dp)
                 .clip(RoundedCornerShape(15.dp))
                 .background(Palette.panel),
@@ -281,7 +288,7 @@ fun GameCard(
         Column(Modifier.padding(start = 6.dp, end = 6.dp, bottom = 4.dp)) {
             Text(
                 game.title,
-                color = if (lit) Palette.gold else Palette.text,
+                color = if (outlined) Palette.gold else Palette.text,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.ExtraBold,
                 fontStyle = FontStyle.Italic,
@@ -295,6 +302,50 @@ fun GameCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/**
+ * First run: the steps before the first game (the BIOS, a game), each ticked
+ * off once done, with the next one's button gold.
+ */
+@Composable
+private fun SetupCard(hasBios: Boolean, anyReady: Boolean, onBios: () -> Unit, onLibrary: () -> Unit, modifier: Modifier) {
+    Panel(modifier) {
+        Kicker("Get set up")
+        Spacer(Modifier.height(4.dp))
+        Text("Two steps to your first game", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+        Spacer(Modifier.height(16.dp))
+        SetupStep(1, "Add the Neo Geo BIOS", "neogeo.zip, from your library or this phone", hasBios, "Add", onBios, next = !hasBios)
+        Spacer(Modifier.height(12.dp))
+        SetupStep(2, "Add a game", "Tap one below, or get them from your library", anyReady, "Library", onLibrary, next = hasBios && !anyReady)
+    }
+}
+
+@Composable
+private fun SetupStep(number: Int, title: String, sub: String, done: Boolean, action: String, onAction: () -> Unit, next: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(32.dp).clip(CircleShape)
+                .background(if (done) Palette.green.copy(alpha = 0.16f) else if (next) Palette.gold else Palette.bg)
+                .border(1.dp, if (done) Palette.green.copy(alpha = 0.6f) else if (next) Palette.gold else Palette.line, CircleShape),
+        ) {
+            if (done) {
+                CheckIcon(Modifier.size(14.dp), Palette.green)
+            } else {
+                Text("$number", color = if (next) OnGold else Palette.muted, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, fontSize = 14.sp)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = if (done) Palette.muted else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(if (done) "Done" else sub, color = if (done) Palette.green else Palette.muted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        if (!done) {
+            Spacer(Modifier.width(8.dp))
+            if (next) GoldButton(action, onAction, compact = true) else GhostButton(action, onAction, compact = true)
         }
     }
 }
