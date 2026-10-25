@@ -411,7 +411,7 @@ fun StepsStrip() {
 }
 
 /**
- * A wide card on the Multiplayer screens: the game's picture filling it, in
+ * A wide card on the Multiplayer screens: the game's gameplay picture filling it, in
  * full colour, the [title] and [info] over a shade at the bottom, [action]
  * (a gold pill) beside them and an optional [tag] at the top.
  */
@@ -436,14 +436,15 @@ fun WideGameCard(
             .clickable(interactionSource = source, indication = null, enabled = enabled, onClick = onClick),
     ) {
         if (game != null) {
-            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
+            // Gameplay, not the title screen: the card names the game itself.
+            ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
         } else {
             // A game this app doesn't know: its name on a tile, like a picture still loading.
             Box(Modifier.matchParentSize().background(Palette.bg).padding(16.dp), contentAlignment = Alignment.Center) {
                 Text(title, color = Palette.muted, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.88f))))
+        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.3f to Color.Transparent, 0.65f to Color.Black.copy(alpha = 0.55f), 1f to Color.Black.copy(alpha = 0.9f))))
         if (tag != null) Box(Modifier.align(Alignment.TopStart).padding(12.dp)) { tag() }
         Row(
             verticalAlignment = Alignment.CenterVertically,

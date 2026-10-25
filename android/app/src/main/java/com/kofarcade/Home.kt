@@ -47,9 +47,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -207,11 +209,12 @@ private fun Hero(
         Box(
             Modifier.matchParentSize().background(
                 Brush.verticalGradient(
-                    0f to Palette.bg.copy(alpha = 0.88f),
-                    0.12f to Palette.bg.copy(alpha = 0.6f),
-                    0.28f to Color.Transparent,
-                    0.45f to Color.Transparent,
-                    0.82f to Palette.bg.copy(alpha = 0.85f),
+                    0f to Palette.bg.copy(alpha = 0.92f),
+                    0.14f to Palette.bg.copy(alpha = 0.65f),
+                    0.3f to Color.Transparent,
+                    0.42f to Color.Transparent,
+                    0.62f to Palette.bg.copy(alpha = 0.55f),
+                    0.85f to Palette.bg.copy(alpha = 0.92f),
                     1f to Palette.bg,
                 ),
             ),
@@ -247,6 +250,7 @@ private fun Hero(
                 color = Palette.text,
                 fontSize = big.sp,
                 lineHeight = (big + 2).sp,
+                style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), blurRadius = 16f)),
                 fontWeight = FontWeight.Black,
                 fontStyle = FontStyle.Italic,
                 maxLines = 2,
@@ -254,8 +258,9 @@ private fun Hero(
             )
             Text(
                 ui.heroText ?: game.subtitle ?: game.series,
-                color = Palette.text.copy(alpha = 0.75f),
+                color = Palette.text.copy(alpha = 0.8f),
                 fontSize = 14.sp,
+                style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), blurRadius = 10f)),
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -299,7 +304,9 @@ fun GameCard(
                 .border(2.5.dp, if (outlined) Palette.gold else Color.Transparent, RoundedCornerShape(20.dp))
                 .padding(5.dp)
                 .clip(RoundedCornerShape(15.dp))
-                .background(Palette.panel),
+                .background(Palette.panel)
+                // A faint rim, so a black title screen still has an edge on the black page.
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(15.dp)),
         ) {
             ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
             if (set == null) PictureTag("Add ROM", Palette.red, Modifier.align(Alignment.TopStart).padding(8.dp))
