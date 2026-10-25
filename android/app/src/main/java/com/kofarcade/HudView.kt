@@ -316,7 +316,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val six = st.faceButtons.size == 6
         val faceR = s / 2 * when {
             st.layout == Layout.SHOOTER -> 1.12f
-            six -> 0.92f
+            six -> 0.88f
             else -> 1f
         }
         val hh = s / 2 + 5 * d
@@ -325,8 +325,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val facePos: Map<Char, Pair<Float, Float>> = when {
             // Capcom: punches over kicks, light to heavy, in straight columns.
             six -> mapOf(
-                'A' to (-1.2f to -0.58f), 'B' to (-0.2f to -0.58f), 'C' to (0.8f to -0.58f),
-                'D' to (-1.2f to 0.55f), 'E' to (-0.2f to 0.55f), 'F' to (0.8f to 0.55f),
+                'A' to (-1.25f to -0.6f), 'B' to (-0.19f to -0.6f), 'C' to (0.87f to -0.6f),
+                'D' to (-1.25f to 0.55f), 'E' to (-0.19f to 0.55f), 'F' to (0.87f to 0.55f),
             )
             // Metal Slug, Nightmare in the Dark: Shoot and Jump low, Bomb above Jump.
             st.layout == Layout.SHOOTER -> mapOf(
@@ -350,7 +350,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val skillR = 26 * d * sc
         // Moves on an outer ring; Sengoku 3's first three sit higher and bigger.
         val brawler = st.layout == Layout.BRAWLER
-        val ring = arcPositions(st.moves.size, 3 * s, 72f, 23f).mapIndexed { i, p ->
+        // Six buttons: a slightly tighter ring, so the last move clears Block.
+        val ring = arcPositions(st.moves.size, 3 * s, 72f, if (six) 21f else 23f).mapIndexed { i, p ->
             when {
                 brawler && i == 1 -> Pt(-0.52f * s, -2.98f * s)
                 brawler && i == 2 -> Pt(-1.93f * s, -2.94f * s)
@@ -370,7 +371,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
         // Block: left of the bottom row, where the thumb already is. Slide down for low block.
         if (st.block) {
-            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.15f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
+            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.2f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
         }
         // System chips (MAX, Roll, Tag...): above the buttons, the third to the left.
         val sysR = 22 * d * sc
@@ -773,18 +774,27 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // ----- Touch -----
 
     private fun hit(x: Float, y: Float, only: Kind? = null): El? {
-        // Inner elements first so a ring button never steals a tap meant for A-D.
-        val order = listOf(Kind.FACE, Kind.BLOCK, Kind.SYS, Kind.SKILL, Kind.PAUSE, Kind.COIN, Kind.FACING, Kind.START, Kind.SLOT)
+        // Round buttons reach a little past their edge (fingers are wide), so
+        // where two reaches meet, the tap goes to the button it's nearest to
+        // for its size: a tap can't land on a neighbour's side of the line.
+        var best: El? = null
+        var bestScore = Float.MAX_VALUE
+        for (el in elements) {
+            if (!el.round || (only != null && el.kind != only)) continue
+            val score = hypot(x - el.cx, y - el.cy) / el.r
+            val reach = if (el.kind == Kind.FACE) 1.15f else 1.08f
+            if (score <= reach && score < bestScore) {
+                best = el
+                bestScore = score
+            }
+        }
+        if (best != null) return best
+        val order = listOf(Kind.PAUSE, Kind.COIN, Kind.FACING, Kind.START, Kind.SLOT)
         for (k in order) {
             if (only != null && k != only) continue
             for (el in elements) {
-                if (el.kind != k) continue
-                val inside = if (el.round) {
-                    hypot(x - el.cx, y - el.cy) <= el.r * if (el.kind == Kind.FACE) 1.15f else 1.08f
-                } else {
-                    RectF(el.rect).apply { inset(-6 * d, -6 * d) }.contains(x, y)
-                }
-                if (inside) return el
+                if (el.kind != k || el.round) continue
+                if (RectF(el.rect).apply { inset(-6 * d, -6 * d) }.contains(x, y)) return el
             }
         }
         return null
