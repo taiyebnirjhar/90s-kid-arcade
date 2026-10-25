@@ -855,14 +855,20 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             st.stick == StickMode.FIXED -> 0.8f
             else -> 0.4f
         }
+        // Like the buttons: the fill fades (a floating stick waiting for a thumb
+        // most), the ring and arrows hardly, so it reads on any stage.
+        val lines = maxOf(alpha, 0.85f)
         val r = stickRadius()
         // A see-through ring...
-        fill.color = Color.argb((glassFill.alpha * 0.9f * alpha).toInt(), 8, 8, 14)
+        fill.color = Color.argb((glassFill.alpha * 0.9f * maxOf(alpha, 0.6f)).toInt(), 8, 8, 14)
         canvas.drawCircle(stickCx, stickCy, r, fill)
-        ring.color = Color.argb((220 * alpha).toInt(), 255, 255, 255)
+        ring.color = Color.argb(110, 0, 0, 0)
+        ring.strokeWidth = d
+        canvas.drawCircle(stickCx, stickCy, r + 0.5f * d, ring)
+        ring.color = Color.argb((220 * lines).toInt(), 255, 255, 255)
         ring.strokeWidth = 1.2f * d
         canvas.drawCircle(stickCx, stickCy, r, ring)
-        ring.color = Color.argb((40 * alpha).toInt(), 255, 255, 255)
+        ring.color = Color.argb((60 * lines).toInt(), 255, 255, 255)
         canvas.drawCircle(stickCx, stickCy, r * 0.62f, ring)
         // ...with an arrow mark each way, gold for where it's pushed.
         val dir = if (active) lastDir else 5
@@ -876,7 +882,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 2 -> dir == 1 || dir == 4 || dir == 7
                 else -> dir == 7 || dir == 8 || dir == 9
             }
-            fill.color = if (lit) accent else Color.argb((170 * alpha).toInt(), 255, 255, 255)
+            fill.color = if (lit) accent else Color.argb((200 * lines).toInt(), 255, 255, 255)
             canvas.drawPath(stickMark, fill)
             canvas.rotate(90f)
         }
@@ -886,9 +892,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val ky = stickCy + knobDy
         val kr = r * 0.42f
         if (active) halo(canvas, kx, ky, kr, accent)
-        fill.color = if (active) Color.argb(150, 116, 89, 13) else Color.argb((140 * alpha).toInt(), 20, 20, 30)
+        fill.color = if (active) Color.argb(150, 116, 89, 13) else Color.argb((160 * lines).toInt(), 20, 20, 30)
         canvas.drawCircle(kx, ky, kr, fill)
-        ring.color = if (active) accent else Color.argb((170 * alpha).toInt(), 255, 255, 255)
+        ring.color = if (active) accent else Color.argb((200 * lines).toInt(), 255, 255, 255)
         ring.strokeWidth = (if (active) 2f else 1.2f) * d
         canvas.drawCircle(kx, ky, kr - ring.strokeWidth / 2, ring)
     }
