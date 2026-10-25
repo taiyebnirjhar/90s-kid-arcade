@@ -433,7 +433,7 @@ fun WideGameCard(
             .clickable(enabled = enabled, onClick = onClick),
     ) {
         if (game != null) {
-            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
         } else {
             // A game this app doesn't know: its name on a tile, like a picture still loading.
             Box(Modifier.matchParentSize().background(Palette.bg).padding(16.dp), contentAlignment = Alignment.Center) {

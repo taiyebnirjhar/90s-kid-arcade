@@ -321,12 +321,12 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
                 FileTile(row.title, Modifier.matchParentSize())
             }
             val tag = when (val s = row.state) {
-                RowState.Idle -> null
+                RowState.Idle -> "Not on phone" to Palette.muted
                 RowState.OnPhone -> "On phone" to Palette.green
                 is RowState.Downloading -> "Downloading ${(s.fraction * 100).toInt()}%" to Palette.gold
                 is RowState.Done -> if (s.ok) "Ready" to Palette.green else "Problem" to Palette.red
             }
-            tag?.let { (text, color) -> PictureTag(text, color, Modifier.align(Alignment.TopStart).padding(8.dp)) }
+            PictureTag(tag.first, tag.second, Modifier.align(Alignment.TopStart).padding(8.dp))
             when (val s = row.state) {
                 RowState.Idle -> GoldButton("Get", onDownload, Modifier.align(Alignment.BottomEnd).padding(8.dp), enabled = !busy, compact = true)
                 is RowState.Downloading -> Box(

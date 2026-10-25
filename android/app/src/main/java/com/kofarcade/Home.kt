@@ -92,19 +92,23 @@ fun HomeScreen(
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
         // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
-        val heroHeight = if (landscape) maxHeight * 0.8f else (maxHeight * 0.5f).coerceIn(320.dp, 460.dp)
+        val heroHeight = if (landscape) maxHeight * 0.68f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+        val chips: @Composable () -> Unit = {
+            HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
+            HeaderChip("Library", onClick = onLibrary)
+            HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
+        }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Hero(ui.hero, ui.sets[ui.hero.id], ui.heroLabel, ui.heroAction, heroHeight, landscape, onHero)
+            // Landscape has room for the chips beside the logo; portrait puts them under the banner.
+            Hero(ui.hero, ui.sets[ui.hero.id], ui.heroLabel, ui.heroAction, heroHeight, landscape, onHero, chips.takeIf { landscape })
             Column(Modifier.windowInsetsPadding(sides)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 6.dp),
-                ) {
-                    HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
-                    HeaderChip("Library", onClick = onLibrary)
-                    HeaderChip(if (ui.hasBios) "BIOS ready" else "Add BIOS", dot = if (ui.hasBios) Palette.green else Palette.red, warn = !ui.hasBios, onClick = onBios)
+                if (!landscape) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 6.dp),
+                    ) { chips() }
                 }
                 val cardWidth = if (landscape) 230.dp else 196.dp
                 for ((series, games) in GAMES.groupBy { it.series }) {
@@ -171,9 +175,18 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
 // The banner: the game's gameplay picture across the whole width, fading into
 // the page, with the logo on top and the title and button at the bottom.
 @Composable
-private fun Hero(game: Game, set: String?, label: String, action: String, height: Dp, landscape: Boolean, onClick: () -> Unit) {
+private fun Hero(
+    game: Game,
+    set: String?,
+    label: String,
+    action: String,
+    height: Dp,
+    landscape: Boolean,
+    onClick: () -> Unit,
+    chips: (@Composable () -> Unit)?,
+) {
     Box(Modifier.fillMaxWidth().height(height).clickable(onClick = onClick)) {
-        ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+        ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
         // Dark at the top for the logo, then clear, then into the page's background.
         Box(
             Modifier.matchParentSize().background(
@@ -189,9 +202,16 @@ private fun Hero(game: Game, set: String?, label: String, action: String, height
         // And from the left, so the title reads on any picture.
         Box(Modifier.matchParentSize().background(Brush.horizontalGradient(0f to Palette.bg.copy(alpha = 0.6f), 0.7f to Color.Transparent)))
         val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-        Row(Modifier.windowInsetsPadding(safe).padding(start = 20.dp, top = 14.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp),
+        ) {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
+            if (chips != null) {
+                Spacer(Modifier.weight(1f))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { chips() }
+            }
         }
         Column(
             Modifier
@@ -282,24 +302,27 @@ fun GameCard(
 /**
  * A game picture from libretro's thumbnail collection, scaled without
  * smoothing so the pixel art stays crisp. Until it loads (or offline) a
- * tinted tile with the game's name shows instead.
+ * tinted tile (with the game's name, unless [label] is off) shows instead.
  */
 @Composable
-fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentScale: ContentScale) {
+fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentScale: ContentScale, label: Boolean = true) {
     val tint = when (game.layout) {
         Layout.FIGHTER -> Palette.red
         Layout.SHOOTER -> Palette.green
         Layout.BRAWLER -> Palette.blue
     }
     Box(modifier.background(Brush.linearGradient(listOf(tint.copy(alpha = 0.45f), Palette.panel))), contentAlignment = Alignment.Center) {
-        Text(
-            game.title,
-            color = Color.White.copy(alpha = 0.35f),
-            fontWeight = FontWeight.Black,
-            fontStyle = FontStyle.Italic,
-            fontSize = 20.sp,
-            textAlign = TextAlign.Center,
-        )
+        // Left off where the card shows the title anyway.
+        if (label) {
+            Text(
+                game.title,
+                color = Color.White.copy(alpha = 0.35f),
+                fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
         val url = artUrl(game, kind, set)
         // Screenshot tests have no network; the tile above stands in.
         if (url != null && !LocalInspectionMode.current) {

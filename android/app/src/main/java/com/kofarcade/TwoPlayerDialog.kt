@@ -371,9 +371,9 @@ fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>)
                 GoldButton("Open the library", onLibrary)
             }
         } else {
-            // Wide picture cards: one a row in portrait, two side by side in landscape.
+            // Wide picture cards: one a row in portrait, two or three side by side in landscape.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth > 600.dp) 2 else 1
+                val columns = if (maxWidth > 820.dp) 3 else if (maxWidth > 560.dp) 2 else 1
                 val gap = 14.dp
                 val cardWidth = (maxWidth - gap * (columns - 1)) / columns
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
