@@ -170,6 +170,7 @@ class Room private constructor(
     @Volatile private var lastRematch = 0L
     @Volatile private var lastResync = 0L
     private val migrating = AtomicBoolean(false)
+    private val ownerLock = Any()
     @Volatile private var takenOver = CountDownLatch(1)
 
     val isHost: Boolean get() = isOwner
@@ -334,7 +335,7 @@ class Room private constructor(
             }
         } else if (owner in gone) {
             lastHeard[owner] = now
-            ownerGone("${nameOf(owner)} lost the connection")
+            ownerLine?.let { ownerGone(it, "lost the connection") }
         }
     }
 
@@ -594,13 +595,13 @@ class Room private constructor(
                         listener?.onPartnerPaused(from, t == Msg.PAUSE)
                     }
                     Msg.BYE -> {
-                        if (line === ownerLine) ownerGone("${nameOf(owner)} left")
+                        ownerGone(line)
                         return
                     }
                 }
             }
         } catch (e: IOException) {
-            if (!closed && line === ownerLine) ownerGone("${nameOf(owner)} left")
+            ownerGone(line)
         }
     }
 
@@ -628,13 +629,20 @@ class Room private constructor(
         }
     }
 
-    /** The owner left: the player in the lowest seat takes the room over. */
-    private fun ownerGone(news: String) {
-        if (closed || !migrating.compareAndSet(false, true)) return
-        val old = owner
-        ownerLine?.close()
-        ownerLine = null
-        val rest = seats.keys.filter { it != old }.sorted()
+    /** The owner's [line] ended: the player in the lowest seat takes the room over. */
+    private fun ownerGone(line: Line, why: String = "left") {
+        val old: Int
+        val rest: List<Int>
+        synchronized(ownerLock) {
+            // A new owner may have called first: then the old line ending is old news.
+            if (closed || line !== ownerLine || !migrating.compareAndSet(false, true)) return
+            old = owner
+            line.close()
+            ownerLine = null
+            rest = seats.keys.filter { it != old }.sorted()
+            if (rest.firstOrNull().let { it != null && it != localPlayer }) takenOver = CountDownLatch(1)
+        }
+        val news = "${nameOf(old)} $why"
         val next = rest.firstOrNull()
         if (next == null || next == localPlayer) {
             worker.execute {
@@ -643,7 +651,6 @@ class Room private constructor(
             }
         } else {
             // Wait for the next owner to call.
-            takenOver = CountDownLatch(1)
             thread("net-wait-owner") {
                 if (!takenOver.await(TAKEOVER_MS, TimeUnit.MILLISECONDS) && !closed) {
                     migrating.set(false)
@@ -683,10 +690,12 @@ class Room private constructor(
         line.player = takeover.owner
         line.name = nameOf(takeover.owner)
         line.socket.soTimeout = 0
-        ownerLine = line
-        owner = takeover.owner
-        migrating.set(false)
-        takenOver.countDown()
+        synchronized(ownerLock) {
+            ownerLine = line
+            owner = takeover.owner
+            migrating.set(false)
+            takenOver.countDown()
+        }
         listener?.onNews("${line.name} is the host now")
         memberLoop(line)
     }
