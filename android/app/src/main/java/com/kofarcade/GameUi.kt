@@ -166,7 +166,7 @@ fun PauseContent(
                     item("Load state", onClick = onLoad)
                 }
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
-                item("Controls", onClick = onControls)
+                item("Settings", onClick = onControls)
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
                 if (netplay && !watching) item("Restart for everyone", onClick = onRestart)

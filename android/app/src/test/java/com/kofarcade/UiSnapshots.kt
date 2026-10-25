@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -195,23 +196,43 @@ class UiSnapshots {
         ),
     )
 
-    /** A stand-in for the game's picture, undimmed. */
+    /**
+     * A real KOF '97 screen, if CI downloaded one (build/test-art, never
+     * committed): libretro's thumbnail, stretched to 16:9 like the game.
+     */
+    // Decoded while rendering: Android's decoder only works inside Paparazzi's snapshot.
+    private val gameSnap: androidx.compose.ui.graphics.ImageBitmap? by lazy {
+        java.io.File("build/test-art/kof97_snap.png").takeIf { it.isFile }
+            ?.let { android.graphics.BitmapFactory.decodeFile(it.path) }
+            ?.asImageBitmap()
+    }
+
+    /** The game's picture (or a stand-in), undimmed. */
     @Composable
     private fun GameBehind(content: @Composable () -> Unit) {
         Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Palette.blue, Palette.red)))) {
-            Box(
-                Modifier.fillMaxSize().background(
-                    androidx.compose.ui.graphics.Brush.verticalGradient(0.7f to androidx.compose.ui.graphics.Color.Transparent, 0.7f to androidx.compose.ui.graphics.Color(0xFF3A2A1E)),
-                ),
-            )
+            val snap = gameSnap
+            if (snap != null) {
+                androidx.compose.foundation.Image(
+                    snap, null, Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                    filterQuality = androidx.compose.ui.graphics.FilterQuality.None,
+                )
+            } else {
+                Box(
+                    Modifier.fillMaxSize().background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(0.7f to androidx.compose.ui.graphics.Color.Transparent, 0.7f to androidx.compose.ui.graphics.Color(0xFF3A2A1E)),
+                    ),
+                )
+            }
             content()
         }
     }
 
-    /** In-game overlays sit on the game; a stand-in picture behind them. */
+    /** In-game overlays sit on the game; its picture behind them, dimmed. */
     @Composable
     private fun OverGame(content: @Composable () -> Unit) {
-        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Palette.blue, Palette.red)))) {
+        GameBehind {
             Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(0f to androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.88f), 1f to androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f)))) {
                 content()
             }
@@ -367,7 +388,7 @@ class UiSnapshots {
                 factory = { ctx ->
                     HudView(ctx, hudListener).apply {
                         state = hudState()
-                        alpha = 0.46f
+                        opacity = 0.46f
                         this.editing = editing
                         var done = false
                         addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
