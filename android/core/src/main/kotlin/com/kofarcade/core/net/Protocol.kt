@@ -102,6 +102,7 @@ internal object Msg {
     const val SEATING: Byte = 9
     const val TAKEOVER: Byte = 10
     const val START_STATE: Byte = 11
+    const val RESYNC: Byte = 12
 }
 
 internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {

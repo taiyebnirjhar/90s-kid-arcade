@@ -190,7 +190,7 @@ private fun PauseMenu(game: GameActivity) {
             netplay = game.isNetplay,
             roomInfo = game.roomInfo,
             onResume = { game.close() },
-            onRematch = { game.rematch() },
+            onRestart = { game.restartGame() },
             onSave = { game.saveState() },
             onLoad = { game.loadState() },
             onEditMoves = { c?.let { game.show(GameDialog.Editor(it)) } },
@@ -208,7 +208,7 @@ fun PauseContent(
     fighter: String?,
     netplay: Boolean,
     onResume: () -> Unit,
-    onRematch: () -> Unit,
+    onRestart: () -> Unit,
     onSave: () -> Unit,
     onLoad: () -> Unit,
     onEditMoves: () -> Unit,
@@ -246,10 +246,8 @@ fun PauseContent(
             modifier = Modifier.width(320.dp).verticalScroll(rememberScrollState()),
         ) {
             BigButton("Resume", primary = true, onClick = onResume)
-            // Multiplayer: restart together. (A saved state can't be loaded on one phone of several.)
-            if (netplay) {
-                BigButton("Rematch", onClick = onRematch)
-            } else {
+            // Alone: save states. (Multiplayer has none: a state can't be loaded on one phone of several.)
+            if (!netplay) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     BigButton("Save state", Modifier.weight(1f), onClick = onSave)
                     BigButton("Load state", Modifier.weight(1f), onClick = onLoad)
@@ -260,6 +258,8 @@ fun PauseContent(
                 BigButton("Layout", Modifier.weight(1f), onClick = onLayout)
                 BigButton("Controls", Modifier.weight(1f), onClick = onControls)
             }
+            // Rarely needed: KOF's challenger mode and continues are the rematch.
+            if (netplay) BigButton("Restart the game for everyone", onClick = onRestart)
             BigButton(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
         }
     }

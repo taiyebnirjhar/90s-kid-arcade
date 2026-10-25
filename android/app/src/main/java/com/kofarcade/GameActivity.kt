@@ -125,7 +125,6 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var lastNetFrame = -1
     private var stalledFrames = 0
     private var lastSumFrame = -1L
-    private var desyncShown = false
     private var lastWait = 0L
     // Two players: the game waits while either menu is open.
     private var localPaused = false
@@ -413,14 +412,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     masks.forEachIndexed { i, m -> LibretroDroid.pushRemoteInput(player, start + i, m) }
                 }
 
-                override fun onDesync(frame: Int) {
-                    runOnUiThread {
-                        if (!desyncShown) {
-                            desyncShown = true
-                            Toast.makeText(this@GameActivity, "The games went out of sync. Restart the match.", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
+                // The room puts everyone back in step from the host's game by
+                // itself (a moment's pause, like someone joining).
+                override fun onDesync(frame: Int) = Unit
 
                 override fun onClosed(reason: String) = runOnUiThread { netEnded(reason) }
 
@@ -452,7 +446,6 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     runOnUiThread {
                         lastSumFrame = -1
                         lastNetFrame = -1
-                        desyncShown = false
                         remotePaused = room.partnerPaused
                         hud.releaseAll()
                         pad.releaseAll()
@@ -517,8 +510,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lifecycleScope.launch(Dispatchers.IO) { action(r) }
     }
 
-    /** Pause menu: restart the game on every phone, from the state the room started from. */
-    fun rematch() {
+    /**
+     * Pause menu: restart the game on every phone, from the state the room
+     * started from. Rarely needed: KOF's own challenger mode and continues
+     * already give a rematch; this is for a game stuck somewhere.
+     */
+    fun restartGame() {
         sendNet { it.requestRematch() }
         close()
     }

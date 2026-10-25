@@ -40,7 +40,7 @@ interface RoomListener {
     /** [player]'s inputs for frames [start] onwards, in order and without gaps: feed them to the emulator. */
     fun onRemote(player: Int, start: Int, masks: IntArray)
 
-    /** The games differ at [frame]. */
+    /** The games differed at [frame]: the room puts everyone back in sync from the owner's game (a seating). */
     fun onDesync(frame: Int)
 
     /** This phone is out of the room (it lost everyone): the game can't go on together. */
@@ -168,6 +168,7 @@ class Room private constructor(
     private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "net-room").apply { isDaemon = true } }
     @Volatile private var beacon: BeaconSender? = null
     @Volatile private var lastRematch = 0L
+    @Volatile private var lastResync = 0L
     private val migrating = AtomicBoolean(false)
     @Volatile private var takenOver = CountDownLatch(1)
 
@@ -276,7 +277,12 @@ class Room private constructor(
             val mine = mySums[frame]
             mine != null && theirSums[frame].orEmpty().any { it != mine }
         }
-        if (differs) listener?.onDesync(frame)
+        if (differs) {
+            listener?.onDesync(frame)
+            // Everyone takes the owner's game as it stands: back in step
+            // without restarting anything. (On a thread: this can be the game's.)
+            runCatching { worker.execute { if (isOwner) resync() else control(Msg.RESYNC) } }
+        }
     }
 
     private fun receiveLoop() {
@@ -356,7 +362,7 @@ class Room private constructor(
     /** Tells everyone our menu opened or closed. */
     fun sendPause(paused: Boolean) = control(if (paused) Msg.PAUSE else Msg.RESUME)
 
-    /** Restarts the game for everyone from the start state (a network call: off the main thread). */
+    /** Restarts the game for everyone from the state the room started from (a network call: off the main thread). */
     fun requestRematch() {
         if (isOwner) worker.execute { rematch() } else control(Msg.REMATCH)
     }
@@ -427,6 +433,7 @@ class Room private constructor(
                         listener?.onPartnerPaused(from, t == Msg.PAUSE)
                     }
                     Msg.REMATCH -> worker.execute { rematch() }
+                    Msg.RESYNC -> worker.execute { resync() }
                 }
             }
         } catch (e: IOException) {
@@ -479,6 +486,14 @@ class Room private constructor(
         }
         line?.close()
         if (player in seats) seat(news, gone = player) else if (line != null) listener?.onNews(news)
+    }
+
+    private fun resync() {
+        // Both sides notice the same difference: one seating fixes it.
+        val now = System.nanoTime()
+        if (now - lastResync < 3_000_000_000L) return
+        lastResync = now
+        seat("Back in sync")
     }
 
     private fun rematch() {

@@ -132,12 +132,17 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - A phone that runs ahead of a partner waits a frame now and then (time
   sync). A phone stops only if a partner falls 8 frames behind.
 - Phones play the same game because whenever who sits where changes
-  (someone joins or leaves, a rematch), the room's owner stops the game for a
-  moment and sends everyone its emulator state and the new seats; all carry
-  on from that state. An empty seat plays no input and nobody waits for it.
-- A RAM checksum of confirmed frames every 2 seconds catches drift.
-- The pause menu pauses every phone; **Rematch** restarts them all from the
-  state the room started from.
+  (someone joins or leaves), the room's owner stops the game for a moment and
+  sends everyone its emulator state and the new seats; all carry on from that
+  state. An empty seat plays no input and nobody waits for it.
+- A RAM checksum of confirmed frames every 2 seconds catches drift; if two
+  phones ever differ, the owner re-sends its game to everyone in the same
+  way, and play goes on from there (nothing restarts).
+- The pause menu pauses every phone. For a rematch, use the game's own:
+  in KOF the other player presses COIN and START mid-fight ("Here comes a
+  new challenger!"), and after a versus fight the loser continues with
+  COIN and START. *Restart the game for everyone* (bottom of the pause menu)
+  is only for a game stuck somewhere.
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run, with two
   players in KOF and three in Cadillacs and Dinosaurs.

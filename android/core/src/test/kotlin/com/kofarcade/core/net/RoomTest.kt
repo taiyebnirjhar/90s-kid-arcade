@@ -249,6 +249,27 @@ class RoomTest {
     }
 
     @Test
+    fun goingOutOfSyncPutsEveryoneBackInStepFromTheHostsGame() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Guest")
+        val b = FakeGame(g).apply { play() }
+        waitFor("both seated") { a.epoch == 2 && b.epoch == 2 }
+        b.loaded = null
+        // The two games' checksums for the same frame differ.
+        h.reportSum(600, 1)
+        g.reportSum(600, 2)
+        waitFor("resynced") { a.epoch == 3 && b.epoch == 3 }
+        // The guest took the host's game as it stood; nothing restarted.
+        assertTrue(byteArrayOf(7, 0).contentEquals(b.loaded))
+        assertTrue(a.news.any { "Back in sync" in it }, a.news.toString())
+        // One difference, one resync.
+        Thread.sleep(500)
+        assertEquals(3, a.epoch)
+    }
+
+    @Test
     fun aProbeLearnsTheRoomsGame() {
         val h = Room.host("Host", "kf2k5uni", "KOF 2005", rom = 7, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1).also { open += it }
         FakeGame(h).play()
