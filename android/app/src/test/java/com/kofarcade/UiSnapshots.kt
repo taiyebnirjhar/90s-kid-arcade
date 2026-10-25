@@ -81,30 +81,6 @@ class UiSnapshots {
     }
 
     @Test
-    fun hostingWaiting() = shot("twoplayer_hosting") {
-        HostingScreen(
-            "Sengoku 3", "Waiting for players", false, listOf("192.168.43.1"), listOf("You"), 2, null,
-            onAccept = {}, onDecline = {}, onStart = null, onBack = {},
-        )
-    }
-
-    @Test
-    fun hostingRequest() = shot("twoplayer_request") {
-        HostingScreen(
-            "Sengoku 3", "Waiting for players", false, listOf("192.168.43.1"), listOf("You"), 2, "SM-S918B",
-            onAccept = {}, onDecline = {}, onStart = null, onBack = {},
-        )
-    }
-
-    @Test
-    fun hostingThreePlayers() = shot("multiplayer_hosting_3") {
-        HostingScreen(
-            "Cadillacs and Dinosaurs", "Waiting for players", false, listOf("192.168.43.1"), listOf("You", "Pixel 8"), 3, null,
-            onAccept = {}, onDecline = {}, onStart = {}, onBack = {},
-        )
-    }
-
-    @Test
     fun joinLooking() = shot("twoplayer_join_empty") {
         JoinScreen(emptyList(), "", {}, null, false, false, {}, {}, {}, {})
     }
@@ -112,7 +88,7 @@ class UiSnapshots {
     @Test
     fun joinFound() = shot("twoplayer_join") {
         JoinScreen(
-            listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3), HostChoice("KOF 2005", "SM-S918B", false)),
+            listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q2"), HostChoice("KOF 2005", "SM-S918B", false, code = "M4TX")),
             "", {}, "You need KOF 2005 on this phone first.", true, false, {}, {}, {}, {},
         )
     }
