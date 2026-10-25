@@ -1,5 +1,10 @@
 package com.kofarcade
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,10 +35,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -41,6 +49,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontStyle
@@ -121,56 +133,27 @@ fun PauseContent(
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
-    Box(
+    val shown = slideIn()
+    BoxWithConstraints(
         Modifier
             .fillMaxSize()
             // Dark behind the menu, clear over the right, so the game still shows.
+            .graphicsLayer { alpha = shown.value }
             .background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.6f), 0.55f to Color.Black.copy(alpha = 0.25f), 1f to Color.Transparent)),
     ) {
-        Column(
-            Modifier
+        // Small phones (640 dp wide) get a narrower panel and tag, so the two never meet.
+        val narrow = maxWidth < 760.dp
+        Box(
+            contentAlignment = Alignment.CenterStart,
+            modifier = Modifier
                 .fillMaxHeight()
-                .width(430.dp)
-                .slantPanel(left = 0.dp, right = 90.dp)
+                .width(if (narrow) 330.dp else 400.dp)
+                .graphicsLayer { translationX = -(1 - shown.value) * size.width }
+                .slantPanel(left = 0.dp, right = 80.dp)
                 // Taps on the panel itself don't close the menu.
-                .clickable(remember { MutableInteractionSource() }, indication = null) {}
-                .padding(start = 36.dp, end = 110.dp, top = 22.dp, bottom = 14.dp),
+                .clickable(remember { MutableInteractionSource() }, indication = null) {},
         ) {
-            Text(
-                title.uppercase(),
-                color = Palette.gold,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Black,
-                fontStyle = FontStyle.Italic,
-                letterSpacing = 1.5.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (fighter != null) {
-                Spacer(Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Portrait(fighter, size = 26)
-                    Spacer(Modifier.width(8.dp))
-                    Text(fighter, color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                }
-            }
-            if (netplay) {
-                Spacer(Modifier.height(6.dp))
-                Text(roomInfo ?: "Multiplayer", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, lineHeight = 15.sp)
-                // The technical line, for when something's wrong.
-                if (roomStatus != null) {
-                    var details by remember { mutableStateOf(false) }
-                    Text(
-                        if (details) roomStatus else "Connection details ▸",
-                        color = Palette.muted,
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        modifier = Modifier.padding(top = 2.dp).clickable { details = !details },
-                    )
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 28.dp, end = 96.dp, top = 6.dp, bottom = 6.dp)) {
                 @Composable
                 fun item(text: String, danger: Boolean = false, onClick: () -> Unit) =
                     MenuItem(text, lit = (pressed ?: "Resume") == text, danger = danger, onPress = { pressed = if (it) text else pressed.takeIf { p -> p != text } }, onClick = onClick)
@@ -190,17 +173,23 @@ fun PauseContent(
                 item(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
             }
         }
-        // The big tag, top right, like the game's own pause screen.
-        Column(horizontalAlignment = Alignment.End, modifier = Modifier.align(Alignment.TopEnd).padding(top = 22.dp)) {
+        // Top right, like the game's own pause screen: the big tag, then what's being played.
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 18.dp)
+                .graphicsLayer { translationX = (1 - shown.value) * size.width },
+        ) {
             Box(
                 Modifier
-                    .slantPanel(left = 26.dp, right = 0.dp, alpha = 0.92f)
-                    .padding(start = 44.dp, end = 34.dp, top = 2.dp, bottom = 2.dp),
+                    .slantPanel(left = 24.dp, right = 0.dp, alpha = 0.92f)
+                    .padding(start = 40.dp, end = 30.dp),
             ) {
                 Text(
                     if (watching) "WATCHING" else "PAUSED",
                     color = Color.White,
-                    fontSize = 44.sp,
+                    fontSize = if (narrow) 34.sp else 44.sp,
                     fontWeight = FontWeight.Black,
                     fontStyle = FontStyle.Italic,
                     letterSpacing = 1.sp,
@@ -214,11 +203,66 @@ fun PauseContent(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.5.sp,
                     modifier = Modifier.padding(top = 6.dp).clip(Slant(8.dp, 0.dp)).background(Palette.gold)
-                        .padding(start = 16.dp, end = 34.dp, top = 4.dp, bottom = 4.dp),
+                        .padding(start = 16.dp, end = 30.dp, top = 4.dp, bottom = 4.dp),
                 )
+            }
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .widthIn(max = if (narrow) 270.dp else 360.dp)
+                    .slantPanel(left = 14.dp, right = 0.dp, alpha = 0.75f)
+                    .padding(start = 26.dp, end = 30.dp, top = 8.dp, bottom = 8.dp),
+            ) {
+                Text(
+                    title.uppercase(),
+                    color = Palette.gold,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
+                    fontStyle = FontStyle.Italic,
+                    letterSpacing = 1.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (fighter != null) {
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(fighter, color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Spacer(Modifier.width(8.dp))
+                        Portrait(fighter, size = 26)
+                    }
+                }
+                if (netplay) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(roomInfo ?: "Multiplayer", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, lineHeight = 15.sp, textAlign = TextAlign.End)
+                    // The technical line, for when something's wrong.
+                    if (roomStatus != null) {
+                        var details by remember { mutableStateOf(false) }
+                        Text(
+                            if (details) roomStatus else "Connection details ▸",
+                            color = Palette.muted,
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.clickable { details = !details }.padding(vertical = 6.dp),
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+/** True where only one still frame is drawn (screenshot tests): panels start in place. */
+val LocalStill = staticCompositionLocalOf { false }
+
+/** 0 to 1 as a panel slides in, once, when it opens. */
+@Composable
+private fun slideIn(): Animatable<Float, AnimationVector1D> {
+    val preview = LocalInspectionMode.current || LocalStill.current
+    val shown = remember { Animatable(if (preview) 1f else 0f) }
+    LaunchedEffect(Unit) { shown.animateTo(1f, tween(180, easing = FastOutSlowInEasing)) }
+    return shown
 }
 
 /** One line of the pause menu: big italic words, a gold slanted bar when [lit]. */
@@ -227,25 +271,31 @@ private fun MenuItem(text: String, lit: Boolean, danger: Boolean, onPress: (Bool
     val source = remember { MutableInteractionSource() }
     val down by source.collectIsPressedAsState()
     LaunchedEffect(down) { onPress(down) }
-    val bar = if (danger) Palette.red else Palette.gold
+    // Quick, so a press feels instant, but it still slides rather than blinks.
+    val bar by animateColorAsState(if (!lit) Color.Transparent else if (danger) Palette.red else Palette.gold, tween(90), label = "bar")
+    val ink by animateColorAsState(
+        when {
+            lit && danger -> Color.White
+            lit -> OnGold
+            danger -> Palette.red
+            else -> Palette.text
+        },
+        tween(90),
+        label = "ink",
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(48.dp)
             .clip(Slant(12.dp, 12.dp))
-            .background(if (lit) bar else Color.Transparent)
+            .background(bar)
             .clickable(source, indication = null, onClick = onClick)
             .padding(start = 16.dp, end = 12.dp),
     ) {
         Text(
             text,
-            color = when {
-                lit && danger -> Color.White
-                lit -> OnGold
-                danger -> Palette.red
-                else -> Palette.text
-            },
+            color = ink,
             fontSize = 21.sp,
             fontWeight = FontWeight.Black,
             fontStyle = FontStyle.Italic,
@@ -282,11 +332,13 @@ fun ControlsPanel(
     startTab: SettingsTab = SettingsTab.SCREEN,
 ) {
     var tab by remember { mutableStateOf(startTab) }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+    val shown = slideIn()
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
         Column(
             Modifier
                 .fillMaxHeight()
-                .width(490.dp)
+                .width(if (maxWidth < 760.dp) 440.dp else 490.dp)
+                .graphicsLayer { translationX = (1 - shown.value) * size.width }
                 .slantPanel(left = 50.dp, right = 0.dp)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}
                 .padding(start = 62.dp, end = 24.dp, top = 16.dp, bottom = 12.dp),
@@ -296,10 +348,11 @@ fun ControlsPanel(
                 Spacer(Modifier.width(12.dp))
                 Text("Changes show as you make them", color = Palette.muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 6.dp))
             }
-            Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (t in SettingsTab.entries) {
                     val on = t == tab
+                    // A 48 dp target round a smaller chip.
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.height(48.dp).clickable(remember { MutableInteractionSource() }, indication = null) { tab = t }) {
                     Text(
                         t.title.uppercase(),
                         color = if (on) OnGold else Palette.muted,
@@ -310,12 +363,11 @@ fun ControlsPanel(
                         modifier = Modifier
                             .clip(Slant(8.dp, 8.dp))
                             .background(if (on) Palette.gold else Color.White.copy(alpha = 0.06f))
-                            .clickable { tab = t }
                             .padding(horizontal = 16.dp, vertical = 7.dp),
                     )
+                    }
                 }
             }
-            Spacer(Modifier.height(6.dp))
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 when (tab) {
                     SettingsTab.SCREEN -> {
@@ -403,7 +455,7 @@ private fun SettingRow(
 private fun Arrow(glyph: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(40.dp).clickable(enabled = enabled, onClick = onClick),
+        modifier = Modifier.size(48.dp).clickable(enabled = enabled, onClick = onClick),
     ) {
         Text(glyph, color = if (enabled) Palette.gold else Palette.line, fontSize = 22.sp, fontWeight = FontWeight.Black)
     }
@@ -467,22 +519,26 @@ fun EditBarContent(
     onCancel: () -> Unit,
     onSave: () -> Unit,
 ) {
-    Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp), contentAlignment = Alignment.TopCenter) {
+        // Small phones: a shorter name box and slider, so the bar fits in 640 dp.
+        val narrow = maxWidth < 760.dp
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .slantPanel(left = 18.dp, right = 18.dp, alpha = 0.88f)
-                .padding(start = 26.dp, end = 26.dp, top = 6.dp, bottom = 6.dp),
+                .padding(start = 24.dp, end = 24.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).padding(start = 12.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
             ) {
                 GearIcon(Modifier.size(14.dp), OnGold, hole = Palette.gold)
-                Spacer(Modifier.width(6.dp))
-                Text("EDIT CONTROLS", color = OnGold, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, letterSpacing = 1.sp)
+                if (!narrow) {
+                    Spacer(Modifier.width(6.dp))
+                    Text("EDIT CONTROLS", color = OnGold, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, letterSpacing = 1.sp)
+                }
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
             Text(
                 picked ?: "Pick a control",
                 color = if (picked != null) Palette.text else Palette.muted,
@@ -490,51 +546,69 @@ fun EditBarContent(
                 fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(140.dp),
+                modifier = Modifier.width(if (narrow) 104.dp else 140.dp),
             )
-            Text("SIZE", color = Palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            Slider(
-                value = scale,
-                onValueChange = onScale,
-                valueRange = 0.6f..1.8f,
-                enabled = canResize,
-                colors = SliderDefaults.colors(
-                    thumbColor = Palette.gold,
-                    activeTrackColor = Palette.gold,
-                    inactiveTrackColor = Palette.line,
-                    disabledThumbColor = Palette.line,
-                    disabledActiveTrackColor = Palette.line,
-                    disabledInactiveTrackColor = Palette.line.copy(alpha = 0.5f),
-                ),
-                modifier = Modifier.width(150.dp).padding(horizontal = 8.dp),
-            )
-            BarAction("Reset all", Palette.muted, onReset)
+            Text("SIZE", color = if (canResize) Palette.muted else Palette.line, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            GoldSlider(scale, onScale, 0.6f..1.8f, canResize, Modifier.width(if (narrow) 110.dp else 150.dp).padding(horizontal = 10.dp))
+            BarAction(if (narrow) "Reset" else "Reset all", Palette.muted, onReset)
             BarAction("Cancel", Palette.text, onCancel)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                "SAVE",
-                color = OnGold,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Black,
-                fontStyle = FontStyle.Italic,
-                letterSpacing = 1.sp,
-                modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).clickable(onClick = onSave)
-                    .padding(horizontal = 18.dp, vertical = 8.dp),
-            )
+            Spacer(Modifier.width(4.dp))
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.height(48.dp).clickable(remember { MutableInteractionSource() }, indication = null, onClick = onSave),
+            ) {
+                Text(
+                    "SAVE",
+                    color = OnGold,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black,
+                    fontStyle = FontStyle.Italic,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).padding(horizontal = 18.dp, vertical = 8.dp),
+                )
+            }
         }
+    }
+}
+
+/** A thin gold track with a round thumb; drag or tap anywhere on it (48 dp tall to touch). */
+@Composable
+private fun GoldSlider(
+    value: Float,
+    onChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val fraction = ((value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
+    fun at(x: Float, width: Int) = range.start + (x / width).coerceIn(0f, 1f) * (range.endInclusive - range.start)
+    Canvas(
+        modifier
+            .height(48.dp)
+            .pointerInput(enabled) {
+                if (enabled) detectTapGestures { onChange(at(it.x, size.width)) }
+            }
+            .pointerInput(enabled) {
+                if (enabled) detectHorizontalDragGestures { change, _ -> onChange(at(change.position.x, size.width)) }
+            },
+    ) {
+        val y = size.height / 2
+        val x = size.width * fraction
+        val track = 4.dp.toPx()
+        drawLine(Palette.line, Offset(0f, y), Offset(size.width, y), track, StrokeCap.Round)
+        if (enabled) drawLine(Palette.gold, Offset(0f, y), Offset(x, y), track, StrokeCap.Round)
+        drawCircle(if (enabled) Palette.gold else Palette.line, 9.dp.toPx(), Offset(x, y))
     }
 }
 
 @Composable
 private fun BarAction(text: String, color: Color, onClick: () -> Unit) {
-    Text(
-        text.uppercase(),
-        color = color,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 1.sp,
-        modifier = Modifier.clip(Slant(6.dp, 6.dp)).clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 8.dp),
-    )
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.height(48.dp).clickable(onClick = onClick).padding(horizontal = 10.dp),
+    ) {
+        Text(text.uppercase(), color = color, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+    }
 }
 
 /** A cog: eight teeth round a ring. */

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -134,9 +135,12 @@ private fun Sheet(
 /** The [Sheet]'s panel, centred (so it can be previewed). */
 @Composable
 fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Box(Modifier.widthIn(max = width.dp).padding(horizontal = 16.dp, vertical = 8.dp).slantPanel(left = 22.dp, right = 22.dp, alpha = 0.96f)) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 36.dp, vertical = 14.dp)) { content() }
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // Small phones: a smaller slant and margins, so more fits across.
+        val narrow = maxWidth < 760.dp
+        val slant = if (narrow) 14.dp else 22.dp
+        Box(Modifier.widthIn(max = width.dp).padding(horizontal = if (narrow) 6.dp else 16.dp, vertical = 8.dp).slantPanel(left = slant, right = slant, alpha = 0.96f)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = slant + 14.dp, vertical = 14.dp)) { content() }
         }
     }
 }

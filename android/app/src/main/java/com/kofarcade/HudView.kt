@@ -223,7 +223,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     init {
         isHapticFeedbackEnabled = true
+        softShadow()
     }
+
+    // Every label carries a small dark shadow, so it reads on a bright stage too.
+    private fun softShadow() = text.setShadowLayer(1.5f * d, 0f, 0.5f * d, Color.argb(170, 0, 0, 0))
 
     fun refresh() {
         if (width > 0) layoutElements()
@@ -485,7 +489,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             text.textAlign = Paint.Align.LEFT
             text.setShadowLayer(4 * d, 0f, 1 * d, Color.BLACK)
             canvas.drawText("Tap a slot to pick your fighter and get their moves", safeInsets().first + 132 * d, 78 * d, text)
-            text.clearShadowLayer()
+            softShadow()
             text.textAlign = Paint.Align.CENTER
         }
     }
@@ -524,14 +528,17 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             }
             text.textSize = 10 * d
             text.color = if (el.id == selected) accent else Color.WHITE
-            canvas.drawText(ellipsize(name, el.r * 2.8f), el.cx, el.rect.bottom + 13 * d, text)
+            // Under the control, or over it when that would leave the screen.
+            val below = el.rect.bottom + 13 * d
+            canvas.drawText(ellipsize(name, el.r * 2.8f), el.cx, if (below > height - 3 * d) el.rect.top - 6 * d else below, text)
         }
         text.textSize = 10 * d
         text.color = if (selected == "stick") accent else Color.WHITE
         canvas.drawText("Stick", homeX, homeY + stickRadius() + 14 * d, text)
         text.color = Color.WHITE
-        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, height - 18 * d, 12 * d)
-        text.clearShadowLayer()
+        // Under the editor's bar, where no control sits by default.
+        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, 84 * d, 12 * d)
+        softShadow()
     }
 
     private fun glass(canvas: Canvas, el: El, stroke: Int? = null, strokeWidth: Float = 1.2f * d, glow: Int = accent) {
@@ -539,6 +546,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (el.round) {
             if (down) halo(canvas, el.cx, el.cy, el.r, glow)
             canvas.drawCircle(el.cx, el.cy, el.r, if (down) pressedFill(glow) else glassFill)
+            // A faint dark edge outside the light ring keeps the button's shape on a bright stage.
+            ring.color = Color.argb(60, 0, 0, 0)
+            ring.strokeWidth = d
+            canvas.drawCircle(el.cx, el.cy, el.r + 0.5f * d, ring)
             ring.color = if (down) glow else stroke ?: glassStroke.color
             ring.strokeWidth = if (down) 2 * d else strokeWidth
             canvas.drawCircle(el.cx, el.cy, el.r - ring.strokeWidth / 2, ring)
@@ -649,7 +660,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             text.color = if (active) accent else Color.argb(200, 255, 255, 255)
             canvas.drawText(name?.substringBefore(" ") ?: "Pick", tile.right + 6 * d, tile.centerY() + 3.5f * d, text)
             text.color = Color.WHITE
-            text.clearShadowLayer()
+            softShadow()
             text.textAlign = Paint.Align.CENTER
         }
     }
@@ -730,7 +741,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             text.textSize = el.r * 0.32f
             val label = ellipsize(move.shortName, el.r * 2.7f)
             canvas.drawText(label, el.cx, el.rect.bottom + el.r * 0.39f, text)
-            text.clearShadowLayer()
+            softShadow()
         }
         drawSweep(canvas, el)
     }

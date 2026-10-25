@@ -35,7 +35,11 @@ class UiSnapshots {
     val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_6, maxPercentDifference = 0.0)
 
     private fun shot(name: String, content: @Composable () -> Unit) =
-        paparazzi.snapshot(name) { KofTheme { Box(Modifier.fillMaxSize().background(Palette.bg)) { content() } } }
+        paparazzi.snapshot(name) {
+            androidx.compose.runtime.CompositionLocalProvider(LocalStill provides true) {
+                KofTheme { Box(Modifier.fillMaxSize().background(Palette.bg)) { content() } }
+            }
+        }
 
     private val sets = mapOf("kof97" to "kof97", "kof2002" to "kof2002", "sengoku3" to "sengoku3")
 
@@ -184,6 +188,13 @@ class UiSnapshots {
         deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080),
     )
 
+    /** A small landscape phone: 640 x 360 dp. */
+    private fun smallLandscape() = paparazzi.unsafeUpdateConfig(
+        deviceConfig = DeviceConfig.PIXEL_6.copy(
+            orientation = ScreenOrientation.LANDSCAPE, screenWidth = 1280, screenHeight = 720, density = com.android.resources.Density.XHIGH,
+        ),
+    )
+
     /** A stand-in for the game's picture, undimmed. */
     @Composable
     private fun GameBehind(content: @Composable () -> Unit) {
@@ -211,6 +222,22 @@ class UiSnapshots {
     fun pause() {
         landscape()
         shot("pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
+    }
+
+    @Test
+    fun pauseSmall() {
+        smallLandscape()
+        shot("pause_small") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
+    }
+
+    @Test
+    fun roomSheetSmall() {
+        smallLandscape()
+        shot("room_sheet_small") {
+            OverGame {
+                SheetFrame(width = 880) { RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {}) }
+            }
+        }
     }
 
     @Test
@@ -256,8 +283,8 @@ class UiSnapshots {
         }
     }
 
-    private fun controlsShot(name: String, tab: SettingsTab) {
-        landscape()
+    private fun controlsShot(name: String, tab: SettingsTab, small: Boolean = false) {
+        if (small) smallLandscape() else landscape()
         shot(name) {
             GameBehind {
                 ControlsPanel(
@@ -277,6 +304,9 @@ class UiSnapshots {
 
     @Test
     fun controlsMoves() = controlsShot("controls_moves", SettingsTab.MOVES)
+
+    @Test
+    fun controlsSmall() = controlsShot("controls_small", SettingsTab.CONTROLS, small = true)
 
     @Test
     fun gameError() {
@@ -379,6 +409,23 @@ class UiSnapshots {
                 touch(v, android.view.MotionEvent.ACTION_MOVE, sx + 50 * d, sy - 4 * d)
                 val (ax, ay) = facePos(v, d, -0.44f, 0.6f)
                 touch(v, android.view.MotionEvent.ACTION_DOWN, ax, ay)
+            }
+        }
+    }
+
+    @Test
+    fun hudSmall() {
+        smallLandscape()
+        shot("hud_small") { Hud() }
+    }
+
+    @Test
+    fun hudEditSmall() {
+        smallLandscape()
+        shot("hud_edit_small") {
+            Box(Modifier.fillMaxSize()) {
+                Hud(editing = true)
+                EditBarContent("Move 3", 1f, true, {}, {}, {}, {})
             }
         }
     }
