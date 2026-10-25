@@ -324,7 +324,7 @@ class RoomTest {
         val g2 = join(h, "Rafi", device = "phone-rafi")
         val b2 = FakeGame(g2).apply { play() }
         waitFor("back") { g2.localPlayer == 1 && b2.epoch == a.epoch && h.held.isEmpty() }
-        assertTrue(a.news.any { "Rafi is back as player 2" in it }, a.news.toString())
+        waitFor("told back") { a.news.any { "Rafi is back as player 2" in it } }
         waitFor("frames") { a.framesOf(1) >= 60 && b2.framesOf(0) >= 60 }
         assertTrue(a.matches(1, b2, 60) && b2.matches(0, a, 60))
     }
@@ -332,7 +332,7 @@ class RoomTest {
     @Test
     fun aHeldSeatGoesFreeWhenTheHoldEndsOrTheHostFreesIt() {
         val h = host("dino", seats = 3)
-        h.holdMs = 1_500
+        h.holdMs = 3_000
         val a = FakeGame(h).apply { play() }
         waitFor("host seated") { a.epoch == 1 }
         val g1 = join(h, "One", "dino", device = "one")
@@ -350,7 +350,7 @@ class RoomTest {
         g1.vanish()
         waitFor("held") { h.held.keys == setOf(1) }
         waitFor("free after the hold") { h.held.isEmpty() && h.hasFreeSeat }
-        assertTrue(a.news.any { "didn't come back" in it }, a.news.toString())
+        waitFor("told") { a.news.any { "didn't come back" in it } }
 
         // Two drops; the host frees the seat at once.
         h.holdMs = 60_000
