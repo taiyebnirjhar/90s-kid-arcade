@@ -46,15 +46,25 @@ and settings.
 
 ## Playing
 
-1. Tap **Add BIOS** and pick your `neogeo.zip` (once).
-2. Tap a game. The first time it asks for that game's zip: pick it from the
-   phone (any file name is fine) or download it from your library (below).
-   Long-press a game to remove its ROM.
+1. The first time, the home screen asks for the Neo Geo BIOS: tap
+   **Add BIOS** and pick your `neogeo.zip` (once; Capcom games don't need it).
+2. Tap a game's card. The first time it asks for that game's zip: pick it
+   from the phone (any file name is fine) or download it from your library
+   (below). Cards of games you haven't added say **Add ROM**; long-press a
+   game to remove its ROM.
 3. **COIN**, then **START**.
+
+The home screen opens on the game you played last, with **Continue**, and
+lists every game by series as picture cards. **Multiplayer** and
+**Library** are at the top.
+
+In a game, the pause button opens the pause menu: Resume, save and load
+state, *Edit <name>'s moves*, **Settings**, **Button layout** (drag any
+control where your thumbs want it, tap one to resize it) and Quit.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Controls to pick by hand). Each fighter's face
+fighter (turn this off in Pause → Settings → Moves → *Detect fighters* to pick by hand). Each fighter's face
 comes from the game itself: the first time they're on screen the app takes
 the face the game draws by the life bar (Double Dragon: on its select
 screen) and shows it from then on on the team buttons, the pause menu and
@@ -81,7 +91,7 @@ Throw and Overhead. The app reads which Super Art you picked and shows only
 that one on the ring, with the fighter's specials.
 
 **Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
-fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
+fire; switch it off in Pause → Settings → Controls). Slug Attack on 4 and 5, Slide on 5.
 
 **Marvel vs Capcom:** six buttons like Street Fighter III, plus **Tag**
 (HP+HK) and **Partner** (MP+MK, your Special Partner). The app follows
@@ -101,8 +111,11 @@ and **Log escape** (A+B+C: you swap places with a log, for some life).
 (the spinning attack). Run with the Run button or by pushing the stick to the
 edge.
 
-Pause → **Controls**: stick style (floating, fixed or hidden), size,
-opacity, move names, vibration, left-handed layout, move timing.
+Pause → **Settings**, in three tabs: **Screen** (picture width, controls
+opacity, detection readout), **Controls** (stick style: floating, fixed or
+hidden; button size; buttons on the left; vibration; rapid fire) and
+**Moves** (move names under the buttons, fighter detection, move timing).
+Changes show on the game as you make them.
 
 ## Multiplayer
 
@@ -181,7 +194,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - A player's pause menu pauses every phone (a watcher's pauses nobody). For a rematch, use the game's own:
   in KOF the other player presses COIN and START mid-fight ("Here comes a
   new challenger!"), and after a versus fight the loser continues with
-  COIN and START. *Restart the game for everyone* (bottom of the pause menu)
+  COIN and START. *Restart for everyone* (in the pause menu)
   is only for a game stuck somewhere.
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run, with two
