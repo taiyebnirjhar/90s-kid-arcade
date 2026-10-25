@@ -88,7 +88,7 @@ jobs:
           fi
 
       # Screenshots of the app's screens (Paparazzi, app/src/test), published
-      # to the ui-snapshots branch to check the look without a phone. Never
+      # to a ui-snapshots-<branch> branch to check the look without a phone. Never
       # holds up the APK.
       - name: Render UI screenshots
         if: github.ref != 'refs/heads/main'
@@ -106,7 +106,9 @@ jobs:
           out=$(mktemp -d)
           cp "$shots"/*.png "$out"/
           cd "$out"
-          git init -q -b ui-snapshots
+          # One screenshots branch per branch, so branches built side by side don't overwrite each other's.
+          target="ui-snapshots-${GITHUB_REF_NAME//\//-}"
+          git init -q -b "$target"
           git add .
           git -c user.name="ci" -c user.email="ci@users.noreply.github.com" commit -qm "UI screenshots of ${GITHUB_SHA::7}"
-          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ui-snapshots
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$target"
