@@ -1,10 +1,11 @@
 # 90s Kid Arcade
 
 An Android app for a handful of famous arcade games (Neo Geo, and Capcom's
-Cadillacs and Dinosaurs and Street Fighter III), with touch controls
-built for each one: one-tap specials and supers for every fighter in KOF,
-Double Dragon and Street Fighter III, and big Shoot / Jump / Bomb buttons
-with rapid fire for Metal Slug.
+Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III), with
+touch controls built for each one: one-tap specials and supers for every
+fighter in KOF, Double Dragon, Street Fighter III and Marvel vs Capcom, big
+Shoot / Jump / Bomb buttons with rapid fire for Metal Slug and Nightmare in
+the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 
 | Game | ROM set (zip) |
 | --- | --- |
@@ -160,7 +161,8 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - **Double Dragon, Street Fighter III and Marvel vs Capcom** come from `command.dat`,
   StrategyWiki and SuperCombo (and the 3rd Strike training scripts), and
   were checked the same way: every Double Dragon special and Charge Move,
-  and every 3rd Strike special and all three Super Arts of each fighter.
+  every 3rd Strike special and all three Super Arts of each fighter, and
+  every Marvel vs Capcom Hyper Combo and special of all 21 characters.
 
 `tools/fix_rosters.py` holds every KOF change with the reason;
 `tools/doubledr_roster.py`, `tools/sfiii3_roster.py` and
@@ -183,17 +185,19 @@ change the secret to lock out a lost phone.
 ## Project
 
 - `android/core` — plain Kotlin: the move engine (numpad commands, played
-  back one emulated frame at a time), motion icons, the game list and the
-  KOF move lists (see [Move lists](#move-lists)). Tested without the
+  back one emulated frame at a time), motion icons, the game list, fighter
+  detection, the ROM checks and the move lists (see [Move lists](#move-lists)). Tested without the
   Android SDK: `cd android/core && gradle test`.
 - `android/app` — the Android app: [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)
   running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
   native touch HUD, and Compose screens.
 - `server/worker.js` — the ROM library Worker.
-- `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo and CPS-1 drivers.
+- `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo,
+  CPS-1, CPS-2 and CPS-3 drivers.
 - `tools/emu.py`, `tools/movetest.py` — a headless FBNeo front end, and the
   move tester built on it (bring your own core and ROMs).
-- `docs/kof-ram.md` — the KOF RAM map fighter detection reads.
+- `docs/kof-ram.md` — the KOF RAM map fighter detection reads (the other
+  games' addresses are documented in `Detect.kt`).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
 
