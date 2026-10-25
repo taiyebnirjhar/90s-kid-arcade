@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -110,14 +111,22 @@ fun ArcadeScreen(
             }
             actions()
         }
-        Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
-            content = content,
-        )
-        if (bottomBar != null) {
-            Box(
-                Modifier.fillMaxWidth().background(Palette.bg).padding(horizontal = 16.dp, vertical = 12.dp),
-            ) { bottomBar() }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                    // Room under the last row to scroll it clear of the bar.
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
+                content = content,
+            )
+            if (bottomBar != null) {
+                // The page fades out under the bar, so cards scroll behind it instead of being cut.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .background(Brush.verticalGradient(0f to Palette.bg.copy(alpha = 0f), 0.35f to Palette.bg))
+                        .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp),
+                ) { Box(Modifier.widthIn(max = 560.dp)) { bottomBar() } }
+            }
         }
     }
 }

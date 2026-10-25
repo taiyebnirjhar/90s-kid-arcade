@@ -384,7 +384,7 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             if (row.game != null) {
                 ArtImage(row.game, row.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
             } else {
-                FileTile(row.title, Modifier.matchParentSize())
+                FileTile(row.title, Modifier.matchParentSize(), bios = row.set?.startsWith("neogeo") == true)
             }
             val tag = when (val s = row.state) {
                 RowState.Idle -> "Not on phone" to Palette.muted
@@ -443,21 +443,50 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
     }
 }
 
-/** A file with no game picture (the BIOS, or a zip the app doesn't know): its name on a dark tile. */
+/**
+ * A file with no game picture: the BIOS (a drawn chip) or a zip the app
+ * doesn't know, its name in the app's heavy italic on a dark tile.
+ */
 @Composable
-private fun FileTile(title: String, modifier: Modifier) {
-    Box(
-        modifier.background(Brush.linearGradient(listOf(Palette.gold.copy(alpha = 0.22f), Palette.panel))).padding(12.dp),
-        contentAlignment = Alignment.Center,
+private fun FileTile(title: String, modifier: Modifier, bios: Boolean) {
+    Column(
+        modifier.background(Brush.linearGradient(listOf(Color(0xFF231C0A), Palette.panel))).padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
+        if (bios) {
+            ChipIcon(Modifier.size(40.dp))
+            Spacer(Modifier.height(10.dp))
+        }
         Text(
             title.uppercase(),
-            color = Palette.text.copy(alpha = 0.8f),
-            fontSize = 18.sp,
+            color = Palette.text,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Black,
             fontStyle = FontStyle.Italic,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp,
+            lineHeight = 19.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/** A drawn microchip in gold, for the BIOS. */
+@Composable
+private fun ChipIcon(modifier: Modifier) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val pin = w * 0.07f
+        for (i in 0..3) {
+            val at = w * (0.26f + i * 0.16f)
+            drawLine(Palette.gold, Offset(at, 0f), Offset(at, h * 0.2f), pin)
+            drawLine(Palette.gold, Offset(at, h * 0.8f), Offset(at, h), pin)
+            drawLine(Palette.gold, Offset(0f, at), Offset(w * 0.2f, at), pin)
+            drawLine(Palette.gold, Offset(w * 0.8f, at), Offset(w, at), pin)
+        }
+        drawRoundRect(Palette.gold, Offset(w * 0.16f, h * 0.16f), Size(w * 0.68f, h * 0.68f), CornerRadius(w * 0.1f))
+        drawRoundRect(Color(0xFF231C0A), Offset(w * 0.32f, h * 0.32f), Size(w * 0.36f, h * 0.36f), CornerRadius(w * 0.05f))
     }
 }
