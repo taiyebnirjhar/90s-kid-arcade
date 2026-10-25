@@ -1,0 +1,902 @@
+{
+ "game": "mvsc",
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "https://wiki.supercombo.gg/w/Marvel_vs._Capcom",
+  "https://strategywiki.org/wiki/Marvel_vs._Capcom/Moves",
+  "Checked in FBNeo with tools/movetest.py"
+ ],
+ "characters": [
+  {
+   "id": "spiderman",
+   "name": "Spider-Man",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Maximum Spider",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Crawler Assault",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Ultimate Web Throw",
+     "cmd": "214+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Web Ball",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Spider Sting",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Web Throw",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "hulk",
+   "name": "Hulk",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Gamma Wave",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Quake",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Crush",
+     "cmd": "214+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Slam",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gamma Charge",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gamma Tornado",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "warmachine",
+   "name": "War Machine",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Proton Cannon",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "War Destroyer",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Shoulder Cannon",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Low Shoulder Cannon",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Repulsor Blast",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Smart Bomb",
+     "cmd": "BD",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "captainamerica",
+   "name": "Captain America",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Final Justice",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Hyper Stars & Stripes",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Hyper Charging Star",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Shield Slash",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Stars & Stripes",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Charging Star",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "venom",
+   "name": "Venom",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Venom Web",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Death Bite",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Venom Fang",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Venom Rush",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Web Throw",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "wolverine",
+   "name": "Wolverine",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Berserker Barrage X",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Weapon X",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Fatal Claw",
+     "cmd": "623+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Berserker Barrage",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tornado Claw",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Drill Claw",
+     "cmd": "BD",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "gambit",
+   "name": "Gambit",
+   "team": "Marvel",
+   "moves": [
+    {
+     "name": "Royal Flush",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Cajun Explosion",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Kinetic Card",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Cajun Slash",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Trick Card",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cajun Strike",
+     "cmd": "[2]8+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "ryu",
+   "name": "Ryu",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Shinkuu Hadouken",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Shin Shouryuuken",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Shinkuu Tatsumaki",
+     "cmd": "214+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Hadouken",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shouryuuken",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tatsumaki Senpuu Kyaku",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "chunli",
+   "name": "Chun-Li",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Kikou Shou",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Senretsu Kyaku",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Hazan Tenshou Kyaku",
+     "cmd": "623+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Kikou Ken",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tenshou Kyaku",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hyakuretsu Kyaku",
+     "cmd": "D,D,D,D,D",
+     "type": "special",
+     "note": "mash"
+    }
+   ]
+  },
+  {
+   "id": "zangief",
+   "name": "Zangief",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Final Atomic Buster",
+     "cmd": "63214789+AB",
+     "type": "dm",
+     "note": "close"
+    },
+    {
+     "name": "Spinning Piledriver",
+     "cmd": "63214789+A",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Double Lariat",
+     "cmd": "ABC",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Atomic Suplex",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Banishing Flat",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Aerial Russian Slam",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "captaincommando",
+   "name": "Captain Commando",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Captain Sword",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Captain Storm",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Captain Fire",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Captain Corridor",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Captain Kick",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Captain Strike",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "morrigan",
+   "name": "Morrigan",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Soul Eraser",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Darkness Illusion",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Silhouette Blade",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Soul Fist",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shadow Blade",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Vector Drain",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "megaman",
+   "name": "Mega Man",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Hyper Mega Man",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Rush Drill",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Beat Plane",
+     "cmd": "214+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Mega Upper",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Item Attack",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Item Change",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "strider",
+   "name": "Strider Hiryu",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Ouroboros",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Ragnarok",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Legion",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Ame no Murakumo",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gram",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Vajra",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "jin",
+   "name": "Jin",
+   "team": "Capcom",
+   "moves": [
+    {
+     "name": "Blodia Punch",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Blodia Vulcan",
+     "cmd": "214+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Saotome Cyclone",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Saotome Typhoon",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Saotome Dynamite",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Saotome Crush",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "redvenom",
+   "name": "Red Venom",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Venom Web",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Death Bite",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Venom Crush",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Venom Storm",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Venom Charge",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Web Throw",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "orangehulk",
+   "name": "Orange Hulk",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Gamma Wave",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Quake",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Crush",
+     "cmd": "214+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gamma Slam",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gamma Charge",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gamma Tornado",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "goldwarmachine",
+   "name": "Gold War Machine",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Proton Cannon",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "War Destroyer",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Shoulder Cannon",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Low Shoulder Cannon",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Smart Bomb",
+     "cmd": "BD",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "shadowlady",
+   "name": "Shadow Lady",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Big Bang Laser",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Galaxy Missile",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Miracle Drill",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Rainbow Missile",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Sky Counter Crash",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Plasma Barrier",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "lilith",
+   "name": "Lilith-style Morrigan",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Brilliant Shower",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Luminous Illusion",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Splendor Love",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Soul Flash",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shining Blade",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Vector Drain",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "roll",
+   "name": "Roll",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Hyper Roll",
+     "cmd": "236+AB",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Rush Drill",
+     "cmd": "236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Beat Plane",
+     "cmd": "214+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Roll Buster",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Exploding Flower",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Item Attack",
+     "cmd": "236+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  }
+ ]
+}

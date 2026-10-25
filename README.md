@@ -18,6 +18,7 @@ with rapid fire for Metal Slug.
 | Cadillacs and Dinosaurs ("Mostofa", Capcom CPS-1) | `dino` |
 | Nightmare in the Dark | `nitd` |
 | Double Dragon (Neo Geo, 1995) | `doubledr` |
+| Marvel vs Capcom (Capcom CPS-2) | `mvsc` (or `mvscu`, `mvscur1`, `mvscj`, `mvsca`...): the zip must include its `.key` file |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 
 The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the Capcom
@@ -73,6 +74,12 @@ that one on the ring, with the fighter's specials.
 
 **Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
 fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
+
+**Marvel vs Capcom:** six buttons like Street Fighter III, plus **Tag**
+(HP+HK) and **Partner** (MP+MK, your Special Partner). The app follows
+whichever of your two characters is on screen, through tags, and shows
+their Hyper Combos and specials. Zips made before current FBNeo lack the
+`.key` file the game's code is decrypted with, and won't start.
 
 **Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
 flames (the same rapid fire switch as Metal Slug).
@@ -131,8 +138,8 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 ## Move lists
 
 `android/core/src/main/resources/rosters/` has one list per game: `kof97`,
-`kof97plus`, `kof2002`, `kof2002mp` (Magic Plus), `kof2005`, `doubledr`
-and `sfiii3`.
+`kof97plus`, `kof2002`, `kof2002mp` (Magic Plus), `kof2005`, `doubledr`,
+`sfiii3` and `mvsc`.
 
 - **Sources.** '97 and 2002 come from MAME's `command.dat`, cross-checked
   against StrategyWiki, SuperCombo and SNK Fandom. 2005 Unique has no
@@ -150,14 +157,14 @@ and `sfiii3`.
 - Moves left out on purpose: inputs no source or test could bring out in
   that game.
 
-- **Double Dragon and Street Fighter III** come from `command.dat`,
+- **Double Dragon, Street Fighter III and Marvel vs Capcom** come from `command.dat`,
   StrategyWiki and SuperCombo (and the 3rd Strike training scripts), and
   were checked the same way: every Double Dragon special and Charge Move,
   and every 3rd Strike special and all three Super Arts of each fighter.
 
 `tools/fix_rosters.py` holds every KOF change with the reason;
-`tools/doubledr_roster.py` and `tools/sfiii3_roster.py` write the other two
-lists, and `tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
+`tools/doubledr_roster.py`, `tools/sfiii3_roster.py` and
+`tools/mvsc_roster.py` write the other lists, and `tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
 
 ## Your ROM library (optional)
 
