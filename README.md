@@ -60,7 +60,11 @@ lists every game by series as picture cards. **Multiplayer** and
 
 In a game, the pause button opens the pause menu: Resume, save and load
 state, *Edit <name>'s moves*, **Settings**, **Button layout** (drag any
-control where your thumbs want it, tap one to resize it) and Quit.
+control where your thumbs want it, tap one to resize it), **Start over** and Quit.
+
+Playing alone, a game goes on where you left it: it's kept as you leave
+(and every minute), and **Continue** picks it up. **Start over** in the
+pause menu begins it afresh. Multiplayer games always start from the host's.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
