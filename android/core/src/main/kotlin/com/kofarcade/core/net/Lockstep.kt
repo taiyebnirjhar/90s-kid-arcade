@@ -164,3 +164,83 @@ class DelayTuner(private val min: Int = 1, private val max: Int = 3, private val
         const val LOWER = -1.0
     }
 }
+
+/**
+ * How many frames this phone's game runs ahead of a partner's, times two:
+ * the [advantage] it runs ahead of the partner's inputs and the partner's
+ * own ([theirAdvantage], as last sent), each set against the other's input
+ * delay. The network's latency and the delays cancel out, whatever they are.
+ */
+fun frameLead(advantage: Int, delay: Int, theirAdvantage: Int, theirDelay: Int): Int =
+    (advantage + theirDelay) - (theirAdvantage + delay)
+
+/**
+ * Keeps this phone's game level with its partners'. Phones never run at
+ * exactly the same speed (screens differ a little), so one slowly gets
+ * ahead; that one guesses the others' inputs more and more and, at the
+ * rollback limit, stops. Waiting a frame puts it back level. But a wait
+ * shows (a frame held on screen), and a single measurement of the lead
+ * jumps by a frame or two with each packet's timing: waiting on those had
+ * the phones taking turns waiting, about once a second on a router's Wi-Fi.
+ * So it waits only for a lead that's real: a frame or more on average over
+ * a second of fresh measurements of one partner (the largest of several
+ * partners' would be larger than any of them, from the jumps alone), and
+ * then not again until that wait has shown in them. A lead of two frames
+ * or more is no jump: it's waited for after a quarter of a second, so a
+ * phone that can't keep up (an old one, in a heavy scene) is followed, by
+ * several frames a second.
+ */
+class TimeSync(private val window: Int = 60, private val rest: Int = 15) {
+    private val total = LongArray(MAX_IDS)
+    private val samples = IntArray(MAX_IDS)
+    private var frames = 0
+    private var resting = window
+
+    /**
+     * Once per frame, with each partner's [frameLead], or null when it's stale
+     * (that partner unheard for a moment). Returns how many frames to wait
+     * now: 0 almost always.
+     */
+    @Synchronized
+    fun update(partners: List<Int>, lead: (Int) -> Int?): Int {
+        if (resting > 0) {
+            resting--
+            return 0
+        }
+        frames++
+        for (p in partners) {
+            val l = lead(p) ?: continue
+            total[p] += l
+            samples[p]++
+        }
+        val enough = if (frames < window) QUICK else window / 2
+        val ahead = partners.filter { samples[it] >= enough }.maxOfOrNull { total[it].toDouble() / samples[it] / 2 } ?: 0.0
+        if (frames < window && ahead < FAR_AHEAD) return 0
+        clear()
+        if (ahead < AHEAD) return 0
+        // The wait shows in our measurements at once, in the partners' a round trip later.
+        resting = rest
+        return kotlin.math.round(ahead).toInt().coerceIn(1, MAX_WAIT)
+    }
+
+    /** A new game: measurements start again, after a moment for the first packets. */
+    @Synchronized
+    fun reset() {
+        clear()
+        resting = window
+    }
+
+    private fun clear() {
+        total.fill(0)
+        samples.fill(0)
+        frames = 0
+    }
+
+    private companion object {
+        const val AHEAD = 0.75
+        const val FAR_AHEAD = 2.0
+        const val QUICK = 15
+        // The emulator waits no more than this at once (LibretroDroid::netWait).
+        const val MAX_WAIT = 4
+    }
+}

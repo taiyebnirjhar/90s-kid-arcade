@@ -129,8 +129,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // A watcher this close to the players is caught up.
         private const val WATCH_NEAR = 8
         private const val FIGHT_GONE_CHECKS = 12
-        /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
-        private const val MAX_ROLLBACK = 8
+        /**
+         * Multiplayer: how far a phone may run on guesses of its partners'
+         * inputs before waiting: a fifth of a second, longer than most Wi-Fi
+         * hiccups (SmoothnessTest), so the game plays through them.
+         */
+        private const val MAX_ROLLBACK = 12
     }
 
     private lateinit var game: Game
@@ -160,7 +164,6 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     @Volatile private var lastNetFrame = -1
     @Volatile private var stalledFrames = 0
     @Volatile private var lastSumFrame = -1L
-    @Volatile private var lastWait = 0L
     @Volatile private var lastResyncAsk = 0L
     private var netStartRequested = false
     // Watching: the COIN or START that asked for a seat, pressed for real once
@@ -509,7 +512,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun shareConnectionReport() {
         val report = buildString {
             appendLine("90s Kid Arcade connection report")
-            appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}")
+            appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}, screen ${screenHz()} Hz")
             appendLine("Game: ${game.title} ($set)")
             room?.let { appendLine(it.status()) }
             appendLine()
@@ -520,6 +523,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             .putExtra(Intent.EXTRA_TEXT, report)
         runCatching { startActivity(Intent.createChooser(send, "Send connection report")) }
     }
+
+    @Suppress("DEPRECATION")
+    private fun screenHz(): Int = Math.round(windowManager.defaultDisplay.refreshRate)
 
     /** The room as the screens show it (pill, room sheet); null alone. */
     var roomUi by mutableStateOf<RoomUi?>(null)
@@ -769,14 +775,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
             }
         }
-        // Time sync: when this phone's game runs ahead of a partner's (see
-        // Room.lead), wait a frame so it catches up. Every phone then guesses
-        // as little as possible, and none stalls at the rollback limit.
+        // Time sync: when this phone's game has got ahead of a partner's, wait
+        // so it catches up (Room.timeSync: only for a real lead, as a wait shows).
+        // Every phone then guesses as little as possible, and none stalls at the rollback limit.
         room.updateAdvantage(emulated)
-        if (room.lead >= 2 && netFrames - lastWait > 20) {
-            lastWait = netFrames
+        val wait = room.timeSync()
+        if (wait > 0) {
             waits++
-            LibretroDroid.netWait(1)
+            LibretroDroid.netWait(wait)
         }
         val sum = LibretroDroid.getNetSum()
         if (sum[0] >= 0 && sum[0] != lastSumFrame) {
@@ -816,7 +822,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     @Volatile private var stalls = 0
     @Volatile private var waits = 0
     @Volatile private var qualityFrom = 0L
-    @Volatile private var lastStats = LongArray(2)
+    @Volatile private var lastStats = LongArray(3)
 
     private fun logQuality(room: Room) {
         if (netFrames - qualityFrom < 600) return
@@ -824,9 +830,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val stats = LibretroDroid.getNetStats()
         val replayed = stats[0] - lastStats[0]
         val rollbacks = stats[1] - lastStats[1]
+        val slowestMs = stats[2] / 1000
         lastStats = stats
-        if (stalls > 6 || rollbacks > 60 || waits > 6) {
-            NetLog.add("Last 10 s: $rollbacks rollbacks ($replayed frames replayed), $stalls frames stalled, $waits waits, delay ${room.delay}")
+        val hiccups = room.takeHiccups()
+        if (stalls > 0 || waits > 1 || rollbacks > 30 || hiccups.isNotEmpty() || slowestMs > 30) {
+            val heard = hiccups.entries.joinToString("") { (who, ms) -> ", nothing from $who for $ms ms" }
+            NetLog.add(
+                "Last 10 s: $rollbacks rollbacks ($replayed frames replayed), $stalls frames stalled, " +
+                    "$waits waits, delay ${room.delay}, slowest frame $slowestMs ms$heard",
+            )
         }
         stalls = 0
         waits = 0

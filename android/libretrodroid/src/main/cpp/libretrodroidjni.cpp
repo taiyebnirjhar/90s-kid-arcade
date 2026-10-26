@@ -259,6 +259,13 @@ JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushRe
     return LibretroDroid::getInstance().pushRemoteInput(player, frame, mask);
 }
 
+JNIEXPORT jlong JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getFrameWorkNanos(
+    JNIEnv* env,
+    jclass obj
+) {
+    return (jlong) LibretroDroid::getInstance().getFrameWorkNanos();
+}
+
 JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_netWait(
     JNIEnv* env,
     jclass obj,
@@ -272,9 +279,9 @@ JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getN
     jclass obj
 ) {
     auto stats = LibretroDroid::getInstance().getNetStats();
-    jlong values[2] = {(jlong) stats[0], (jlong) stats[1]};
-    jlongArray result = env->NewLongArray(2);
-    env->SetLongArrayRegion(result, 0, 2, values);
+    jlong values[3] = {(jlong) stats[0], (jlong) stats[1], (jlong) stats[2]};
+    jlongArray result = env->NewLongArray(3);
+    env->SetLongArrayRegion(result, 0, 3, values);
     return result;
 }
 

@@ -253,6 +253,7 @@ class Room private constructor(
     /** This phone's input delay now: it adapts to the connection ([DelayTuner]). */
     val delay: Int get() = lockstep.delay
     private val tuner = DelayTuner()
+    private val timeSync = TimeSync()
 
     /** Seats taken, as a bit mask (bit p = seat p). */
     val activeMask: Int get() = seats.keys.fold(0) { m, p -> m or (1 shl p) }
@@ -260,6 +261,8 @@ class Room private constructor(
     @Volatile private var closed = false
     @Volatile private var listener: RoomListener? = null
     private val lastHeard = LongArray(MAX_IDS)
+    // The longest wait between two packets from each phone, since last asked.
+    private val gap = LongArray(MAX_IDS)
     @Volatile private var lastSent = 0L
     private val mySums = HashMap<Int, Long>()
     private val theirSums = HashMap<Int, MutableList<Long>>()
@@ -363,19 +366,39 @@ class Room private constructor(
     }
 
     /**
-     * How many frames this phone's game runs ahead of the slowest partner's
-     * (time sync waits when it's 2 or more). Each advantage counts frames ahead
-     * of the other's inputs, which arrive earlier by that phone's input delay;
-     * adding it back compares the games themselves, whatever the delays.
+     * Once per frame, after [updateAdvantage]: how many frames this phone's
+     * game should wait now so it doesn't run ahead of the others' (0 almost
+     * always; see [TimeSync]). A partner unheard for a moment isn't measured:
+     * what it last said is out of date.
      */
-    val lead: Int
-        get() = if (!lockstep.playing) 0 else lockstep.partners.maxOfOrNull { p ->
-            (advantage[p] + theirDelay[p]) - (theirAdvantage[p] + delay)
-        } ?: 0
+    fun timeSync(): Int {
+        val ls = lockstep
+        if (!ls.playing || ls.partners.isEmpty()) return 0
+        val now = System.nanoTime()
+        return timeSync.update(ls.partners) { p ->
+            if (now - lastHeard[p] > FRESH_NS) null else frameLead(advantage[p], ls.delay, theirAdvantage[p], theirDelay[p])
+        }
+    }
 
     /** Watching: the newest frame the players' inputs are all in for (relayed, or straight from them). */
     val watchedUpTo: Int
         get() = if (isOwner || !watching) lockstep.remoteKnown else seats.keys.minOfOrNull { relayed[it] } ?: Int.MAX_VALUE
+
+    /**
+     * For the connection log: each other phone's longest silence (ms) since
+     * last asked, when one was long enough to notice (a Wi-Fi hiccup; with
+     * nothing new to send, a phone still sends every 100 ms).
+     */
+    fun takeHiccups(atLeastMs: Long = 150): Map<String, Long> {
+        val ls = lockstep
+        val out = LinkedHashMap<String, Long>()
+        for (p in ls.partners + ls.watchers) {
+            val ms = gap[p] / 1_000_000
+            gap[p] = 0
+            if (ms >= atLeastMs) out[nameOf(p)] = ms
+        }
+        return out
+    }
 
     /** How the connection is doing, for the pause menu: this game, and each other phone. */
     fun status(): String {
@@ -527,7 +550,9 @@ class Room private constructor(
             }
             val p = InputPacket.decode(buf, packet.length) ?: continue
             if (p.session != session || p.from !in members || p.from == localId || p.from >= MAX_IDS) continue
-            lastHeard[p.from] = System.nanoTime()
+            val heard = System.nanoTime()
+            gap[p.from] = maxOf(gap[p.from], heard - lastHeard[p.from])
+            lastHeard[p.from] = heard
             val player = synchronized(deliverLock) {
                 // From the previous game (still in flight) or the next one
                 // (that phone was seated first): not this game's inputs.
@@ -1549,9 +1574,11 @@ class Room private constructor(
             }
             advantage.fill(0)
             theirAdvantage.fill(0)
+            timeSync.reset()
             paused.fill(false)
             val now = System.nanoTime()
             for (m in others) lastHeard[m.id] = now
+            gap.fill(0)
             // Where to look for the room should it be lost: the owner first.
             val reachable = others.filter { it.host.isNotEmpty() && it.tcpPort > 0 }.sortedBy { if (it.id == seating.owner) -1 else it.id }
             val found = reachable.map { InetSocketAddress(it.host, it.tcpPort) }
@@ -1857,6 +1884,8 @@ class Room private constructor(
         private const val RESEND_NS = 12_000_000L
         private const val KEEPALIVE_NS = 100_000_000L
         private const val QUIET_NS = 5_000_000_000L
+        // A partner's word on how far ahead it runs is out of date after this (a few frames).
+        private const val FRESH_NS = 50_000_000L
         private const val LINE_QUIET_NS = 10_000_000_000L
         private const val ARRIVING_QUIET_NS = 60_000_000_000L
         private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME)
@@ -1874,6 +1903,10 @@ class Room private constructor(
         private const val HOLD_SECONDS = 60
         // Inputs the owner keeps beyond what watchers need, for newcomers' snapshots.
         private const val KEEP_FRAMES = 600
+
+        // Inputs go marked for Wi-Fi's quickest lane (DSCP EF: WMM's voice or
+        // video queue), ahead of downloads and videos on a busy router.
+        private fun gameSocket() = DatagramSocket(0).apply { runCatching { trafficClass = 0xB8 } }
 
         // The first free room port from [port] (0: any, for tests).
         private fun openServer(port: Int): ServerSocket {
@@ -1902,7 +1935,7 @@ class Room private constructor(
             faults: Faults = Faults(),
         ): Room = Room(
             name, set, title, rom, bios, maxPlayers, localId = 0, session = Random.nextInt(),
-            server = openServer(port), udp = DatagramSocket(0), owner = 0, startDelay = delay, beaconPort = beaconPort,
+            server = openServer(port), udp = gameSocket(), owner = 0, startDelay = delay, beaconPort = beaconPort,
             build = build, device = device, listenPort = port, faults = faults,
         ).also { it.key = it.keyNow() }
 
@@ -1924,7 +1957,7 @@ class Room private constructor(
                 Thread.sleep(connectMs.toLong())
                 throw IOException("Can't reach the host")
             }
-            val udp = DatagramSocket(0)
+            val udp = gameSocket()
             // Where a new owner would call this phone, should the owner leave.
             val server = try {
                 openServer(listenPort)
