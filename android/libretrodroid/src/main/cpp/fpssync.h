@@ -28,18 +28,26 @@ typedef std::chrono::duration<long, std::micro> Duration;
 
 class FPSSync {
 public:
-    FPSSync(double contentRefreshRate, double screenRefreshRate);
+    // [timerRate]: when frames don't go with the screen's, the rate they
+    // go at (0: the game's own).
+    FPSSync(double contentRefreshRate, double screenRefreshRate, double timerRate = 0);
     ~FPSSync() { }
 
     void reset();
     unsigned advanceFrames();
     void wait();
     double getTimeStretchFactor();
+    bool usesVSync() const { return useVSync; }
+    // Frames by the clock: the next [over] frames together take [frames] frames longer.
+    void stretch(int frames, int over);
 private:
 
     double screenRefreshRate;
     double contentRefreshRate;
+    double timerRate;
     bool useVSync;
+    int stretchLeft = 0;
+    Duration stretchEach = Duration(0);
     const double FPS_TOLERANCE = 5;
 
     const TimePoint MIN_TIME = TimePoint::min();

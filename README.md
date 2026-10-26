@@ -196,8 +196,9 @@ BIOS for Neo Geo games; the library has them).
   phone finds it again and the game goes on.
 - **Connection report.** Pause → Connection details → *Send connection
   report* shares what happened (drops, reconnects, errors, and every 10
-  seconds that weren't smooth: rollbacks, stalls, input delay), to report a
-  problem.
+  seconds that weren't smooth: rollbacks, stalls, waits, input delay, the
+  slowest frame, and any Wi-Fi hiccup: "nothing from Rafi for 240 ms"),
+  with the phone's model and screen rate, to report a problem.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over
@@ -217,11 +218,29 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   to 1 when the connection allows.
 - Wi-Fi stays awake during a game (a low-latency Wi-Fi lock): phones
   otherwise let the radio nap between packets, which shows up as hiccups.
+  Inputs go marked for Wi-Fi's quickest lane (DSCP EF, WMM voice/video), so
+  a busy router sends them ahead of downloads and videos.
   When a guess was wrong, the phone loads the state from that frame and
   replays to now in a few milliseconds, silently. You see the corrected
-  game, not a delay.
-- A phone that runs ahead of a partner waits a frame now and then (time
-  sync). A phone stops only if a partner falls 8 frames behind.
+  game, not a delay. Only frames run on a guess are saved to go back to,
+  so on a good connection most frames save nothing and run quicker; and
+  Android is told how long each frame's work takes (performance hints,
+  Android 12 on), so it speeds the CPU up before a replay runs late.
+- Every phone in a room runs at the same pace: 60 frames a second, with
+  the screen on 60 Hz phones and by the clock on 90/120 Hz ones (alone, a
+  120 Hz phone runs the game at its own 59.19). Otherwise the faster phone
+  would keep having to wait for the others.
+- A phone that still gets ahead of a partner (screens are never exactly
+  alike) waits so the other catches up (time sync), but only for a real
+  lead: a frame or more on average over a second, per partner. A single
+  measurement jumps by a frame or two with each packet's timing; waiting
+  on those (as it used to) held a frame on screen about once a second on a
+  router's Wi-Fi. On 90/120 Hz phones a wait is spread over 20 frames,
+  unseen. A lead of two frames or more is acted on within a quarter of a
+  second, so a phone that can't keep up (an old one in a heavy scene) is
+  followed by the others rather than left behind. A phone stops only if a
+  partner's inputs are 12 frames (a fifth of a second) late, longer than
+  most Wi-Fi hiccups.
 - Phones play the same game because whenever who plays changes (someone
   takes a seat, or a player leaves), the room's owner stops the game for a
   moment and sends everyone its emulator state (compressed) and the new
@@ -250,6 +269,16 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   Android does, packet loss, delay, reordering) with the app's timings, and
   checks every phone ends up back in the one room, in its seat, in step.
   `KOF_SOAK_SEEDS=1,2,3,… KOF_SOAK_SECONDS=60` runs longer soaks.
+- Smoothness tests: `SmoothnessTest` plays minutes of two and three phone
+  games in simulated time (screens at slightly different rates, Wi-Fi
+  latency, jitter, loss and hiccups of up to a third of a second) through
+  the game's own input bookkeeping and the emulator's rollback rules, and
+  counts what a player would see: frames held, frames stalled, rollbacks.
+  Before the fixes above: 5-7 held frames a minute on clean Wi-Fi, 50-70 on
+  a router's with hiccups or with a 120 Hz phone; now 0-1 (the drift
+  between the screens needs no more). With a phone that manages only 56
+  frames a second, the other used to run 12-16 frames ahead, replaying
+  thousands of frames and stopping at the limit; now it stays within 1-2.
 
 ## Move lists
 

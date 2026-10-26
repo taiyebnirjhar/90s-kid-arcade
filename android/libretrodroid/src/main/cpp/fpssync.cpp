@@ -28,6 +28,11 @@ unsigned FPSSync::advanceFrames() {
         start();
     }
 
+    if (stretchLeft > 0) {
+        stretchLeft--;
+        lastFrame += stretchEach;
+    }
+
     auto now = std::chrono::steady_clock::now();
     auto frames = std::max((now - lastFrame) / sampleInterval, (long long) 1);
     lastFrame = lastFrame + sampleInterval * frames;
@@ -35,16 +40,23 @@ unsigned FPSSync::advanceFrames() {
     return frames;
 }
 
-FPSSync::FPSSync(double contentRefreshRate, double screenRefreshRate) {
+FPSSync::FPSSync(double contentRefreshRate, double screenRefreshRate, double timerRate) {
     this->contentRefreshRate = contentRefreshRate;
     this->screenRefreshRate = screenRefreshRate;
     this->useVSync = std::abs(contentRefreshRate - screenRefreshRate) < FPS_TOLERANCE;
-    this->sampleInterval = std::chrono::microseconds((long) ((1000000L / contentRefreshRate)));
+    this->timerRate = timerRate > 0 ? timerRate : contentRefreshRate;
+    this->sampleInterval = std::chrono::microseconds((long) ((1000000L / this->timerRate)));
     reset();
 }
 
+void FPSSync::stretch(int frames, int over) {
+    if (useVSync || frames <= 0 || over <= 0) return;
+    stretchLeft = over;
+    stretchEach = sampleInterval * frames / over;
+}
+
 void FPSSync::start() {
-    LOGI("Starting game with fps %f on a screen with refresh rate %f. Using vsync: %d", contentRefreshRate, screenRefreshRate, useVSync);
+    LOGI("Starting game with fps %f (by the clock: %f) on a screen with refresh rate %f. Using vsync: %d", contentRefreshRate, timerRate, screenRefreshRate, useVSync);
     lastFrame = std::chrono::steady_clock::now();
 }
 
@@ -52,8 +64,13 @@ void FPSSync::reset() {
     lastFrame = MIN_TIME;
 }
 
+// The game's sound comes as fast as its frames run: at the screen's rate (or
+// the clock's) rather than its own, it comes that much faster, and must be
+// played that much faster to keep up. (It was the other way round: a Neo Geo
+// game at 60 on a 60 Hz screen, 59.19 its own, made 2.7% more sound than was
+// played, more than the buffer's rate control makes up, and bits were lost.)
 double FPSSync::getTimeStretchFactor() {
-    return useVSync ? contentRefreshRate / screenRefreshRate : 1.0;
+    return (useVSync ? screenRefreshRate : timerRate) / contentRefreshRate;
 }
 
 void FPSSync::wait() {

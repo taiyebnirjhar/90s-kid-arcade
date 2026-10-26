@@ -101,10 +101,11 @@ public:
     int32_t getNetFrame();
     // The latest confirmed state checksum: {frame, sum}, frame -1 if none yet.
     std::array<int64_t, 2> getNetSum();
-    // {frames replayed in total, rollbacks}
-    std::array<int64_t, 2> getNetStats();
-    // Skip running new frames for the next [frames] steps: the phone that's
-    // ahead lets its partner catch up, so neither keeps hitting maxRollback.
+    // {frames replayed in total, rollbacks, the longest frame since last asked (µs)}
+    std::array<int64_t, 3> getNetStats();
+    // The phone that's ahead lets its partner catch up, so neither keeps
+    // hitting maxRollback: [frames] frames later, over the next few frames
+    // (frames by the clock), or by holding as many (with the screen).
     void netWait(int frames);
     // The game at the newest frame every player's input is in for (nothing
     // guessed), without stopping it: {frame, state}, or an empty state if
@@ -117,6 +118,8 @@ public:
     // Frozen: no game frames run, but the last one is still drawn, so the
     // picture follows size changes while the game is paused (90s Kid Arcade).
     void setFrozen(bool value) { frozen = value; }
+    // How long the last step's work took (the frame and drawing it, not the wait after).
+    int64_t getFrameWorkNanos() const { return frameWorkNanos; }
 
     void onSurfaceCreated();
     void onSurfaceChanged(unsigned int width, unsigned int height);
@@ -230,6 +233,7 @@ private:
     void grab(const void* data, unsigned width, unsigned height, size_t pitch);
 
     std::atomic<bool> frozen{false};
+    std::atomic<int64_t> frameWorkNanos{0};
     std::mutex netMutex;
     bool netplay = false;
     static constexpr int NET_RING = 32;            // states kept to roll back to
@@ -238,6 +242,8 @@ private:
     static constexpr int NET_WATCH_NEAR = 4;       // …to this close, then plays on as usual
     static constexpr int NET_WATCH_CATCH_UP_MS = 10;
     static constexpr int NET_MAX_PLAYERS = 4;
+    static constexpr double NET_FRAME_RATE = 60.0;    // frames by the clock in a room
+    static constexpr int NET_STRETCH_FRAMES = 20;     // a wait, spread over this many frames
     int netPlayers = 2;
     uint32_t netActive = 0x3;
     int netLocalPlayer = 0;
@@ -253,6 +259,7 @@ private:
     int32_t netRemoteKnown() const;                // all partners' inputs below this are in
     std::array<int64_t, 2> netSum = {-1, 0};
     int64_t netReplayed = 0;
+    int64_t netSlowestFrameUs = 0;                 // the longest frame (with its replays) since asked
     int64_t netRollbacks = 0;
     int netWaitFrames = 0;
     void stepNetplay(unsigned wanted);

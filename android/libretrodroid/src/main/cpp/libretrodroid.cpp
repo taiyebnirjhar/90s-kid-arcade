@@ -503,11 +503,13 @@ void LibretroDroid::pause() {
 
 void LibretroDroid::step() {
     std::lock_guard<std::mutex> lock(coreLock);
+    auto started = std::chrono::steady_clock::now();
 
     LOGD("Stepping into retro_run()");
 
     if (frozen) {
         if (video) video->renderFrame();
+        frameWorkNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - started).count();
         return;
     }
 
@@ -521,6 +523,10 @@ void LibretroDroid::step() {
 
     if (netplay) {
         stepNetplay(frames);
+        // For the connection log: a frame with many replayed is a hitch.
+        auto took = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count();
+        std::lock_guard<std::mutex> netLock(netMutex);
+        netSlowestFrameUs = std::max(netSlowestFrameUs, (int64_t) took);
     } else {
         for (size_t i = 0; i < frames * frameSpeed; i++)
             core->retro_run();
@@ -529,6 +535,9 @@ void LibretroDroid::step() {
     if (video && !video->rendersInVideoCallback()) {
         video->renderFrame();
     }
+
+    // The frame's work, without the wait for the next one.
+    frameWorkNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - started).count();
 
     if (fpsSync) {
         fpsSync->wait();
@@ -685,7 +694,16 @@ void LibretroDroid::afterGameLoad() {
     struct retro_system_av_info system_av_info {};
     core->retro_get_system_av_info(&system_av_info);
 
-    fpsSync = std::make_unique<FPSSync>(system_av_info.timing.fps, screenRefreshRate);
+    // Multiplayer: every phone at the same pace, or the faster one keeps
+    // waiting for the others. Phones whose screens run at about 60 Hz go
+    // with the screen; on others (90, 120 Hz…) frames go by the clock, at 60
+    // a second too, rather than the game's own (59.19 for the Neo Geo).
+    bool inRoom;
+    {
+        std::lock_guard<std::mutex> lock(netMutex);
+        inRoom = netplay;
+    }
+    fpsSync = std::make_unique<FPSSync>(system_av_info.timing.fps, screenRefreshRate, inRoom ? NET_FRAME_RATE : 0);
 
     double inputSampleRate = system_av_info.timing.sample_rate * fpsSync->getTimeStretchFactor();
 
@@ -829,22 +847,36 @@ void LibretroDroid::netStartAt(int32_t frame) {
 
 void LibretroDroid::netWait(int frames) {
     std::lock_guard<std::mutex> lock(netMutex);
-    netWaitFrames = std::max(netWaitFrames, std::min(frames, 4));
+    frames = std::min(frames, 4);
+    // Frames by the clock: a little slower for a while, unseen. With the
+    // screen: frames held (the screen's next tick can't come later).
+    if (fpsSync && !fpsSync->usesVSync()) {
+        fpsSync->stretch(frames, NET_STRETCH_FRAMES);
+    } else {
+        netWaitFrames = std::max(netWaitFrames, frames);
+    }
 }
 
-std::array<int64_t, 2> LibretroDroid::getNetStats() {
+std::array<int64_t, 3> LibretroDroid::getNetStats() {
     std::lock_guard<std::mutex> lock(netMutex);
-    return {netReplayed, netRollbacks};
+    int64_t slowest = netSlowestFrameUs;
+    netSlowestFrameUs = 0;
+    return {netReplayed, netRollbacks, slowest};
 }
 
-// Runs one frame: saves the state before it (to come back to), applies this
-// phone's input and the partner's (or the guess), and notes a checksum to
-// compare once the frame's inputs are all real. With netMutex held.
+// Runs one frame: saves the state before it if it runs on a guess (to come
+// back to), applies this phone's input and the partner's (or the guess), and
+// notes a checksum to compare once the frame's inputs are all real. With
+// netMutex held.
 void LibretroDroid::netSimulate(int32_t frame, bool replay) {
-    size_t size = core->retro_serialize_size();
-    auto& state = netStates[frame % NET_RING];
-    if (state.size() != size) state.resize(size);
-    core->retro_serialize(state.data(), size);
+    // Only a frame run on a guess can be gone back to. Every input in (most
+    // frames, on a good connection): no state to save, a frame that much quicker.
+    if (frame >= netRemoteKnown()) {
+        size_t size = core->retro_serialize_size();
+        auto& state = netStates[frame % NET_RING];
+        if (state.size() != size) state.resize(size);
+        core->retro_serialize(state.data(), size);
+    }
 
     // Each player's input for the frame, or their last one as the guess.
     for (int p = 0; p < netPlayers; p++) {

@@ -137,6 +137,7 @@ public class LibretroDroid {
     public static native boolean pushLocalInput(int frame, int mask);
     public static native boolean pushRemoteInput(int player, int frame, int mask);
     public static native long[] getNetStats();
+    public static native long getFrameWorkNanos();
     public static native void netWait(int frames);
     // Paused, but still drawing the last frame (see LibretroDroid::setFrozen).
     public static native void setFrozen(boolean frozen);

@@ -1,0 +1,14 @@
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/libretrodroid.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/list_install_components.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/install.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/install/local.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/CMakeFiles/install/strip.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/oboe.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/edit_cache.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/rebuild_cache.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/list_install_components.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/install.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/install/local.dir
+/home/user/kof-arcade/android/libretrodroid/.cxx/Debug/5x6c12k1/armeabi-v7a/oboe/CMakeFiles/install/strip.dir
