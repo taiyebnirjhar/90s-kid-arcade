@@ -232,6 +232,9 @@ private:
     bool netplay = false;
     static constexpr int NET_RING = 32;            // states kept to roll back to
     static constexpr int NET_INPUT_RING = 1024;    // inputs kept: a watcher may trail the players
+    static constexpr int NET_WATCH_FAR = 30;       // a watcher this far behind skips ahead unseen…
+    static constexpr int NET_WATCH_NEAR = 4;       // …to this close, then plays on as usual
+    static constexpr int NET_WATCH_CATCH_UP_MS = 10;
     static constexpr int NET_MAX_PLAYERS = 4;
     int netPlayers = 2;
     uint32_t netActive = 0x3;
