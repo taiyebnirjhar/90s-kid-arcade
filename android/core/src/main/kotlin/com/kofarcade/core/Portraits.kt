@@ -132,3 +132,49 @@ fun portraitSpec(roster: String?): PortraitSpec? = when (roster) {
     "doubledr" -> DOUBLE_DRAGON_FACES
     else -> null
 }
+
+/**
+ * Decides which face to keep for each fighter, from what the screen shows
+ * while that fighter is on it. A face is kept once seen the same [SEEN]
+ * times in a row, never if it's another fighter's kept face, and a kept face
+ * is checked again while its fighter plays: if the screen shows another the
+ * same way, that one replaces it. So a face taken at the wrong moment (a
+ * fighter changing over) puts itself right.
+ */
+class FaceKeeper(
+    /** The face kept for a fighter, or null. */
+    private val kept: (String) -> IntArray?,
+    /** Every kept face, by fighter. */
+    private val all: () -> Map<String, IntArray>,
+) {
+    private val runs = HashMap<String, Pair<IntArray, Int>>()
+    private val confirmed = HashMap<String, Int>()
+
+    /** [id]'s face is still worth looking at (not kept, or not seen right [CONFIRMS] times yet). */
+    fun wants(id: String): Boolean = (confirmed[id] ?: 0) < CONFIRMS
+
+    /** [face] is on screen for [id]: the face to keep for it now, or null (nothing to change). */
+    fun seen(id: String, face: IntArray): IntArray? {
+        if (kept(id)?.contentEquals(face) == true) {
+            confirmed[id] = (confirmed[id] ?: 0) + 1
+            runs.remove(id)
+            return null
+        }
+        val run = runs[id]
+        val n = if (run != null && run.first.contentEquals(face)) run.second + 1 else 1
+        if (n < SEEN) {
+            runs[id] = face to n
+            return null
+        }
+        runs.remove(id)
+        // Another fighter's face, shown while this one's ID was already in: not this one's.
+        if (all().any { (other, f) -> other != id && f.contentEquals(face) }) return null
+        confirmed[id] = 1
+        return face
+    }
+
+    companion object {
+        const val SEEN = 3
+        const val CONFIRMS = 3
+    }
+}

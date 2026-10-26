@@ -25,6 +25,9 @@ class Faces(context: Context, gameId: String, private val roster: Roster?) {
     /** By fighter name, for the HUD's canvas. */
     private val bitmaps = HashMap<String, Bitmap>()
 
+    /** By fighter id, the kept faces' pixels (to check them against the screen). */
+    private val pixels = HashMap<String, IntArray>()
+
     init {
         dir.listFiles { f -> f.name.endsWith(".png") }?.forEach { f ->
             BitmapFactory.decodeFile(f.path)?.let { put(f.name.removeSuffix(".png"), it) }
@@ -34,6 +37,13 @@ class Faces(context: Context, gameId: String, private val roster: Roster?) {
     fun has(id: String): Boolean = nameOf(id)?.let { it in bitmaps } ?: true
 
     fun bitmap(name: String): Bitmap? = bitmaps[name]
+
+    /** Whether [id] is a fighter whose face can be kept. */
+    fun knows(id: String): Boolean = nameOf(id) != null
+
+    fun pixels(id: String): IntArray? = pixels[id]
+
+    fun allPixels(): Map<String, IntArray> = pixels
 
     /** Keeps [id]'s face ([w] x [h] ARGB). Call on the main thread. */
     fun save(id: String, argb: IntArray, w: Int, h: Int) {
@@ -49,6 +59,9 @@ class Faces(context: Context, gameId: String, private val roster: Roster?) {
 
     private fun put(id: String, bitmap: Bitmap) {
         val name = nameOf(id) ?: return
+        pixels[id] = IntArray(bitmap.width * bitmap.height).also {
+            bitmap.getPixels(it, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        }
         bitmaps[name] = bitmap
         byName[name] = bitmap.asImageBitmap()
     }

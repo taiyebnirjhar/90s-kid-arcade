@@ -53,6 +53,33 @@ class PortraitsTest {
     }
 
     @Test
+    fun aFaceIsKeptOnlyWhenSeenTheSameAndAWrongOnePutsItselfRight() {
+        val store = HashMap<String, IntArray>()
+        val keeper = FaceKeeper({ store[it] }, { store })
+        val beni = IntArray(4) { 1 }
+        val iori = IntArray(4) { 2 }
+        fun see(id: String, face: IntArray) = keeper.seen(id, face)?.let { store[id] = it }
+        // Seen twice: not yet.
+        see("benimaru", beni)
+        see("benimaru", beni)
+        assertNull(store["benimaru"])
+        see("benimaru", beni)
+        assertContentEquals(beni, store["benimaru"])
+        // Iori's ID is in while Benimaru's face still shows: never kept for Iori.
+        repeat(5) { see("iori", beni) }
+        assertNull(store["iori"])
+        // A face kept wrong (an older app took it) is replaced once the right one shows.
+        store["iori"] = beni.copyOf()
+        store.remove("benimaru")
+        assertTrue(keeper.wants("iori"))
+        repeat(3) { see("iori", iori) }
+        assertContentEquals(iori, store["iori"])
+        // Seen right a few times, it's settled.
+        repeat(FaceKeeper.CONFIRMS) { see("iori", iori) }
+        assertFalse(keeper.wants("iori"))
+    }
+
+    @Test
     fun doubleDragonTellsAFightByItsHud() {
         val hud = fightHud("doubledr")!!
         assertNull(fightHud("kof97"))
