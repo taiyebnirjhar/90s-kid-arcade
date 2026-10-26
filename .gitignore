@@ -6,3 +6,6 @@
 /android/app/src/test/snapshots/
 __pycache__/
 .kotlin/
+
+# The site's APK is fetched from the release when it deploys.
+/site/*.apk
