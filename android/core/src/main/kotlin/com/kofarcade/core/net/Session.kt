@@ -574,6 +574,7 @@ class Room private constructor(
             Thread.sleep(PING_MS)
             val now = System.nanoTime()
             if (isOwner) {
+                releaseEnded()
                 val all = ownerLines()
                 for (line in all) {
                     val newcomer = synchronized(lines) { line.id in arriving }
@@ -1032,10 +1033,23 @@ class Room private constructor(
 
     // Holds [id]'s seat (it dropped out) until it comes back or the hold ends (on the worker).
     private fun hold(id: Int, news: String) {
-        val m = members[id] ?: return
+        if (members[id] == null) return
         holdUntil[id] = System.currentTimeMillis() + holdMs
         seat(news, hold = id)
-        worker.schedule({ if (members[id]?.away == true) release(id, "${m.name} didn't come back: player ${m.seat + 1}'s seat is free") }, holdMs, TimeUnit.MILLISECONDS)
+        // It goes free when the hold ends (the owner's ping loop looks every second).
+    }
+
+    // Owner, every second: held seats whose hold has ended go free. (Looked
+    // at afresh each time, not one timer per hold: a phone that drops again
+    // is held anew, and an owner that took the room over frees the seats it
+    // was handed too.)
+    private fun releaseEnded() {
+        val now = System.currentTimeMillis()
+        for (m in members.values) {
+            if (!m.away) continue
+            val until = holdUntil[m.id] ?: (now + holdMs).also { holdUntil[m.id] = it }
+            if (until <= now) worker.execute { release(m.id, "${m.name} didn't come back: player ${m.seat + 1}'s seat is free") }
+        }
     }
 
     // ----- Two owners -----
@@ -1084,9 +1098,12 @@ class Room private constructor(
     // Into the other owner's room, then everyone here follows.
     private fun moveTo(at: InetSocketAddress, winner: String) {
         yielding = true
+        // Taking nobody new from here (it refuses them while moving anyway):
+        // its port is free for the room it moves into (see ownPort).
+        runCatching { server.close() }
         val next = try {
             join(
-                at.address, at.port, name, set, rom, bios, listenPort, beaconPort, build, device,
+                at.address, at.port, name, set, rom, bios, ownPort(), beaconPort, build, device,
                 session = session, connectMs = LOOK_MS, faults = faults,
             )
         } catch (e: IOException) {
@@ -1111,6 +1128,8 @@ class Room private constructor(
     // A held seat goes free (on the worker).
     private fun release(id: Int, news: String) {
         if (closed || !isOwner || members[id]?.away != true) return
+        // Held anew since (it came back and dropped again): not yet.
+        if ((holdUntil[id] ?: 0L) > System.currentTimeMillis()) return
         seat(news, gone = id)
     }
 
@@ -1684,6 +1703,13 @@ class Room private constructor(
     }
 
     /**
+     * The port this phone listened on, to listen on again in the room it
+     * rejoins: where the others remember it, so a phone finding the room
+     * again (or a new owner calling) reaches it there.
+     */
+    private fun ownPort(): Int = server.localPort.takeIf { it > 0 } ?: listenPort
+
+    /**
      * While finding the room again: a host's beacon heard on the network
      * ([BeaconListener]). If it's this room's, its owner is tried first, at
      * the address it has now (a phone can come back to the Wi-Fi with another).
@@ -1715,7 +1741,7 @@ class Room private constructor(
             if (!tried.add(at)) continue
             try {
                 return join(
-                    at.address, at.port, name, set, rom, bios, listenPort, beaconPort, build, device,
+                    at.address, at.port, name, set, rom, bios, ownPort(), beaconPort, build, device,
                     session = session, connectMs = connectMs, faults = faults,
                 )
             } catch (e: Redirected) {
@@ -1737,11 +1763,11 @@ class Room private constructor(
             line.close()
             return
         }
-        // Still hearing from the host: it's the caller that lost it, not this
-        // phone. Stay (the caller finds nobody followed, and rejoins the host).
+        // Still hearing from the host (within 3 of the 5 s that make it gone):
+        // it's the caller that lost it, not this phone. Stay (the caller finds nobody followed, and rejoins the host).
         val current = ownerLine
         if (current != null && current !== line && takeover.owner != owner && !migrating.get() &&
-            System.nanoTime() - current.lastHeard < HEALTHY_NS
+            System.nanoTime() - current.lastHeard < quietNs * 3 / 5
         ) {
             log("${nameOf(takeover.owner)} tried to take the room over; the host is still here")
             line.close()
@@ -1839,8 +1865,6 @@ class Room private constructor(
         // An owner missing phones looks for another owner every 2 to 4 s.
         private const val SCOUT_MS = 2_000L
         private const val MOVED_MS = 500L
-        // Heard from the host this recently: it's still running the room.
-        private const val HEALTHY_NS = 3_000_000_000L
         private const val FEED_STOP_MS = 1_000L
         private const val READY_MS = 3_000L
         private const val PING_MS = 1_000L
