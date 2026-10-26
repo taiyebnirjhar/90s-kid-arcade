@@ -464,19 +464,39 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         homeX = home.centerX()
         homeY = home.centerY()
 
-        // Buttons moved: let go of anything a finger was holding on the old layout.
-        if (blockPointer != -1) {
+        // Laid out again (the fighters swapped sides, the move ring changed…):
+        // a finger on a button that's still there keeps holding it, so Block,
+        // a held A-D (rapid fire) or Run don't let go mid-fight. Only a finger
+        // whose button went lets go.
+        val byId = els.associateBy { it.id }
+        val kept = HashMap<Int, El>()
+        var runsKept = 0
+        for ((pid, old) in pointerEl) {
+            val now = byId[old.id]?.takeIf { it.kind == old.kind && it.key == old.key && it.sys?.hold == old.sys?.hold }
+            val holding = old.kind == Kind.FACE || old.kind == Kind.COIN || old.kind == Kind.START ||
+                old.kind == Kind.BLOCK || (old.kind == Kind.SYS && old.sys?.hold == true)
+            if (now != null && holding) {
+                kept[pid] = now
+                if (now.kind == Kind.SYS) runsKept++
+            } else if (old.kind == Kind.FACE || old.kind == Kind.COIN || old.kind == Kind.START) {
+                listener.onKey(old.key!!, false)
+            }
+        }
+        if (blockPointer != -1 && blockPointer !in kept) {
             listener.onBlock(null)
             blockPointer = -1
             blockLow = false
         }
-        for (el in pointerEl.values) {
-            if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
-        }
         pressed.clear()
+        pressed += kept.values.filter { it.kind != Kind.BLOCK }
         firing.clear()
         pointerEl.clear()
-        stopRunning()
+        pointerEl += kept
+        if (runsKept != holdRuns) {
+            // A Run button that went: stop, unless the stick still runs.
+            holdRuns = runsKept
+            if (holdRuns == 0 && !stickRun) listener.onRun(false)
+        }
         elements = els
         if (stickPointer == -1) resetStick()
     }

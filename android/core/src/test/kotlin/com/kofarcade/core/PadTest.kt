@@ -155,4 +155,52 @@ class PadTest {
         assertEquals(false, pad.running)
         assertEquals(5, dirNow())
     }
+
+    /**
+     * The move editor takes any text: whatever it accepts (what Save keeps and
+     * Test plays) must play to the end and let every key go, never throw.
+     */
+    @Test
+    fun anyInputTheEditorAcceptsPlaysAndLetsGo() {
+        val rnd = kotlin.random.Random(7)
+        val alphabet = "123456789ABCDEFG+[],~> x"
+        var accepted = 0
+        repeat(5000) {
+            val cmd = String(CharArray(rnd.nextInt(0, 25)) { alphabet[rnd.nextInt(alphabet.length)] }).uppercase().take(24)
+            if (!isValidCommand(cmd)) return@repeat
+            accepted++
+            toArrows(cmd)
+            for (left in listOf(false, true)) {
+                pad.facingLeft = left
+                val frames = pad.play(cmd)
+                runFrames(frames + 2)
+                assertTrue(!pad.playing, cmd)
+                assertTrue(state.values.none { it }, "$cmd left a key held: $state")
+            }
+        }
+        assertTrue(accepted > 100, "only $accepted accepted")
+    }
+
+    @Test
+    fun rollKeepsTheStickSoBackAndRollRollsBack() {
+        pad.timing = Timing(step = 1, press = 2)
+        pad.setDir(4)
+        log.clear()
+        pad.play("AB")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] == true && state[Key.A] == true && state[Key.B] == true, state.toString())
+        runFrames(4)
+        assertTrue(!pad.playing && state[Key.LEFT] == true && state[Key.A] != true, state.toString())
+        // A motion still owns the stick while it plays.
+        pad.play("236+A")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] != true && state[Key.DOWN] == true, state.toString())
+        runFrames(12)
+        // And holding Block (back) while rolling rolls back.
+        pad.setDir(5)
+        pad.setHold(4)
+        pad.play("AB")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] == true && state[Key.A] == true, state.toString())
+    }
 }

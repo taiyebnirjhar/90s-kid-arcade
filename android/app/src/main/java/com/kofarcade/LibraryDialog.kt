@@ -361,7 +361,7 @@ private fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = P
 }
 
 /**
- * A library file as a card: the game's picture in full colour with a tag for
+ * A library file as a card: the game's picture (grey while it isn't on the phone) with a tag for
  * where it is (and the download's progress on the picture itself), then its
  * name and file under it. Tap a card that's only in the library to get it.
  */
@@ -382,7 +382,7 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
                 .clickable(interactionSource = source, indication = null, enabled = canGet, onClick = onDownload),
         ) {
             if (row.game != null) {
-                ArtImage(row.game, row.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+                ArtImage(row.game, row.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, grey = row.state == RowState.Idle)
             } else {
                 FileTile(row.title, Modifier.matchParentSize(), bios = row.set?.startsWith("neogeo") == true)
             }

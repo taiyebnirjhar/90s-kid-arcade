@@ -50,7 +50,7 @@ and settings.
    **Add BIOS** and pick your `neogeo.zip` (once; Capcom games don't need it).
 2. Tap a game's card. The first time it asks for that game's zip: pick it
    from the phone (any file name is fine) or download it from your library
-   (below). Cards of games you haven't added say **Add ROM**; long-press a
+   (below). Cards of games you haven't added are grey and say **Add ROM**; long-press a
    game to remove its ROM.
 3. **COIN**, then **START**.
 
@@ -64,14 +64,17 @@ control where your thumbs want it, tap one to resize it) and Quit.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Pause → Settings → Moves → *Detect fighters* to pick by hand). Each fighter's face
+fighter. The fighter (name, face, move ring, *Edit moves*) shows once a
+round is on: on the select screen the picks are still changing. Each fighter's face
 comes from the game itself: the first time they're on screen the app takes
 the face the game draws by the life bar (Double Dragon: on its select
 screen) and shows it from then on on the team buttons, the pause menu and
 the select screen; the app ships no character art. The ring around
 A B C D shows that fighter's desperation moves and specials, each drawn as
 its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
-tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback. Pause →
+tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback; they keep the stick's direction, as on the
+arcade, so back + Roll rolls back. **Block** holds back for as long as
+you hold it (slide down for a low block), even as the fighters swap sides. Pause →
 *Edit <name>'s moves* to change any move.
 
 Every move in the lists was checked in the real games (see
@@ -114,7 +117,7 @@ edge.
 Pause → **Settings**, in three tabs: **Screen** (picture width, controls
 opacity, detection readout), **Controls** (stick style: floating, fixed or
 hidden; button size; buttons on the left; vibration; rapid fire) and
-**Moves** (move names under the buttons, fighter detection, move timing).
+**Moves** (move names under the buttons, move timing).
 Changes show on the game as you make them.
 
 ## Multiplayer

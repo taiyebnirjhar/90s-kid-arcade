@@ -2603,9 +2603,9 @@
    "moves": [
     {
      "name": "Armageddon",
-     "cmd": "B,D,A,ABC",
+     "cmd": "2+ABC",
      "type": "hsdm",
-     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
+     "note": "HSDM: 2 power stocks (1 in MAX mode); 2005 input; the 2002 one no longer works (B,D,A,ABC)"
     },
     {
      "name": "Ankoku Jigoku Gokuraku Otoshi",
@@ -2618,12 +2618,6 @@
      "cmd": "236236+B",
      "type": "dm",
      "note": "DM: 1 power stock (or during MAX mode); K: B or D"
-    },
-    {
-     "name": "Ankoku Jigoku Gokuraku Otoshi",
-     "cmd": "6321463214+AC",
-     "type": "dm",
-     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation); close range"
     },
     {
      "name": "Araburu Daichi",
@@ -2664,12 +2658,6 @@
    "team": "Awakened Orochi (hidden)",
    "moves": [
     {
-     "name": "Unmei no Ya",
-     "cmd": "B,A,4,A,A",
-     "type": "hsdm",
-     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat. The last button can be any of A-D; it sets the distance."
-    },
-    {
      "name": "Ankoku Raikou Ken",
      "cmd": "236236+A",
      "type": "dm",
@@ -2684,12 +2672,6 @@
     {
      "name": "Ankoku Raikou Ken",
      "cmd": "236236+AC",
-     "type": "dm",
-     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
-    },
-    {
-     "name": "Shukumei, Gen'ei, Shinshi",
-     "cmd": "236236+BD",
      "type": "dm",
      "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
     },
@@ -2725,12 +2707,6 @@
    "name": "Orochi Chris",
    "team": "Awakened Orochi (hidden)",
    "moves": [
-    {
-     "name": "Sanagi o Yaburi, Chou wa Mau",
-     "cmd": "D,C,2,C,D",
-     "type": "hsdm",
-     "note": "HSDM (MAX2): MAX mode + 1 stock + low life. Button sequence, verified against GameFAQs / Dream Cancel / SuperCombo and MAME command.dat."
-    },
     {
      "name": "Ankoku Orochinagi",
      "cmd": "2141236+A",

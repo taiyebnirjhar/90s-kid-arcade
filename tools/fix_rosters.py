@@ -159,6 +159,16 @@ for cid, name in (('k9999', 'Temee mo oucchimae!!'), ('k9999', 'Chikara ga...kat
                   ('chang', 'Tekkyuu Dai Sekai')):
     c = char(f, cid)
     c['moves'] = [m for m in c['moves'] if m['name'] != name]
+# The Orochi team (Yashiro, Shermie, Chris from the Orochi box of the select
+# screen) shares the regular fighters' IDs; detection tells them apart by the
+# fighter block's flag (Detect.kt). Each was picked from the select screen and
+# its moves tried: Orochi Yashiro's hidden super is 2+ABC here (2 power stocks,
+# 1 in MAX mode; ddooo.com: 末日之审判), and these 2002 inputs bring out nothing.
+redo('oyashiro', 'Armageddon', '2+ABC', 'HSDM: 2 power stocks (1 in MAX mode); ' + NEW + ' (B,D,A,ABC)')
+drop(char(f, 'oyashiro'), 'Ankoku Jigoku Gokuraku Otoshi', '6321463214+AC')
+drop(char(f, 'oshermie'), 'Unmei no Ya', 'B,A,4,A,A')
+drop(char(f, 'oshermie'), "Shukumei, Gen'ei, Shinshi", '236236+BD')
+drop(char(f, 'ochris'), 'Sanagi o Yaburi, Chou wa Mau', 'D,C,2,C,D')
 save('kof2005', f)
 print('ok 2002/2005')
 

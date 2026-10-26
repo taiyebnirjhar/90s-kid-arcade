@@ -323,8 +323,6 @@ fun ControlsPanel(
     onLook: (Look) -> Unit,
     canDetect: Boolean,
     canRapid: Boolean = false,
-    autoDetect: Boolean,
-    onAutoDetect: (Boolean) -> Unit,
     detectInfo: Boolean,
     onDetectInfo: (Boolean) -> Unit,
     onCancel: () -> Unit,
@@ -384,7 +382,6 @@ fun ControlsPanel(
                     }
                     SettingsTab.MOVES -> {
                         PickRow("Move names", LabelMode.entries, look.labelMode, { it.label }, sub = "Names under the move buttons") { onLook(look.copy(labelMode = it)) }
-                        if (canDetect) ToggleRow("Detect fighters", autoDetect, onAutoDetect, sub = "Team, fighter and facing from the game")
                         CountRow("Frames per direction", look.stepFrames, 1..6, sub = "Raise if specials don't come out") { onLook(look.copy(stepFrames = it)) }
                         CountRow("Frames button held", look.pressFrames, 1..12) { onLook(look.copy(pressFrames = it)) }
                     }

@@ -421,7 +421,7 @@ class UiSnapshots {
             GameBehind {
                 ControlsPanel(
                     Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4),
-                    onLook = {}, canDetect = true, canRapid = true, autoDetect = true, onAutoDetect = {},
+                    onLook = {}, canDetect = true, canRapid = true,
                     detectInfo = false, onDetectInfo = {}, onCancel = {}, onSave = {}, startTab = tab,
                 )
             }

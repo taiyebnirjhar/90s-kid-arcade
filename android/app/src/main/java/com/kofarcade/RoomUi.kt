@@ -411,8 +411,8 @@ fun StepsStrip() {
 }
 
 /**
- * A wide card on the Multiplayer screens: the game's gameplay picture filling it, in
- * full colour, the [title] and [info] over a shade at the bottom, [action]
+ * A wide card on the Multiplayer screens: the game's gameplay picture filling it
+ * (grey if this phone hasn't the game), the [title] and [info] over a shade at the bottom, [action]
  * (a gold pill) beside them and an optional [tag] at the top.
  */
 @Composable
@@ -422,6 +422,8 @@ fun WideGameCard(
     title: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Greyed out: this phone hasn't the game. */
+    grey: Boolean = false,
     onClick: () -> Unit,
     tag: (@Composable () -> Unit)? = null,
     info: @Composable () -> Unit = {},
@@ -437,7 +439,7 @@ fun WideGameCard(
     ) {
         if (game != null) {
             // Gameplay, not the title screen: the card names the game itself.
-            ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
+            ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false, grey = grey)
         } else {
             // A game this app doesn't know: its name on a tile, like a picture still loading.
             Box(Modifier.matchParentSize().background(Palette.bg).padding(16.dp), contentAlignment = Alignment.Center) {
@@ -470,6 +472,7 @@ fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
         room.title,
         Modifier.height(150.dp),
         enabled = enabled,
+        grey = !room.have,
         onClick = onClick,
         tag = { if (!room.have) PictureTag("Need the game", Palette.red) else PictureTag(if (full) "Full: watch" else "Open seat", if (full) Palette.gold else Palette.green) },
         info = {
