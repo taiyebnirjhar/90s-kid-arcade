@@ -530,7 +530,6 @@ fun MoveEditorContent(
 private fun ControlsSettings(game: GameActivity) {
     val p = game.settings
     var look by remember { mutableStateOf(p.look()) }
-    var auto by remember { mutableStateOf(p.autoDetect) }
     var info by remember { mutableStateOf(p.detectInfo) }
 
     // Every change shows on the game right away; Save keeps it, Cancel puts
@@ -547,8 +546,6 @@ private fun ControlsSettings(game: GameActivity) {
             onLook = { look = it },
             canDetect = game.canDetect,
             canRapid = game.hasRapidFire,
-            autoDetect = auto,
-            onAutoDetect = { auto = it },
             detectInfo = info,
             onDetectInfo = { info = it },
             onCancel = ::cancel,
@@ -563,7 +560,6 @@ private fun ControlsSettings(game: GameActivity) {
                 p.stepFrames = look.stepFrames
                 p.pressFrames = look.pressFrames
                 p.rapidFire = look.rapidFire
-                p.autoDetect = auto
                 p.detectInfo = info
                 game.applyPrefs()
                 game.close()

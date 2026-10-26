@@ -255,11 +255,6 @@ class Prefs(context: Context) {
 
     fun setLibrarySet(file: String, set: String?) = sp.edit().putString("lib.$file", set).apply()
 
-    /** KOF: fill the team, the active fighter and their facing from the game's RAM. */
-    var autoDetect: Boolean
-        get() = sp.getBoolean("autoDetect", true)
-        set(v) = sp.edit().putBoolean("autoDetect", v).apply()
-
     /** Shows what detection reads, to check it (and map unknown fighters) on a phone. */
     var detectInfo: Boolean
         get() = sp.getBoolean("detectInfo", false)

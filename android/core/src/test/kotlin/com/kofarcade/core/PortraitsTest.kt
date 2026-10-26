@@ -53,6 +53,17 @@ class PortraitsTest {
     }
 
     @Test
+    fun doubleDragonTellsAFightByItsHud() {
+        val hud = fightHud("doubledr")!!
+        assertNull(fightHud("kof97"))
+        val px = IntArray(320 * 224)
+        assertFalse(shows(Picture(320, 224, px), hud, 320))
+        for (a in hud) px[a.y * 320 + a.x] = 0xFF000000.toInt() or a.rgb
+        assertTrue(shows(Picture(320, 224, px), hud, 320))
+        assertFalse(shows(Picture(320, 224, px), hud, 304))
+    }
+
+    @Test
     fun p2sFaceIsMirroredToFaceRight() {
         val spec = portraitSpec("sfiii3")!!
         val frame = hud(spec)
@@ -90,5 +101,10 @@ class PortraitsTest {
             checked++
         }
         assertTrue(checked > 0, "no screenshots in $dir")
+        // Double Dragon's fights (dd_3-11: several moments of one) show its HUD; its select screen doesn't.
+        val dd = fightHud("doubledr")!!
+        fun pic(name: String) = ImageIO.read(File(dir, name)).let { Picture(it.width, it.height, it.getRGB(0, 0, it.width, it.height, null, 0, it.width)) }
+        for (i in 3..11) File(dir, "dd_$i.png").takeIf { it.exists() }?.let { assertTrue(shows(pic(it.name), dd, 320), it.name) }
+        File(dir, "doubledr_f1.png").takeIf { it.exists() }?.let { assertFalse(shows(pic(it.name), dd, 320), it.name) }
     }
 }

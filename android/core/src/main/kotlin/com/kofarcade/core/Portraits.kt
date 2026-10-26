@@ -51,13 +51,6 @@ class PortraitSpec(
         }
     }
 
-    private fun close(argb: Int, rgb: Int): Boolean {
-        for (shift in intArrayOf(16, 8, 0)) {
-            if (Math.abs((argb shr shift and 0xFF) - (rgb shr shift and 0xFF)) > TOLERANCE) return false
-        }
-        return true
-    }
-
     companion object {
         /** Per channel: the emulator's 16-bit colours come out a little differently by converter. */
         const val TOLERANCE = 24
@@ -105,6 +98,30 @@ private val DOUBLE_DRAGON_FACES = PortraitSpec(
     ),
     selectScreen = true,
 )
+
+/**
+ * Double Dragon's RAM reads the same on its select screen (the fighter under
+ * the cursor) as in a fight; the gold frame of its life bars, at the top of
+ * every stage, tells a fight. Measured over its stages in FBNeo.
+ */
+private val DOUBLE_DRAGON_FIGHT = anchors(11, 6, 0xB49141, 42, 10, 0xD5AE52, 302, 14, 0xB49141, 251, 18, 0xB49141)
+
+/**
+ * For a game whose RAM can't tell a fight from its select screen, the HUD
+ * pixels a fight always shows; null where detection's "in a round" is enough.
+ */
+fun fightHud(roster: String?): List<Anchor>? = if (roster == "doubledr") DOUBLE_DRAGON_FIGHT else null
+
+/** Every one of [anchors] is on [picture] (as P1's side has them). */
+fun shows(picture: Picture, anchors: List<Anchor>, width: Int): Boolean =
+    picture.width == width && anchors.all { a -> a.y < picture.height && close(picture.at(a.x, a.y), a.rgb) }
+
+private fun close(argb: Int, rgb: Int): Boolean {
+    for (shift in intArrayOf(16, 8, 0)) {
+        if (Math.abs((argb shr shift and 0xFF) - (rgb shr shift and 0xFF)) > PortraitSpec.TOLERANCE) return false
+    }
+    return true
+}
 
 /** Where a roster's game draws its faces, or null if it has none to take. */
 fun portraitSpec(roster: String?): PortraitSpec? = when (roster) {

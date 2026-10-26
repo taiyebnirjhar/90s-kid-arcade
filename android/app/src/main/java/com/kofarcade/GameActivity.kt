@@ -50,6 +50,8 @@ import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.portraitSpec
+import com.kofarcade.core.fightHud
+import com.kofarcade.core.shows
 import com.kofarcade.core.fighterBase
 import com.kofarcade.core.gameById
 import com.kofarcade.core.loadRoster
@@ -110,6 +112,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val RECONNECT_MS = 65_000L
         private const val RECONNECT_EVERY_MS = 2_000L
         private const val FACE_GRAB_MS = 40L
+        private const val FIGHT_GONE_CHECKS = 12
         /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
         private const val MAX_ROLLBACK = 8
     }
@@ -835,12 +838,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 while (true) {
                     delay(DETECT_MS)
-                    if (paused || frame == 0L || !(prefs.autoDetect || prefs.detectInfo)) {
+                    if (paused || frame == 0L) {
                         detectInfo.visibility = View.GONE
-                        if (!prefs.autoDetect && superArt != null) {
-                            superArt = null
-                            updateHud()
-                        }
                         continue
                     }
                     // Watching: no fighter of our own to follow.
@@ -849,10 +848,36 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     val ram = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: continue
                     val found = runCatching { fighterBase(spec, ram, me) to detect(spec, ram, me) }.getOrNull() ?: continue
                     groundBase = found.first
+                    fightMarks?.let { seeFight(found.second, it) }
                     onDetected(found.second)
                     takeFaces(spec)
                 }
             }
+        }
+    }
+
+    // Double Dragon: a fight is told by its HUD on the picture (fightHud), as
+    // its RAM reads the same on the select screen. Once seen it holds through
+    // a moment without it (a super's flash greys the HUD), and ends on the
+    // select screen, after a few seconds without it, or with the round.
+    private val fightMarks by lazy { fightHud(game.roster) }
+    private var fightSeen = false
+    private var fightMissed = 0
+
+    private fun seeFight(d: Detection, hud: List<com.kofarcade.core.Anchor>) {
+        if (!d.inRound) {
+            fightSeen = false
+            return
+        }
+        val raw = LibretroDroid.grabFrame() ?: return
+        val picture = Picture(raw[0], raw[1], raw.copyOfRange(2, raw.size))
+        when {
+            shows(picture, hud, raw[0]) -> {
+                fightSeen = true
+                fightMissed = 0
+            }
+            faceSpec?.showing(picture, 0) == true -> fightSeen = false
+            ++fightMissed >= FIGHT_GONE_CHECKS -> fightSeen = false
         }
     }
 
@@ -896,8 +921,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun onDetected(d: Detection) {
-        if (prefs.autoDetect && d.inRound) {
-            var changed = false
+        // A fighter shows (name, face, moves) only while one is really
+        // playing: on the select screen the picks are still changing, and the
+        // team saved last time may not be this one.
+        val live = d.inRound && d.active != null && (fightMarks == null || fightSeen)
+        var changed = live != fighterLive
+        fighterLive = live
+        if (d.inRound) {
             // Only in a round: on the select screen the picks are still changing.
             if (d.teamKnown && d.team.size == game.team && d.team != team()) {
                 prefs.setTeam(game.id, d.team)
@@ -916,8 +946,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 superArt = d.superArt
                 changed = true
             }
-            if (changed) updateHud()
         }
+        if (changed) updateHud()
         detectInfo.visibility = if (prefs.detectInfo) View.VISIBLE else View.GONE
         if (prefs.detectInfo) {
             fun hex(v: Int) = "%02X".format(v)
@@ -929,7 +959,6 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 append("\non screen ${hex(d.activeRaw)} ${d.active?.let(::name) ?: "(not in team)"}")
                 append("   facing ${if (d.facingLeft) "←" else "→"}   x ${d.x} vs ${d.otherX}")
                 d.superArt?.let { append("   Super Art $it") }
-                if (!prefs.autoDetect) append("   (auto off)")
             }
         }
     }
@@ -942,8 +971,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val teamSize: Int get() = game.team
 
+    /** A fighter of ours is in a round now (detection saw it): until then none is shown. */
+    @Volatile private var fighterLive = false
+
     fun activeCharacter(): Character? {
         if (game.layout != Layout.FIGHTER) return null
+        if (canDetect && !fighterLive) return null
         val team = team()
         if (team.isEmpty()) return null
         return roster?.character(team[prefs.active(game.id).coerceIn(0, team.size - 1)])
@@ -1003,7 +1036,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val active = prefs.active(game.id)
         // With detection on, the game says who's fighting and which way they
         // face: no team slots or FACING button to tap.
-        val detecting = canDetect && prefs.autoDetect
+        val detecting = canDetect
         val slots = if (game.layout == Layout.FIGHTER && roster != null && !detecting) {
             team().mapIndexed { i, id -> HudView.Slot(roster?.character(id)?.name, i == active) }
         } else {

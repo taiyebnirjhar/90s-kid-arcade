@@ -72,6 +72,8 @@ class DetectSpec(
     /** Alternate versions ('94 Kyo, Orochi Yashiro...) by base character, with the per-slot flag byte. */
     val alternates: Map<String, String> = emptyMap(),
     val alternateFlags: Int? = null,
+    /** Where the alternate version is told by the fighter on screen instead (its block): true for it. */
+    val activeAlternate: ((Ram, Int) -> Boolean)? = null,
     /** Street Fighter III: the Super Art picked (0-2), P1; P2's is the next byte. */
     val superArt: Int? = null,
     /** Tag teams: the block of the fighter on screen, from the player's first block (null: that one). */
@@ -105,7 +107,7 @@ private val KOF97 = kof97(KOF97_IDS)
 // '97 Plus makes Orochi playable (checked in kof97pls: his ID is 0x1E).
 private val KOF97_PLUS = kof97(KOF97_IDS.map { it ?: "orochi" })
 
-private val KOF2002 = DetectSpec(
+private fun kof2002(alternate: ((Ram, Int) -> Boolean)? = null) = DetectSpec(
     team = listOf(0x10A804, 0x10A805, 0x10A806),
     teamStride = 0x26,
     teamMask = 0x7F,
@@ -118,7 +120,17 @@ private val KOF2002 = DetectSpec(
         "whip", "vanessa", "seth", "ramon", "kula", "k9999", "angel", "rugal",
         "kusanagi",
     ),
+    alternates = if (alternate != null) mapOf("yashiro" to "oyashiro", "shermie" to "oshermie", "chris" to "ochris") else emptyMap(),
+    activeAlternate = alternate,
 )
+
+private val KOF2002 = kof2002()
+
+// 2005 Unique's Orochi team (Yashiro, Shermie, Chris from the Orochi box of
+// the select screen) shares the regular fighters' IDs; byte +0x08 of the
+// fighter's block is 1 for them, 0 for the regular ones (checked picking
+// each from the select screen in kf2k5uni: their Orochi moves come out).
+private val KOF2005 = kof2002 { ram, base -> ram.byte(base + 0x08) == 1 }
 
 // Double Dragon (Neo Geo): one fighter each, P1's block at 0x100400 and P2's
 // 0x100 later; the character ID at +0x45 (the FBNeo cheat file's list; the
@@ -211,7 +223,8 @@ private val MVSC = DetectSpec(
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
     "kof97plus" -> KOF97_PLUS
-    "kof2002", "kof2005", "kof2002mp" -> KOF2002
+    "kof2002", "kof2002mp" -> KOF2002
+    "kof2005" -> KOF2005
     "doubledr" -> DOUBLE_DRAGON
     "sfiii3" -> SF3
     "mvsc" -> MVSC
@@ -253,11 +266,18 @@ fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
     // The on-screen ID has no alternate flag of its own, so it is matched
     // against the team: a recognised fighter that isn't in it is a misread.
     val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 }
+    // Where the fighter on screen says it's the alternate version, so is that team slot.
+    val alt = spec.activeAlternate?.invoke(ram, base) == true
+    val shown = if (alt && activeSlot != null) {
+        team.mapIndexed { slot, id -> if (slot == activeSlot && id != null) spec.alternates[id] ?: id else id }
+    } else {
+        team
+    }
     return Detection(
         inRound = spec.inRound(ram),
-        team = team,
+        team = shown,
         teamRaw = teamRaw,
-        active = activeSlot?.let { team[it] },
+        active = activeSlot?.let { shown[it] },
         activeRaw = activeRaw,
         activeSlot = activeSlot,
         facingLeft = spec.facing?.invoke(ram, base) ?: (ram.word(base + spec.x) > ram.word(otherBase + spec.x)),

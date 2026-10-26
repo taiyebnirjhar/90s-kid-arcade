@@ -155,4 +155,29 @@ class PadTest {
         assertEquals(false, pad.running)
         assertEquals(5, dirNow())
     }
+
+    /**
+     * The move editor takes any text: whatever it accepts (what Save keeps and
+     * Test plays) must play to the end and let every key go, never throw.
+     */
+    @Test
+    fun anyInputTheEditorAcceptsPlaysAndLetsGo() {
+        val rnd = kotlin.random.Random(7)
+        val alphabet = "123456789ABCDEFG+[],~> x"
+        var accepted = 0
+        repeat(5000) {
+            val cmd = String(CharArray(rnd.nextInt(0, 25)) { alphabet[rnd.nextInt(alphabet.length)] }).uppercase().take(24)
+            if (!isValidCommand(cmd)) return@repeat
+            accepted++
+            toArrows(cmd)
+            for (left in listOf(false, true)) {
+                pad.facingLeft = left
+                val frames = pad.play(cmd)
+                runFrames(frames + 2)
+                assertTrue(!pad.playing, cmd)
+                assertTrue(state.values.none { it }, "$cmd left a key held: $state")
+            }
+        }
+        assertTrue(accepted > 100, "only $accepted accepted")
+    }
 }

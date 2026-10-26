@@ -78,6 +78,24 @@ class DetectTest {
     }
 
     @Test
+    fun kof2005TellsTheOrochiTeamFromTheRegularFighters() {
+        val fake = FakeRam()
+        // Team: Yashiro, Shermie, Mature; Yashiro on screen.
+        fake.set(0x10A804, 0x1B)
+        fake.set(0x10A805, 0x1C)
+        fake.set(0x10A806, 0x16)
+        fake.set(0x108171, 0x1B)
+        assertEquals("yashiro", detect(detectSpec("kof2005")!!, fake.ram()).active)
+        // Picked from the Orochi box: the fighter block says so.
+        fake.set(0x108108, 1)
+        val d = detect(detectSpec("kof2005")!!, fake.ram())
+        assertEquals("oyashiro", d.active)
+        assertEquals(listOf("oyashiro", "shermie", "mature"), d.team)
+        // KOF 2002 has no such flag to read.
+        assertEquals("yashiro", detect(detectSpec("kof2002")!!, fake.ram()).active)
+    }
+
+    @Test
     fun aFighterOutsideTheTeamIsNotTrusted() {
         val fake = FakeRam()
         fake.set(0x10A804, 0x00)

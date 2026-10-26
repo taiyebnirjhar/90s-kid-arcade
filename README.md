@@ -64,7 +64,8 @@ control where your thumbs want it, tap one to resize it) and Quit.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Pause → Settings → Moves → *Detect fighters* to pick by hand). Each fighter's face
+fighter. The fighter (name, face, move ring, *Edit moves*) shows once a
+round is on: on the select screen the picks are still changing. Each fighter's face
 comes from the game itself: the first time they're on screen the app takes
 the face the game draws by the life bar (Double Dragon: on its select
 screen) and shows it from then on on the team buttons, the pause menu and
@@ -114,7 +115,7 @@ edge.
 Pause → **Settings**, in three tabs: **Screen** (picture width, controls
 opacity, detection readout), **Controls** (stick style: floating, fixed or
 hidden; button size; buttons on the left; vibration; rapid fire) and
-**Moves** (move names under the buttons, fighter detection, move timing).
+**Moves** (move names under the buttons, move timing).
 Changes show on the game as you make them.
 
 ## Multiplayer
