@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 #include <unordered_set>
 
 #include "libretrodroid.h"
@@ -917,6 +918,16 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
     if (netLocalPlayer < 0) {
         // Watching: only frames whose inputs are all in (no guessing, so
         // nothing to replay), catching up when they've piled up.
+        if ((int64_t) remoteKnown - netFrame > NET_WATCH_FAR) {
+            // Far behind (just in, or put back in step): straight to the
+            // players' moment, silent and undrawn (the app covers it with
+            // "Joining…"), as much as a few milliseconds a frame allow.
+            auto until = std::chrono::steady_clock::now() + std::chrono::milliseconds(NET_WATCH_CATCH_UP_MS);
+            while ((int64_t) remoteKnown - netFrame > NET_WATCH_NEAR && std::chrono::steady_clock::now() < until) {
+                netSimulate(netFrame, true);
+                netFrame++;
+            }
+        }
         if ((int64_t) remoteKnown - netFrame > 8) wanted++;
         for (unsigned i = 0; i < wanted && (int64_t) netFrame < (int64_t) remoteKnown; i++) {
             netSimulate(netFrame, false);

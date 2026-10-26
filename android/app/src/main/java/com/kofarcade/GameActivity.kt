@@ -114,6 +114,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val RECONNECT_EVERY_MS = 2_000L
         private const val FACE_GRAB_MS = 40L
         private const val FACE_CHECK_EVERY = 4
+        // A watcher this close to the players is caught up.
+        private const val WATCH_NEAR = 8
         private const val FIGHT_GONE_CHECKS = 12
         /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
         private const val MAX_ROLLBACK = 8
@@ -640,6 +642,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         }
                         netStarted = true
                         seating = false
+                        catchingUp = room.watching
                         applyNetFreeze()
                         updateRoomUi()
                         // Said big when it's about this phone.
@@ -655,6 +658,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             })
         }
     }
+
+    // Watching, just in or put back in step: the game skips ahead to the
+    // players' moment unseen (LibretroDroid), behind "Joining…" until it's there.
+    private var catchingUp = false
 
     // Each displayed frame: read our buttons for the frames the game will
     // need next, one macro step per frame, and send them.
@@ -677,6 +684,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             push = { start, masks -> masks.forEachIndexed { i, m -> LibretroDroid.pushLocalInput(start + i, m) } },
         )
         val emulated = sample.emulated
+        if (catchingUp) {
+            val upTo = room.watchedUpTo
+            if (!room.watching || upTo == Int.MAX_VALUE || upTo.toLong() - emulated <= WATCH_NEAR) {
+                catchingUp = false
+                applyNetFreeze()
+            } else if (netStatus.visibility != View.VISIBLE) {
+                netStatus.text = "Joining the game…"
+                netStatus.visibility = View.VISIBLE
+            }
+        }
         // Time sync: when this phone's game runs ahead of a partner's (see
         // Room.lead), wait a frame so it catches up. Every phone then guesses
         // as little as possible, and none stalls at the rollback limit.
@@ -694,7 +711,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         stalledFrames = if (emulated == lastNetFrame) stalledFrames + 1 else 0
         lastNetFrame = emulated
         val waiting = stalledFrames > 30
-        if (waiting != (netStatus.visibility == View.VISIBLE)) {
+        if (!catchingUp && waiting != (netStatus.visibility == View.VISIBLE)) {
             netStatus.text = if (room.watching) "Waiting for the players…" else "Waiting for ${room.peerName}…"
             netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
         }
@@ -728,6 +745,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 netStatus.text = "${room?.pausedName ?: "Someone"} paused the game"
                 netStatus.visibility = View.VISIBLE
             }
+            // "Joining…" holds until the game's caught up (onNetFrame).
+            catchingUp -> Unit
             netStarted -> netStatus.visibility = View.GONE
         }
         stalledFrames = 0
