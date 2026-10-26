@@ -34,6 +34,7 @@ import com.kofarcade.core.Character
 import com.kofarcade.core.DetectSpec
 import com.kofarcade.core.Detection
 import com.kofarcade.core.FACE_KEYS
+import com.kofarcade.core.FaceKeeper
 import com.kofarcade.core.Game
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
@@ -112,6 +113,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val RECONNECT_MS = 65_000L
         private const val RECONNECT_EVERY_MS = 2_000L
         private const val FACE_GRAB_MS = 40L
+        private const val FACE_CHECK_EVERY = 4
         private const val FIGHT_GONE_CHECKS = 12
         /** Two players: how far a phone may run on guesses of its partner's input before waiting. */
         private const val MAX_ROLLBACK = 8
@@ -881,41 +883,44 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
-    // A face read once, waiting to be seen the same again before it's kept.
-    private val faceSeen = HashMap<String, IntArray>()
+    // Which face to keep for each fighter; it puts a wrongly kept one right.
+    private val faceKeeper by lazy { faces?.let { f -> FaceKeeper({ f.pixels(it) }, { f.allPixels() }) } }
+    private var faceTick = 0
 
     /**
-     * Takes the faces of the fighters on screen that we haven't got yet, from
-     * the game's own picture: only while its HUD shows them (Portraits.kt), and
-     * only a face seen the same twice in a row, so a passing flash or a
-     * fighter changing over is never kept.
+     * Takes the faces of the fighters on screen from the game's own picture:
+     * only while its HUD shows them (Portraits.kt), and only a face seen the
+     * same a few times, never another fighter's (FaceKeeper). Faces already
+     * kept are looked at again, less often, for a while each session, so one
+     * taken at the wrong moment (a fighter changing over) puts itself right.
      */
     private suspend fun takeFaces(spec: DetectSpec) {
         val faceSpec = faceSpec ?: return
         val faces = faces ?: return
+        val keeper = faceKeeper ?: return
         fun wanted(ram: Ram): List<Pair<Int, String>> = (0..1).mapNotNull { side ->
             val d = runCatching { detect(spec, ram, side) }.getOrNull() ?: return@mapNotNull null
             val id = if (faceSpec.selectScreen) d.team.firstOrNull() else d.active.takeIf { d.inRound }
-            id?.takeIf { !faces.has(it) }?.let { side to it }
+            id?.takeIf { faces.knows(it) && keeper.wants(it) }?.let { side to it }
         }
         val before = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: return
-        if (wanted(before).isEmpty()) return
+        val looking = wanted(before)
+        if (looking.isEmpty()) return
+        // Only checking faces already kept: now and then is enough.
+        if (looking.all { (_, id) -> faces.pixels(id) != null } && faceTick++ % FACE_CHECK_EVERY != 0) return
         // The first grab asks for the next frame; the second, a moment later, gets it.
         LibretroDroid.grabFrame()
         delay(FACE_GRAB_MS)
         val raw = LibretroDroid.grabFrame() ?: return
         val after = withContext(Dispatchers.Default) { readRam(spec, spec.windows) } ?: return
         // Who's on screen must be the same either side of the picture.
-        val now = wanted(after).takeIf { it == wanted(before) } ?: return
+        val now = wanted(after).takeIf { it == looking } ?: return
         val picture = Picture(raw[0], raw[1], raw.copyOfRange(2, raw.size))
         for ((side, id) in now) {
             if (!faceSpec.showing(picture, side)) continue
-            val face = faceSpec.crop(picture, side)
-            if (faceSeen.remove(id)?.contentEquals(face) == true) {
-                faces.save(id, face, faceSpec.w, faceSpec.h)
+            keeper.seen(id, faceSpec.crop(picture, side))?.let {
+                faces.save(id, it, faceSpec.w, faceSpec.h)
                 hud.invalidate()
-            } else {
-                faceSeen[id] = face
             }
         }
     }
