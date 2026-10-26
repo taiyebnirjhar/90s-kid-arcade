@@ -12,6 +12,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
@@ -408,48 +410,83 @@ fun StepsStrip() {
     }
 }
 
+/**
+ * A wide card on the Multiplayer screens: the game's gameplay picture filling it, in
+ * full colour, the [title] and [info] over a shade at the bottom, [action]
+ * (a gold pill) beside them and an optional [tag] at the top.
+ */
+@Composable
+fun WideGameCard(
+    game: Game?,
+    set: String?,
+    title: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    tag: (@Composable () -> Unit)? = null,
+    info: @Composable () -> Unit = {},
+    action: @Composable () -> Unit = {},
+) {
+    val shape = RoundedCornerShape(20.dp)
+    val source = remember { MutableInteractionSource() }
+    val outlined = lit(source)
+    Box(
+        modifier.pressScale(source).fillMaxWidth().clip(shape).background(Palette.panel)
+            .border(if (outlined) 2.dp else 1.dp, if (outlined) Palette.gold else Color.White.copy(alpha = 0.08f), shape)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, onClick = onClick),
+    ) {
+        if (game != null) {
+            // Gameplay, not the title screen: the card names the game itself.
+            ArtImage(game, set, Art.SNAP, Modifier.matchParentSize(), contentScale = ContentScale.Crop, label = false)
+        } else {
+            // A game this app doesn't know: its name on a tile, like a picture still loading.
+            Box(Modifier.matchParentSize().background(Palette.bg).padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(title, color = Palette.muted, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.3f to Color.Transparent, 0.65f to Color.Black.copy(alpha = 0.55f), 1f to Color.Black.copy(alpha = 0.9f))))
+        if (tag != null) Box(Modifier.align(Alignment.TopStart).padding(12.dp)) { tag() }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 12.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                info()
+            }
+            Spacer(Modifier.width(12.dp))
+            action()
+        }
+    }
+}
+
 /** A room found nearby: the game's picture, its key and host, the seats, and what tapping does. */
 @Composable
 fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Palette.panel)
-            .border(1.dp, Palette.line, RoundedCornerShape(18.dp))
-            .clickable(enabled = enabled, onClick = onClick).padding(10.dp),
-    ) {
-        val game = room.game
-        Box(Modifier.width(96.dp).height(72.dp).clip(RoundedCornerShape(12.dp))) {
-            if (game != null) {
-                ArtImage(game, room.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-            } else {
-                // A game this app doesn't know: its name on a tile, like a picture still loading.
-                Box(Modifier.matchParentSize().background(Palette.bg).padding(6.dp), contentAlignment = Alignment.Center) {
-                    Text(room.title, color = Palette.muted, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(room.title, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(room.hostName + if (room.key.isNotEmpty()) " · ${room.key}" else "", color = Palette.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val full = room.players >= room.maxPlayers
+    WideGameCard(
+        room.game,
+        room.set,
+        room.title,
+        Modifier.height(150.dp),
+        enabled = enabled,
+        onClick = onClick,
+        tag = { if (!room.have) PictureTag("Need the game", Palette.red) else PictureTag(if (full) "Full: watch" else "Open seat", if (full) Palette.gold else Palette.green) },
+        info = {
+            Text(room.hostName + if (room.key.isNotEmpty()) " · ${room.key}" else "", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SeatDots(room.maxPlayers, (0 until room.players.coerceAtMost(room.maxPlayers)).toSet(), size = 8)
                 if (room.watchers > 0) {
                     Spacer(Modifier.width(8.dp))
-                    EyeIcon(Modifier.size(11.dp), color = Palette.muted)
+                    EyeIcon(Modifier.size(11.dp), color = Color.White.copy(alpha = 0.75f))
                     Spacer(Modifier.width(3.dp))
-                    Text("${room.watchers}", color = Palette.muted, fontSize = 11.sp)
+                    Text("${room.watchers}", color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp)
                 }
             }
-        }
-        Spacer(Modifier.width(8.dp))
-        when {
-            !room.have -> Tag("Need game", Palette.red)
-            room.players >= room.maxPlayers -> Tag("Watch", Palette.gold)
-            else -> Tag("Join", Palette.gold, filled = true)
-        }
-    }
+        },
+        action = { if (room.have) GoldButton(if (full) "Watch" else "Join", onClick, enabled = enabled, compact = true) },
+    )
 }
 
 /** A message on the Multiplayer screen, with what to do about it. */

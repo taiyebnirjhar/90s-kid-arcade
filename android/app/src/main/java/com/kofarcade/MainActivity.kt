@@ -8,6 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,6 +60,8 @@ class MainActivity : ComponentActivity() {
                 .putExtra(GameActivity.EXTRA_NETPLAY, netplay),
         )
     }
+
+    private enum class Page { HOME, LIBRARY, MULTIPLAYER }
 
     /** What the "add" dialog is for: the BIOS, or a game's ROM. */
     private sealed interface Pick {
@@ -114,40 +118,51 @@ class MainActivity : ComponentActivity() {
             hero = hero,
             heroLabel = when {
                 needsBios(hero) -> "Get started"
-                hero == last && sets[hero.id] != null -> "Continue"
+                hero == last && sets[hero.id] != null -> "Last played"
                 sets[hero.id] != null -> "Ready to play"
                 else -> "Get started"
             },
             heroAction = when {
                 needsBios(hero) -> "Add BIOS"
                 sets[hero.id] == null -> "Add ROM"
+                hero == last -> "Continue"
                 else -> "Play"
             },
+            heroTitle = if (needsBios(hero)) "Add the Neo Geo BIOS" else null,
+            heroText = if (needsBios(hero)) "neogeo.zip: every Neo Geo game needs it to start." else null,
         )
 
-        when {
-            library -> LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
-            twoPlayer -> TwoPlayerDialog(
-                roms,
-                onStart = { game, set ->
-                    twoPlayer = false
-                    play(game, netplay = true, set = set)
-                },
-                onLibrary = {
-                    twoPlayer = false
-                    library = true
-                },
-                onClose = { twoPlayer = false },
-            )
-            else -> HomeScreen(
-                ui,
-                onTwoPlayer = { twoPlayer = true },
-                onLibrary = { library = true },
-                onBios = { ask = Pick.Bios },
-                onHero = { open(hero) },
-                onGame = ::open,
-                onLongGame = { if (sets[it.id] != null) remove = it },
-            )
+        // Pages fade into each other instead of cutting.
+        val page = when {
+            library -> Page.LIBRARY
+            twoPlayer -> Page.MULTIPLAYER
+            else -> Page.HOME
+        }
+        Crossfade(page, animationSpec = tween(220), label = "page") { shown ->
+            when (shown) {
+                Page.LIBRARY -> LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
+                Page.MULTIPLAYER -> TwoPlayerDialog(
+                    roms,
+                    onStart = { game, set ->
+                        twoPlayer = false
+                        play(game, netplay = true, set = set)
+                    },
+                    onLibrary = {
+                        twoPlayer = false
+                        library = true
+                    },
+                    onClose = { twoPlayer = false },
+                )
+                Page.HOME -> HomeScreen(
+                    ui,
+                    onTwoPlayer = { twoPlayer = true },
+                    onLibrary = { library = true },
+                    onBios = { ask = Pick.Bios },
+                    onHero = { open(hero) },
+                    onGame = ::open,
+                    onLongGame = { if (sets[it.id] != null) remove = it },
+                )
+            }
         }
 
         ask?.let { p ->

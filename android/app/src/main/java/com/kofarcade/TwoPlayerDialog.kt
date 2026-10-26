@@ -6,6 +6,9 @@ import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -31,6 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -155,12 +161,14 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
         }
     }
 
-    when (screen) {
-        TwoPlayer.Hub -> Hub(roms, onHost = { screen = TwoPlayer.PickGame }, onLibrary = onLibrary, onBack = back, onJoined = onStart)
-        TwoPlayer.PickGame -> {
-            val hasBios = remember { roms.has(BIOS) }
-            val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
-            PickGameScreen(ready, onPick = { (g, set) -> host(g, set) }, onLibrary = onLibrary, onBack = back)
+    Crossfade(screen, animationSpec = tween(220), label = "multiplayer") { shown ->
+        when (shown) {
+            TwoPlayer.Hub -> Hub(roms, onHost = { screen = TwoPlayer.PickGame }, onLibrary = onLibrary, onBack = back, onJoined = onStart)
+            TwoPlayer.PickGame -> {
+                val hasBios = remember { roms.has(BIOS) }
+                val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
+                PickGameScreen(ready, onPick = { (g, set) -> host(g, set) }, onLibrary = onLibrary, onBack = back)
+            }
         }
     }
 }
@@ -300,19 +308,28 @@ fun MultiplayerHub(
     onJoinRoom: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
-    ArcadeScreen(title = "Multiplayer", kicker = "Play together", onBack = onBack) {
-        // Host.
-        Panel(highlight = true, onClick = onHost) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Palette.gold),
-                ) { PlayIcon(Modifier.size(16.dp)) }
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("Host a game", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                    Text("Pick the game and play. Share the room key with friends.", color = Palette.muted, fontSize = 13.sp)
-                }
+    ArcadeScreen(
+        title = "Multiplayer",
+        kicker = "Play together",
+        onBack = onBack,
+        // Hosting is the page's main action: pinned at the bottom, in thumb reach.
+        bottomBar = { GoldButton("Host a game", onHost, Modifier.fillMaxWidth(), play = true) },
+    ) {
+        status?.let {
+            StatusPanel(it, onStatusAction)
+            Spacer(Modifier.height(8.dp))
+        }
+        // Rooms nearby.
+        SectionLabel("Rooms nearby")
+        if (rooms.isEmpty()) {
+            EmptyState(
+                "Looking for rooms…",
+                "On this Wi-Fi or hotspot. A friend's room shows up here; not appearing? Type its key below.",
+                icon = { RadarIcon(Modifier.size(28.dp)) },
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
             }
         }
         // Join with a key.
@@ -320,43 +337,33 @@ fun MultiplayerHub(
         Panel {
             Row(verticalAlignment = Alignment.Bottom) {
                 ArcadeField(key, onKey, "Room key", Modifier.weight(1f), placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(12.dp))
                 GoldButton("Join", onJoinKey, enabled = !busy && key.isNotBlank())
-            }
-        }
-        status?.let {
-            Spacer(Modifier.height(10.dp))
-            StatusPanel(it, onStatusAction)
-        }
-        // Rooms nearby.
-        SectionLabel("Rooms nearby")
-        if (rooms.isEmpty()) {
-            Panel {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot()
-                    Spacer(Modifier.width(10.dp))
-                    Text("Looking on this Wi-Fi or hotspot…", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                }
-                Spacer(Modifier.height(4.dp))
-                Text("A friend's room shows up here. Not appearing? Type its key above.", color = Palette.muted, fontSize = 13.sp)
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
             }
         }
         // How it works.
         SectionLabel("How it works")
         StepsStrip()
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
             "All phones on the same Wi-Fi or one phone's hotspot: no internet needed. Each needs the game (and the " +
                 "Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3.",
             color = Palette.muted,
             fontSize = 12.sp,
-            lineHeight = 17.sp,
+            lineHeight = 18.sp,
         )
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** Rings around a dot: looking for rooms on the network. */
+@Composable
+private fun RadarIcon(modifier: Modifier) {
+    Canvas(modifier) {
+        val c = center
+        drawCircle(Palette.gold, size.minDimension * 0.1f, c)
+        drawCircle(Palette.gold.copy(alpha = 0.7f), size.minDimension * 0.28f, c, style = Stroke(size.minDimension * 0.07f))
+        drawCircle(Palette.gold.copy(alpha = 0.35f), size.minDimension * 0.46f, c, style = Stroke(size.minDimension * 0.07f))
     }
 }
 
@@ -365,22 +372,21 @@ fun MultiplayerHub(
 fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit) {
     ArcadeScreen(title = "Host a game", kicker = "Pick the game", onBack = onBack) {
         if (ready.isEmpty()) {
-            Panel {
-                Text("Add a game first (Neo Geo games also need the BIOS).", color = Palette.text, fontSize = 15.sp)
-                Spacer(Modifier.height(12.dp))
-                GoldButton("Open the library", onLibrary)
-            }
+            EmptyState(
+                "No games to host yet",
+                "Add a game to this phone first (Neo Geo games also need the BIOS). Friends need the same game to join.",
+                action = "Open the library" to onLibrary,
+            )
         } else {
+            // Wide picture cards: one a row in portrait, two or three side by side in landscape.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth > 600.dp) 3 else 2
+                val columns = if (maxWidth > 820.dp) 3 else if (maxWidth > 560.dp) 2 else 1
                 val gap = 12.dp
                 val cardWidth = (maxWidth - gap * (columns - 1)) / columns
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                     ready.chunked(columns).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                            row.forEach { pick ->
-                                GameCard(pick.first, pick.second, onClick = { onPick(pick) }, onLongClick = {}, width = cardWidth)
-                            }
+                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth)) { onPick(pick) } }
                         }
                     }
                 }
@@ -388,4 +394,19 @@ fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>)
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+/** A game to host: its picture filling a wide card, how many can play, and a gold Host button. */
+@Composable
+private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> Unit) {
+    WideGameCard(
+        game,
+        set,
+        game.title,
+        modifier.aspectRatio(16f / 9f),
+        onClick = onHost,
+        tag = { PictureTag("${game.players} players", Palette.green) },
+        info = { Text(game.subtitle ?: game.series, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1) },
+        action = { GoldButton("Host", onHost, play = true, compact = true) },
+    )
 }

@@ -1,9 +1,11 @@
 package com.kofarcade
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -11,11 +13,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +29,8 @@ import com.kofarcade.core.GAMES
 import com.kofarcade.core.gameById
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
+import java.net.URL
 
 /**
  * Renders the app's screens with sample data. `gradle :app:recordPaparazziDebug`
@@ -38,24 +43,32 @@ class UiSnapshots {
 
     private fun shot(name: String, content: @Composable () -> Unit) =
         paparazzi.snapshot(name) {
-            androidx.compose.runtime.CompositionLocalProvider(LocalStill provides true) {
+            CompositionLocalProvider(LocalArtOverride provides TestArt::get, LocalStill provides true) {
                 KofTheme { Box(Modifier.fillMaxSize().background(Palette.bg)) { content() } }
             }
         }
 
     private val sets = mapOf("kof97" to "kof97", "kof2002" to "kof2002", "sengoku3" to "sengoku3")
 
+    private val homeUi get() = HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Last played", "Continue")
+
     @Test
-    fun home() = shot("home") {
-        HomeScreen(
-            HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Continue", "Play"),
-            {}, {}, {}, {}, {}, {},
-        )
+    fun home() = shot("home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
+
+    @Test
+    fun homeLandscape() {
+        landscape()
+        shot("home_landscape") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
     }
+
+    private val firstRunUi get() = HomeUi(
+        false, emptyMap(), GAMES.first(), "Get started", "Add BIOS",
+        "Add the Neo Geo BIOS", "neogeo.zip: every Neo Geo game needs it to start.",
+    )
 
     @Test
     fun homeFirstRun() = shot("home_first_run") {
-        HomeScreen(HomeUi(false, emptyMap(), GAMES.first(), "Get started", "Add BIOS"), {}, {}, {}, {}, {}, {})
+        HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {})
     }
 
     @Test
@@ -63,22 +76,36 @@ class UiSnapshots {
         LibraryScreen(LibraryUi(askKey = true, error = "Wrong key. Check it and try again."), "secret", {}, Library.DEFAULT_URL, {}, false, {}, {}, {}, {}, {}, {}, {})
     }
 
+    private val libraryUi = LibraryUi(
+        askKey = false,
+        rows = listOf(
+            LibraryRowUi("neogeo (1).zip", "Neo Geo BIOS", "neogeo (1).zip · 1.9 MB", RowState.OnPhone, set = "neogeo"),
+            LibraryRowUi("kf2k5uni.zip", "KOF 2005", "kf2k5uni.zip · 41.1 MB", RowState.Downloading(0.42f), gameById("kof2005"), "kf2k5uni"),
+            LibraryRowUi("kof97.zip", "KOF '97", "kof97.zip · 27.4 MB", RowState.Done("Added KOF '97: The King of Fighters '97 (NGM-2320).", true), gameById("kof97"), "kof97"),
+            LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false), gameById("sengoku3"), "sengoku3"),
+            LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle, GAMES.find { "mslug3" in it.sets }, "mslug3"),
+            LibraryRowUi("dino.zip", "Cadillacs and Dinosaurs", "dino.zip · 6.2 MB", RowState.OnPhone, gameById("dino"), "dino"),
+        ),
+        busy = true,
+    )
+
     @Test
     fun libraryList() = shot("library_list") {
+        LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryIdle() = shot("library_idle") {
         LibraryScreen(
-            LibraryUi(
-                askKey = false,
-                rows = listOf(
-                    LibraryRowUi("neogeo (1).zip", "Neo Geo BIOS", "neogeo (1).zip · 1.9 MB", RowState.OnPhone),
-                    LibraryRowUi("kf2k5uni.zip", "KOF 2005", "kf2k5uni.zip · 41.1 MB", RowState.Downloading(0.42f)),
-                    LibraryRowUi("kof97.zip", "KOF '97", "kof97.zip · 27.4 MB", RowState.Done("Added KOF '97: The King of Fighters '97 (NGM-2320).", true)),
-                    LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false)),
-                    LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle),
-                ),
-                busy = true,
-            ),
+            libraryUi.copy(rows = libraryUi.rows.map { if (it.state is RowState.OnPhone) it else it.copy(state = RowState.Idle) }, busy = false),
             "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {},
         )
+    }
+
+    @Test
+    fun libraryLandscape() {
+        landscape()
+        shot("library_landscape") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) }
     }
 
     @Test
@@ -86,9 +113,15 @@ class UiSnapshots {
         MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {})
     }
 
+    private val picks get() = listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }
+
     @Test
-    fun pickGame() = shot("twoplayer_pick") {
-        PickGameScreen(listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }, {}, {}, {})
+    fun pickGame() = shot("twoplayer_pick") { PickGameScreen(picks, {}, {}, {}) }
+
+    @Test
+    fun pickGameLandscape() {
+        landscape()
+        shot("twoplayer_pick_landscape") { PickGameScreen(picks, {}, {}, {}) }
     }
 
     @Test
@@ -185,6 +218,62 @@ class UiSnapshots {
             DialogCard("Remove KOF '97?", "Deletes the ROM from this app. You can add it again any time.", "Keep it" to {}, "Remove" to {}, Tone.BAD, dangerSecondary = true)
         }
     }
+
+    /** A small phone, 360dp wide: nothing may clip. */
+    private fun small() = paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.NEXUS_5)
+
+    @Test
+    fun homeSmall() {
+        small()
+        shot("home_small") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun homeFirstRunLandscape() {
+        landscape()
+        shot("home_first_run_landscape") { HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun librarySmall() {
+        small()
+        shot("library_small") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun libraryLoading() = shot("library_loading") {
+        LibraryScreen(LibraryUi(askKey = false, loading = true), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryError() = shot("library_error") {
+        LibraryScreen(LibraryUi(askKey = false, error = "Couldn't reach the library: Unable to resolve host"), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun libraryEmpty() = shot("library_empty") {
+        LibraryScreen(LibraryUi(askKey = false), "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun twoPlayerJoinSmall() {
+        small()
+        shot("twoplayer_join_small") {
+            MultiplayerHub(
+                listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino"))),
+                "", {}, null, false, {}, {}, {}, {}, {},
+            )
+        }
+    }
+
+    @Test
+    fun pickGameSmall() {
+        small()
+        shot("twoplayer_pick_small") { PickGameScreen(picks, {}, {}, {}) }
+    }
+
+    @Test
+    fun pickGameEmpty() = shot("twoplayer_pick_empty") { PickGameScreen(emptyList(), {}, {}, {}) }
 
     private fun landscape() = paparazzi.unsafeUpdateConfig(
         deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2400, screenHeight = 1080),
@@ -509,5 +598,34 @@ class UiSnapshots {
                 EditBarContent("B button", 1.1f, true, {}, {}, {}, {})
             }
         }
+    }
+}
+
+/**
+ * The real libretro thumbnails for the snapshots: downloaded once into
+ * build/test-art (never committed: they're the games' own pictures).
+ * Offline, a picture is null and the stand-in tile shows.
+ */
+private object TestArt {
+    private val dir = File("build/test-art").apply { mkdirs() }
+    private val cache = HashMap<String, ImageBitmap?>()
+
+    fun get(url: String): ImageBitmap? {
+        if (url in cache) return cache[url]
+        val picture = runCatching {
+            val file = File(dir, url.substringAfter("/master/").replace('/', '_'))
+            if (!file.exists()) {
+                val conn = URL(url).openConnection().apply {
+                    connectTimeout = 10_000
+                    readTimeout = 20_000
+                }
+                val tmp = File(dir, file.name + ".part")
+                conn.getInputStream().use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                tmp.renameTo(file)
+            }
+            BitmapFactory.decodeFile(file.path)?.asImageBitmap()
+        }.getOrNull()
+        cache[url] = picture
+        return picture
     }
 }

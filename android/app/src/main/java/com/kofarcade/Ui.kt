@@ -1,10 +1,21 @@
 package com.kofarcade
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,19 +52,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -64,36 +81,53 @@ import androidx.compose.ui.window.DialogProperties
 
 val OnGold = Color(0xFF1D1400)
 
-/** A full-screen page over the home screen: back button, title, then [content]. */
+/**
+ * A full-screen page over the home screen: back button, title, then [content].
+ * [bottomBar] pins the page's main action to the bottom, in thumb reach.
+ */
 @Composable
 fun ArcadeScreen(
     title: String,
     onBack: () -> Unit,
     kicker: String? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(Modifier.fillMaxSize().background(Palette.bg).systemBarsPadding()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 16.dp, top = 10.dp, bottom = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(40.dp).clip(CircleShape).background(Palette.panel)
+                modifier = Modifier.size(48.dp).clip(CircleShape).background(Palette.panel)
                     .border(1.dp, Palette.line, CircleShape).clickable(onClick = onBack),
             ) { BackIcon(Modifier.size(14.dp)) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 if (kicker != null) Kicker(kicker)
-                Text(title, color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Text(title, color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             actions()
         }
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 10.dp),
-            content = content,
-        )
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                    // Room under the last row to scroll it clear of the bar.
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
+                content = content,
+            )
+            if (bottomBar != null) {
+                // The page fades out under the bar, so cards scroll behind it instead of being cut.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .background(Brush.verticalGradient(0f to Palette.bg.copy(alpha = 0f), 0.35f to Palette.bg))
+                        .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp),
+                ) { Box(Modifier.widthIn(max = 560.dp)) { bottomBar() } }
+            }
+        }
     }
 }
 
@@ -112,7 +146,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.6.sp,
-        modifier = modifier.padding(top = 18.dp, bottom = 10.dp),
+        modifier = modifier.padding(top = 24.dp, bottom = 12.dp),
     )
 }
 
@@ -137,44 +171,55 @@ fun Panel(
     )
 }
 
-/** The main action: a gold pill. */
+/** The main action: a gold pill. [compact] for one on a game card. */
 @Composable
-fun GoldButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, play: Boolean = false) {
+fun GoldButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    play: Boolean = false,
+    compact: Boolean = false,
+) {
+    val source = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
-            .height(46.dp)
+            .pressScale(source)
+            .height(if (compact) 40.dp else 48.dp)
             .clip(RoundedCornerShape(50))
             // Disabled: a quiet grey pill, not a dimmed (muddy) gold one.
             .background(if (enabled) Palette.gold else Palette.line)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 22.dp),
+            .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
+            .padding(horizontal = if (compact) 16.dp else 22.dp),
     ) {
         val ink = if (enabled) OnGold else Palette.muted
         if (play) {
-            PlayIcon(Modifier.size(12.dp), ink)
-            Spacer(Modifier.width(10.dp))
+            PlayIcon(Modifier.size(if (compact) 10.dp else 12.dp), ink)
+            Spacer(Modifier.width(if (compact) 8.dp else 10.dp))
         }
-        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 14.sp, letterSpacing = 1.sp)
     }
 }
 
 /** A second choice beside a [GoldButton]: an outlined pill. [danger] for removing things. */
 @Composable
-fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, danger: Boolean = false) {
+fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, danger: Boolean = false, compact: Boolean = false) {
     val color = if (danger) Palette.red else Palette.text
+    val source = remember { MutableInteractionSource() }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .height(46.dp)
+            .pressScale(source)
+            .height(if (compact) 40.dp else 48.dp)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(50))
             .border(1.dp, if (danger) Palette.red.copy(alpha = 0.6f) else Palette.line, RoundedCornerShape(50))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 20.dp),
+            .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
+            .padding(horizontal = if (compact) 16.dp else 20.dp),
     ) {
-        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 13.sp, letterSpacing = 1.sp)
     }
 }
 
@@ -192,6 +237,82 @@ fun Tag(text: String, color: Color = Palette.muted, filled: Boolean = false) {
             .background(if (filled) color else color.copy(alpha = 0.12f))
             .padding(horizontal = 9.dp, vertical = 4.dp),
     )
+}
+
+/** A tag on a game picture: a dark pill with a coloured dot, readable on any picture. */
+@Composable
+fun PictureTag(text: String, color: Color = Palette.gold, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.Black.copy(alpha = 0.72f))
+            .padding(start = 8.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
+    ) {
+        Box(Modifier.size(7.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(6.dp))
+        Text(text.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+    }
+}
+
+/** Shrinks a little while [source] is pressed, like a console tile. Give the click the same source. */
+fun Modifier.pressScale(source: InteractionSource): Modifier = composed {
+    val pressed by source.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(120), label = "press")
+    graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+/** Whether [source] is pressed or focused (a gamepad or TV remote moves the focus): when a card lights up. */
+@Composable
+fun lit(source: InteractionSource): Boolean {
+    val pressed by source.collectIsPressedAsState()
+    val focused by source.collectIsFocusedAsState()
+    return pressed || focused
+}
+
+/**
+ * An empty, first-run or error state: a round mark (the [tone]'s, or [icon]),
+ * a title, a line of help, then what to do about it.
+ */
+@Composable
+fun EmptyState(
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier,
+    tone: Tone = Tone.INFO,
+    icon: (@Composable () -> Unit)? = null,
+    action: Pair<String, () -> Unit>? = null,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Palette.panel)
+            .border(1.dp, Palette.line, RoundedCornerShape(24.dp)).padding(horizontal = 24.dp, vertical = 32.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(64.dp).clip(CircleShape).background(tone.color.copy(alpha = 0.14f)),
+        ) { if (icon != null) icon() else ToneIcon(tone, Modifier.size(24.dp)) }
+        Spacer(Modifier.height(16.dp))
+        Text(title, color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(8.dp))
+        Text(message, color = Palette.muted, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+        if (action != null) {
+            Spacer(Modifier.height(24.dp))
+            GoldButton(action.first, action.second)
+        }
+    }
+}
+
+/** A grey stand-in block while something loads, gently pulsing (still in screenshots). */
+@Composable
+fun Skeleton(modifier: Modifier, shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(8.dp)) {
+    val pulse by rememberInfiniteTransition(label = "skeleton").animateFloat(
+        1f, 0.5f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "skeleton",
+    )
+    Box(modifier.alpha(pulse).clip(shape).background(Palette.panel))
 }
 
 enum class Tone(val color: Color) { INFO(Palette.gold), GOOD(Palette.green), BAD(Palette.red) }
@@ -421,9 +542,9 @@ fun EyeIcon(modifier: Modifier = Modifier, crossed: Boolean = false, color: Colo
 
 /** A thin progress bar in gold. */
 @Composable
-fun ProgressBar(fraction: Float, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(Palette.line)) {
-        Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(6.dp).clip(RoundedCornerShape(50)).background(Palette.gold))
+fun ProgressBar(fraction: Float, modifier: Modifier = Modifier, thickness: Dp = 6.dp, track: Color = Palette.line) {
+    Box(modifier.fillMaxWidth().height(thickness).clip(RoundedCornerShape(50)).background(track)) {
+        Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(thickness).clip(RoundedCornerShape(50)).background(Palette.gold))
     }
 }
 
@@ -452,6 +573,24 @@ fun PlayIcon(modifier: Modifier = Modifier, color: Color = OnGold) {
                 close()
             },
             color,
+        )
+    }
+}
+
+/** A drawn tick, for a step that's done. */
+@Composable
+fun CheckIcon(modifier: Modifier = Modifier, color: Color = Palette.green) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        drawPath(
+            Path().apply {
+                moveTo(w * 0.12f, h * 0.55f)
+                lineTo(w * 0.4f, h * 0.82f)
+                lineTo(w * 0.9f, h * 0.2f)
+            },
+            color,
+            style = Stroke(width = w * 0.16f, cap = StrokeCap.Round),
         )
     }
 }
