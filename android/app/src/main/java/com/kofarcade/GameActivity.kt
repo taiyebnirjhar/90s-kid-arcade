@@ -277,9 +277,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         retroView = GLRetroView(this, data)
         lifecycle.addObserver(retroView)
-        // Multiplayer: every frame, straight after it on the emulator's thread
-        // (never late because the main thread was busy drawing or collecting).
-        retroView.onFrame = { if (room != null) onNetFrame() }
+        // Every frame, straight after it on the emulator's thread (never late
+        // because the main thread was busy drawing): multiplayer's inputs, and
+        // alone the macros and rapid fire, so a move's every step lands on its frame.
+        retroView.onFrame = {
+            if (room != null) {
+                onNetFrame()
+            } else {
+                padFrame++
+                pad.onFrame()
+            }
+        }
 
         pad = Pad(send = ::sendKey, clock = { padFrame })
         hud = HudView(this, this)
@@ -329,18 +337,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         applyPrefs()
 
-        // One tick per emulated frame drives the macros and rapid fire.
+        // One tick per emulated frame for the screen (the macros and rapid
+        // fire go on the emulator's thread: retroView.onFrame).
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect {
                 when (it) {
                     is GLRetroView.GLRetroEvents.FrameRendered -> {
                         frame++
                         if (frame == 1L && room == null) resumeWhereLeft()
-                        // Multiplayer reads its inputs on the emulator's own thread (onNetFrame).
-                        if (room == null) {
-                            padFrame++
-                            pad.onFrame()
-                        }
                         hud.onFrame(frame)
                     }
                     // Once: the surface is made again if the GL context is lost.
@@ -511,18 +515,40 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** The connection's story (NetLog) and this phone, to send when multiplayer misbehaves. */
     fun shareConnectionReport() {
         val report = buildString {
-            appendLine("90s Kid Arcade connection report")
+            appendLine(if (room != null) "90s Kid Arcade connection report" else "90s Kid Arcade performance report")
             appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}, screen ${screenHz()} Hz")
             appendLine("Game: ${game.title} ($set)")
+            appendLine(playbackStatus)
             room?.let { appendLine(it.status()) }
             appendLine()
             append(NetLog.dump())
         }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade connection report")
+            .putExtra(Intent.EXTRA_SUBJECT, if (room != null) "90s Kid Arcade connection report" else "90s Kid Arcade performance report")
             .putExtra(Intent.EXTRA_TEXT, report)
-        runCatching { startActivity(Intent.createChooser(send, "Send connection report")) }
+        runCatching { startActivity(Intent.createChooser(send, if (room != null) "Send connection report" else "Send report")) }
     }
+
+    /**
+     * How the game runs, for the pause menu and reports: its frames' rate and
+     * how they're timed (with the screen, or by the clock), frames that ran
+     * late and were made up, and gaps in the sound, since it started.
+     */
+    val playbackStatus: String
+        get() {
+            val s = LibretroDroid.getPlaybackStats()
+            val rate = (s[3] / 10) / 100.0
+            val ticks = (s[3] % 10).toInt()
+            val pace = when {
+                ticks == 1 -> "with the screen"
+                ticks > 1 -> "with the screen, 1 in $ticks ticks"
+                else -> "by the clock"
+            }
+            val overflow = if (s[2] > 0) ", ${s[2]} sound frames dropped" else ""
+            return "%.2f frames a second, %s (%d Hz). Late frames made up: %d. Sound gaps: %d%s.".format(
+                rate, pace, screenHz(), s[0], s[1], overflow,
+            )
+        }
 
     @Suppress("DEPRECATION")
     private fun screenHz(): Int = Math.round(windowManager.defaultDisplay.refreshRate)
@@ -823,6 +849,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     @Volatile private var waits = 0
     @Volatile private var qualityFrom = 0L
     @Volatile private var lastStats = LongArray(3)
+    @Volatile private var lastPlayback = LongArray(4)
 
     private fun logQuality(room: Room) {
         if (netFrames - qualityFrom < 600) return
@@ -832,12 +859,17 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val rollbacks = stats[1] - lastStats[1]
         val slowestMs = stats[2] / 1000
         lastStats = stats
+        val playback = LibretroDroid.getPlaybackStats()
+        val madeUp = playback[0] - lastPlayback[0]
+        val soundGaps = playback[1] - lastPlayback[1]
+        lastPlayback = playback
         val hiccups = room.takeHiccups()
-        if (stalls > 0 || waits > 1 || rollbacks > 30 || hiccups.isNotEmpty() || slowestMs > 30) {
+        if (stalls > 0 || waits > 1 || rollbacks > 30 || hiccups.isNotEmpty() || slowestMs > 30 || madeUp > 0 || soundGaps > 0) {
             val heard = hiccups.entries.joinToString("") { (who, ms) -> ", nothing from $who for $ms ms" }
             NetLog.add(
                 "Last 10 s: $rollbacks rollbacks ($replayed frames replayed), $stalls frames stalled, " +
-                    "$waits waits, delay ${room.delay}, slowest frame $slowestMs ms$heard",
+                    "$waits waits, delay ${room.delay}, slowest frame $slowestMs ms, " +
+                    "$madeUp late frames made up, $soundGaps sound gaps$heard",
             )
         }
         stalls = 0

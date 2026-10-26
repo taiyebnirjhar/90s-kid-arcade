@@ -25,19 +25,27 @@
 
 namespace libretrodroid {
 
-Audio::Audio(int32_t sampleRate, double refreshRate, bool preferLowLatencyAudio) {
-    LOGI("Audio initialization has been called with input sample rate %d", sampleRate);
+Audio::Audio(double sampleRate, double refreshRate, bool preferLowLatencyAudio) {
+    LOGI("Audio initialization has been called with input sample rate %f", sampleRate);
 
+    this->sampleRate = sampleRate;
     contentRefreshRate = refreshRate;
-    inputSampleRate = sampleRate;
     audioLatencySettings = findBestLatencySettings(preferLowLatencyAudio);
+
+    // Room for one and a half times the latency asked for, kept at half of
+    // it: the game's sound of a frame or two late, or early, never runs it
+    // dry or over.
+    double framesPerVideoFrame = sampleRate / std::max(refreshRate, 1.0);
+    auto videoFrames = (double) audioLatencySettings->bufferSizeInVideoFrames;
+    pipe = std::make_unique<AudioPipe>(
+        (int32_t) std::lround(framesPerVideoFrame * videoFrames * 1.5),
+        (int32_t) std::lround(framesPerVideoFrame * videoFrames * 0.5)
+    );
     initializeStream();
 }
 
 bool Audio::initializeStream() {
     LOGI("Using low latency stream: %d", audioLatencySettings->useLowLatencyStream);
-
-    int32_t audioBufferSize = computeAudioBufferSize();
 
     oboe::AudioStreamBuilder builder;
     builder.setChannelCount(2);
@@ -49,14 +57,12 @@ bool Audio::initializeStream() {
     if (audioLatencySettings->useLowLatencyStream) {
         builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
     } else {
-        builder.setFramesPerCallback(audioBufferSize / 10);
+        // A fifth of the latency asked for.
+        builder.setFramesPerCallback((int32_t) (sampleRate * audioLatencySettings->bufferSizeInVideoFrames / contentRefreshRate / 5));
     }
 
     oboe::Result result = builder.openManagedStream(stream);
     if (result == oboe::Result::OK) {
-        baseConversionFactor = (double) inputSampleRate / stream->getSampleRate();
-        fifoBuffer = std::make_unique<oboe::FifoBuffer>(2, audioBufferSize);
-        temporaryAudioBuffer = std::unique_ptr<int16_t[]>(new int16_t[audioBufferSize]);
         latencyTuner = std::make_unique<oboe::LatencyTuner>(*stream);
         return true;
     } else {
@@ -75,18 +81,6 @@ std::unique_ptr<Audio::AudioLatencySettings> Audio::findBestLatencySettings(bool
     }
 }
 
-int32_t Audio::computeAudioBufferSize() {
-    double maxLatency = computeMaximumLatency();
-    LOGI("Average audio latency set to: %f ms", maxLatency * 0.5);
-    double sampleRateDivisor = 500.0 / maxLatency;
-    return roundToEven(inputSampleRate / sampleRateDivisor);
-}
-
-double Audio::computeMaximumLatency() const {
-    double maxLatency = (audioLatencySettings->bufferSizeInVideoFrames / contentRefreshRate) * 1000;
-    return std::max(maxLatency, 32.0);
-}
-
 void Audio::start() {
     startRequested = true;
     if (stream != nullptr)
@@ -100,7 +94,7 @@ void Audio::stop() {
 }
 
 void Audio::write(const int16_t *data, size_t frames) {
-    fifoBuffer->write(data, frames * 2);
+    pipe->write(data, (int32_t) frames);
 }
 
 void Audio::setPlaybackSpeed(const double newPlaybackSpeed) {
@@ -111,20 +105,20 @@ void Audio::setVolume(float newVolume) {
     volume = std::max(0.0f, std::min(1.0f, newVolume));
 }
 
+void Audio::setTimeStretch(double factor) {
+    if (factor > 0) timeStretch = factor;
+}
+
+std::array<int64_t, 2> Audio::getStats() const {
+    return {pipe->shortBlocks(), pipe->droppedFrames()};
+}
+
 oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
-    double dynamicBufferFactor = computeDynamicBufferConversionFactor(0.001 * numFrames);
-    double finalConversionFactor = baseConversionFactor * dynamicBufferFactor * playbackSpeed;
-
-    // When using low-latency stream, numFrames is very low (~100) and the dynamic buffer scaling doesn't work with rounding.
-    // By keeping track of the "fractional" frames we can keep the error smaller.
-    framesToSubmit += numFrames * finalConversionFactor;
-    int32_t currentFramesToSubmit = std::round(framesToSubmit);
-    framesToSubmit -= currentFramesToSubmit;
-
-    fifoBuffer->readNow(temporaryAudioBuffer.get(), currentFramesToSubmit * 2);
+    int32_t outputRate = oboeStream->getSampleRate();
+    double ratio = sampleRate * timeStretch.load() * playbackSpeed.load() / std::max(outputRate, 1);
 
     auto outputArray = reinterpret_cast<int16_t *>(audioData);
-    resampler.resample(temporaryAudioBuffer.get(), currentFramesToSubmit, outputArray, numFrames);
+    pipe->read(outputArray, numFrames, ratio, outputRate);
 
     // The app's volume (the game's own level at 1).
     float gain = volume.load();
@@ -134,39 +128,9 @@ oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void
         }
     }
 
-    latencyTuner->tune();
+    if (latencyTuner) latencyTuner->tune();
 
     return oboe::DataCallbackResult::Continue;
-}
-
-// To prevent audio buffer overruns or underruns we set up a PI controller. The idea is to run the
-// audio slower when the buffer is empty and faster when it's full.
-double Audio::computeDynamicBufferConversionFactor(double dt) {
-    double framesCapacityInBuffer = fifoBuffer->getBufferCapacityInFrames();
-    double framesAvailableInBuffer = fifoBuffer->getFullFramesAvailable();
-
-    // Error is represented by normalized distance to half buffer utilization. Range [-1.0, 1.0]
-    double errorMeasure = (framesCapacityInBuffer - 2.0f * framesAvailableInBuffer) / framesCapacityInBuffer;
-
-    errorIntegral += errorMeasure * dt;
-
-    // Wikipedia states that human ear resolution is around 3.6 Hz within the octave of 1000–2000 Hz.
-    // This changes continuously, so we should try to keep it a very low value.
-    double proportionalAdjustment = std::clamp(kp * errorMeasure, -maxp, maxp);
-
-    // Ki is a lot lower, so it's safe if it exceeds the ear threshold. Hopefully convergence will
-    // be slow enough to be not perceptible. We need to battle test this value.
-    double integralAdjustment = std::clamp(ki * errorIntegral, -maxi, maxi);
-
-    double finalAdjustment = proportionalAdjustment + integralAdjustment;
-
-    LOGD("Audio speed adjustments (p: %f) (i: %f)", proportionalAdjustment, integralAdjustment);
-
-    return 1.0 - (finalAdjustment);
-}
-
-int32_t Audio::roundToEven(int32_t x) {
-    return (x / 2) * 2;
 }
 
 void Audio::onErrorAfterClose(oboe::AudioStream* oldStream, oboe::Result result) {

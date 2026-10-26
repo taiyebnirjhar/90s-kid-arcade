@@ -334,6 +334,7 @@ void LibretroDroid::create(
 
     openglESVersion = GLESVersion;
     screenRefreshRate = refreshRate;
+    newScreenRefreshRate = 0;
     skipDuplicateFrames = duplicateFrames;
     immersiveModeEnabled = GLESVersion >= 3 && immersiveModeConfig.has_value();
     this->immersiveModeConfig = immersiveModeConfig.value_or(ImmersiveMode::Config{});
@@ -507,9 +508,16 @@ void LibretroDroid::step() {
 
     LOGD("Stepping into retro_run()");
 
+    float screenRate = newScreenRefreshRate.exchange(0);
+    if (screenRate > 0 && fpsSync) fpsSync->setScreenRefreshRate(screenRate);
+
     if (frozen) {
         if (video) video->renderFrame();
+        // The pace goes on (a frame's time, not run), so it's not behind when it's back.
+        unsigned due = fpsSync ? fpsSync->advanceFrames() : 1;
+        stepFrames = due > 0 ? 1 : 0;
         frameWorkNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - started).count();
+        if (fpsSync) fpsSync->wait();
         return;
     }
 
@@ -519,7 +527,14 @@ void LibretroDroid::step() {
 
         // If the application runs too slow it's better to just skip those frames.
         frames = std::min(requestedFrames, 2u);
+
+        // The frames' rate changed (the screen's did): the sound follows.
+        if (audio && fpsSync->getFrameRate() != appliedFrameRate) {
+            appliedFrameRate = fpsSync->getFrameRate();
+            audio->setTimeStretch(fpsSync->getTimeStretchFactor());
+        }
     }
+    stepFrames = (int) frames;
 
     if (netplay) {
         stepNetplay(frames);
@@ -705,13 +720,13 @@ void LibretroDroid::afterGameLoad() {
     }
     fpsSync = std::make_unique<FPSSync>(system_av_info.timing.fps, screenRefreshRate, inRoom ? NET_FRAME_RATE : 0);
 
-    double inputSampleRate = system_av_info.timing.sample_rate * fpsSync->getTimeStretchFactor();
-
     audio = std::make_unique<Audio>(
-        (int32_t) std::lround(inputSampleRate),
+        system_av_info.timing.sample_rate,
         system_av_info.timing.fps,
         preferLowLatencyAudio
     );
+    appliedFrameRate = fpsSync->getFrameRate();
+    audio->setTimeStretch(fpsSync->getTimeStretchFactor());
     audio->setVolume(volume);
 
     updateAudioSampleRateMultiplier();
@@ -857,6 +872,22 @@ void LibretroDroid::netWait(int frames) {
     }
 }
 
+void LibretroDroid::setScreenRefreshRate(float rate) {
+    screenRefreshRate = rate;
+    newScreenRefreshRate = rate;
+}
+
+std::array<int64_t, 4> LibretroDroid::getPlaybackStats() {
+    std::lock_guard<std::mutex> lock(coreLock);
+    auto sound = audio ? audio->getStats() : std::array<int64_t, 2>{0, 0};
+    return {
+        fpsSync ? fpsSync->getCaughtUp() : 0,
+        sound[0],
+        sound[1],
+        fpsSync ? (int64_t) std::lround(fpsSync->getFrameRate() * 100) * 10 + fpsSync->getTicksPerFrame() : 0,
+    };
+}
+
 std::array<int64_t, 3> LibretroDroid::getNetStats() {
     std::lock_guard<std::mutex> lock(netMutex);
     int64_t slowest = netSlowestFrameUs;
@@ -949,10 +980,13 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
         }
     }
 
-    if (netWaitFrames > 0) {
+    // A wait holds frames that were due (a step between frames, on a 120 Hz
+    // screen, has none to hold).
+    while (netWaitFrames > 0 && wanted > 0) {
         netWaitFrames--;
-        return;
+        wanted--;
     }
+    if (wanted == 0) return;
     if (netLocalPlayer < 0) {
         // Watching: only frames whose inputs are all in (no guessing, so
         // nothing to replay), catching up when they've piled up.

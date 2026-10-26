@@ -127,11 +127,13 @@ fun PauseContent(
     roomInfo: String? = null,
     /** Multiplayer: how the connection is doing (small print). */
     roomStatus: String? = null,
+    /** Alone: how smoothly the game runs (small print), and its report. */
+    playback: String? = null,
     /** Multiplayer: this phone watches (its menu stops nobody). */
     watching: Boolean = false,
     /** Multiplayer: the room sheet (key, seats, who watches). */
     onRoom: () -> Unit = {},
-    /** Multiplayer: share what happened to the connection (to report a problem). */
+    /** Share what happened (multiplayer: to the connection; alone: how it runs), to report a problem. */
     onReport: () -> Unit = {},
     /** The game's sound, and its quick switch (the menu stays open). */
     soundOn: Boolean = true,
@@ -265,6 +267,27 @@ fun PauseContent(
                                 modifier = Modifier.clickable(onClick = onReport).padding(vertical = 6.dp),
                             )
                         }
+                    }
+                } else if (playback != null) {
+                    // How smoothly it runs, for when it doesn't.
+                    var details by remember { mutableStateOf(false) }
+                    Text(
+                        if (details) playback else "Performance ▸",
+                        color = Palette.muted,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.clickable { details = !details }.padding(vertical = 6.dp),
+                    )
+                    if (details) {
+                        Text(
+                            "Send report ▸",
+                            color = Palette.gold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.clickable(onClick = onReport).padding(vertical = 6.dp),
+                        )
                     }
                 }
             }

@@ -46,7 +46,8 @@ internal class FrameHints(private val context: Context) {
     }
 
     private companion object {
-        // A frame is 16.7 ms; its work should be done well within it.
-        const val TARGET_NANOS = 12_000_000L
+        // A frame is 16.7 ms; its work should be done well within it, with
+        // room for a frame made up after one ran late.
+        const val TARGET_NANOS = 10_000_000L
     }
 }
