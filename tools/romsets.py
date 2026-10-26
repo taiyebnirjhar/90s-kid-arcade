@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds android/core/src/main/resources/romsets.json from FBNeo's drivers.
+"""Builds android/core/src/commonMain/resources/romsets.json from FBNeo's drivers.
 
 Lists, for every version (set) of the games the app supports, the files FBNeo
 loads with their sizes and CRC32s. The app checks imported zips against it.
@@ -81,7 +81,7 @@ if missing:
     sys.exit("not found in the driver: %s" % missing)
 
 bios = [f for f in descs["neogeo"] if f["name"] in ("sp-s3.sp1", "sm1.sm1", "sfix.sfix", "000-lo.lo")]
-out = os.path.join(os.path.dirname(__file__), "..", "android/core/src/main/resources/romsets.json")
+out = os.path.join(os.path.dirname(__file__), "..", "android/core/src/commonMain/resources/romsets.json")
 with open(out, "w") as f:
     json.dump({"source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp", "bios": bios, "sets": sets}, f, indent=1)
     f.write("\n")

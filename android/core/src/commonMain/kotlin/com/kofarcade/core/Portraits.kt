@@ -1,5 +1,7 @@
 package com.kofarcade.core
 
+import kotlin.math.abs
+
 // Fighter faces from the game itself: the games draw each fighter's face
 // beside the life bars (Double Dragon: big ones on its select screen), so the
 // app crops it from the picture the first time a fighter appears and keeps it.
@@ -118,7 +120,7 @@ fun shows(picture: Picture, anchors: List<Anchor>, width: Int): Boolean =
 
 private fun close(argb: Int, rgb: Int): Boolean {
     for (shift in intArrayOf(16, 8, 0)) {
-        if (Math.abs((argb shr shift and 0xFF) - (rgb shr shift and 0xFF)) > PortraitSpec.TOLERANCE) return false
+        if (abs((argb shr shift and 0xFF) - (rgb shr shift and 0xFF)) > PortraitSpec.TOLERANCE) return false
     }
     return true
 }

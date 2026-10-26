@@ -251,7 +251,7 @@ fun artUrl(game: Game, kind: Art, set: String? = null): String? {
     // name FBNeo gives it (the thumbnails are named after FBNeo's list).
     val name = set?.takeIf { it in game.sets }?.let { romSet(it)?.title } ?: game.art ?: return null
     val file = name.map { if (it in "&*/:`<>?\\|\"") '_' else it }.joinToString("")
-    val encoded = java.net.URLEncoder.encode("$file.png", "UTF-8").replace("+", "%20")
+    val encoded = urlEncode("$file.png")
     return "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/${kind.folder}/$encoded"
 }
 
@@ -286,7 +286,5 @@ private val rosterCache = mutableMapOf<String, Roster?>()
 
 /** Loads a character list bundled with the app (resources/rosters/<name>.json). */
 fun loadRoster(name: String): Roster? = rosterCache.getOrPut(name) {
-    Game::class.java.getResourceAsStream("/rosters/$name.json")
-        ?.bufferedReader()
-        ?.use { json.decodeFromString(Roster.serializer(), it.readText()) }
+    resourceText("rosters/$name.json")?.let { json.decodeFromString(Roster.serializer(), it) }
 }

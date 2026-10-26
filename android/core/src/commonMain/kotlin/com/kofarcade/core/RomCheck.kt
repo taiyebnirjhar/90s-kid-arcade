@@ -29,7 +29,7 @@ data class RomSet(
 private data class RomDb(val bios: List<RomFile>, val sets: List<RomSet>)
 
 private val romDb: RomDb by lazy {
-    val text = RomSet::class.java.getResourceAsStream("/romsets.json")!!.bufferedReader().use { it.readText() }
+    val text = resourceText("romsets.json")!!
     Json { ignoreUnknownKeys = true }.decodeFromString<RomDb>(text)
 }
 
@@ -61,7 +61,7 @@ sealed interface RomCheck {
     data object Unknown : RomCheck
 }
 
-private fun crcOf(item: ZipItem) = "%08x".format(item.crc)
+private fun crcOf(item: ZipItem) = hex8(item.crc)
 
 /**
  * Identifies a zip from its [items]. [otherZip] gives the items of another zip
@@ -141,7 +141,7 @@ fun installedSet(game: Game, zips: Collection<String>): String? =
  * same files (CRC32 over the sorted file CRCs, so names and order don't count).
  */
 fun romFingerprint(items: List<ZipItem>): Long {
-    val crc = java.util.zip.CRC32()
+    val crc = Crc32()
     for (c in items.map { it.crc }.sorted()) {
         for (shift in 0 until 32 step 8) crc.update(((c shr shift) and 0xFF).toInt())
     }

@@ -46,7 +46,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Test the move engine
-        run: ./gradlew -p core test --no-daemon
+        run: ./gradlew -p core jvmTest --no-daemon
 
       - name: Download the FBNeo core
         run: |

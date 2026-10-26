@@ -126,7 +126,7 @@ def main():
             for cid, name, moves in CHARACTERS
         ],
     }
-    out = os.path.join(os.path.dirname(__file__), "../android/core/src/main/resources/rosters/doubledr.json")
+    out = os.path.join(os.path.dirname(__file__), "../android/core/src/commonMain/resources/rosters/doubledr.json")
     with open(out, "w") as f:
         json.dump(roster, f, indent=1, ensure_ascii=False)
         f.write("\n")
