@@ -56,7 +56,10 @@ import kotlin.random.Random
 // from a thread of its own. The players send nothing to watchers, and a
 // slow watcher only falls behind itself (and asks for the game again).
 
-class Refused(reason: String) : IOException(reason)
+open class Refused(reason: String) : IOException(reason)
+
+/** Turned away by a phone of the room that isn't running it, which says who is: [at]. */
+class Redirected(reason: String, val at: InetSocketAddress) : Refused(reason)
 
 /** Phones in a room at most: players and watchers. */
 const val MAX_MEMBERS = 8
@@ -192,9 +195,12 @@ class Room private constructor(
 
     val isOwner: Boolean get() = owner == localId
 
+    // A line of the connection log (tests: with this phone's name).
+    private fun log(text: String) = NetLog.add(if (NetLog.echo != null) "[$name] $text" else text)
+
     // Something to tell the player, kept in the connection log too.
     private fun news(text: String) {
-        NetLog.add(text)
+        log(text)
         listener?.onNews(text)
     }
 
@@ -402,7 +408,7 @@ class Room private constructor(
      */
     fun start(listener: RoomListener) {
         this.listener = listener
-        NetLog.add("Room ${session.toUInt().toString(16)}: member $localId, ${if (isOwner) "host" else "host is $owner"}, ${build.ifEmpty { "?" }}")
+        log("Room ${session.toUInt().toString(16)}: member $localId, ${if (isOwner) "host" else "host is $owner"}, ${build.ifEmpty { "?" }}")
         thread("net-udp") { receiveLoop() }
         thread("net-send") { sendLoop() }
         thread("net-accept") { acceptLoop() }
@@ -489,7 +495,7 @@ class Room private constructor(
             mine != null && theirSums[frame].orEmpty().any { it != mine }
         }
         if (differs) {
-            NetLog.add("Games differ at frame $frame: putting everyone back in step")
+            log("Games differ at frame $frame: putting everyone back in step")
             listener?.onDesync(frame)
             // Back in step from the owner's game, without restarting anything:
             // a watcher alone, players all together. (On a thread: this can be the game's.)
@@ -509,7 +515,7 @@ class Room private constructor(
                 continue
             } catch (e: IOException) {
                 if (closed) return
-                NetLog.add("Receiving: ${e.message ?: e.javaClass.simpleName}")
+                log("Receiving: ${e.message ?: e.javaClass.simpleName}")
                 // One failure isn't the end; silence is.
                 checkQuiet()
                 Thread.sleep(20)
@@ -546,7 +552,7 @@ class Room private constructor(
         val ls = lockstep
         val gone = (ls.partners + ls.watchers).filter { now - lastHeard[it] > quietNs }
         if (gone.isEmpty()) return
-        NetLog.add("No inputs for ${quietNs / 1_000_000_000.0} s from ${gone.joinToString { nameOf(it) }}")
+        log("No inputs for ${quietNs / 1_000_000_000.0} s from ${gone.joinToString { nameOf(it) }}")
         if (isOwner) {
             for (id in gone) {
                 lastHeard[id] = now
@@ -574,7 +580,7 @@ class Room private constructor(
                     // A newcomer's phone may take a while to load the game.
                     val quiet = if (newcomer) ARRIVING_QUIET_NS else lineQuietNs
                     if (now - line.lastHeard > quiet) {
-                        NetLog.add("Nothing heard from ${line.name} for ${quiet / 1_000_000_000} s: closing its connection")
+                        log("Nothing heard from ${line.name} for ${quiet / 1_000_000_000} s: closing its connection")
                         // Closed now: a write stuck on it (the worker's, say)
                         // fails at once instead of holding up the room.
                         line.lastHeard = now
@@ -589,7 +595,7 @@ class Room private constructor(
                 val line = ownerLine ?: continue
                 pingAsync(line, ping)
                 if (now - line.lastHeard > lineQuietNs) {
-                    NetLog.add("Nothing heard from the host for ${lineQuietNs / 1_000_000_000} s")
+                    log("Nothing heard from the host for ${lineQuietNs / 1_000_000_000} s")
                     line.lastHeard = now
                     ownerGone(line, "lost the connection", dropped = true)
                 }
@@ -800,7 +806,7 @@ class Room private constructor(
         } catch (e: IOException) {
             // Gone without saying goodbye: dropped, not left.
             if (!closed) {
-                NetLog.add("Connection to ${line.name} broke: ${e.message ?: e.javaClass.simpleName}")
+                log("Connection to ${line.name} broke: ${e.message ?: e.javaClass.simpleName}")
                 worker.execute { remove(line.id, "${line.name} lost the connection", dropped = true) }
             }
         }
@@ -1066,7 +1072,7 @@ class Room private constructor(
                 val found = runCatching { probe(at.address, at.port, LOOK_MS) }.getOrNull() ?: continue
                 if (found.session != session || found.owner < 0 || found.owner == localId) continue
                 val ours = liveCount()
-                NetLog.add("${found.name} runs this room too (${found.live} phones; here $ours)")
+                log("${found.name} runs this room too (${found.live} phones; here $ours)")
                 if (found.live > ours || (found.live == ours && found.owner < localId)) {
                     moveTo(at, found.name)
                     break
@@ -1085,7 +1091,7 @@ class Room private constructor(
             )
         } catch (e: IOException) {
             // It isn't running the room after all, or not now: this one goes on.
-            NetLog.add("Couldn't move to $winner's room: ${e.message}")
+            log("Couldn't move to $winner's room: ${e.message}")
             yielding = false
             return
         }
@@ -1156,14 +1162,18 @@ class Room private constructor(
     // Anyone with the room's game comes in, to watch until they take a seat.
     private fun welcome(line: Line, hello: Hello) {
         val out = line.output
-        fun refuse(reason: String) {
-            NetLog.add("Turned ${hello.name.ifEmpty { "a phone" }} away: $reason")
-            out.message(Msg.WELCOME, encode(Welcome(false, reason)))
+        fun refuse(reason: String, redirect: Member? = null) {
+            log("Turned ${hello.name.ifEmpty { "a phone" }} away: $reason")
+            out.message(Msg.WELCOME, encode(Welcome(false, reason, ownerHost = redirect?.host.orEmpty(), ownerPort = redirect?.tcpPort ?: 0)))
             line.close()
         }
         // Only the phone running the room answers for it (a phone looking for
-        // its room knows it by its session).
-        if (!isOwner) return refuse("This phone isn't running the room any more. Look for it again.")
+        // its room knows it by its session), but it says who does: a phone
+        // finding its room again needs to reach just one of its phones.
+        if (!isOwner) {
+            val o = members[owner]?.takeIf { (hello.session == 0 || hello.session == session) && it.host.isNotEmpty() && it.tcpPort > 0 && ownerLine != null }
+            return refuse("This phone isn't running the room any more. Look for it again.", o)
+        }
         if (hello.set == PROBE) {
             // Moving to another owner: not one to move to.
             val live = if (yielding) 0 else liveCount()
@@ -1449,7 +1459,7 @@ class Room private constructor(
             }
         } catch (e: IOException) {
             // Gone without a goodbye: dropped.
-            if (!closed && line === ownerLine) NetLog.add("Connection to the host broke: ${e.message ?: e.javaClass.simpleName}")
+            if (!closed && line === ownerLine) log("Connection to the host broke: ${e.message ?: e.javaClass.simpleName}")
             ownerGone(line, "lost the connection", dropped = true)
         }
     }
@@ -1559,7 +1569,7 @@ class Room private constructor(
             if (rest.firstOrNull().let { it != null && it != localId }) takenOver = CountDownLatch(1)
         }
         val news = "${nameOf(old)} $why"
-        NetLog.add("The host (${nameOf(old)}) $why; next host: ${rest.firstOrNull()?.let(::nameOf) ?: "nobody"}")
+        log("The host (${nameOf(old)}) $why; next host: ${rest.firstOrNull()?.let(::nameOf) ?: "nobody"}")
         if (epoch == 0) {
             // Not in yet: nothing to take over.
             migrating.set(false)
@@ -1576,7 +1586,7 @@ class Room private constructor(
                 // Closed, or a new owner called meanwhile: nothing to do.
                 if (closed || ownerLine != null) return@thread
                 if (alive) {
-                    NetLog.add("The host is still there: reconnecting to it")
+                    log("The host is still there: reconnecting to it")
                     foundAt = InetSocketAddress(o.host, o.tcpPort)
                     migrating.set(false)
                     lost("$news. Reconnecting…")
@@ -1646,7 +1656,7 @@ class Room private constructor(
             }.apply { start() }
         }
         calls.forEach { it.join(4_000) }
-        NetLog.add("Taking the room over: reached ${reached.get()} of ${others.size}")
+        log("Taking the room over: reached ${reached.get()} of ${others.size}")
         if (dropped && reached.get() == 0) {
             owner = old
             lost("$news. Reconnecting…")
@@ -1667,7 +1677,7 @@ class Room private constructor(
      */
     private fun lost(reason: String) {
         if (closed) return
-        NetLog.add("Lost the room: $reason")
+        log("Lost the room: $reason")
         val ln = listener
         vanish()
         ln?.onLost(reason)
@@ -1681,7 +1691,7 @@ class Room private constructor(
     fun heard(beacon: Beacon, from: InetAddress) {
         if (beacon.session != session || beacon.owner < 0 || beacon.owner == localId) return
         val at = InetSocketAddress(from, beacon.tcpPort)
-        if (foundAt != at) NetLog.add("Heard the room's host (${beacon.name}) at ${from.hostAddress}:${beacon.tcpPort}")
+        if (foundAt != at) log("Heard the room's host (${beacon.name}) at ${from.hostAddress}:${beacon.tcpPort}")
         foundAt = at
     }
 
@@ -1697,17 +1707,25 @@ class Room private constructor(
             moved = null
             return it
         }
-        val tries = (listOfNotNull(foundAt) + peers).distinct()
-        if (tries.isEmpty()) NetLog.add("Rejoining: nowhere to look")
-        for (at in tries) {
+        val tries = ArrayDeque((listOfNotNull(foundAt) + peers).distinct())
+        if (tries.isEmpty()) log("Rejoining: nowhere to look")
+        val tried = HashSet<InetSocketAddress>()
+        while (tries.isNotEmpty()) {
+            val at = tries.removeFirst()
+            if (!tried.add(at)) continue
             try {
                 return join(
                     at.address, at.port, name, set, rom, bios, listenPort, beaconPort, build, device,
                     session = session, connectMs = connectMs, faults = faults,
                 )
+            } catch (e: Redirected) {
+                // A phone of the room that knows where it is now: there, next.
+                log("Rejoining at ${at.address.hostAddress}:${at.port}: the host is at ${e.at.address.hostAddress}:${e.at.port}")
+                foundAt = e.at
+                tries.addFirst(e.at)
             } catch (e: IOException) {
                 // Not there, not running the room, or not ready for us yet: the next.
-                NetLog.add("Rejoining at ${at.address.hostAddress}:${at.port}: ${e.message ?: e.javaClass.simpleName}")
+                log("Rejoining at ${at.address.hostAddress}:${at.port}: ${e.message ?: e.javaClass.simpleName}")
             }
         }
         return null
@@ -1725,7 +1743,7 @@ class Room private constructor(
         if (current != null && current !== line && takeover.owner != owner && !migrating.get() &&
             System.nanoTime() - current.lastHeard < HEALTHY_NS
         ) {
-            NetLog.add("${nameOf(takeover.owner)} tried to take the room over; the host is still here")
+            log("${nameOf(takeover.owner)} tried to take the room over; the host is still here")
             line.close()
             return
         }
@@ -1899,7 +1917,10 @@ class Room private constructor(
                 val (t, payload) = line.input.message()
                 if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
                 val w = decode<Welcome>(payload)
-                if (!w.accepted) throw Refused(w.reason)
+                if (!w.accepted) {
+                    if (w.ownerHost.isNotEmpty() && w.ownerPort > 0) throw Redirected(w.reason, InetSocketAddress(w.ownerHost, w.ownerPort))
+                    throw Refused(w.reason)
+                }
                 // (Anything else first, a ping say, can wait.)
                 var start = line.input.message()
                 while (start.first != Msg.START_STATE && start.first in SKIPPABLE) start = line.input.message()
@@ -1971,7 +1992,10 @@ fun probe(host: InetAddress, port: Int = TCP_PORT, timeoutMs: Int = 5_000): Beac
         val (t, payload) = input.message()
         if (t != Msg.WELCOME) throw IOException("Unexpected answer from the host")
         val w = decode<Welcome>(payload)
-        if (w.reason != PROBE) throw Refused(w.reason)
+        if (w.reason != PROBE) {
+            if (w.ownerHost.isNotEmpty() && w.ownerPort > 0) throw Redirected(w.reason, InetSocketAddress(w.ownerHost, w.ownerPort))
+            throw Refused(w.reason)
+        }
         return Beacon(
             PROTOCOL, w.name, w.set, w.title, w.rom, port, players = w.players, maxPlayers = w.maxPlayers, key = w.key,
             watchers = w.watchers, session = w.session, owner = w.owner, live = w.live,

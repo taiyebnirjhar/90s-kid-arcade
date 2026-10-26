@@ -66,6 +66,9 @@ data class Welcome(
     val watchers: Int = 0,
     /** Phones connected to the owner now, itself included (a [PROBE]: which of two owners keeps the room). */
     val live: Int = 0,
+    /** Turned away by a phone of the room that isn't running it: who is, as far as it knows. */
+    val ownerHost: String = "",
+    val ownerPort: Int = 0,
 )
 
 /**

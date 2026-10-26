@@ -15,7 +15,11 @@ object NetLog {
     private val lines = ArrayDeque<String>()
     private val time = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
 
+    /** For tests: several phones in one process, each line says whose it is; and lines are echoed here. */
+    @Volatile var echo: ((String) -> Unit)? = null
+
     fun add(text: String) {
+        echo?.invoke(text)
         val line = synchronized(time) { time.format(Date()) } + "  " + text
         synchronized(lines) {
             lines.addLast(line)

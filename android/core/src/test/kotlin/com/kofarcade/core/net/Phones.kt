@@ -17,6 +17,11 @@ class Phones(private val log: (String) -> Unit = {}) {
     val all = CopyOnWriteArrayList<Phone>()
     private val start = System.nanoTime()
 
+    init {
+        // Every room's connection log, in the test's output.
+        NetLog.echo = { note("   $it") }
+    }
+
     fun note(text: String) = log("%6.2f s  %s".format((System.nanoTime() - start) / 1e9, text))
 
     fun host(name: String, set: String = "kof97", seats: Int = 2, timings: (Room) -> Unit = {}): Phone {
