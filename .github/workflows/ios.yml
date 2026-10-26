@@ -34,3 +34,7 @@ jobs:
 
       - name: Build the shared core for iPhone
         run: ./gradlew -p core compileKotlinIosArm64 compileKotlinIosSimulatorArm64 --no-daemon
+
+      # The room code (multiplayer) on iPhone's own sockets and threads.
+      - name: Test the shared core on an iPhone simulator
+        run: ./gradlew -p core iosSimulatorArm64Test --no-daemon

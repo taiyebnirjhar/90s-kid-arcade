@@ -41,12 +41,13 @@ class Lockstep(
     val playing: Boolean get() = localPlayer >= 0
 
     /** May change mid-game: the next [sampleUpTo] then reads one input more, or one fewer. */
-    @Volatile var delay = delay
+    @kotlin.concurrent.Volatile var delay = delay
         set(value) {
             require(value >= 1) { "delay must be at least one frame" }
             field = value
         }
 
+    private val monitor = Monitor()
     private val local = HashMap<Int, Int>()
     private val remote = Array(MAX_IDS) { HashMap<Int, Int>() }
     private val known = IntArray(MAX_IDS)
@@ -58,28 +59,25 @@ class Lockstep(
         private set
 
     /** All of [player]'s frames below this are known. */
-    @Synchronized
-    fun known(player: Int): Int = known[player]
+    fun known(player: Int): Int = monitor.locked { known[player] }
 
     /** Every partner's frames below this are known (alone: all of them). */
-    val remoteKnown: Int @Synchronized get() = partners.minOfOrNull { known[it] } ?: Int.MAX_VALUE
+    val remoteKnown: Int get() = monitor.locked { partners.minOfOrNull { known[it] } ?: Int.MAX_VALUE }
 
     /** [player]'s frames below this have been handed out by [takeRemote]. */
-    @Synchronized
-    fun taken(player: Int): Int = taken[player]
+    fun taken(player: Int): Int = monitor.locked { taken[player] }
 
     /** Everyone has all our frames below this (alone: everything sampled). */
-    val localAcked: Int @Synchronized get() = (partners + watchers).minOfOrNull { acked[it] } ?: nextLocal
+    val localAcked: Int get() = monitor.locked { (partners + watchers).minOfOrNull { acked[it] } ?: nextLocal }
 
     /**
      * Samples local input for every frame up to [emulated] + [delay] not yet
      * sampled, [input] once per frame (so a macro advances one step per frame).
      * Returns the new inputs: (first frame, masks).
      */
-    @Synchronized
-    fun sampleUpTo(emulated: Int, input: () -> Int): Pair<Int, IntArray> {
+    fun sampleUpTo(emulated: Int, input: () -> Int): Pair<Int, IntArray> = monitor.locked {
         val start = nextLocal
-        if (!playing) return start to IntArray(0)
+        if (!playing) return@locked start to IntArray(0)
         val out = ArrayList<Int>()
         while (nextLocal <= emulated + delay) {
             val m = input()
@@ -89,18 +87,17 @@ class Lockstep(
         }
         // Alone: nobody to send them to, so nothing to keep.
         if (partners.isEmpty() && watchers.isEmpty()) local.clear()
-        return start to out.toIntArray()
+        start to out.toIntArray()
     }
 
     /** [from]'s inputs for frames [start] until start + masks.size (a watcher's: none); [ack]: they have our frames below it. */
-    @Synchronized
-    fun receive(from: Int, start: Int, masks: IntArray, ack: Int) {
+    fun receive(from: Int, start: Int, masks: IntArray, ack: Int) = monitor.locked {
         require(from in partners || from in watchers) { "not in the game: $from" }
         if (from in partners) {
             val got = remote[from]
             masks.forEachIndexed { i, m ->
                 val f = start + i
-                if (f >= taken[from]) got.putIfAbsent(f, m)
+                if (f >= taken[from] && f !in got) got[f] = m
             }
             while (got.containsKey(known[from])) known[from]++
         }
@@ -112,20 +109,18 @@ class Lockstep(
     }
 
     /** [from]'s inputs not handed out yet, in order and without gaps: (first frame, masks). */
-    @Synchronized
-    fun takeRemote(from: Int): Pair<Int, IntArray> {
+    fun takeRemote(from: Int): Pair<Int, IntArray> = monitor.locked {
         val start = taken[from]
         val masks = IntArray(known[from] - start) { remote[from].remove(start + it)!! }
         taken[from] = known[from]
-        return start to masks
+        start to masks
     }
 
     /** Our inputs [to] hasn't acknowledged: (first frame, masks), at most [max]. */
-    @Synchronized
-    fun outgoing(to: Int, max: Int = 120): Pair<Int, IntArray> {
+    fun outgoing(to: Int, max: Int = 120): Pair<Int, IntArray> = monitor.locked {
         val start = acked[to]
         val end = minOf(nextLocal, start + max)
-        return start to IntArray(maxOf(0, end - start)) { local[start + it] ?: 0 }
+        start to IntArray(maxOf(0, end - start)) { local[start + it] ?: 0 }
     }
 }
 

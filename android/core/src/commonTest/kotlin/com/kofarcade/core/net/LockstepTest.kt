@@ -164,7 +164,7 @@ class LockstepTest {
         val seen = ArrayList<Int>()
         repeat(seconds * 60) {
             val jitter = if (it % 3 == 0) 1 else 0
-            delay = tuner.update(delay, Math.round(latency - delay).toInt() + jitter)
+            delay = tuner.update(delay, kotlin.math.floor(latency - delay + 0.5).toInt() + jitter)
             seen += delay
         }
         return seen

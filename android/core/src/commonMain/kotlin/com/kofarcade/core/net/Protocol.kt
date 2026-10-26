@@ -3,10 +3,6 @@ package com.kofarcade.core.net
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.IOException
-import java.nio.ByteBuffer
 
 // The wire format. TCP connections (each phone of a room to its owner) carry
 // joining, who sits where, the game state when that changes, and pause /
@@ -174,50 +170,32 @@ class RelayedInputs(val epoch: Int, val start: Int, val seats: Int, val masks: A
     fun encode(): ByteArray {
         val order = (0 until 4).filter { seats and (1 shl it) != 0 }
         val n = count
-        val b = ByteBuffer.allocate(4 + 4 + 1 + 2 + 4 + 8 + n * order.size * 2)
-        b.putInt(epoch).putInt(start).put(seats.toByte()).putShort(n.toShort()).putInt(sumFrame).putLong(sum)
-        for (i in 0 until n) for (k in order.indices) b.putShort(masks[k][i].toShort())
-        return b.array()
+        val b = ByteWriter(4 + 4 + 1 + 2 + 4 + 8 + n * order.size * 2)
+        b.putInt(epoch).putInt(start).put(seats).putShort(n).putInt(sumFrame).putLong(sum)
+        for (i in 0 until n) for (k in order.indices) b.putShort(masks[k][i])
+        return b.bytes()
     }
 
     companion object {
         fun decode(data: ByteArray): RelayedInputs {
-            val b = ByteBuffer.wrap(data)
-            val epoch = b.int
-            val start = b.int
-            val seats = b.get().toInt() and 0xFF
-            val n = b.short.toInt() and 0xFFFF
-            val sumFrame = b.int
-            val sum = b.long
+            val b = ByteReader(data)
+            val epoch = b.int()
+            val start = b.int()
+            val seats = b.byte() and 0xFF
+            val n = b.short() and 0xFFFF
+            val sumFrame = b.int()
+            val sum = b.long()
             val order = (0 until 4).filter { seats and (1 shl it) != 0 }
             val masks = Array(order.size) { IntArray(n) }
-            for (i in 0 until n) for (k in order.indices) masks[k][i] = b.short.toInt() and 0xFFFF
+            for (i in 0 until n) for (k in order.indices) masks[k][i] = b.short() and 0xFFFF
             return RelayedInputs(epoch, start, seats, masks, sumFrame, sum)
         }
     }
 }
 
-internal fun DataOutputStream.message(type: Byte, payload: ByteArray = ByteArray(0)) {
-    synchronized(this) {
-        writeByte(type.toInt())
-        writeInt(payload.size)
-        write(payload)
-        flush()
-    }
-}
+internal inline fun <reified T> encode(value: T): ByteArray = json.encodeToString(value).encodeToByteArray()
 
-internal fun DataInputStream.message(): Pair<Byte, ByteArray> {
-    val type = readByte()
-    val size = readInt()
-    if (size < 0 || size > 16 shl 20) throw IOException("Bad message size $size")
-    val payload = ByteArray(size)
-    readFully(payload)
-    return type to payload
-}
-
-internal inline fun <reified T> encode(value: T): ByteArray = json.encodeToString(value).toByteArray()
-
-internal inline fun <reified T> decode(bytes: ByteArray): T = json.decodeFromString(String(bytes))
+internal inline fun <reified T> decode(bytes: ByteArray): T = json.decodeFromString(bytes.decodeToString())
 
 /**
  * One input packet from phone [from] (its member id): the sender's unacknowledged inputs
@@ -239,14 +217,14 @@ data class InputPacket(
     val from: Int = 0,
 ) {
     fun encode(): ByteArray {
-        val b = ByteBuffer.allocate(4 + 1 + 4 + 1 + 1 + 4 * 3 + 1 + 1 + 1 + masks.size * 2 + 8)
-        b.putInt(MAGIC).put(VERSION).putInt(session).put(from.toByte()).put(epoch.toByte()).putInt(ack).putInt(start).putInt(sumFrame)
-        b.put(advantage.coerceIn(-127, 127).toByte())
-        b.put(delay.toByte())
-        b.put(masks.size.toByte())
-        masks.forEach { b.putShort(it.toShort()) }
+        val b = ByteWriter(4 + 1 + 4 + 1 + 1 + 4 * 3 + 1 + 1 + 1 + masks.size * 2 + 8)
+        b.putInt(MAGIC).put(VERSION.toInt()).putInt(session).put(from).put(epoch).putInt(ack).putInt(start).putInt(sumFrame)
+        b.put(advantage.coerceIn(-127, 127))
+        b.put(delay)
+        b.put(masks.size)
+        masks.forEach { b.putShort(it) }
         b.putLong(sum)
-        return b.array().copyOf(b.position())
+        return b.bytes()
     }
 
     companion object {
@@ -255,23 +233,23 @@ data class InputPacket(
         const val MAX_MASKS = 120
 
         fun decode(data: ByteArray, length: Int = data.size): InputPacket? = try {
-            val b = ByteBuffer.wrap(data, 0, length)
-            if (b.int != MAGIC || b.get() != VERSION) {
+            val b = ByteReader(data, length)
+            if (b.int() != MAGIC || b.byte() != VERSION.toInt()) {
                 null
             } else {
-                val session = b.int
-                val from = b.get().toInt() and 0xFF
-                val epoch = b.get().toInt() and 0xFF
-                val ack = b.int
-                val start = b.int
-                val sumFrame = b.int
-                val advantage = b.get().toInt()
-                val delay = b.get().toInt()
-                val n = b.get().toInt() and 0xFF
-                val masks = IntArray(n) { b.short.toInt() and 0xFFFF }
-                InputPacket(session, ack, start, masks, sumFrame, b.long, advantage, epoch, delay, from)
+                val session = b.int()
+                val from = b.byte() and 0xFF
+                val epoch = b.byte() and 0xFF
+                val ack = b.int()
+                val start = b.int()
+                val sumFrame = b.int()
+                val advantage = b.byte()
+                val delay = b.byte()
+                val n = b.byte() and 0xFF
+                val masks = IntArray(n) { b.short() and 0xFFFF }
+                InputPacket(session, ack, start, masks, sumFrame, b.long(), advantage, epoch, delay, from)
             }
-        } catch (e: RuntimeException) {
+        } catch (e: IndexOutOfBoundsException) {
             null
         }
     }

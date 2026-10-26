@@ -1,11 +1,6 @@
 package com.kofarcade.core.net
 
-import java.net.Inet4Address
-import java.net.InetAddress
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
+import kotlin.concurrent.Volatile
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +9,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RoomTest {
-    private val localhost = InetAddress.getLoopbackAddress()
+    private val localhost = "127.0.0.1"
     private val open = ArrayList<Room>()
     private val games = ArrayList<FakeGame>()
 
@@ -25,10 +20,10 @@ class RoomTest {
     }
 
     private fun waitFor(what: String = "condition", condition: () -> Boolean) {
-        val until = System.currentTimeMillis() + 15_000
+        val until = currentTimeMillis() + 15_000
         while (!condition()) {
-            assertTrue(System.currentTimeMillis() < until, "timed out waiting for $what")
-            Thread.sleep(10)
+            assertTrue(currentTimeMillis() < until, "timed out waiting for $what")
+            sleepMs(10)
         }
     }
 
@@ -57,8 +52,7 @@ class RoomTest {
         Room.join(localhost, port(room), name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1, device = device).also { open += it }
 
     private fun port(room: Room): Int {
-        val f = Room::class.java.getDeclaredField("server").apply { isAccessible = true }
-        return (f.get(room) as java.net.ServerSocket).localPort
+        return room.serverPort
     }
 
     // What a phone presses on frame f (so each phone's inputs can be told apart).
@@ -66,7 +60,7 @@ class RoomTest {
 
     /** A phone's game as the game screen runs it, with a fake emulator. */
     private inner class FakeGame(val room: Room) : RoomListener {
-        private val lock = Any()
+        private val lock = Monitor()
         @Volatile var epoch = -1
         @Volatile var startAt = 0
         val local = ArrayList<Int>()
@@ -81,7 +75,9 @@ class RoomTest {
         @Volatile var partnerPaused: Boolean? = null
         @Volatile var loaded: ByteArray? = null
         @Volatile var seatings = 0
-        val news = CopyOnWriteArrayList<String>()
+        private val newsLock = Monitor()
+        private val newsList = ArrayList<String>()
+        val news: List<String> get() = synchronized(newsLock) { newsList.toList() }
 
         init {
             games += this
@@ -130,12 +126,12 @@ class RoomTest {
         }
 
         override fun onNews(message: String) {
-            news += message
+            synchronized(newsLock) { newsList += message }
         }
 
         fun play() {
             room.start(this)
-            thread(isDaemon = true) {
+            startThread("fake-game") {
                 while (running) {
                     synchronized(lock) {
                         val known = startAt.toLong() + (remotes.values.minOfOrNull { it.size } ?: Int.MAX_VALUE / 2)
@@ -154,7 +150,7 @@ class RoomTest {
                         push = { _, masks -> synchronized(lock) { local += masks.toList() } },
                     )
                     room.updateAdvantage(emulated)
-                    Thread.sleep(16)
+                    sleepMs(16)
                 }
             }
         }
@@ -251,7 +247,7 @@ class RoomTest {
         g1.requestSeat()
         g2.requestSeat()
         waitFor("one seated") { a.epoch == 2 && b.epoch == 2 && c.epoch == 2 }
-        Thread.sleep(300)
+        sleepMs(300)
         assertEquals(2, a.epoch)
         // Whichever asked first plays; the other is told and keeps watching.
         val (player, watcher) = if (g1.watching) c to b else b to c
@@ -286,7 +282,7 @@ class RoomTest {
 
         // The loser stops pressing anything: their seat goes to the next one.
         b.idle = true
-        Thread.sleep(2_000)
+        sleepMs(2_000)
         g2.requestSeat()
         waitFor("swapped") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
         assertEquals(1, g2.localPlayer)
@@ -334,7 +330,7 @@ class RoomTest {
         g.vanish()
         waitFor("held") { h.held.keys == setOf(1) && w.held.keys == setOf(1) }
         assertEquals(setOf(0), h.seats.keys)
-        assertTrue(w.holdEnds(h.held[1]!!.id) > System.currentTimeMillis())
+        assertTrue(w.holdEnds(h.held[1]!!.id) > currentTimeMillis())
         // A watcher can't take it, and is told why.
         w.requestSeat()
         waitFor("told") { c.news.any { "held for Rafi" in it } }
@@ -638,7 +634,7 @@ class RoomTest {
         val g = join(h, "Guest")
         val b = FakeGame(g).apply { play() }
         waitFor("watching") { b.epoch == 1 && b.seatings == 1 }
-        Thread.sleep(500)
+        sleepMs(500)
         g.requestResync()
         waitFor("again") { b.seatings == 2 }
         assertEquals(1, a.seatings, "the host's game went on")
@@ -702,7 +698,7 @@ class RoomTest {
         // The guest took the host's game as it stood; nothing restarted.
         assertTrue(byteArrayOf(7, 0).contentEquals(b.loaded))
         // One difference, one resync.
-        Thread.sleep(500)
+        sleepMs(500)
         assertEquals(3, a.epoch)
     }
 
@@ -731,7 +727,7 @@ class RoomTest {
 
     @Test
     fun roomKeysHoldTheAddressAndPort() {
-        fun v4(s: String) = InetAddress.getByName(s) as Inet4Address
+        fun v4(s: String) = s
         for ((ip, length) in listOf("192.168.43.1" to 6, "192.168.255.254" to 6, "172.20.10.1" to 6, "10.42.0.1" to 7, "8.8.4.4" to 10)) {
             for (port in listOf(TCP_PORT, TCP_PORT + 7)) {
                 val key = roomKey(v4(ip), port)!!
@@ -761,16 +757,19 @@ class RoomTest {
 
     @Test
     fun beaconsAreHeard() {
-        val heard = CountDownLatch(1)
+        val heard = Latch()
         var got: Beacon? = null
-        BeaconListener(port = 0) { b, _ -> got = b; heard.countDown() }.use { listener ->
-            val field = BeaconListener::class.java.getDeclaredField("socket").apply { isAccessible = true }
-            val port = (field.get(listener) as java.net.DatagramSocket).localPort
+        val listener = BeaconListener(port = 0) { b, _ -> got = b; heard.countDown() }
+        try {
             val beacon = Beacon(PROTOCOL, "Host", "kof97", "KOF '97", 1, 7845, key = "K7Q-2M", watchers = 2)
             val bytes = encode(beacon)
-            java.net.DatagramSocket().use { it.send(java.net.DatagramPacket(bytes, bytes.size, localhost, port)) }
-            assertTrue(heard.await(5, TimeUnit.SECONDS))
+            val sender = UdpSocket(0)
+            sender.send(bytes, bytes.size, localhost, listener.port)
+            sender.close()
+            assertTrue(heard.await(5_000))
             assertEquals(beacon, got)
+        } finally {
+            listener.close()
         }
     }
 }

@@ -58,7 +58,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.InetAddress
 
 /** The room handed from the MULTIPLAYER screen to the game screen. */
 object Netplay {
@@ -74,7 +73,7 @@ private sealed interface TwoPlayer {
 }
 
 /** What a found host looks like in the list. */
-private data class FoundHost(val beacon: Beacon, val address: InetAddress)
+private data class FoundHost(val beacon: Beacon, val address: String)
 
 /** A room found on the network: [players] playing of [maxPlayers], [watchers] watching. */
 data class HostChoice(

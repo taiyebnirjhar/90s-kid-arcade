@@ -18,6 +18,8 @@ kotlin {
     }
     iosArm64()
     iosSimulatorArm64()
+    // Not shipped: runs the iPhone's code (POSIX sockets, threads) in tests on Linux.
+    linuxX64()
 
     sourceSets {
         commonMain.dependencies {
