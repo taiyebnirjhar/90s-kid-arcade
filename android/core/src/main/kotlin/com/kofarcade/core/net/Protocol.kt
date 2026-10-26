@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 // (small, frequent, and resent until acknowledged, so a lost packet costs
 // nothing).
 
-const val PROTOCOL = 9
+const val PROTOCOL = 10
 const val TCP_PORT = 7845
 
 /** Rooms listen on the first free one of these TCP ports from [TCP_PORT] (the room key says which). */
@@ -64,6 +64,8 @@ data class Welcome(
     /** Players and watchers in, for a [PROBE]. */
     val players: Int = 0,
     val watchers: Int = 0,
+    /** Phones connected to the owner now, itself included (a [PROBE]: which of two owners keeps the room). */
+    val live: Int = 0,
 )
 
 /**
@@ -128,7 +130,14 @@ data class Beacon(
     val watchers: Int = 0,
     /** The room's session (from a probe), so a phone looking for its room knows it. */
     val session: Int = 0,
+    /** From a probe: the owner's member id, and how many phones it has connected (itself included). */
+    val owner: Int = -1,
+    val live: Int = 0,
 )
+
+/** The room moved to another owner (two had it, after a split): rejoin it there. */
+@Serializable
+data class Moved(val host: String, val port: Int)
 
 internal val json = Json { ignoreUnknownKeys = true }
 
@@ -161,6 +170,10 @@ internal object Msg {
     const val ROSTER: Byte = 19
     /** A player gives up their seat, to watch. */
     const val STAND: Byte = 20
+    /** Owner to everyone: the room is another owner's now ([Moved]): rejoin it there. */
+    const val MOVED: Byte = 21
+    /** A member to a phone taking the room over ([TAKEOVER]): yes, you're my host now. */
+    const val TAKEN: Byte = 22
 }
 
 /**

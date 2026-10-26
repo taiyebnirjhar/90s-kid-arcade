@@ -157,24 +157,44 @@ BIOS for Neo Geo games; the library has them).
 - **Leave any time**: tapping **Leave** empties your seat at once and the
   game goes on for the others. If the host leaves, the next phone takes the
   room over (and the key changes to its address).
-- **Dropped out? Your seat waits 60 seconds, and so does the game.** A
-  phone that goes quiet (Wi-Fi blip, app closed by accident) is treated as
-  gone after a few seconds, but its seat is kept for it and the game waits:
-  "Waiting for Rafi to reconnect…", with "Reconnecting… seat kept 0:42" in
-  the room sheet. Watchers who press COIN are told the seat is held. The
-  host can tap **Free seat** to go on without them; after 60 seconds it
-  frees itself.
+- **Dropped out? Your seat waits 60 seconds; the others play on.** A phone
+  that goes quiet (Wi-Fi blip, app closed by accident) is treated as gone
+  after a few seconds, but its seat is kept for it. Everyone waits 5
+  seconds ("Waiting for Rafi to reconnect…"), as most blips are over by
+  then, then plays on: Rafi's fighter stands still and the seat stays his
+  ("Reconnecting… seat kept 0:42" in the room sheet). Watchers who press
+  COIN are told the seat is held. The host can tap **Free seat** to give it
+  away; after 60 seconds it frees itself.
 - **Back by itself.** The phone that dropped shows "Connection lost.
-  Reconnecting…" and keeps looking for its room every couple of seconds;
-  when its Wi-Fi is back it rejoins (the same phone, by its own id) and sits
-  straight back down. Nobody types the key again.
+  Reconnecting…" and tries again every second, and at once when its Wi-Fi
+  comes back; when it's in, it sits straight back down (the same phone, by
+  its own id). Nobody types the key again. It also listens for the host's
+  beacon, so it finds the room even if the host came back with another
+  address.
+- **Stays on the Wi-Fi.** When Wi-Fi gets weak, Android moves a phone's
+  traffic to mobile data and can leave it there long after; the room's
+  phones can't be reached that way. So during a game (and while joining)
+  the app's traffic is tied to the room's Wi-Fi (`LanLink`), and tied
+  again the moment that Wi-Fi comes back.
+- **If only your connection broke** (the host is fine), you go straight back
+  to the host: nobody takes the room over, nobody else notices. Phones that
+  still hear the host refuse a would-be new host.
 - **If the host drops**, the next phone takes the room over and holds the
   host's seat the same way; the host's phone, its Wi-Fi back, finds the room
   where it went and rejoins into its seat. A phone that can't reach anyone
   never opens a room of its own: it reconnects instead.
+- **If the network splits** and two phones end up running the room, they
+  find each other once it's back: the one with fewer phones (on a tie, the
+  later one) moves into the other's room first, then its phones follow. It
+  gives its room up only once it's in the other, so the room is never left
+  with nobody running it.
 - **If everyone drops at once** (the hotspot phone or the router went), the
   host keeps the room and everyone's seats; when the network is back, every
   phone finds it again and the game goes on.
+- **Connection report.** Pause → Connection details → *Send connection
+  report* shares what happened (drops, reconnects, errors, and every 10
+  seconds that weren't smooth: rollbacks, stalls, input delay), to report a
+  problem.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over
@@ -217,8 +237,16 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run, with two
   players in KOF and three in Cadillacs and Dinosaurs.
+- Each frame's inputs are read on the emulator's own thread, straight after
+  the frame, so a busy screen (drawing, garbage collection) never leaves
+  the game waiting for them.
 - Native side: `android/libretrodroid` (LibretroDroid::setNetplay).
   Rooms, protocol and tests: `android/core/.../net` (`Room` in `Session.kt`).
+- Battle tests: `ChaosTest` runs rooms of two and four phones through bad
+  Wi-Fi (drops of a moment to 12 s, connections stalled or destroyed as
+  Android does, packet loss, delay, reordering) with the app's timings, and
+  checks every phone ends up back in the one room, in its seat, in step.
+  `KOF_SOAK_SEEDS=1,2,3,… KOF_SOAK_SECONDS=60` runs longer soaks.
 
 ## Move lists
 

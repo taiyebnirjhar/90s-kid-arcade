@@ -78,6 +78,9 @@ class GLRetroView(
     private var isAborted = false
 
     private val retroGLEventsSubject = MutableSharedFlow<GLRetroEvents>(1)
+
+    /** Runs on the GL (emulation) thread after every emulated frame. */
+    @Volatile var onFrame: (() -> Unit)? = null
     private val retroGLIssuesErrors = MutableSharedFlow<Int>(1)
 
     private val rumbleEventsSubject = MutableSharedFlow<RumbleEvent>()
@@ -319,6 +322,10 @@ class GLRetroView(
         override fun onDrawFrame(gl: GL10) = catchExceptions {
             if (isEmulationReady) {
                 LibretroDroid.step(this@GLRetroView)
+                // Straight after the frame, on this (top priority) thread:
+                // multiplayer reads its next inputs here, so a busy main
+                // thread never leaves the game without them.
+                onFrame?.invoke()
                 lifecycle?.coroutineScope?.launch {
                     retroGLEventsSubject.emit(GLRetroEvents.FrameRendered)
                 }

@@ -225,6 +225,7 @@ private fun PauseMenu(game: GameActivity) {
             roomStatus = game.roomStatus,
             watching = game.isWatching,
             onRoom = { game.openRoom() },
+            onReport = { game.shareConnectionReport() },
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },

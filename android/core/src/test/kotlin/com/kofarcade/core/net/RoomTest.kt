@@ -483,6 +483,8 @@ class RoomTest {
 
         // It's back: everyone returns to the host, Rafi into its seat.
         h.offline = false
+        g.offline = false
+        w.offline = false
         b.running = false
         c.running = false
         val g2 = rejoined(g)

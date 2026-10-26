@@ -224,8 +224,16 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId).also { room ->
-                        if (left.get()) room.close()
+                    // Over the host's Wi-Fi, even if Android prefers mobile data now (LanLink).
+                    val link = LanLink(context, target = { found.address.hostAddress })
+                    try {
+                        link.await(500)
+                        Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId).also { room ->
+                            if (left.get()) room.close()
+                        }
+                    } finally {
+                        // The game screen ties the game to the Wi-Fi itself from here.
+                        link.stop()
                     }
                 }
                 if (left.get() || !isActive) {

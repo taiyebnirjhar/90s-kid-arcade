@@ -130,6 +130,8 @@ fun PauseContent(
     watching: Boolean = false,
     /** Multiplayer: the room sheet (key, seats, who watches). */
     onRoom: () -> Unit = {},
+    /** Multiplayer: share what happened to the connection (to report a problem). */
+    onReport: () -> Unit = {},
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -248,6 +250,16 @@ fun PauseContent(
                             textAlign = TextAlign.End,
                             modifier = Modifier.clickable { details = !details }.padding(vertical = 6.dp),
                         )
+                        if (details) {
+                            Text(
+                                "Send connection report ▸",
+                                color = Palette.gold,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.clickable(onClick = onReport).padding(vertical = 6.dp),
+                            )
+                        }
                     }
                 }
             }
