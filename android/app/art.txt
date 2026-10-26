@@ -1,0 +1,66 @@
+Named_Snaps/Cadillacs and Dinosaurs (World 930201).png
+Named_Snaps/Double Dragon (Neo-Geo).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Europe 980112).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Europe 980123).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Hispanic 980123).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Japan 980112).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Japan 980123).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (USA 971222).png
+Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (USA 980123).png
+Named_Snaps/Metal Slug - Super Vehicle-001.png
+Named_Snaps/Metal Slug 2 - Super Vehicle-001_II (NGM-2410 ~ NGH-2410).png
+Named_Snaps/Metal Slug 3 (NGM-2560).png
+Named_Snaps/Metal Slug 4 (NGM-2630).png
+Named_Snaps/Metal Slug 5 (NGM-2680).png
+Named_Snaps/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
+Named_Snaps/Nightmare in the Dark.png
+Named_Snaps/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
+Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
+Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
+Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
+Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990608, NO CD).png
+Named_Snaps/The King of Fighters '97 (NGM-2320).png
+Named_Snaps/The King of Fighters '97 Plus (bootleg).png
+Named_Snaps/The King of Fighters 10th Anniversary (bootleg of The King of Fighters 2002).png
+Named_Snaps/The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002).png
+Named_Snaps/The King of Fighters 10th Anniversary Extra Plus (bootleg of The King of Fighters 2002).png
+Named_Snaps/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
+Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
+Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
+Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Titles/Cadillacs and Dinosaurs (World 930201).png
+Named_Titles/Double Dragon (Neo-Geo).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Europe 980112).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Europe 980123).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Hispanic 980123).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Japan 980112).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Japan 980123).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (USA 971222).png
+Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (USA 980123).png
+Named_Titles/Metal Slug - Super Vehicle-001.png
+Named_Titles/Metal Slug 2 - Super Vehicle-001_II (NGM-2410 ~ NGH-2410).png
+Named_Titles/Metal Slug 3 (NGM-2560).png
+Named_Titles/Metal Slug 4 (NGM-2630).png
+Named_Titles/Metal Slug 5 (NGM-2680).png
+Named_Titles/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
+Named_Titles/Nightmare in the Dark.png
+Named_Titles/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
+Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
+Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
+Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
+Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990608, NO CD).png
+Named_Titles/The King of Fighters '97 (NGM-2320).png
+Named_Titles/The King of Fighters '97 Plus (bootleg).png
+Named_Titles/The King of Fighters 10th Anniversary (bootleg of The King of Fighters 2002).png
+Named_Titles/The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002).png
+Named_Titles/The King of Fighters 10th Anniversary Extra Plus (bootleg of The King of Fighters 2002).png
+Named_Titles/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
+Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
+Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
+Named_Titles/The King of Fighters 2002 Magic Plus II (bootleg).png

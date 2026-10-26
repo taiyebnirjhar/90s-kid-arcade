@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -132,6 +133,9 @@ fun PauseContent(
     onRoom: () -> Unit = {},
     /** Multiplayer: share what happened to the connection (to report a problem). */
     onReport: () -> Unit = {},
+    /** The game's sound, and its quick switch (the menu stays open). */
+    soundOn: Boolean = true,
+    onSound: () -> Unit = {},
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -168,6 +172,7 @@ fun PauseContent(
                     item("Load state", onClick = onLoad)
                 }
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
+                item(if (soundOn) "Sound: on" else "Sound: off", onClick = onSound)
                 item("Settings", onClick = onControls)
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
@@ -324,7 +329,7 @@ private fun MenuItem(text: String, lit: Boolean, danger: Boolean, onPress: (Bool
 // ----- Controls settings -----
 
 /** The settings panel's tabs. */
-enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves") }
+enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves"), SOUND("Sound") }
 
 /**
  * The Controls settings, from plain data (so they can be previewed): a
@@ -360,7 +365,8 @@ fun ControlsPanel(
                 Spacer(Modifier.width(12.dp))
                 Text("Changes show as you make them", color = Palette.muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 6.dp))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Scrolls sideways if the tabs don't all fit (small phones).
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 for (t in SettingsTab.entries) {
                     val on = t == tab
                     // A 48 dp target round a smaller chip.
@@ -375,7 +381,7 @@ fun ControlsPanel(
                         modifier = Modifier
                             .clip(Slant(8.dp, 8.dp))
                             .background(if (on) Palette.gold else Color.White.copy(alpha = 0.06f))
-                            .padding(horizontal = 16.dp, vertical = 7.dp),
+                            .padding(horizontal = 13.dp, vertical = 7.dp),
                     )
                     }
                 }
@@ -393,6 +399,12 @@ fun ControlsPanel(
                         ToggleRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
                         ToggleRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
                         if (canRapid) ToggleRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot or Fire to keep firing")
+                    }
+                    SettingsTab.SOUND -> {
+                        ToggleRow("Sound", look.sound, { onLook(look.copy(sound = it)) }, sub = "The game's music and effects")
+                        StepRow("Volume", look.volume, 0.1f..1f, 0.1f, sub = if (look.sound) "The phone's volume buttons work too" else "Sound is off") {
+                            onLook(look.copy(volume = it, sound = true))
+                        }
                     }
                     SettingsTab.MOVES -> {
                         PickRow("Move names", LabelMode.entries, look.labelMode, { it.label }, sub = "Names under the move buttons") { onLook(look.copy(labelMode = it)) }

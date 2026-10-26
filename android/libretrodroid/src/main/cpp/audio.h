@@ -19,6 +19,7 @@
 #define LIBRETRODROID_AUDIO_H
 
 #include <array>
+#include <atomic>
 #include <unistd.h>
 #include <oboe/Oboe.h>
 #include <oboe/FifoBuffer.h>
@@ -55,6 +56,8 @@ public:
 public:
     void write(const int16_t *data, size_t frames);
     void setPlaybackSpeed(const double newPlaybackSpeed);
+    /** 0 (silent) to 1 (as the game plays it), applied as it's played. */
+    void setVolume(float newVolume);
 
 private:
     static int32_t roundToEven(int32_t x);
@@ -87,6 +90,7 @@ private:
     double errorIntegral = 0.0;
 
     double playbackSpeed = 1.0;
+    std::atomic<float> volume{1.0f};
 
     std::unique_ptr<AudioLatencySettings> audioLatencySettings;
 };

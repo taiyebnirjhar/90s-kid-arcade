@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.ScreenOrientation
+import com.kofarcade.core.artSource
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.gameById
 import org.junit.Rule
@@ -602,7 +603,8 @@ class UiSnapshots {
 }
 
 /**
- * The real libretro thumbnails for the snapshots: downloaded once into
+ * The games' pictures for the snapshots (by artFile): the ones the build
+ * fetched for the app (build/generated/gameArt), else downloaded once into
  * build/test-art (never committed: they're the games' own pictures).
  * Offline, a picture is null and the stand-in tile shows.
  */
@@ -610,10 +612,14 @@ private object TestArt {
     private val dir = File("build/test-art").apply { mkdirs() }
     private val cache = HashMap<String, ImageBitmap?>()
 
-    fun get(url: String): ImageBitmap? {
-        if (url in cache) return cache[url]
+    fun get(path: String): ImageBitmap? {
+        if (path in cache) return cache[path]
+        File("build/generated/gameArt/art", path).takeIf { it.isFile }?.let { built ->
+            return BitmapFactory.decodeFile(built.path)?.asImageBitmap().also { cache[path] = it }
+        }
+        val url = artSource(path)
         val picture = runCatching {
-            val file = File(dir, url.substringAfter("/master/").replace('/', '_'))
+            val file = File(dir, path.replace('/', '_'))
             if (!file.exists()) {
                 val conn = URL(url).openConnection().apply {
                     connectTimeout = 10_000

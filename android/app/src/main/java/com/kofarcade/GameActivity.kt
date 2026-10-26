@@ -99,9 +99,11 @@ data class Look(
     val stepFrames: Int,
     val pressFrames: Int,
     val rapidFire: Boolean = true,
+    val sound: Boolean = true,
+    val volume: Float = 1f,
 )
 
-fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire)
+fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
@@ -251,6 +253,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         LibretroDroid.setFrozen(false)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // The phone's volume buttons set the game's (media) volume, not the ringer's.
+        volumeControlStream = android.media.AudioManager.STREAM_MUSIC
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -1257,7 +1261,24 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
         game.rapid?.let { pad.setRapid(it, l.rapidFire) }
         hud.opacity = l.opacity
+        applySound(l.sound, l.volume)
         updateHud()
+    }
+
+    /** Sound on, for the pause menu's quick switch. */
+    var soundOn by mutableStateOf(true)
+        private set
+
+    // Squared, so each step up sounds like the same step (ears hear loudness that way).
+    private fun applySound(on: Boolean, volume: Float) {
+        soundOn = on
+        LibretroDroid.setVolume(if (on) volume * volume else 0f)
+    }
+
+    /** The pause menu's switch: sound off, or back on at its volume. Saved. */
+    fun toggleSound() {
+        prefs.soundOn = !prefs.soundOn
+        applySound(prefs.soundOn, prefs.volume)
     }
 
     val settings: Prefs get() = prefs

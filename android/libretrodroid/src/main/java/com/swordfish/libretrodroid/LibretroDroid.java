@@ -112,6 +112,9 @@ public class LibretroDroid {
     public static native void setRumbleEnabled(boolean enabled);
     public static native void setFrameSpeed(int speed);
     public static native void setAudioEnabled(boolean enabled);
+
+    /** 0 (silent) to 1 (the game's own level). */
+    public static native void setVolume(float volume);
     public static native void setShaderConfig(GLRetroShader shader);
     public static native void setViewport(float x, float y, float width, float height);
     public static native void setViewportAlignment(int viewportAlignment);

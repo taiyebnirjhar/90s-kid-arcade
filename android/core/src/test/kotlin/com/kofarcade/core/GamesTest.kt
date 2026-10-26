@@ -62,6 +62,22 @@ class GamesTest {
         for (g in GAMES) assertNotNull(g.art, g.id)
     }
 
+    // Where a game's picture comes from when the app is built.
+    private fun artUrl(game: Game, kind: Art, set: String? = null) = artFile(game, kind, set)?.let(::artSource)
+
+    /**
+     * app/art.txt (what the build packs into the app) lists every picture
+     * the app can show. KOF_WRITE_ART_LIST=1 rewrites it after a game's added.
+     */
+    @Test
+    fun theAppShipsEveryPicture() {
+        val list = java.io.File("../app/art.txt")
+        val all = allArt()
+        assertTrue(all.size >= GAMES.size * 2)
+        if (System.getenv("KOF_WRITE_ART_LIST") == "1") list.writeText(all.joinToString("\n", postfix = "\n"))
+        assertEquals(all, list.readLines().filter { it.isNotBlank() }, "app/art.txt is out of date: run with KOF_WRITE_ART_LIST=1")
+    }
+
     @Test
     fun kof2005ShowsTheVersionYouHave() {
         val g = gameById("kof2005")!!

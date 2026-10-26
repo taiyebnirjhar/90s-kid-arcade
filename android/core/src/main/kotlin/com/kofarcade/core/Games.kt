@@ -242,18 +242,31 @@ fun gameById(id: String): Game? = GAMES.find { it.id == id }
 enum class Art(val folder: String) { TITLE("Named_Titles"), SNAP("Named_Snaps"), BOXART("Named_Boxarts") }
 
 /**
- * Where a game's picture lives in libretro's FBNeo thumbnail collection (the
- * set RetroArch and Lemuroid use). Characters libretro can't use in file
- * names become "_"; the rest is URL-encoded.
+ * A game's picture, as it ships inside the app (assets/art/<this>): from
+ * libretro's FBNeo thumbnail collection (the set RetroArch and Lemuroid
+ * use), fetched when the app is built (app/art.txt lists them all), never
+ * over the network while it runs. Characters libretro can't use in file
+ * names become "_".
  */
-fun artUrl(game: Game, kind: Art, set: String? = null): String? {
+fun artFile(game: Game, kind: Art, set: String? = null): String? {
     // A version listed in the game's sets has its own picture, under the
     // name FBNeo gives it (the thumbnails are named after FBNeo's list).
     val name = set?.takeIf { it in game.sets }?.let { romSet(it)?.title } ?: game.art ?: return null
     val file = name.map { if (it in "&*/:`<>?\\|\"") '_' else it }.joinToString("")
-    val encoded = java.net.URLEncoder.encode("$file.png", "UTF-8").replace("+", "%20")
-    return "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/${kind.folder}/$encoded"
+    return "${kind.folder}/$file.png"
 }
+
+/** Where [artFile] comes from: libretro's thumbnail collection (for building the app, and tests). */
+fun artSource(file: String): String {
+    val (folder, name) = file.split('/', limit = 2)
+    val encoded = java.net.URLEncoder.encode(name, "UTF-8").replace("+", "%20")
+    return "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/$folder/$encoded"
+}
+
+/** Every picture the app can show: each game's title screen and play screen, for each of its versions. */
+fun allArt(): List<String> = GAMES.flatMap { game ->
+    listOf(Art.TITLE, Art.SNAP).flatMap { kind -> (listOf<String?>(null) + game.sets).mapNotNull { artFile(game, kind, it) } }
+}.distinct().sorted()
 
 /** "KOF97.zip" -> "kof97". */
 fun setName(fileName: String): String = fileName.lowercase().removeSuffix(".zip")

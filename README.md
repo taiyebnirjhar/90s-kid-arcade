@@ -56,10 +56,11 @@ and settings.
 
 The home screen opens on the game you played last, with **Continue**, and
 lists every game by series as picture cards. **Multiplayer** and
-**Library** are at the top.
+**Library** are at the top. The pictures (each game's title and play
+screens) ship inside the app: they show offline, from the first launch.
 
 In a game, the pause button opens the pause menu: Resume, save and load
-state, *Edit <name>'s moves*, **Settings**, **Button layout** (drag any
+state, *Edit <name>'s moves*, **Sound** on/off, **Settings**, **Button layout** (drag any
 control where your thumbs want it, tap one to resize it), **Start over** and Quit.
 
 Playing alone, a game goes on where you left it: it's kept as you leave
@@ -118,10 +119,12 @@ and **Log escape** (A+B+C: you swap places with a log, for some life).
 (the spinning attack). Run with the Run button or by pushing the stick to the
 edge.
 
-Pause → **Settings**, in three tabs: **Screen** (picture width, controls
+Pause → **Settings**, in four tabs: **Screen** (picture width, controls
 opacity, detection readout), **Controls** (stick style: floating, fixed or
-hidden; button size; buttons on the left; vibration; rapid fire) and
-**Moves** (move names under the buttons, move timing).
+hidden; button size; buttons on the left; vibration; rapid fire),
+**Moves** (move names under the buttons, move timing) and **Sound** (on or
+off, volume up and down in steps). The phone's volume buttons set the
+game's volume too.
 Changes show on the game as you make them.
 
 ## Multiplayer
@@ -312,6 +315,10 @@ change the secret to lock out a lost phone.
   games' addresses are documented in `Detect.kt`).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
+- The games' pictures (`android/app/art.txt`, kept in step with the game
+  list by a test) are fetched from libretro's thumbnail collection when the
+  app is built (`fetchGameArt`, into `build/`) and packed inside the APK;
+  they're never committed, and the app never downloads them.
 
 Build locally with Android Studio, or: download the FBNeo core into
 `android/app/src/main/jniLibs/<abi>/libfbneo_libretro_android.so` (see the

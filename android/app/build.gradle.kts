@@ -1,3 +1,7 @@
+import java.net.HttpURLConnection
+import java.net.URI
+import java.net.URLEncoder
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -48,6 +52,9 @@ android {
         compose = true
     }
 
+    // The games' pictures, fetched when the app is built (fetchGameArt), never at run time.
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/gameArt"))
+
     packaging {
         jniLibs {
             // libretro cores are loaded with dlopen from the native library
@@ -71,8 +78,52 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
 
-    // Game pictures from libretro's thumbnail collection, cached on the phone.
-    implementation("io.coil-kt:coil-compose:2.7.0")
-
     testImplementation("junit:junit:4.13.2")
 }
+
+// The games' pictures (title and play screens, app/art.txt) go inside the
+// app: fetched here once from libretro's thumbnail collection (the set
+// RetroArch uses) into build/, never committed (they're the games' own
+// pictures) and never downloaded by the app. One that libretro hasn't got
+// is skipped (the app shows the game's main picture); on CI, any other
+// failure fails the build, so no APK ships without them.
+val fetchGameArt by tasks.registering {
+    val list = file("art.txt")
+    val out = layout.buildDirectory.dir("generated/gameArt/art")
+    inputs.file(list)
+    outputs.dir(out)
+    doLast {
+        val dir = out.get().asFile
+        val base = "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/"
+        val failed = ArrayList<String>()
+        for (path in list.readLines().map { it.trim() }.filter { it.isNotEmpty() }) {
+            val target = File(dir, path)
+            if (target.isFile && target.length() > 0) continue
+            target.parentFile.mkdirs()
+            val (folder, name) = path.split('/', limit = 2)
+            val url = base + folder + "/" + URLEncoder.encode(name, "UTF-8").replace("+", "%20")
+            try {
+                val conn = URI(url).toURL().openConnection() as HttpURLConnection
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 30_000
+                when (conn.responseCode) {
+                    200 -> {
+                        val tmp = File(target.path + ".part")
+                        conn.inputStream.use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                        tmp.renameTo(target)
+                    }
+                    404 -> logger.lifecycle("No picture upstream (the game's main one shows): $path")
+                    else -> failed += "$path: HTTP ${conn.responseCode}"
+                }
+            } catch (e: Exception) {
+                failed += "$path: ${e.message}"
+            }
+        }
+        if (failed.isNotEmpty()) {
+            val text = "Couldn't fetch the games' pictures:\n" + failed.joinToString("\n")
+            if (System.getenv("CI") != null) throw GradleException(text) else logger.warn(text)
+        }
+    }
+}
+
+tasks.named("preBuild") { dependsOn(fetchGameArt) }
