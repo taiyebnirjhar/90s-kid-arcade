@@ -46,15 +46,25 @@ and settings.
 
 ## Playing
 
-1. Tap **Add BIOS** and pick your `neogeo.zip` (once).
-2. Tap a game. The first time it asks for that game's zip: pick it from the
-   phone (any file name is fine) or download it from your library (below).
-   Long-press a game to remove its ROM.
+1. The first time, the home screen asks for the Neo Geo BIOS: tap
+   **Add BIOS** and pick your `neogeo.zip` (once; Capcom games don't need it).
+2. Tap a game's card. The first time it asks for that game's zip: pick it
+   from the phone (any file name is fine) or download it from your library
+   (below). Cards of games you haven't added say **Add ROM**; long-press a
+   game to remove its ROM.
 3. **COIN**, then **START**.
+
+The home screen opens on the game you played last, with **Continue**, and
+lists every game by series as picture cards. **Multiplayer** and
+**Library** are at the top.
+
+In a game, the pause button opens the pause menu: Resume, save and load
+state, *Edit <name>'s moves*, **Settings**, **Button layout** (drag any
+control where your thumbs want it, tap one to resize it) and Quit.
 
 **KOF:** the app reads the game's memory to see who you picked, who is
 fighting and which way they face, so the move ring always matches your
-fighter (turn this off in Controls to pick by hand). Each fighter's face
+fighter (turn this off in Pause → Settings → Moves → *Detect fighters* to pick by hand). Each fighter's face
 comes from the game itself: the first time they're on screen the app takes
 the face the game draws by the life bar (Double Dragon: on its select
 screen) and shows it from then on on the team buttons, the pause menu and
@@ -81,7 +91,7 @@ Throw and Overhead. The app reads which Super Art you picked and shows only
 that one on the ring, with the fighter's specials.
 
 **Metal Slug:** Shoot, Jump and Bomb. Hold Shoot to keep firing (rapid
-fire; switch it off in Controls). Slug Attack on 4 and 5, Slide on 5.
+fire; switch it off in Pause → Settings → Controls). Slug Attack on 4 and 5, Slide on 5.
 
 **Marvel vs Capcom:** six buttons like Street Fighter III, plus **Tag**
 (HP+HK) and **Partner** (MP+MK, your Special Partner). The app follows
@@ -101,8 +111,11 @@ and **Log escape** (A+B+C: you swap places with a log, for some life).
 (the spinning attack). Run with the Run button or by pushing the stick to the
 edge.
 
-Pause → **Controls**: stick style (floating, fixed or hidden), size,
-opacity, move names, vibration, left-handed layout, move timing.
+Pause → **Settings**, in three tabs: **Screen** (picture width, controls
+opacity, detection readout), **Controls** (stick style: floating, fixed or
+hidden; button size; buttons on the left; vibration; rapid fire) and
+**Moves** (move names under the buttons, fighter detection, move timing).
+Changes show on the game as you make them.
 
 ## Multiplayer
 
@@ -137,13 +150,24 @@ BIOS for Neo Geo games; the library has them).
 - **Leave any time**: tapping **Leave** empties your seat at once and the
   game goes on for the others. If the host leaves, the next phone takes the
   room over (and the key changes to its address).
-- **Dropped out? Your seat waits 60 seconds.** A phone that goes quiet for
-  10 seconds (Wi-Fi blip, app closed by accident) is treated as gone, but
-  its seat is kept for it: the room sheet shows "Reconnecting… seat kept
-  0:42", watchers who press COIN are told the seat is held, and the phone
-  that comes back (the same phone, by its own id) sits straight back down.
-  The host can tap **Free seat** to let a watcher have it right away; after
-  60 seconds it frees itself.
+- **Dropped out? Your seat waits 60 seconds, and so does the game.** A
+  phone that goes quiet (Wi-Fi blip, app closed by accident) is treated as
+  gone after a few seconds, but its seat is kept for it and the game waits:
+  "Waiting for Rafi to reconnect…", with "Reconnecting… seat kept 0:42" in
+  the room sheet. Watchers who press COIN are told the seat is held. The
+  host can tap **Free seat** to go on without them; after 60 seconds it
+  frees itself.
+- **Back by itself.** The phone that dropped shows "Connection lost.
+  Reconnecting…" and keeps looking for its room every couple of seconds;
+  when its Wi-Fi is back it rejoins (the same phone, by its own id) and sits
+  straight back down. Nobody types the key again.
+- **If the host drops**, the next phone takes the room over and holds the
+  host's seat the same way; the host's phone, its Wi-Fi back, finds the room
+  where it went and rejoins into its seat. A phone that can't reach anyone
+  never opens a room of its own: it reconnects instead.
+- **If everyone drops at once** (the hotspot phone or the router went), the
+  host keeps the room and everyone's seats; when the network is back, every
+  phone finds it again and the game goes on.
 
 How it works, the way GGPO / Fightcade do it (rollback netcode):
 - Every player's phone runs the game, sending only its button states over
@@ -181,7 +205,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 - A player's pause menu pauses every phone (a watcher's pauses nobody). For a rematch, use the game's own:
   in KOF the other player presses COIN and START mid-fight ("Here comes a
   new challenger!"), and after a versus fight the loser continues with
-  COIN and START. *Restart the game for everyone* (bottom of the pause menu)
+  COIN and START. *Restart for everyone* (in the pause menu)
   is only for a game stuck somewhere.
 - Checked against the real games with `tools/emu.py`: rollback with
   random 0-7 frame delays lands on the same game as a perfect run, with two
