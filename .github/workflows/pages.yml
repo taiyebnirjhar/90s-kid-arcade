@@ -1,4 +1,7 @@
-# Publishes the website (site/) to GitHub Pages whenever it changes on main.
+# Publishes the website (site/) to GitHub Pages whenever it changes on main,
+# and again after each new APK build, with that APK beside the page: the
+# Download button then starts the download straight from the site, without
+# GitHub's short-lived download links (which a browser's retry can't reuse).
 # Needs Pages turned on once: repo Settings → Pages → Source: GitHub Actions.
 name: Website
 
@@ -6,6 +9,10 @@ on:
   push:
     branches: [main]
     paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_run:
+    workflows: ["Android APK"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,12 +26,18 @@ concurrency:
 
 jobs:
   deploy:
+    # After an APK build: only when it built (and published) one.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: The latest APK, served by the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download latest --pattern 90s-Kid-Arcade.apk --dir site --clobber
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
