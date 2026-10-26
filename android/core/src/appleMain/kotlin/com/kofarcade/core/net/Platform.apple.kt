@@ -21,9 +21,9 @@ import platform.posix.AF_INET
 import platform.posix.SOL_SOCKET
 import platform.posix.SO_NOSIGPIPE
 import platform.posix.SO_REUSEPORT
-import platform.posix.freeifaddrs
-import platform.posix.getifaddrs
-import platform.posix.ifaddrs
+import platform.darwin.freeifaddrs
+import platform.darwin.getifaddrs
+import platform.darwin.ifaddrs
 import platform.posix.setsockopt
 import platform.posix.sockaddr_in
 import platform.zlib.Z_OK
