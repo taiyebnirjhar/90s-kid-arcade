@@ -1,2 +1,0 @@
-/home/user/kof-arcade/android/libretrodroid/src/main/cpp/CMakeLists.txt
-/home/user/kof-arcade/android/libretrodroid/src/main/cpp/oboe/CMakeLists.txt

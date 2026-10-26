@@ -1,1 +1,0 @@
-/home/user/kof-arcade/android/libretrodroid/build/intermediates/cxx/Debug/5x6c12k1/obj/arm64-v8a

@@ -5,3 +5,5 @@ local.properties
 *.iml
 # FBNeo core, downloaded by CI (see .github/workflows/android.yml)
 app/src/main/jniLibs/
+# Native build files (CMake/ninja), made by every build.
+.cxx/
