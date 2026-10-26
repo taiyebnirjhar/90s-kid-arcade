@@ -671,7 +671,7 @@ class Room private constructor(
 
     /** Owner: frees a seat held for a player who dropped out, now. */
     fun freeHeldSeat(seat: Int) {
-        if (isOwner) worker.execute { release(held[seat]?.id ?: return@execute, "Player ${seat + 1}'s seat is free") }
+        if (isOwner) worker.execute { release(held[seat]?.id ?: return@execute, "Player ${seat + 1}'s seat is free", now = true) }
     }
 
     /** Playing: gives up the seat, to watch (it's free for someone else). */
@@ -1126,10 +1126,11 @@ class Room private constructor(
     }
 
     // A held seat goes free (on the worker).
-    private fun release(id: Int, news: String) {
+    private fun release(id: Int, news: String, now: Boolean = false) {
         if (closed || !isOwner || members[id]?.away != true) return
-        // Held anew since (it came back and dropped again): not yet.
-        if ((holdUntil[id] ?: 0L) > System.currentTimeMillis()) return
+        // Held anew since (it came back and dropped again): not yet. (The host
+        // freeing it by hand [now]: at once.)
+        if (!now && (holdUntil[id] ?: 0L) > System.currentTimeMillis()) return
         seat(news, gone = id)
     }
 
