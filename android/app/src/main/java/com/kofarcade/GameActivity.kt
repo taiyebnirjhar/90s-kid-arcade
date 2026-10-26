@@ -48,6 +48,9 @@ import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
+import com.kofarcade.core.net.NetLog
+import com.kofarcade.core.net.BeaconListener
+import com.kofarcade.core.net.lanAddress
 import com.kofarcade.core.detect
 import com.kofarcade.core.detectSpec
 import com.kofarcade.core.portraitSpec
@@ -67,6 +70,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.channels.Channel
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -94,9 +99,11 @@ data class Look(
     val stepFrames: Int,
     val pressFrames: Int,
     val rapidFire: Boolean = true,
+    val sound: Boolean = true,
+    val volume: Float = 1f,
 )
 
-fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire)
+fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
@@ -111,7 +118,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val DETECT_MS = 250L
         // Looking for a lost room: as long as a seat is held, every couple of seconds.
         private const val RECONNECT_MS = 65_000L
-        private const val RECONNECT_EVERY_MS = 2_000L
+        private const val RECONNECT_EVERY_MS = 1_000L
+        // How long everyone waits for a player who dropped out before playing on.
+        private const val HELD_WAIT_MS = 5_000L
         private const val FACE_GRAB_MS = 40L
         private const val FACE_CHECK_EVERY = 4
         // Alone: the game's kept every minute, once it's run for a few seconds.
@@ -143,33 +152,53 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private var frame = 0L
 
     // Multiplayer: the room, and this phone's buttons as a RetroPad mask.
-    private var room: Room? = null
-    private var localMask = 0
-    private var padFrame = 0L
-    private var netStarted = false
-    private var lastNetFrame = -1
-    private var stalledFrames = 0
-    private var lastSumFrame = -1L
-    private var lastWait = 0L
-    private var lastResyncAsk = 0L
+    // (Read on the emulator's thread too, every frame: see onNetFrame.)
+    @Volatile private var room: Room? = null
+    @Volatile private var localMask = 0
+    @Volatile private var padFrame = 0L
+    @Volatile private var netStarted = false
+    @Volatile private var lastNetFrame = -1
+    @Volatile private var stalledFrames = 0
+    @Volatile private var lastSumFrame = -1L
+    @Volatile private var lastWait = 0L
+    @Volatile private var lastResyncAsk = 0L
     private var netStartRequested = false
     // Watching: the COIN or START that asked for a seat, pressed for real once
     // seated (so the coin drops); then pressed for this many more frames.
-    private var askedWith: Key? = null
-    private var tapKey: Key? = null
-    private var tapFrames = 0
+    @Volatile private var askedWith: Key? = null
+    @Volatile private var tapKey: Key? = null
+    @Volatile private var tapFrames = 0
     // Two players: the game waits while either menu is open.
-    private var localPaused = false
-    private var remotePaused = false
+    @Volatile private var localPaused = false
+    @Volatile private var remotePaused = false
     // While the room seats everyone (someone joined or left, a rematch): the game waits.
     @Volatile private var seating = true
 
     // The room was lost (Wi-Fi went): the game waits while this phone finds it again.
-    private var netLost = false
+    @Volatile private var netLost = false
     private var reconnecting: Job? = null
+    // Wakes the reconnect loop early: the Wi-Fi is back.
+    private val rejoinNow = Channel<Unit>(Channel.CONFLATED)
+    private var lanLink: LanLink? = null
+
+    // The address that says which Wi-Fi the room is on: the host's, or this host's own.
+    private fun roomAddress(): String? {
+        val r = room ?: return null
+        return if (r.isOwner) lanAddress()?.hostAddress else r.members[r.owner]?.host?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun tryRejoinNow() {
+        rejoinNow.trySend(Unit)
+    }
 
     // A player dropped out and their seat is held: the game waits for them (the host can free it).
-    private val waitingForHeld: Boolean get() = room?.held?.isNotEmpty() == true
+    // Everyone waits a moment for them (most Wi-Fi blips are over by then, and
+    // they slot straight back in), then plays on: their seat stays theirs,
+    // their fighter stands still, and they're back in it the moment they are.
+    private fun heldWaiting(): List<String> = room?.let { r -> r.held.values.filter { r.heldFor(it.id) < HELD_WAIT_MS }.map { it.name } }.orEmpty()
+    private val waitingForHeld: Boolean get() = heldWaiting().isNotEmpty()
+    private val heldCheck = Runnable { applyNetFreeze() }
+    private var playedOnFor: Set<String> = emptySet()
     private lateinit var netStatus: TextView
     private var paused = false
     private val dpad = mutableMapOf(Key.UP to false, Key.DOWN to false, Key.LEFT to false, Key.RIGHT to false)
@@ -214,12 +243,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // inputs (rollback netcode, see LibretroDroid::setNetplay). Until the
         // first seating the game runs on its own (watching nobody).
         LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
-        if (room != null) holdWifi()
+        if (room != null) {
+            holdWifi()
+            // Multiplayer stays on the room's Wi-Fi, whatever Android prefers (LanLink).
+            lanLink = LanLink(this, target = ::roomAddress, onBack = { runOnUiThread { tryRejoinNow() } })
+        }
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
         LibretroDroid.setFrozen(false)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // The phone's volume buttons set the game's (media) volume, not the ringer's.
+        volumeControlStream = android.media.AudioManager.STREAM_MUSIC
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -239,6 +274,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         retroView = GLRetroView(this, data)
         lifecycle.addObserver(retroView)
+        // Multiplayer: every frame, straight after it on the emulator's thread
+        // (never late because the main thread was busy drawing or collecting).
+        retroView.onFrame = { if (room != null) onNetFrame() }
 
         pad = Pad(send = ::sendKey, clock = { padFrame })
         hud = HudView(this, this)
@@ -295,9 +333,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     is GLRetroView.GLRetroEvents.FrameRendered -> {
                         frame++
                         if (frame == 1L && room == null) resumeWhereLeft()
-                        if (room != null) {
-                            onNetFrame()
-                        } else {
+                        // Multiplayer reads its inputs on the emulator's own thread (onNetFrame).
+                        if (room == null) {
                             padFrame++
                             pad.onFrame()
                         }
@@ -369,8 +406,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         if (retroId(key) < 0) return // a button this game doesn't have
         room?.let { r ->
             if (r.watching) {
-                // Watching: COIN or START asks for a free seat.
-                if (down && netStarted && (key == Key.COIN || key == Key.START) && askedWith == null) {
+                // Watching: COIN or START asks for a free seat (on the main thread:
+                // a macro can press it from the emulator's).
+                if (down && netStarted && (key == Key.COIN || key == Key.START) && askedWith == null) runOnUiThread {
+                    if (askedWith != null) return@runOnUiThread
                     // A free seat, or an idle player's: the host decides (first come).
                     askedWith = key
                     sendNet { it.requestSeat() }
@@ -466,6 +505,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** How the room's connection is doing, for the pause menu's details. */
     val roomStatus: String? get() = room?.status()
 
+    /** The connection's story (NetLog) and this phone, to send when multiplayer misbehaves. */
+    fun shareConnectionReport() {
+        val report = buildString {
+            appendLine("90s Kid Arcade connection report")
+            appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}")
+            appendLine("Game: ${game.title} ($set)")
+            room?.let { appendLine(it.status()) }
+            appendLine()
+            append(NetLog.dump())
+        }
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade connection report")
+            .putExtra(Intent.EXTRA_TEXT, report)
+        runCatching { startActivity(Intent.createChooser(send, "Send connection report")) }
+    }
+
     /** The room as the screens show it (pill, room sheet); null alone. */
     var roomUi by mutableStateOf<RoomUi?>(null)
         private set
@@ -487,6 +542,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun updateRoomUi() {
         val r = room ?: return
+        lanLink?.refresh()
         val members = r.members.values
         val people = if (members.isEmpty()) {
             // The host before its first game: just itself, in seat 1.
@@ -616,7 +672,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 override fun captureState(): ByteArray {
                     seating = true
                     LibretroDroid.setFrozen(true)
-                    return retroView.serializeState()
+                    // Straight from here (see onSeating): the emulator's lock keeps it apart from a frame.
+                    return retroView.serializeState(useEmulationThread = false)
                 }
 
                 override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?, startFrame: Int) {
@@ -624,7 +681,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     LibretroDroid.setFrozen(true)
                     LibretroDroid.setNetplay(true, room.localPlayer, game.players, MAX_ROLLBACK, activeMask)
                     if (startFrame > 0) LibretroDroid.netStartAt(startFrame)
-                    if (state != null) retroView.unserializeState(state)
+                    // Straight from here, not queued for the emulator's thread: that
+                    // thread may be waiting on the room right now (onNetFrame), which
+                    // waits for this. The emulator's own lock keeps it apart from a frame.
+                    if (state != null) retroView.unserializeState(state, useEmulationThread = false)
                     runOnUiThread {
                         // In (again): whatever was lost is found.
                         netLost = false
@@ -667,11 +727,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // Watching, just in or put back in step: the game skips ahead to the
     // players' moment unseen (LibretroDroid), behind "Joining…" until it's there.
-    private var catchingUp = false
+    @Volatile private var catchingUp = false
+    // Frames seen by onNetFrame (the emulator's thread), and whether "Waiting for…" is up.
+    @Volatile private var netFrames = 0L
+    @Volatile private var showingWait = false
 
     // Each displayed frame: read our buttons for the frames the game will
     // need next, one macro step per frame, and send them.
+    // On the emulator's thread, after every frame.
     private fun onNetFrame() {
+        netFrames++
         val room = room ?: return
         if (!netStarted || seating || localPaused || remotePaused || netLost || waitingForHeld) return
         val sample = room.sample(
@@ -694,18 +759,23 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             val upTo = room.watchedUpTo
             if (!room.watching || upTo == Int.MAX_VALUE || upTo.toLong() - emulated <= WATCH_NEAR) {
                 catchingUp = false
-                applyNetFreeze()
-            } else if (netStatus.visibility != View.VISIBLE) {
-                netStatus.text = "Joining the game…"
-                netStatus.visibility = View.VISIBLE
+                runOnUiThread { applyNetFreeze() }
+            } else {
+                runOnUiThread {
+                    if (catchingUp && netStatus.visibility != View.VISIBLE) {
+                        netStatus.text = "Joining the game…"
+                        netStatus.visibility = View.VISIBLE
+                    }
+                }
             }
         }
         // Time sync: when this phone's game runs ahead of a partner's (see
         // Room.lead), wait a frame so it catches up. Every phone then guesses
         // as little as possible, and none stalls at the rollback limit.
         room.updateAdvantage(emulated)
-        if (room.lead >= 2 && frame - lastWait > 20) {
-            lastWait = frame
+        if (room.lead >= 2 && netFrames - lastWait > 20) {
+            lastWait = netFrames
+            waits++
             LibretroDroid.netWait(1)
         }
         val sum = LibretroDroid.getNetSum()
@@ -714,37 +784,75 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             room.reportSum(sum[0].toInt(), sum[1])
         }
         // Say so when a partner's inputs stop arriving for a moment.
+        if (emulated == lastNetFrame) stalls++
+        logQuality(room)
         stalledFrames = if (emulated == lastNetFrame) stalledFrames + 1 else 0
         lastNetFrame = emulated
         val waiting = stalledFrames > 30
-        if (!catchingUp && waiting != (netStatus.visibility == View.VISIBLE)) {
-            netStatus.text = if (room.watching) "Waiting for the players…" else "Waiting for ${room.peerName}…"
-            netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+        if (waiting != showingWait) {
+            showingWait = waiting
+            runOnUiThread {
+                if (!catchingUp && !netLost && waiting != (netStatus.visibility == View.VISIBLE)) {
+                    netStatus.text = if (room.watching) "Waiting for the players…" else "Waiting for ${room.peerName}…"
+                    netStatus.visibility = if (waiting) View.VISIBLE else View.GONE
+                }
+            }
         }
         // Stuck for 3 seconds with nobody paused: back in step from the host's
         // game (a watcher alone; players with a moment's pause). A watcher
         // that fell far behind the players gets the game again, too.
         val behind = room.watching && room.watchedUpTo.toLong() - emulated > 600
-        if ((stalledFrames > 180 || behind) && frame - lastResyncAsk > 300) {
-            lastResyncAsk = frame
-            netStatus.text = "Reconnecting…"
+        if ((stalledFrames > 180 || behind) && netFrames - lastResyncAsk > 300) {
+            lastResyncAsk = netFrames
+            runOnUiThread { netStatus.text = "Reconnecting…" }
             sendNet { it.requestResync() }
         }
+    }
+
+    // How smooth the last 10 seconds were, in the connection log: frames
+    // replayed after a wrong guess (rollbacks), frames the game stood still
+    // for a late input (stalls), waits to let a partner catch up, the input
+    // delay. Only when something's off, so the log stays readable.
+    @Volatile private var stalls = 0
+    @Volatile private var waits = 0
+    @Volatile private var qualityFrom = 0L
+    @Volatile private var lastStats = LongArray(2)
+
+    private fun logQuality(room: Room) {
+        if (netFrames - qualityFrom < 600) return
+        qualityFrom = netFrames
+        val stats = LibretroDroid.getNetStats()
+        val replayed = stats[0] - lastStats[0]
+        val rollbacks = stats[1] - lastStats[1]
+        lastStats = stats
+        if (stalls > 6 || rollbacks > 60 || waits > 6) {
+            NetLog.add("Last 10 s: $rollbacks rollbacks ($replayed frames replayed), $stalls frames stalled, $waits waits, delay ${room.delay}")
+        }
+        stalls = 0
+        waits = 0
     }
 
     // The game runs only while no player has the menu open, and not while
     // seating, finding the room again or waiting for a player who dropped out.
     private fun applyNetFreeze() {
-        val held = room?.held?.values.orEmpty()
-        LibretroDroid.setFrozen(seating || localPaused || remotePaused || netLost || held.isNotEmpty())
+        val waiting = heldWaiting()
+        LibretroDroid.setFrozen(seating || localPaused || remotePaused || netLost || waiting.isNotEmpty())
+        // Check again when the wait's over.
+        root.removeCallbacks(heldCheck)
+        if (waiting.isNotEmpty()) root.postDelayed(heldCheck, 500)
+        val held = room?.held?.values?.map { it.name }?.toSet().orEmpty()
+        val playingOn = held - waiting.toSet()
+        if (playingOn.isNotEmpty() && playingOn != playedOnFor) {
+            announce("Playing on: ${playingOn.joinToString(" & ")}'s seat is kept for when they're back")
+        }
+        playedOnFor = playingOn
         when {
             netLost -> {
                 netStatus.text = "Connection lost. Reconnecting…"
                 netStatus.visibility = View.VISIBLE
             }
-            held.isNotEmpty() && !localPaused -> {
-                val who = held.joinToString(" & ") { it.name }
-                netStatus.text = "Waiting for $who to reconnect…" + if (room?.isOwner == true) "\nRoom & players → Free seat to go on" else ""
+            waiting.isNotEmpty() && !localPaused -> {
+                netStatus.text = "Waiting for ${waiting.joinToString(" & ")} to reconnect…"
                 netStatus.visibility = View.VISIBLE
             }
             remotePaused && !localPaused -> {
@@ -770,22 +878,38 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         applyNetFreeze()
         announce(reason)
         reconnecting = lifecycleScope.launch {
-            val until = android.os.SystemClock.elapsedRealtime() + RECONNECT_MS
-            while (isActive && android.os.SystemClock.elapsedRealtime() < until) {
-                val back = withContext(Dispatchers.IO) { runCatching { lost.rejoin() }.getOrNull() }
-                if (back != null) {
-                    room = back
-                    Netplay.room = back
-                    netStarted = false
-                    wasWatching = null
-                    netStatus.text = "Back in the room…"
-                    startNetplay(back)
-                    updateRoomUi()
-                    return@launch
+            // The host's beacon says where it is now, should its address have changed.
+            val wifi = applicationContext.getSystemService(WifiManager::class.java)
+            val multicast = runCatching { wifi?.createMulticastLock("90s-kid-arcade:rejoin")?.apply { setReferenceCounted(false); acquire() } }.getOrNull()
+            val beacons = runCatching {
+                BeaconListener { beacon, from ->
+                    lost.heard(beacon, from)
+                    if (beacon.owner >= 0) tryRejoinNow()
                 }
-                delay(RECONNECT_EVERY_MS)
+            }.getOrNull()
+            try {
+                val until = android.os.SystemClock.elapsedRealtime() + RECONNECT_MS
+                while (isActive && android.os.SystemClock.elapsedRealtime() < until) {
+                    val back = withContext(Dispatchers.IO) { runCatching { lost.rejoin() }.getOrNull() }
+                    if (back != null) {
+                        room = back
+                        Netplay.room = back
+                        netStarted = false
+                        wasWatching = null
+                        netStatus.text = "Back in the room…"
+                        startNetplay(back)
+                        updateRoomUi()
+                        return@launch
+                    }
+                    // Again in a moment, or at once when the Wi-Fi comes back.
+                    withTimeoutOrNull(RECONNECT_EVERY_MS) { rejoinNow.receive() }
+                }
+                NetLog.add("Gave up getting back into the room")
+                netEnded("Couldn't get back into the room. Check the Wi-Fi, then join again with the room key.")
+            } finally {
+                beacons?.close()
+                runCatching { multicast?.release() }
             }
-            netEnded("Couldn't get back into the room. Check the Wi-Fi, then join again with the room key.")
         }
     }
 
@@ -843,6 +967,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         super.onDestroy()
         wifiLock?.let { if (it.isHeld) it.release() }
+        lanLink?.stop()
     }
 
     override fun onPause() {
@@ -1136,7 +1261,24 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
         game.rapid?.let { pad.setRapid(it, l.rapidFire) }
         hud.opacity = l.opacity
+        applySound(l.sound, l.volume)
         updateHud()
+    }
+
+    /** Sound on, for the pause menu's quick switch. */
+    var soundOn by mutableStateOf(true)
+        private set
+
+    // Squared, so each step up sounds like the same step (ears hear loudness that way).
+    private fun applySound(on: Boolean, volume: Float) {
+        soundOn = on
+        LibretroDroid.setVolume(if (on) volume * volume else 0f)
+    }
+
+    /** The pause menu's switch: sound off, or back on at its volume. Saved. */
+    fun toggleSound() {
+        prefs.soundOn = !prefs.soundOn
+        applySound(prefs.soundOn, prefs.volume)
     }
 
     val settings: Prefs get() = prefs

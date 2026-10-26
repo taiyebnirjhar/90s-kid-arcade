@@ -38,7 +38,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,13 +64,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.kofarcade.core.Art
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.Game
 import com.kofarcade.core.Layout
-import com.kofarcade.core.artUrl
+import com.kofarcade.core.artFile
 
 /** What the home screen shows: which games are on the phone, and the banner's game. */
 data class HomeUi(
@@ -380,15 +381,15 @@ private fun SetupStep(number: Int, title: String, sub: String, done: Boolean, ac
 }
 
 /**
- * Screenshot tests only: where [ArtImage] gets its pictures from (by URL)
- * instead of loading them, so the snapshots show the real thumbnails.
+ * Screenshot tests only: where [ArtImage] gets its pictures from (by
+ * artFile) instead of the app's own, so the snapshots show the real ones.
  */
 val LocalArtOverride = staticCompositionLocalOf<((String) -> ImageBitmap?)?> { null }
 
 /**
- * A game picture from libretro's thumbnail collection, scaled without
- * smoothing so the pixel art stays crisp. Until it loads (or offline) a
- * tinted tile (with the game's name, unless [label] is off) shows instead.
+ * A game picture (packed in the app: GameArt), scaled without smoothing so
+ * the pixel art stays crisp. Until it's decoded, a tinted tile (with the
+ * game's name, unless [label] is off) shows instead.
  */
 @Composable
 fun ArtImage(
@@ -419,19 +420,20 @@ fun ArtImage(
                 textAlign = TextAlign.Center,
             )
         }
-        val url = artUrl(game, kind, set)
+        // The version's own picture, else the game's.
+        val files = listOfNotNull(artFile(game, kind, set), artFile(game, kind)).distinct()
         val override = LocalArtOverride.current
-        if (url != null && override != null) {
-            override(url)?.let { Image(it, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None, colorFilter = filter) }
-        } else if (url != null && !LocalInspectionMode.current) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
-                contentDescription = null,
-                contentScale = contentScale,
-                filterQuality = FilterQuality.None,
-                colorFilter = filter,
-                modifier = Modifier.matchParentSize(),
-            )
+        val context = LocalContext.current
+        val picture = when {
+            files.isEmpty() -> null
+            override != null -> files.firstNotNullOfOrNull(override)
+            LocalInspectionMode.current -> null
+            else -> produceState(files.firstNotNullOfOrNull(GameArt::cached), files) {
+                if (value == null) value = withContext(Dispatchers.IO) { files.firstNotNullOfOrNull { GameArt.load(context, it) } }
+            }.value
+        }
+        if (picture != null) {
+            Image(picture, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None, colorFilter = filter)
         }
         if (grey) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.35f)))
     }

@@ -241,6 +241,16 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("rapidFire", true)
         set(v) = sp.edit().putBoolean("rapidFire", v).apply()
 
+    /** The games' sound on or off (off keeps the volume for when it's back on). */
+    var soundOn: Boolean
+        get() = sp.getBoolean("soundOn", true)
+        set(v) = sp.edit().putBoolean("soundOn", v).apply()
+
+    /** The games' volume, 0.1 to 1. */
+    var volume: Float
+        get() = sp.getFloat("volume", 1f)
+        set(v) = sp.edit().putFloat("volume", v).apply()
+
     /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
     var libraryUrl: String
         get() = sp.getString("libraryUrl", null)?.takeIf { it.isNotBlank() } ?: Library.DEFAULT_URL

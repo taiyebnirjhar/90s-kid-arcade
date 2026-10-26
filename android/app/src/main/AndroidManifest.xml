@@ -3,10 +3,12 @@
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- Only to download game pictures (title screens) for the home screen. -->
+    <!-- Downloading games from your library (Library). Game pictures ship inside the app. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Two players: finding a hosted game on the local network (Wi-Fi or hotspot). -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Multiplayer stays on the room's Wi-Fi (LanLink). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Keeps Wi-Fi awake during a two-player game (WifiLock). -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />

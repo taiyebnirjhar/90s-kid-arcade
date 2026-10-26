@@ -49,6 +49,7 @@ import com.kofarcade.core.Game
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.net.Beacon
 import com.kofarcade.core.net.BeaconListener
+import com.kofarcade.core.net.Redirected
 import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
@@ -224,8 +225,23 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.join(found.address, found.beacon.tcpPort, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId).also { room ->
-                        if (left.get()) room.close()
+                    // Over the host's Wi-Fi, even if Android prefers mobile data now (LanLink).
+                    val link = LanLink(context, target = { found.address.hostAddress })
+                    try {
+                        link.await(500)
+                        fun joinAt(address: java.net.InetAddress, port: Int) =
+                            Room.join(address, port, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                        // A phone of the room that isn't its host (the key's from before a
+                        // takeover) says who is: straight there.
+                        val joined = try {
+                            joinAt(found.address, found.beacon.tcpPort)
+                        } catch (e: Redirected) {
+                            joinAt(e.at.address, e.at.port)
+                        }
+                        joined.also { room -> if (left.get()) room.close() }
+                    } finally {
+                        // The game screen ties the game to the Wi-Fi itself from here.
+                        link.stop()
                     }
                 }
                 if (left.get() || !isActive) {
@@ -263,7 +279,12 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
             try {
                 val found = withContext(Dispatchers.IO) {
                     val (ip, port) = target
-                    FoundHost(probe(ip, port).copy(tcpPort = port), ip)
+                    try {
+                        FoundHost(probe(ip, port).copy(tcpPort = port), ip)
+                    } catch (e: Redirected) {
+                        // The key's phone isn't the host any more: it says who is.
+                        FoundHost(probe(e.at.address, e.at.port).copy(tcpPort = e.at.port), e.at.address)
+                    }
                 }
                 busy = false
                 connect(found)

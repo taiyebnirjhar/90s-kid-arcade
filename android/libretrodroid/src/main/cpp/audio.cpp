@@ -15,6 +15,8 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
 #include "log.h"
 
 #include "audio.h"
@@ -105,6 +107,10 @@ void Audio::setPlaybackSpeed(const double newPlaybackSpeed) {
     playbackSpeed = newPlaybackSpeed;
 }
 
+void Audio::setVolume(float newVolume) {
+    volume = std::max(0.0f, std::min(1.0f, newVolume));
+}
+
 oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
     double dynamicBufferFactor = computeDynamicBufferConversionFactor(0.001 * numFrames);
     double finalConversionFactor = baseConversionFactor * dynamicBufferFactor * playbackSpeed;
@@ -119,6 +125,14 @@ oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void
 
     auto outputArray = reinterpret_cast<int16_t *>(audioData);
     resampler.resample(temporaryAudioBuffer.get(), currentFramesToSubmit, outputArray, numFrames);
+
+    // The app's volume (the game's own level at 1).
+    float gain = volume.load();
+    if (gain < 0.999f) {
+        for (int32_t i = 0; i < numFrames * 2; i++) {
+            outputArray[i] = (int16_t) (outputArray[i] * gain);
+        }
+    }
 
     latencyTuner->tune();
 

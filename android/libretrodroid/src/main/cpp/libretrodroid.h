@@ -174,6 +174,7 @@ public:
     void setFrameSpeed(unsigned int speed);
 
     void setAudioEnabled(bool enabled);
+    void setVolume(float volume);
 
     void setShaderConfig(ShaderManager::Config shaderConfig);
 
@@ -203,6 +204,7 @@ protected:
 private:
     unsigned int frameSpeed = 1;
     bool audioEnabled = true;
+    float volume = 1.0f;
     bool preferLowLatencyAudio = false;
     bool rumbleEnabled = false;
 

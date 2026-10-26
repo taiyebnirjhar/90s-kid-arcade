@@ -8,7 +8,8 @@ val FACE_KEYS = listOf(Key.A, Key.B, Key.C, Key.D, Key.E, Key.F)
 
 /**
  * Merges finger input and running macros into one controller state and sends
- * only the changes to [send].
+ * only the changes to [send]. Safe to use from two threads (fingers on the
+ * main one, frames on the emulator's in multiplayer).
  *
  * Call [onFrame] once per emulated frame: it advances macros and rapid fire.
  * [clock] returns the emulated frame counter.
@@ -18,14 +19,14 @@ class Pad(
     private val clock: () -> Long,
 ) {
     /** Turning round re-sends a held direction (block), so it stays "back". */
-    var facingLeft = false
-        set(v) {
+    @Volatile var facingLeft = false
+        @Synchronized set(v) {
             if (field == v) return
             field = v
             flush()
         }
-    var timing = Timing()
-    var rapidFrames = 2
+    @Volatile var timing = Timing()
+    @Volatile var rapidFrames = 2
 
     private var dir = 5
     private var hold: Int? = null // a held direction from a button (block), facing right
@@ -45,6 +46,7 @@ class Pad(
     var lastHorizontal = 6
         private set
 
+    @Synchronized
     fun setDir(newDir: Int) {
         dir = newDir
         val f = dirFlags(newDir)
@@ -57,6 +59,7 @@ class Pad(
      * games read a dash (neutral, tap, release), then holds it until
      * [stopRun]. The stick still steers up and down while running.
      */
+    @Synchronized
     fun startRun(toward: Int = lastHorizontal) {
         require(toward == 4 || toward == 6) { "run left (4) or right (6)" }
         if (run == toward) return
@@ -65,12 +68,14 @@ class Pad(
         start(listOf(Frame(5, "")) + List(s) { Frame(toward, "") } + List(s) { Frame(5, "") })
     }
 
+    @Synchronized
     fun stopRun() {
         if (run == null) return
         run = null
         flush()
     }
 
+    @Synchronized
     fun press(key: Key, down: Boolean) {
         if (down) held += key else held -= key
         flush()
@@ -81,14 +86,17 @@ class Pad(
      * button holds back (4) or down-back (1). Written facing right and
      * mirrored with [facingLeft]; null lets go.
      */
+    @Synchronized
     fun setHold(relDir: Int?) {
         hold = relDir
         flush()
     }
 
+    @Synchronized
     fun isRapid(key: Key) = key in rapid
 
     /** Auto-fire: while a rapid key is held it toggles every [rapidFrames] frames. */
+    @Synchronized
     fun setRapid(key: Key, on: Boolean) {
         if (on) rapid += key else rapid -= key
         flush()
@@ -99,6 +107,7 @@ class Pad(
      * mashing a super button doesn't garble the motion. Returns the number of
      * frames the command takes.
      */
+    @Synchronized
     fun play(command: String, jumpFirst: Boolean = false): Int {
         // Air moves from the ground: up for 4 frames, a short pause, then the
         // motion while rising (V-Slasher comes out this way in KOF 2002).
@@ -131,10 +140,12 @@ class Pad(
         if (next != null) start(next) else flush()
     }
 
+    @Synchronized
     fun onFrame() {
         if (macro != null) step() else if (rapid.any { it in held }) flush()
     }
 
+    @Synchronized
     fun cancel() {
         macro = null
         current = null
@@ -142,6 +153,7 @@ class Pad(
         flush()
     }
 
+    @Synchronized
     fun releaseAll() {
         held.clear()
         dir = 5

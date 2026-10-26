@@ -225,6 +225,9 @@ private fun PauseMenu(game: GameActivity) {
             roomStatus = game.roomStatus,
             watching = game.isWatching,
             onRoom = { game.openRoom() },
+            onReport = { game.shareConnectionReport() },
+            soundOn = game.soundOn,
+            onSound = { game.toggleSound() },
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },
@@ -560,6 +563,8 @@ private fun ControlsSettings(game: GameActivity) {
                 p.stepFrames = look.stepFrames
                 p.pressFrames = look.pressFrames
                 p.rapidFire = look.rapidFire
+                p.soundOn = look.sound
+                p.volume = look.volume
                 p.detectInfo = info
                 game.applyPrefs()
                 game.close()
