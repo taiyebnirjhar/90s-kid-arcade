@@ -170,6 +170,8 @@ fun PauseContent(
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
                 if (netplay && !watching) item("Restart for everyone", onClick = onRestart)
+                // Alone the game goes on where you left it; this starts it afresh.
+                if (!netplay) item("Start over", onClick = onRestart)
                 item(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
             }
         }

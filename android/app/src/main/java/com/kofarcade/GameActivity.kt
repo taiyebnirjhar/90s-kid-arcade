@@ -114,6 +114,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val RECONNECT_EVERY_MS = 2_000L
         private const val FACE_GRAB_MS = 40L
         private const val FACE_CHECK_EVERY = 4
+        // Alone: the game's kept every minute, once it's run for a few seconds.
+        private const val AUTO_STATE_EVERY_MS = 60_000L
+        private const val AUTO_STATE_MIN_FRAMES = 300L
         // A watcher this close to the players is caught up.
         private const val WATCH_NEAR = 8
         private const val FIGHT_GONE_CHECKS = 12
@@ -291,6 +294,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 when (it) {
                     is GLRetroView.GLRetroEvents.FrameRendered -> {
                         frame++
+                        if (frame == 1L && room == null) resumeWhereLeft()
                         if (room != null) {
                             onNetFrame()
                         } else {
@@ -316,6 +320,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onResume() {
         super.onResume()
+        // Back in this game (from another app, say): it's the one played last.
+        prefs.lastGame = game.id
         // The emulator resumes itself with the activity; keep it paused if a
         // dialog is still open.
         if ((dialog != null && dialog !is GameDialog.Room) || editing) {
@@ -794,6 +800,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
      * already give a rematch; this is for a game stuck somewhere.
      */
     fun restartGame() {
+        if (room == null) return startOver()
         sendNet { it.requestRematch() }
         close()
     }
@@ -841,6 +848,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     override fun onPause() {
         // Leaving the app mid-game: the others wait, as for the menu.
         if (room != null && !isWatching && (dialog == null || dialog is GameDialog.Room) && !editing && !isFinishing) show(GameDialog.Pause)
+        // Alone: the game is kept as it is, to go on from next time (once it's
+        // run a while: a game that never started has nothing to keep).
+        if (room == null && frame - runFrom >= AUTO_STATE_MIN_FRAMES) {
+            // Before the emulator's own pause (the GL thread may already be
+            // stopped, so straight from here: the core takes its lock).
+            runCatching { retroView.serializeState(useEmulationThread = false) }.getOrNull()?.let(::keepAutoState)
+        }
         super.onPause()
     }
 
@@ -1216,6 +1230,61 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private val stateFile get() = File(File(filesDir, "states").apply { mkdirs() }, "$set.state")
+
+    // Alone, the game goes on where you left it: kept as you leave it (and
+    // every minute, in case the app is stopped), loaded as it starts.
+    private val autoStateFile get() = File(File(filesDir, "states").apply { mkdirs() }, "$set.auto.state")
+
+    private val autoStateLock = Any()
+
+    // Off the main thread, whole or not at all.
+    private fun keepAutoState(bytes: ByteArray) {
+        if (bytes.isEmpty() || frame - runFrom < AUTO_STATE_MIN_FRAMES || startingOver) return
+        val file = autoStateFile
+        Thread {
+            synchronized(autoStateLock) {
+                runCatching {
+                    val tmp = File(file.path + ".tmp")
+                    tmp.writeBytes(bytes)
+                    tmp.renameTo(file)
+                }
+            }
+        }.start()
+    }
+
+    private fun resumeWhereLeft() {
+        val file = autoStateFile.takeIf { it.exists() }
+        lifecycleScope.launch {
+            if (file != null) {
+                val ok = withContext(Dispatchers.IO) { runCatching { retroView.unserializeState(file.readBytes()) }.getOrDefault(false) }
+                if (ok) announce("Continuing where you left off")
+            }
+            while (isActive) {
+                delay(AUTO_STATE_EVERY_MS)
+                // Only while on screen: the emulation thread is stopped otherwise.
+                if (paused || isFinishing || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) continue
+                withContext(Dispatchers.IO) { runCatching { retroView.serializeState() }.getOrNull() }?.let(::keepAutoState)
+            }
+        }
+    }
+
+    // Set while starting over, so a save racing it doesn't bring the old game back.
+    @Volatile private var startingOver = false
+
+    // The frame this run of the game began at (it starts over from the menu).
+    private var runFrom = 0L
+
+    /** Alone: the game from the start, the kept one dropped. */
+    fun startOver() = close {
+        startingOver = true
+        withContext(Dispatchers.IO) {
+            autoStateFile.delete()
+            retroView.reset()
+        }
+        runFrom = frame
+        startingOver = false
+        announce("Started over")
+    }
 
     // Save states run on the emulation thread, so they're done with the game running.
     fun saveState() = close {
