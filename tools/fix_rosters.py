@@ -2,7 +2,7 @@
 (FBNeo, tools/emu.py) and cross-checking wikis. Run once; idempotent."""
 import json, os
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'android', 'core', 'src', 'commonMain', 'resources', 'rosters')
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'android', 'core', 'src', 'main', 'resources', 'rosters')
 
 
 def load(name):

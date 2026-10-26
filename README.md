@@ -222,7 +222,7 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
 
 ## Move lists
 
-`android/core/src/commonMain/resources/rosters/` has one list per game: `kof97`,
+`android/core/src/main/resources/rosters/` has one list per game: `kof97`,
 `kof97plus`, `kof2002`, `kof2002mp` (Magic Plus), `kof2005`, `doubledr`,
 `sfiii3` and `mvsc`.
 
@@ -271,7 +271,7 @@ change the secret to lock out a lost phone.
 - `android/core` — plain Kotlin: the move engine (numpad commands, played
   back one emulated frame at a time), motion icons, the game list, fighter
   detection, the ROM checks and the move lists (see [Move lists](#move-lists)). Tested without the
-  Android SDK: `cd android/core && gradle jvmTest`.
+  Android SDK: `cd android/core && gradle test`.
 - `android/app` — the Android app: [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)
   running the [FBNeo](https://github.com/libretro/FBNeo) libretro core, a
   native touch HUD, and Compose screens.
