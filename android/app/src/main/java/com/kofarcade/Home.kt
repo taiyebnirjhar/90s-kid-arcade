@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shadow
@@ -272,7 +274,7 @@ private fun Hero(
 }
 
 /**
- * A game in a row: its title-screen picture, in full colour, with its name
+ * A game in a row: its title-screen picture (grey until its ROM is added), with its name
  * under it. Outlined in gold when [selected], pressed or focused (a TV
  * remote or gamepad moves the focus), like a console's tiles; a tag on the
  * picture says when its ROM still has to be added.
@@ -308,7 +310,7 @@ fun GameCard(
                 // A faint rim, so a black title screen still has an edge on the black page.
                 .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(15.dp)),
         ) {
-            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+            ArtImage(game, set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, grey = set == null)
             if (set == null) PictureTag("Add ROM", Palette.red, Modifier.align(Alignment.TopStart).padding(8.dp))
         }
         Column(Modifier.padding(start = 6.dp, end = 6.dp, bottom = 4.dp)) {
@@ -389,7 +391,17 @@ val LocalArtOverride = staticCompositionLocalOf<((String) -> ImageBitmap?)?> { n
  * tinted tile (with the game's name, unless [label] is off) shows instead.
  */
 @Composable
-fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentScale: ContentScale, label: Boolean = true) {
+fun ArtImage(
+    game: Game,
+    set: String?,
+    kind: Art,
+    modifier: Modifier,
+    contentScale: ContentScale,
+    label: Boolean = true,
+    /** Greyed out: the game isn't on the phone yet. */
+    grey: Boolean = false,
+) {
+    val filter = if (grey) GREY else null
     val tint = when (game.layout) {
         Layout.FIGHTER -> Palette.red
         Layout.SHOOTER -> Palette.green
@@ -410,15 +422,20 @@ fun ArtImage(game: Game, set: String?, kind: Art, modifier: Modifier, contentSca
         val url = artUrl(game, kind, set)
         val override = LocalArtOverride.current
         if (url != null && override != null) {
-            override(url)?.let { Image(it, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None) }
+            override(url)?.let { Image(it, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None, colorFilter = filter) }
         } else if (url != null && !LocalInspectionMode.current) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
                 contentDescription = null,
                 contentScale = contentScale,
                 filterQuality = FilterQuality.None,
+                colorFilter = filter,
                 modifier = Modifier.matchParentSize(),
             )
         }
+        if (grey) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.35f)))
     }
 }
+
+// Greyscale, for the pictures of games not on the phone yet.
+private val GREY = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })

@@ -180,4 +180,27 @@ class PadTest {
         }
         assertTrue(accepted > 100, "only $accepted accepted")
     }
+
+    @Test
+    fun rollKeepsTheStickSoBackAndRollRollsBack() {
+        pad.timing = Timing(step = 1, press = 2)
+        pad.setDir(4)
+        log.clear()
+        pad.play("AB")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] == true && state[Key.A] == true && state[Key.B] == true, state.toString())
+        runFrames(4)
+        assertTrue(!pad.playing && state[Key.LEFT] == true && state[Key.A] != true, state.toString())
+        // A motion still owns the stick while it plays.
+        pad.play("236+A")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] != true && state[Key.DOWN] == true, state.toString())
+        runFrames(12)
+        // And holding Block (back) while rolling rolls back.
+        pad.setDir(5)
+        pad.setHold(4)
+        pad.play("AB")
+        runFrames(1)
+        assertTrue(state[Key.LEFT] == true && state[Key.A] == true, state.toString())
+    }
 }

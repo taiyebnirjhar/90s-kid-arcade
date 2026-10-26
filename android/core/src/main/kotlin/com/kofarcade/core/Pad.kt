@@ -103,7 +103,10 @@ class Pad(
         // Air moves from the ground: up for 4 frames, a short pause, then the
         // motion while rising (V-Slasher comes out this way in KOF 2002).
         val jump = if (jumpFirst) List(4) { Frame(8, "") } + List(2) { Frame(5, "") } else emptyList()
-        val frames = jump + compile(command, facingLeft, timing)
+        // Buttons alone (Roll: A+B, Blowback: C+D): the stick keeps its
+        // direction, as on the arcade, so back + Roll rolls back.
+        val buttonsOnly = !jumpFirst && runCatching { parseCommand(command).steps.let { it.size == 1 && it[0].parts.isEmpty() } }.getOrDefault(false)
+        val frames = jump + compile(command, facingLeft, timing).let { f -> if (buttonsOnly) f.map { it.copy(dir = FREE) } else f }
         if (macro != null) queued = frames else start(frames)
         return frames.size
     }
@@ -151,7 +154,7 @@ class Pad(
     private fun flush() {
         val frame = if (macro != null) current else null
         val holdDir = hold?.let { if (facingLeft) mirrorDir(it) else it }
-        val flags = dirFlags(frame?.dir ?: holdDir ?: run?.let { withVertical(it, dir) } ?: dir)
+        val flags = dirFlags(frame?.dir?.takeIf { it != FREE } ?: holdDir ?: run?.let { withVertical(it, dir) } ?: dir)
         val phase = (clock() / rapidFrames) % 2 == 0L
         val state = mutableMapOf(
             Key.UP to flags.up,
@@ -186,3 +189,6 @@ internal fun withVertical(horizontal: Int, stick: Int): Int {
         else -> horizontal
     }
 }
+
+/** A macro frame that leaves the stick (or a held direction) as it is: buttons only. */
+private const val FREE = 0

@@ -50,7 +50,7 @@ and settings.
    **Add BIOS** and pick your `neogeo.zip` (once; Capcom games don't need it).
 2. Tap a game's card. The first time it asks for that game's zip: pick it
    from the phone (any file name is fine) or download it from your library
-   (below). Cards of games you haven't added say **Add ROM**; long-press a
+   (below). Cards of games you haven't added are grey and say **Add ROM**; long-press a
    game to remove its ROM.
 3. **COIN**, then **START**.
 
@@ -72,7 +72,9 @@ screen) and shows it from then on on the team buttons, the pause menu and
 the select screen; the app ships no character art. The ring around
 A B C D shows that fighter's desperation moves and specials, each drawn as
 its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
-tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback. Pause →
+tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback; they keep the stick's direction, as on the
+arcade, so back + Roll rolls back. **Block** holds back for as long as
+you hold it (slide down for a low block), even as the fighters swap sides. Pause →
 *Edit <name>'s moves* to change any move.
 
 Every move in the lists was checked in the real games (see
