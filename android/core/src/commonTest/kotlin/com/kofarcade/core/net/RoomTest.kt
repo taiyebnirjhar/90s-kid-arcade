@@ -280,11 +280,17 @@ class RoomTest {
         waitFor("told") { c.news.any { "All seats are in use" in it } }
         assertEquals(2, a.epoch)
 
-        // The loser stops pressing anything: their seat goes to the next one.
+        // The loser stops pressing anything: their seat goes to the next one,
+        // once they've been idle long enough (asked again until then: a slow
+        // machine takes longer to play those frames).
         b.idle = true
-        sleepMs(2_000)
-        g2.requestSeat()
-        waitFor("swapped") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
+        waitFor("swapped") {
+            if (a.epoch == 2) {
+                g2.requestSeat()
+                sleepMs(250)
+            }
+            a.epoch == 3 && b.epoch == 3 && c.epoch == 3
+        }
         assertEquals(1, g2.localPlayer)
         assertTrue(g1.watching)
         waitFor("told the loser") { b.news.any { "You were idle" in it } }

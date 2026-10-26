@@ -30,3 +30,11 @@ kotlin {
         }
     }
 }
+
+// Say why a test failed, in the build's own output (CI shows nothing else).
+tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
