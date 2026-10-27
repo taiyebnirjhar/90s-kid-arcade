@@ -205,6 +205,16 @@ val GAMES: List<Game> = listOf(
     labels = mapOf('A' to "Fire", 'B' to "Jump"),
     rapid = Key.A,
 ) + Game(
+    // Subsino, 2000, on Seta 2 hardware: no BIOS. Penguins clear each round
+    // with bombs, for two. Checked in FBNeo (tools/emu.py): A drops a bomb,
+    // B jumps up to the floor above. Only one bomb is out at a time, held or
+    // tapped, so Bomb has no rapid fire. Hong Tian Lei (ablast) is the same
+    // game with its own title screen.
+    id = "penbros", series = "Penguin Brothers", title = "Penguin Brothers", sets = listOf("penbros", "ablast"),
+    layout = Layout.SHOOTER, art = "Penguin Brothers (Japan)",
+    labels = mapOf('A' to "Bomb", 'B' to "Jump"),
+    neoGeo = false,
+) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
     // buttons. Moves checked in FBNeo (tools/movetest.py).

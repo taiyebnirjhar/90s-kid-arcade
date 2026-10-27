@@ -37,6 +37,27 @@ class RomCheckTest {
     }
 
     @Test
+    fun recognisesPenguinBrothersFromAMameZip() {
+        // MAME 0.139's penbros.zip: its own file names, FBNeo's CRCs. No BIOS needed.
+        val zip = listOf(
+            ZipItem("u06.bin", 0x80000, 0x7bbdffac), ZipItem("u07.bin", 0x80000, 0xd50cda5f),
+            ZipItem("u18.bin", 0x200000, 0xde4e65e2), ZipItem("u38.bin", 0x400000, 0x4247b39e),
+            ZipItem("u39.bin", 0x400000, 0xf9f07faf), ZipItem("u40.bin", 0x400000, 0xdc9e0a96),
+        )
+        val check = checkRom(zip)
+        assertIs<RomCheck.Game>(check)
+        assertEquals("penbros", check.set.name)
+        val game = assertNotNull(gameForSet(check.set.name))
+        assertEquals("penbros", game.id)
+        assertFalse(game.neoGeo)
+        // Hong Tian Lei shares only the sound chip: it's the same game, its own version.
+        val ablast = checkRom(items(set("ablast").files))
+        assertIs<RomCheck.Game>(ablast)
+        assertEquals("ablast", ablast.set.name)
+        assertEquals("penbros", gameForSet("ablast")?.id)
+    }
+
+    @Test
     fun saysWhatIsMissing() {
         val files = set("sengoku3").required.filterNot { it.name == "261-m1.m1" }
         val check = checkRom(items(files))
