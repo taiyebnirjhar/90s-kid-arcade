@@ -37,6 +37,12 @@ import kotlin.math.min
  * the team bar of three portraits on the left.
  */
 @SuppressLint("ViewConstructor")
+// The screen the controls were laid out on (a 20:9 phone, 411 x 914 dp):
+// below this height (or a width the two sides need), they shrink to fit.
+private const val FULL_HEIGHT_DP = 411f
+private const val FULL_WIDTH_DP = 560f
+private const val MIN_FIT = 0.6f
+
 class HudView(context: Context, private val listener: Listener) : View(context) {
 
     interface Listener {
@@ -180,7 +186,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val r get() = rect.width() / 2
     }
 
-    private val d = resources.displayMetrics.density
+    private val density = resources.displayMetrics.density
+
+    // The controls' unit: a dp on a phone 411 dp tall or more (where they
+    // were laid out), and on a smaller screen as much less, so every control,
+    // gap and offset shrinks together and the layout stays the same, not
+    // crowded (Block above the stick, the moves around the buttons).
+    private var d = density
     private var elements = listOf<El>()
     private val pressed = mutableSetOf<El>()
     private val firing = mutableMapOf<El, Pair<Long, Int>>() // element -> start frame, length
@@ -293,7 +305,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        d = density * fit(w, h)
         layoutElements()
+    }
+
+    private fun fit(w: Int, h: Int): Float {
+        if (w <= 0 || h <= 0) return 1f
+        return minOf(1f, h / density / FULL_HEIGHT_DP, w / density / FULL_WIDTH_DP).coerceAtLeast(MIN_FIT)
     }
 
     // ----- Layout -----
