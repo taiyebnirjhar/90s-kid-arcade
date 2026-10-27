@@ -78,9 +78,12 @@ the select screen; the app ships no character art. The ring around
 A B C D shows that fighter's desperation moves and specials, each drawn as
 its stick motion; one tap plays the whole input, frame-exact. **MAX** is one
 tap (A+B+C in '97, B+C in 2002), as are Roll and Blowback; they keep the stick's direction, as on the
-arcade, so back + Roll rolls back. **Block** holds back for as long as
+arcade, so back + Roll rolls back. **Block** (above the stick) holds back for as long as
 you hold it (slide down for a low block), even as the fighters swap sides. Pause →
 *Edit <name>'s moves* to change any move.
+
+The controls start small and in the corners (Button size 85%), so the game
+stays in view, and shrink with a smaller screen so it gets the same layout.
 
 Every move in the lists was checked in the real games (see
 [Move lists](#move-lists)), and the buttons play inputs the way a real stick

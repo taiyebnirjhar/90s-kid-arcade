@@ -44,6 +44,14 @@ private const val FULL_WIDTH_DP = 560f
 private const val MIN_FIT = 0.6f
 
 class HudView(context: Context, private val listener: Listener) : View(context) {
+    companion object {
+        /**
+         * The controls' size (Settings: Button size) until set: small, in the
+         * corners, so the game stays in view (as players set theirs).
+         */
+        const val DEFAULT_SIZE = 0.85f
+    }
+
 
     interface Listener {
         fun onDir(dir: Int)
@@ -140,7 +148,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         /** The FACING button; not needed while the game's RAM says which way you face. */
         val facingButton: Boolean = true,
         val facingLeft: Boolean = false,
-        val size: Float = 1f,
+        val size: Float = DEFAULT_SIZE,
         val leftHanded: Boolean = false,
         val labelMode: LabelMode = LabelMode.SUPERS,
         val stick: StickMode = StickMode.FLOATING,
@@ -392,7 +400,6 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             six -> 0.88f
             else -> 1f
         }
-        val hh = s / 2 + 5 * d
         // Default spots, in button sizes from the cluster's centre (x right,
         // y down). Laid out by hand on a phone for each kind of game.
         val facePos: Map<Char, Pair<Float, Float>> = when {
@@ -456,26 +463,26 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         )
         // Block: above the stick, for the thumb that steers (slide down for
         // low block), clear of the team bar. With no room there (a short
-        // screen, big controls), left of the buttons' bottom row. ("blockUp":
-        // a layout saved for the old spot doesn't carry over to this one.)
+        // screen, big controls), left of the buttons, over Blowback.
         if (st.block) {
             val r = 25 * d * sc
             val teamBottom = if (st.slots.isEmpty()) 0f else 54 * d + (st.slots.size - 1) * 40 * d + 34 * d
             val y = maxOf(home.centerY() - 140 * d * sc, teamBottom + 8 * d + r)
             val above = home.top - (y + r) >= 12 * d
             val rect = if (above) {
-                placed("blockUp", home.centerX(), y, r)
+                placed("block", home.centerX(), y, r)
             } else {
-                placed("blockUp", ax + (if (six) -2.2f else -1.85f) * s * mirror, ay + hh, r)
+                placed("block", ax + (if (six) -2.2f else -1.85f) * s * mirror, ay - 0.6f * s, r)
             }
-            els += El("blockUp", Kind.BLOCK, rect, true)
+            els += El("block", Kind.BLOCK, rect, true)
         }
         // System chips (MAX, Roll, Tag...): above the buttons, the third to the left.
         val sysR = 22 * d * sc
         val sysSpots = if (six) {
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
-            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, -0.68f * s))
+            // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row.
+            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s))
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
         st.system.indices.forEach { i ->
