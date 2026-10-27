@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.Dispatchers
@@ -428,9 +429,13 @@ fun ArtImage(
             files.isEmpty() -> null
             override != null -> files.firstNotNullOfOrNull(override)
             LocalInspectionMode.current -> null
-            else -> produceState(files.firstNotNullOfOrNull(GameArt::cached), files) {
-                if (value == null) value = withContext(Dispatchers.IO) { files.firstNotNullOfOrNull { GameArt.load(context, it) } }
-            }.value
+            // Its own state for each game's picture: one kept across games
+            // showed the last game's picture after another was played.
+            else -> key(files) {
+                produceState(files.firstNotNullOfOrNull(GameArt::cached)) {
+                    if (value == null) value = withContext(Dispatchers.IO) { files.firstNotNullOfOrNull { GameArt.load(context, it) } }
+                }.value
+            }
         }
         if (picture != null) {
             Image(picture, null, Modifier.matchParentSize(), contentScale = contentScale, filterQuality = FilterQuality.None, colorFilter = filter)
