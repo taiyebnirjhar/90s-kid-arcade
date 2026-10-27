@@ -429,9 +429,28 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 chips = buttons.map(::buttonName),
             )
         }
-        // Block: left of the bottom row, where the thumb already is. Slide down for low block.
+        // Stick home: bottom corner, for the left thumb (the right, left-handed).
+        val home = placed(
+            "stick",
+            if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc,
+            h - 104 * d * sc,
+            64 * d * sc,
+        )
+        // Block: above the stick, for the thumb that steers (slide down for
+        // low block), clear of the team bar. With no room there (a short
+        // screen, big controls), left of the buttons' bottom row. ("blockUp":
+        // a layout saved for the old spot doesn't carry over to this one.)
         if (st.block) {
-            els += El("block", Kind.BLOCK, placed("block", ax + (if (six) -2.2f else -1.85f) * s * mirror, ay + hh, 25 * d * sc), true)
+            val r = 25 * d * sc
+            val teamBottom = if (st.slots.isEmpty()) 0f else 54 * d + (st.slots.size - 1) * 40 * d + 34 * d
+            val y = maxOf(home.centerY() - 140 * d * sc, teamBottom + 8 * d + r)
+            val above = home.top - (y + r) >= 12 * d
+            val rect = if (above) {
+                placed("blockUp", home.centerX(), y, r)
+            } else {
+                placed("blockUp", ax + (if (six) -2.2f else -1.85f) * s * mirror, ay + hh, r)
+            }
+            els += El("blockUp", Kind.BLOCK, rect, true)
         }
         // System chips (MAX, Roll, Tag...): above the buttons, the third to the left.
         val sysR = 22 * d * sc
@@ -454,13 +473,6 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             els += El("sys:$i", Kind.SYS, placed("sys:$i", ax + p.x * mirror, ay + p.y, sysR), true, sys = sys)
         }
 
-        // Stick home
-        val home = placed(
-            "stick",
-            if (st.leftHanded) w - safeR - 112 * d * sc else safeL + 112 * d * sc,
-            h - 104 * d * sc,
-            64 * d * sc,
-        )
         homeX = home.centerX()
         homeY = home.centerY()
 

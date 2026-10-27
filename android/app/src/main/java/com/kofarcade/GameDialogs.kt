@@ -582,7 +582,7 @@ private fun controlName(id: String): String = when {
     id == "pause" -> "Pause button"
     id == "top" -> "Coin / Facing / Start"
     id == "team" -> "Team bar"
-    id == "block" -> "Block button"
+    id == "blockUp" -> "Block button"
     id.startsWith("face:") -> "${id.removePrefix("face:")} button"
     id.startsWith("move:") -> "Move ${id.removePrefix("move:").toInt() + 1}"
     id.startsWith("sys:") -> "Quick button ${id.removePrefix("sys:").toInt() + 1}"
