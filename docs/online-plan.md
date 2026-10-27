@@ -4,6 +4,11 @@
 now. If it is, it follows this plan. Today's multiplayer (same Wi-Fi or
 hotspot) is unchanged and stays.
 
+**Making money** (customization, a subscription) comes only after licensing:
+FBNeo's license forbids any profit or donations, and the games are SNK's and
+Capcom's. See [Making money](#making-money-later-and-only-after-licensing)
+and [Licensing the games](#licensing-the-games).
+
 ## Where things are today
 
 - Rooms on the same Wi-Fi or hotspot. The room key is the owner's local
@@ -210,8 +215,132 @@ Steps 1 → 2 → 3 → 4, each shipped and tested on its own (one PR or a few).
 - Step 1 is the biggest: multiplayer moves from Wi-Fi-only to hybrid.
 - In Step 3, the fighter bot is the largest piece.
 
+## Making money (later, and only after licensing)
+
+### First: two things that must be true before any money
+
+This covers subscriptions, purchases, ads and even donations.
+
+1. **The emulator must allow it.** FBNeo's license (`src/license.txt`)
+   says: "You may not sell, lease, rent or otherwise seek to gain monetary
+   profit from FB Neo" and "You may not ask for donations to support your
+   work on any project that uses the FB Neo source code." A paid app needs
+   another emulator, either:
+   - MAME's libretro core: GPL-2.0-or-later since 2016, so selling is
+     allowed if the source is published. It's heavier than FBNeo on
+     phones, so smoothness and rollback must be measured again for each
+     game; or
+   - one the game's licensor provides or approves.
+2. **The games must be licensed.** Charging money around unlicensed SNK or
+   Capcom games, even when players bring their own ROMs, invites takedowns.
+   SNK enforces its rights; it withdrew the Neo Geo X license in 2013. Only
+   licensed games go into a paid app (see [Licensing the games](#licensing-the-games)).
+
+### Rules
+
+- **Never sell smoothness.** The relay, ping-based delay and rollback are
+  the same for everyone.
+- **Never sell wins.** No gameplay advantage, and bots don't change with
+  payment.
+- **The free app stays complete:** offline, nearby, online with friends,
+  public matches, quick chat and a basic profile.
+
+### What to sell
+
+**Customization**, with our own art only, never SNK or Capcom characters:
+
+- **A player avatar character:** outfits, colors, poses, and victory
+  animations shown in lobbies and on the profile.
+- **Profile cards**, frames, name colors, titles and badges.
+- **Controller (HUD) skins and button themes.** Layout and size stay free.
+- **Emote and quick-chat packs**, and lobby and room themes.
+
+**A subscription ("Arcade Pass")**, for features that cost money to run or
+are extras. Candidates:
+
+- Voice in public rooms (voice with friends stays free).
+- Match replays and full match history. Replays are only inputs, so
+  they're tiny to store.
+- Cloud backup of the profile, control layouts and settings across phones.
+- Tournament and host tools: brackets, bigger rooms, queue rules, and
+  private lobbies with their own names.
+- Monthly customization drops.
+
+The subscription would also pay for Supabase Pro and relay use beyond the
+free allowance.
+
+**Payments:**
+
+- Inside a Play Store app, digital goods go through Google Play Billing.
+- Outside Play (the GitHub APK), a provider that works in Bangladesh, such
+  as bKash.
+
+## Licensing the games
+
+**What we found (2026-10):**
+
+- **SNK licenses its library as a business.** In 2018, IP licensing was
+  over 65% of its revenue. Partners include:
+  - Hamster: ACA NEOGEO, on Android too (e.g. KOF 2002 and Metal Slug X,
+    $3.99 each);
+  - Antstream Arcade (a streaming subscription);
+  - Blaze (Evercade);
+  - Arika (2024).
+
+  There's no public application form. The way in is SNK's business
+  contact, as a company.
+- **Capcom re-releases its arcade games itself.** Street Fighter III 3rd
+  Strike is in the Street Fighter 30th Anniversary Collection, and Marvel
+  vs Capcom is in the Marvel vs Capcom Fighting Collection (2024, with
+  Marvel). Licensing either to a small app is unlikely.
+- **Cadillacs and Dinosaurs has never been re-released**, most likely
+  because its rights are tied up with the comic and with GM, which owns
+  the Cadillac name. It's effectively not licensable.
+- **The KOF hacks are bootlegs** (97 Plus, 2002 Magic Plus, 2005 / 10th
+  Anniversary). No one can license them.
+
+| Game | Rights holder | Chance of a license |
+| --- | --- | --- |
+| KOF '97, KOF 2002, Metal Slug 1-5 and X, Sengoku 3 | SNK | Possible: SNK licenses actively |
+| KOF hacks | bootlegs of SNK's games | None |
+| Nightmare in the Dark | unclear (published by SNK) | Ask SNK |
+| Double Dragon (Neo Geo) | Arc System Works, which bought Technōs's games (to confirm) | Possible: ask |
+| Street Fighter III 3rd Strike | Capcom | Unlikely |
+| Marvel vs Capcom | Capcom and Marvel | Very unlikely |
+| Cadillacs and Dinosaurs | Capcom, plus the comic's and GM's rights | Effectively none |
+| Penguin Brothers | Subsino (Taiwan) | Unknown: a smaller company, worth asking |
+
+**What a license usually takes** (to confirm with each licensor):
+
+- a registered company;
+- a pitch: the product, platforms, countries, price, and how the games are
+  protected;
+- usually an advance or minimum guarantee, plus a revenue share;
+- the licensor's approval of each release;
+- a lawyer for the contract.
+
+Licensed games could then ship inside the app, with no bring-your-own-ROM.
+The unlicensed games would have to leave the paid app.
+
+**Paths:**
+
+1. **Stay free, as now:** no money of any kind, including donations
+   (FBNeo's license).
+2. **License a few SNK games** as a company, sell those, and switch the
+   paid app's emulator.
+3. **Offer the multiplayer technology** (rollback, nearby plus online,
+   rooms) to companies that already hold the licenses, as a business deal.
+
 ## Sources
 
+- [FBNeo license](https://github.com/finalburnneo/FBNeo/blob/master/src/license.txt)
+- [MAME licensing (BSD/GPL since 2016)](https://en.wikipedia.org/wiki/MAME)
+- [ACA NEOGEO on mobile: KOF 2002 and Metal Slug X](https://toucharcade.com/2024/01/17/metal-slug-x-aca-neogeo-download-out-now-iphone-android-mobile-snk-hamster-classics/)
+- [SNK's IP licensing business (2018)](https://www.etoday.co.kr/news/view/1695830)
+- [SNK withdraws the Neo Geo X license (2013)](https://www.nintendolife.com/news/2013/10/tommo_refuses_to_follow_snks_neo_geo_x_termination_demand)
+- [Antstream Arcade partners with SNK](https://www.kitguru.net/?p=440149)
+- [Evercade maker partners with SNK](https://www.videogameschronicle.com/news/evercade-manufacturer-announces-partnership-with-snk/)
+- [Cadillacs and Dinosaurs: why it was never re-released](https://www.hardcoregaming101.net/cadillacs-dinosaurs/)
 - [Supabase pricing](https://supabase.com/pricing)
 - [Cloudflare Realtime TURN/SFU pricing](https://developers.cloudflare.com/realtime/sfu/platform/pricing/)
 - [GGPO](https://en.wikipedia.org/wiki/GGPO),
