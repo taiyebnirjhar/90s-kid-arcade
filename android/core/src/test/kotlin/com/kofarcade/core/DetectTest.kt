@@ -25,6 +25,16 @@ class DetectTest {
         assertEquals(0x001B, ram.word(0x108170))
     }
 
+    // Who's fighting and which way they face come from the game: no fighter
+    // asks players to pick their team or tap FACING (the game screen shows
+    // those only for a fighter without detection).
+    @Test
+    fun everyFighterIsDetected() {
+        for (game in GAMES.filter { it.layout == Layout.FIGHTER }) {
+            assertTrue(detectSpec(game.roster) != null, "${game.id} has no detection")
+        }
+    }
+
     @Test
     fun everyDetectedIdIsInItsRoster() {
         for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3", "mvsc")) {

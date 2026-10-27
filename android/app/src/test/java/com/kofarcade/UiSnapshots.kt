@@ -359,12 +359,6 @@ class UiSnapshots {
     }
 
     @Test
-    fun hudFaces() {
-        landscape()
-        shot("hud_faces") { Hud(faces = true) }
-    }
-
-    @Test
     fun pauseSmall() {
         smallLandscape()
         shot("pause_small") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
@@ -488,8 +482,10 @@ class UiSnapshots {
                 g.power?.let { add(HudView.SysButton(it.name, it.cmd, it.cmd, power = true)) }
                 g.system.forEach { add(HudView.SysButton(it.name, it.cmd, it.cmd)) }
             },
-            slots = listOf(HudView.Slot("Iori Yagami", true), HudView.Slot("Kyo Kusanagi", false), HudView.Slot(null, false)),
+            // As the game screen sets it: every fighter is detected, so no
+            // team bar to pick from and no FACING button.
             block = g.block,
+            facingButton = false,
         )
     }
 

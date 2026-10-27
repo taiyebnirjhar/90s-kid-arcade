@@ -195,7 +195,7 @@ enum class ScreenMode(val label: String, val aspect: Float?, val short: String) 
     FULL("The whole screen, most stretch", null, "Full"),
 }
 
-private const val LAYOUT_VERSION = 2
+private const val LAYOUT_VERSION = 3
 
 /** Settings, teams and custom move lists. */
 class Prefs(context: Context) {
@@ -208,7 +208,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putString("stick", v.name).apply()
 
     var size: Float
-        get() = sp.getFloat("size", 1f)
+        get() = sp.getFloat("size", HudView.DEFAULT_SIZE)
         set(v) = sp.edit().putFloat("size", v).apply()
 
     var opacity: Float
@@ -291,7 +291,9 @@ class Prefs(context: Context) {
      * Saved layouts are offsets from the default spots. Version 2 moved the
      * defaults to the layouts arranged on a phone (KOF's square, Metal Slug,
      * Sengoku 3), so offsets saved against the old ones would move everything
-     * twice: they're dropped once.
+     * twice: they're dropped once. Version 3: smaller controls in the corners,
+     * Block above the stick, the third quick button beside A (as players
+     * arranged them).
      */
     private fun forgetOldLayouts() {
         if (sp.getInt("layoutVersion", 1) >= LAYOUT_VERSION) return
