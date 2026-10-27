@@ -1,5 +1,6 @@
 Named_Snaps/Cadillacs and Dinosaurs (World 930201).png
 Named_Snaps/Double Dragon (Neo-Geo).png
+Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
@@ -17,6 +18,7 @@ Named_Snaps/Metal Slug 4 (NGM-2630).png
 Named_Snaps/Metal Slug 5 (NGM-2680).png
 Named_Snaps/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
 Named_Snaps/Nightmare in the Dark.png
+Named_Snaps/Penguin Brothers (Japan).png
 Named_Snaps/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
@@ -33,6 +35,7 @@ Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
 Named_Titles/Cadillacs and Dinosaurs (World 930201).png
 Named_Titles/Double Dragon (Neo-Geo).png
+Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
@@ -50,6 +53,7 @@ Named_Titles/Metal Slug 4 (NGM-2630).png
 Named_Titles/Metal Slug 5 (NGM-2680).png
 Named_Titles/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
 Named_Titles/Nightmare in the Dark.png
+Named_Titles/Penguin Brothers (Japan).png
 Named_Titles/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png

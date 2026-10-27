@@ -1,5 +1,5 @@
 {
- "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp",
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp",
  "bios": [
   {
    "name": "sp-s3.sp1",
@@ -27,6 +27,50 @@
   }
  ],
  "sets": [
+  {
+   "name": "ablast",
+   "parent": "penbros",
+   "base": "penbros",
+   "title": "Hong Tian Lei (A-Blast) (Japan)",
+   "files": [
+    {
+     "name": "a-blast_twn_u06.u06",
+     "size": 524288,
+     "crc": "e62156d7",
+     "optional": false
+    },
+    {
+     "name": "a-blast_twn_u07.u07",
+     "size": 524288,
+     "crc": "d4ddc16b",
+     "optional": false
+    },
+    {
+     "name": "a-blast_twn_u38.u38",
+     "size": 4194304,
+     "crc": "090923da",
+     "optional": false
+    },
+    {
+     "name": "a-blast_twn_u39.u39",
+     "size": 4194304,
+     "crc": "6bb17d83",
+     "optional": false
+    },
+    {
+     "name": "a-blast_twn_u40.u40",
+     "size": 4194304,
+     "crc": "db94847d",
+     "optional": false
+    },
+    {
+     "name": "a-blast_twn_u18.u18",
+     "size": 2097152,
+     "crc": "de4e65e2",
+     "optional": false
+    }
+   ]
+  },
   {
    "name": "dino",
    "parent": null,
@@ -17591,6 +17635,50 @@
      "name": "nitd-v2.bin",
      "size": 2097152,
      "crc": "728558f9",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "penbros",
+   "parent": null,
+   "base": "penbros",
+   "title": "Penguin Brothers (Japan)",
+   "files": [
+    {
+     "name": "a-blast_jpn_u06.u06",
+     "size": 524288,
+     "crc": "7bbdffac",
+     "optional": false
+    },
+    {
+     "name": "a-blast_jpn_u07.u07",
+     "size": 524288,
+     "crc": "d50cda5f",
+     "optional": false
+    },
+    {
+     "name": "a-blast_jpn_u38.u38",
+     "size": 4194304,
+     "crc": "4247b39e",
+     "optional": false
+    },
+    {
+     "name": "a-blast_jpn_u39.u39",
+     "size": 4194304,
+     "crc": "f9f07faf",
+     "optional": false
+    },
+    {
+     "name": "a-blast_jpn_u40.u40",
+     "size": 4194304,
+     "crc": "dc9e0a96",
+     "optional": false
+    },
+    {
+     "name": "a-blast_jpn_u18.u18",
+     "size": 2097152,
+     "crc": "de4e65e2",
      "optional": false
     }
    ]

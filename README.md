@@ -1,7 +1,8 @@
 # 90s Kid Arcade
 
-An Android app for a handful of famous arcade games (Neo Geo, and Capcom's
-Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III), with
+An Android app for a handful of famous arcade games (Neo Geo, Capcom's
+Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, and
+Subsino's Penguin Brothers), with
 touch controls built for each one: one-tap specials and supers for every
 fighter in KOF, Double Dragon, Street Fighter III and Marvel vs Capcom, big
 Shoot / Jump / Bomb buttons with rapid fire for Metal Slug and Nightmare in
@@ -18,12 +19,14 @@ the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 | Sengoku 3 | `sengoku3` |
 | Cadillacs and Dinosaurs ("Mostofa", Capcom CPS-1) | `dino` |
 | Nightmare in the Dark | `nitd` |
+| Penguin Brothers (Subsino, 2000) | `penbros` (or `ablast`, Hong Tian Lei) |
 | Double Dragon (Neo Geo, 1995) | `doubledr` |
 | Marvel vs Capcom (Capcom CPS-2) | `mvsc` (or `mvscu`, `mvscur1`, `mvscj`, `mvsca`...): the zip must include its `.key` file |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 
 The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the Capcom
-games don't. No ROMs or BIOS are included: use dumps of games you own.
+games and Penguin Brothers don't. No ROMs or BIOS are included: use dumps
+of games you own.
 
 File names don't matter. The app checks each zip against the files and CRCs
 FBNeo expects (`romsets.json`, made from FBNeo's driver by `tools/romsets.py`),
@@ -112,6 +115,10 @@ their Hyper Combos and specials. Zips made before current FBNeo lack the
 
 **Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
 flames (the same rapid fire switch as Metal Slug).
+
+**Penguin Brothers:** Bomb and Jump, for one or two. Jump takes you up to
+the floor above. One bomb is out at a time (the next comes once it goes
+off), so Bomb has no rapid fire.
 
 **Sengoku 3:** Weapon, Punch, Jump, Shuriken, and the Ninja Arts every
 character shares: 22+A, 22+B, 28+B while holding an enemy (Kagetsura's
