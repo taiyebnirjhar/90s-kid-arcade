@@ -259,6 +259,32 @@ JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_pushRe
     return LibretroDroid::getInstance().pushRemoteInput(player, frame, mask);
 }
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setScreenRefreshRate(
+    JNIEnv* env,
+    jclass obj,
+    jfloat rate
+) {
+    LibretroDroid::getInstance().setScreenRefreshRate(rate);
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getPlaybackStats(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto stats = LibretroDroid::getInstance().getPlaybackStats();
+    jlong values[4] = {(jlong) stats[0], (jlong) stats[1], (jlong) stats[2], (jlong) stats[3]};
+    jlongArray result = env->NewLongArray(4);
+    env->SetLongArrayRegion(result, 0, 4, values);
+    return result;
+}
+
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getStepFrames(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().getStepFrames();
+}
+
 JNIEXPORT jlong JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getFrameWorkNanos(
     JNIEnv* env,
     jclass obj

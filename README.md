@@ -125,7 +125,37 @@ hidden; button size; buttons on the left; vibration; rapid fire),
 **Moves** (move names under the buttons, move timing) and **Sound** (on or
 off, volume up and down in steps). The phone's volume buttons set the
 game's volume too.
-Changes show on the game as you make them.
+Changes show on the game as you make them. Pause → **Performance** shows
+how the game runs (frames a second, late frames made up, sound gaps), with
+*Send report* to share it.
+
+### Smooth frames, clean sound
+
+- **Frames go with the screen** when its rate is the game's or a multiple
+  (60 Hz: a frame a tick; 120 Hz: a frame every other tick), so every frame
+  shows for the same time. On 90 and 144 Hz screens the app asks Android
+  for 60 or 120 Hz (where the phone allows), and otherwise times frames by
+  the clock. Phones change their screen's rate as they please (between 60
+  and 90 or 120 Hz); frames follow.
+- **A frame that runs late is made up** in the next tick (two run), so the
+  game keeps its pace, and its sound with it. Before, it was lost: on a 60
+  Hz screen each one cost the sound a frame's worth, and a few close
+  together ran it dry (gaps you hear, not see).
+- **The sound** waits in a small buffer (about 30 ms) between the game and
+  the speaker, kept there by playing it a hair faster or slower. That
+  adjustment follows the buffer's average, not each frame's ups and downs
+  (which wobbled the pitch 60 times a second), and the sound is resampled
+  with a cubic curve carried from block to block. If the game holds up for
+  a moment, the sound stretches over it or fades out and back in: never a
+  hard gap or a click. Its rate also matches the frames' (a Neo Geo game
+  runs at 60 on a 60 Hz screen, a hair over its own 59.19).
+- The macros and rapid fire run on the emulator's thread straight after
+  each frame, so a move's every step lands on its frame, however busy the
+  screen is.
+- `android/libretrodroid/src/test/cpp/playback_test.cpp` (run in CI) plays
+  a minute on 60, 90 and 120 Hz screens with late frames and hold-ups, and
+  compares with the sound path as it was: on a 60 Hz screen with 3% of
+  frames late, 106 sound gaps and 279 clicks a minute before, none now.
 
 ## Multiplayer
 
@@ -227,9 +257,8 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   Android is told how long each frame's work takes (performance hints,
   Android 12 on), so it speeds the CPU up before a replay runs late.
 - Every phone in a room runs at the same pace: 60 frames a second, with
-  the screen on 60 Hz phones and by the clock on 90/120 Hz ones (alone, a
-  120 Hz phone runs the game at its own 59.19). Otherwise the faster phone
-  would keep having to wait for the others.
+  the screen on 60 and 120 Hz phones and by the clock on 90/144 Hz ones.
+  Otherwise the faster phone would keep having to wait for the others.
 - A phone that still gets ahead of a partner (screens are never exactly
   alike) waits so the other catches up (time sync), but only for a real
   lead: a frame or more on average over a second, per partner. A single

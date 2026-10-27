@@ -333,7 +333,14 @@ class UiSnapshots {
     @Test
     fun pause() {
         landscape()
-        shot("pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } }
+        shot("pause") {
+            GameBehind {
+                PauseContent(
+                    "KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {},
+                    playback = "60.00 frames a second, with the screen (60 Hz). Late frames made up: 0. Sound gaps: 0.",
+                )
+            }
+        }
     }
 
     // A fighter's face from the game (here a made-up one) in the pause header and the HUD's team bar.

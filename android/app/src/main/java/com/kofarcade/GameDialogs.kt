@@ -223,6 +223,7 @@ private fun PauseMenu(game: GameActivity) {
             netplay = game.isNetplay,
             roomInfo = game.roomInfo,
             roomStatus = game.roomStatus,
+            playback = game.playbackStatus,
             watching = game.isWatching,
             onRoom = { game.openRoom() },
             onReport = { game.shareConnectionReport() },

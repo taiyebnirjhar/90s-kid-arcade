@@ -21,11 +21,15 @@ import android.app.ActivityManager
 import android.content.Context
 import android.graphics.PointF
 import android.graphics.RectF
+import android.hardware.display.DisplayManager
 import android.opengl.GLSurfaceView
+import android.os.Build
 import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.Surface
+import android.view.SurfaceHolder
 import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -79,7 +83,7 @@ class GLRetroView(
 
     private val retroGLEventsSubject = MutableSharedFlow<GLRetroEvents>(1)
 
-    /** Runs on the GL (emulation) thread after every emulated frame. */
+    /** Runs on the GL (emulation) thread after each step that ran a frame (or, frozen, had one due). */
     @Volatile var onFrame: (() -> Unit)? = null
     private val frameHints = FrameHints(context)
     private val retroGLIssuesErrors = MutableSharedFlow<Int>(1)
@@ -116,13 +120,37 @@ class GLRetroView(
         )
         LibretroDroid.setRumbleEnabled(data.rumbleEventsEnabled)
         LibretroDroid.setViewportAlignment(data.viewportAlignment.value)
+        context.getSystemService(DisplayManager::class.java)?.registerDisplayListener(displayListener, null)
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     fun onDestroy() = catchExceptions {
+        context.getSystemService(DisplayManager::class.java)?.unregisterDisplayListener(displayListener)
         queueEvent { frameHints.close() }
         LibretroDroid.destroy()
         lifecycle = null
+    }
+
+    // Phones switch the screen between 60 and 90 or 120 Hz as they please
+    // (some when it's touched, or not): the frames follow (FPSSync).
+    private val displayListener = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) = Unit
+
+        override fun onDisplayRemoved(displayId: Int) = Unit
+
+        override fun onDisplayChanged(displayId: Int) {
+            val shown = display ?: return
+            if (displayId == shown.displayId) LibretroDroid.setScreenRefreshRate(shown.refreshRate)
+        }
+    }
+
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        super.surfaceCreated(holder)
+        // The game's frames come 60 a second: a screen at 60 or 120 Hz shows
+        // each for the same time, one at 90 or 144 Hz can't. Ask for one that can.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching { holder.surface.setFrameRate(60f, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE) }
+        }
     }
 
     private fun getDeviceLanguage() = Locale.getDefault().language
@@ -324,15 +352,19 @@ class GLRetroView(
         override fun onDrawFrame(gl: GL10) = catchExceptions {
             if (isEmulationReady) {
                 LibretroDroid.step(this@GLRetroView)
-                // Straight after the frame, on this (top priority) thread:
-                // multiplayer reads its next inputs here, so a busy main
-                // thread never leaves the game without them.
                 val after = System.nanoTime()
-                onFrame?.invoke()
-                frameHints.report(LibretroDroid.getFrameWorkNanos() + (System.nanoTime() - after))
-                lifecycle?.coroutineScope?.launch {
-                    retroGLEventsSubject.emit(GLRetroEvents.FrameRendered)
+                // On a screen faster than the game (120 Hz), only every other
+                // tick runs a frame: what goes by frames goes by those.
+                if (LibretroDroid.getStepFrames() > 0) {
+                    // Straight after the frame, on this (top priority) thread:
+                    // the next frame's inputs are read here, so a busy main
+                    // thread never leaves the game without them.
+                    onFrame?.invoke()
+                    lifecycle?.coroutineScope?.launch {
+                        retroGLEventsSubject.emit(GLRetroEvents.FrameRendered)
+                    }
                 }
+                frameHints.report(LibretroDroid.getFrameWorkNanos() + (System.nanoTime() - after))
             }
         }
 

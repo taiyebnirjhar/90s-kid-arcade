@@ -24,7 +24,7 @@
 #include <oboe/Oboe.h>
 #include <oboe/FifoBuffer.h>
 
-#include "resamplers/linearresampler.h"
+#include "audiopipe.h"
 
 namespace libretrodroid {
 
@@ -39,7 +39,8 @@ private:
     const AudioLatencySettings LOW_LATENCY_SETTINGS { 4, true };
 
 public:
-    Audio(int32_t sampleRate, double refreshRate, bool preferLowLatencyAudio);
+    // [sampleRate], [refreshRate]: the game's sound and frame rates.
+    Audio(double sampleRate, double refreshRate, bool preferLowLatencyAudio);
     ~Audio() override = default;
 
     void start();
@@ -58,38 +59,30 @@ public:
     void setPlaybackSpeed(const double newPlaybackSpeed);
     /** 0 (silent) to 1 (as the game plays it), applied as it's played. */
     void setVolume(float newVolume);
+    /**
+     * Frames run at this times the game's own rate (with a 60 Hz screen, say):
+     * its sound comes that much faster, and is played that much faster.
+     */
+    void setTimeStretch(double factor);
+    /** Since the start: {blocks that ran short, game frames dropped for want of room}. */
+    std::array<int64_t, 2> getStats() const;
 
 private:
-    static int32_t roundToEven(int32_t x);
-    double computeDynamicBufferConversionFactor(double dt);
-    int32_t computeAudioBufferSize();
     bool initializeStream();
     std::unique_ptr<Audio::AudioLatencySettings> findBestLatencySettings(bool preferLowLatencyAudio);
-    double computeMaximumLatency() const;
 
 private:
-    const double kp = 0.006;
-    const double ki = 0.00002;
-    const double maxp = 0.003;
-    const double maxi = 0.02;
-
-    LinearResampler resampler;
-    std::unique_ptr<oboe::FifoBuffer> fifoBuffer = nullptr;
-    std::unique_ptr<int16_t[]> temporaryAudioBuffer = nullptr;
+    std::unique_ptr<AudioPipe> pipe;
 
     oboe::ManagedStream stream = nullptr;
     std::unique_ptr<oboe::LatencyTuner> latencyTuner = nullptr;
 
     bool startRequested = false;
-    int32_t inputSampleRate;
+    double sampleRate;
     double contentRefreshRate = 60.0;
 
-    double baseConversionFactor = 1.0;
-
-    double framesToSubmit = 0.0;
-    double errorIntegral = 0.0;
-
-    double playbackSpeed = 1.0;
+    std::atomic<double> timeStretch{1.0};
+    std::atomic<double> playbackSpeed{1.0};
     std::atomic<float> volume{1.0f};
 
     std::unique_ptr<AudioLatencySettings> audioLatencySettings;

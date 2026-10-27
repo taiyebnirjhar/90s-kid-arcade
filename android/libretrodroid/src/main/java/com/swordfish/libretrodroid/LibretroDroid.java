@@ -138,6 +138,13 @@ public class LibretroDroid {
     public static native boolean pushRemoteInput(int player, int frame, int mask);
     public static native long[] getNetStats();
     public static native long getFrameWorkNanos();
+    // Game frames the last step ran: 0 on a screen tick between frames (120 Hz).
+    public static native int getStepFrames();
+    // The screen's refresh rate changed: frames follow it (see FPSSync).
+    public static native void setScreenRefreshRate(float rate);
+    // {frames made up after running late, sound blocks that ran short, sound
+    // frames dropped, the frames' rate x 1000 + screen ticks per frame (0: by the clock)}
+    public static native long[] getPlaybackStats();
     public static native void netWait(int frames);
     // Paused, but still drawing the last frame (see LibretroDroid::setFrozen).
     public static native void setFrozen(boolean frozen);

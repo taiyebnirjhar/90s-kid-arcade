@@ -120,6 +120,15 @@ public:
     void setFrozen(bool value) { frozen = value; }
     // How long the last step's work took (the frame and drawing it, not the wait after).
     int64_t getFrameWorkNanos() const { return frameWorkNanos; }
+    // Game frames the last step ran (0 on a screen tick between frames, at
+    // 120 Hz; 2 making one up); a frozen game's step counts 1 when one was due.
+    int getStepFrames() const { return stepFrames; }
+    // The screen's refresh rate changed (any thread): frames follow from the next step.
+    void setScreenRefreshRate(float rate);
+    // Since the game started: {frames made up after running late, sound
+    // blocks that ran short, sound frames dropped for want of room, the
+    // frames' rate x 1000 + screen ticks per frame (0: by the clock)}.
+    std::array<int64_t, 4> getPlaybackStats();
 
     void onSurfaceCreated();
     void onSurfaceChanged(unsigned int width, unsigned int height);
@@ -234,6 +243,9 @@ private:
 
     std::atomic<bool> frozen{false};
     std::atomic<int64_t> frameWorkNanos{0};
+    std::atomic<int> stepFrames{1};
+    std::atomic<float> newScreenRefreshRate{0};
+    double appliedFrameRate = 0;
     std::mutex netMutex;
     bool netplay = false;
     static constexpr int NET_RING = 32;            // states kept to roll back to
