@@ -94,6 +94,10 @@ for name in ('Loyalty Test For the Liberalists',):
     for m in char(r, 'angel')['moves']:
         if m['name'] == name and 'Unchain' not in m.get('note', ''):
             m['note'] = m.get('note', '') + '; only as the finish of an Unchain combo (SuperCombo, Moegirl)'
+# K9999's hidden super (he flies up with a cape and strikes down): back,
+# forward x4. Checked in kof2002 by its animation: it needs MAX mode and low life.
+add(char(r, 'k9999'), {'name': 'Kore wa, maru de....!!', 'cmd': '46464646', 'type': 'hsdm',
+                       'note': 'HSDM: MAX mode + 1 power stock (2 total incl. activation) + life at or below ~1/4; back, forward x4'})
 add(char(r, 'angel'), {'name': "Survivor's Banquet", 'cmd': '4623+BCD', 'type': 'hsdm',
                        'note': 'HSDM: MAX mode + 1 power stock + low life; counters a jumping attack (SuperCombo)'})
 save('kof2002', r)
@@ -151,14 +155,18 @@ redo('iori', 'Kuzukaze', '41236+B', 'K: B or D; close range; ' + NEW + ' (632146
 redo('joe', 'Ougon no Tiger Kick', '2368+B', 'DM: 1 power stock; K: B or D; ' + NEW + ' (2369; kofcn.org)')
 redo('k9999', 'Tsuki...', '6321463214+A', 'DM: 1 power stock; P: A or C; ' + NEW + ' (1632143)')
 # The kick DM (arm cannon) moved to the same long motion: up close it makes
-# 2002's animation, which 1632143+B no longer does.
+# 2002's animation, which 1632143+B no longer does. His SDM keeps 2002's
+# 263+ABCD. His hidden super (the cape) is a three-quarter turn, forward to
+# up, + A+C: 2 power stocks, no low life needed. All found
+# by animation: the game kept the power gauge full in these tests, so power
+# spent didn't show which supers came out.
 redo('k9999', 'Temee mo oucchimae!!', '6321463214+B', 'DM: 1 power stock; K: B or D; ' + NEW + ' (1632143)')
+redo('k9999', 'Kore wa, maru de....!!', '6321478+AC',
+     'HSDM: 2 power stocks; no low life needed; ' + NEW + ' (46464646)')
 # No input brings these out in 2005 Unique (2002's, the sources', or a scan of
-# every common motion), so they're left out rather than guessed. K9999's SDM
-# (2002: 263+ABCD) and his air HSDM (back, forward x4) didn't come out either;
-# his DMs with two buttons in MAX mode are just the DMs.
-for cid, name in (('k9999', 'Chikara ga...katte ni...uwaaaa!!'),
-                  ('mary', 'M. Typhoon'), ('mary', 'M. Dynamite Swing'), ('mary', 'M. Dynamite Swing (MAX)'),
+# every common motion), so they're left out rather than guessed. (These were
+# judged by power spent: worth checking again by animation.)
+for cid, name in (('mary', 'M. Typhoon'), ('mary', 'M. Dynamite Swing'), ('mary', 'M. Dynamite Swing (MAX)'),
                   ('vice', 'Overkill'), ('daimon', 'Fu Rin Ka Zan'),
                   # 214214 + any button (ddooo.com) only starts his wind-up, as 2002's does; the super never follows.
                   ('chang', 'Tekkyuu Dai Sekai')):
@@ -187,5 +195,7 @@ mp['game'] = 'kf2k2mp2'
 for cid, name in (('benimaru', 'Benimaru Collider'), ('shermie', 'F-Captured'), ('kula', 'Freeze Completion')):
     c = char(mp, cid)
     c['moves'] = [m for m in c['moves'] if m['name'] != name]
+# K9999's hidden super: 2002's input, but MAX mode alone is enough (no low life).
+move(char(mp, 'k9999'), 'Kore wa, maru de....!!')['note'] = 'HSDM: MAX mode + 1 power stock; no low life needed; back, forward x4'
 save('kof2002mp', mp)
 print('ok magic plus')
