@@ -1,5 +1,12 @@
 # Notes for working on this repo
 
+## The repo is `taiyebnirjhar/90s-kid-arcade`
+
+It was renamed from `kof-arcade`. Use `90s-kid-arcade` for every GitHub call
+(PRs, CI, subscriptions). The old name only redirects git, and the GitHub
+tools and PR events fail with it. A local clone may still sit in a folder
+called `kof-arcade`.
+
 ## Online play: Step 1 planned, built phase by phase
 
 The owner asked for online play. Follow [docs/online-plan.md](docs/online-plan.md):
