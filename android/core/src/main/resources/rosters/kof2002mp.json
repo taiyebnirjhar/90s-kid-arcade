@@ -2552,6 +2552,12 @@
      "cmd": "214+B",
      "type": "special",
      "note": "K: B or D"
+    },
+    {
+     "name": "Kore wa, maru de....!!",
+     "cmd": "464646464",
+     "type": "hsdm",
+     "note": "HSDM: MAX mode + 1 power stock; no low life needed; back, forward x4, back"
     }
    ]
   },

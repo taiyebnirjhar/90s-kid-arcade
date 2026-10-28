@@ -2509,6 +2509,18 @@
      "note": "DM: 1 power stock; P: A or C; 2005 input; the 2002 one no longer works (1632143)"
     },
     {
+     "name": "Temee mo oucchimae!!",
+     "cmd": "6321463214+B",
+     "type": "dm",
+     "note": "DM: 1 power stock; K: B or D; 2005 input; the 2002 one no longer works (1632143)"
+    },
+    {
+     "name": "Chikara ga...katte ni...uwaaaa!!",
+     "cmd": "263+ABCD",
+     "type": "dm",
+     "note": "SDM (MAX DM): MAX mode + 1 power stock (2 total incl. activation)"
+    },
+    {
      "name": "Acchi he itteroo!",
      "cmd": "236+A",
      "type": "special",
@@ -2525,6 +2537,12 @@
      "cmd": "214+B",
      "type": "special",
      "note": "K: B or D"
+    },
+    {
+     "name": "Kore wa, maru de....!!",
+     "cmd": "6321478+AC",
+     "type": "hsdm",
+     "note": "HSDM: 2 power stocks; no low life needed; 2005 input; the 2002 one no longer works (464646464)"
     }
    ]
   },

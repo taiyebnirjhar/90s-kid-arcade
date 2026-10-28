@@ -376,11 +376,13 @@ change the secret to lock out a lost phone.
   native touch HUD, and Compose screens.
 - `server/worker.js` — the ROM library Worker.
 - `tools/romsets.py` — rebuilds the ROM check data from FBNeo's Neo Geo,
-  CPS-1, CPS-2 and CPS-3 drivers.
+  CPS-1, CPS-2, CPS-3 and Seta 2 drivers.
 - `tools/emu.py`, `tools/movetest.py` — a headless FBNeo front end, and the
   move tester built on it (bring your own core and ROMs).
 - `docs/kof-ram.md` — the KOF RAM map fighter detection reads (the other
   games' addresses are documented in `Detect.kt`).
+- `docs/online-plan.md` — the plan for online play (not started: parked
+  until it's wanted).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
 - The games' pictures (`android/app/art.txt`, kept in step with the game
