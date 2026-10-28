@@ -692,6 +692,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
                 override fun onRoster() = runOnUiThread { updateRoomUi() }
 
+                // The game's own word: this seat's player never started, or
+                // their game is over (Game.seats). One byte, read from any
+                // thread. Null where the game can't say.
+                override fun seatFree(seat: Int): Boolean? {
+                    val seats = game.seats ?: return null
+                    val offset = seats.offsets.getOrNull(seat) ?: return null
+                    val value = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull() ?: return null
+                    return seats.isFree(value.toInt() and 0xFF)
+                }
+
                 // A newcomer watches from the newest frame every input is in for.
                 override fun snapshot(): Pair<Int, ByteArray>? {
                     val raw = LibretroDroid.getNetState()

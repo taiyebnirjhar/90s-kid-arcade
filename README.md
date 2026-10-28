@@ -191,9 +191,12 @@ BIOS for Neo Geo games; the library has them).
   **Watch instead**, and Leave. News (someone joined, left, took a seat)
   slides in at the top; getting a seat says "You're player 2!".
 - **Take a seat**: while watching, press **COIN** or **START** (or Take a
-  seat). You get a free seat, or the seat of a player who has pressed
-  nothing for 20 seconds (say, the challenger who lost): they go back to
-  watching. If two ask at once, the first request to reach the host wins;
+  seat). You get a free seat, or the seat of a player whose game is over,
+  as on the cabinet: the game's own continue countdown ran out (say, the
+  challenger who lost). They go back to watching. The app reads this from
+  the game itself (every Neo Geo game, Cadillacs and Dinosaurs, Penguin
+  Brothers); in Street Fighter III and Marvel vs Capcom, for now, a player
+  who pressed nothing for 10 seconds. If two ask at once, the first request to reach the host wins;
   the other is told. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.

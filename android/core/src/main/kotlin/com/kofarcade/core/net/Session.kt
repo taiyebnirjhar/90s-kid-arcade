@@ -30,8 +30,12 @@ import kotlin.random.Random
 // a seat per player the game takes (Cadillacs and Dinosaurs: three), and up
 // to MAX_MEMBERS phones in all: the rest watch. Anyone with the room's key
 // comes in and watches; a watcher takes a seat with COIN or START (the first
-// request to reach the owner gets it): a free seat, or one whose player has
-// pressed nothing for IDLE_SECONDS (they go back to watching). Anyone may
+// request to reach the owner gets it): a free seat, or one whose player the
+// game itself shows out (never started, or game over once its continue
+// countdown ran out: [RoomListener.seatFree]), as on the cabinet: they go
+// back to watching. No timer of our own, except for a game that can't say:
+// there, a player who pressed nothing for FALLBACK_IDLE_SECONDS (about the
+// games' own continue countdown). Anyone may
 // leave: their seat empties and the game goes on. If the owner (the phone
 // that runs the room) leaves, the next one takes the room over.
 //
@@ -63,9 +67,6 @@ class Redirected(reason: String, val at: InetSocketAddress) : Refused(reason)
 
 /** Phones in a room at most: players and watchers. */
 const val MAX_MEMBERS = 8
-
-/** A player who presses nothing for this long can be replaced by a watcher. */
-const val IDLE_SECONDS = 20
 
 /** What the game screen hears from its room. Called on network threads. */
 interface RoomListener {
@@ -108,6 +109,14 @@ interface RoomListener {
 
     /** Who's in changed (someone came to watch, or left) without a new game. */
     fun onRoster() {}
+
+    /**
+     * Owner: the game shows [seat]'s player out (never started, or game
+     * over once its continue countdown ran out), from this phone's copy of
+     * the game. A watcher's COIN or START takes such a seat. Null: this game
+     * can't say (the room falls back to FALLBACK_IDLE_SECONDS of no input).
+     */
+    fun seatFree(seat: Int): Boolean? = null
 
     /** Something to tell the player: "Rafi joined", "You're the host now". */
     fun onNews(message: String) {}
@@ -337,8 +346,14 @@ class Room private constructor(
     // Watching (not the owner): each seat's next frame of relayed inputs.
     private val relayed = IntArray(4)
 
-    /** Frames of nothing pressed before a player's seat can be taken (shorter in tests). */
-    @Volatile internal var idleLimit = IDLE_FRAMES
+    /** How long a new player has to start in the game before its word that their seat is free counts (shorter in tests). */
+    @Volatile internal var seatGraceMs = SEAT_GRACE_MS
+
+    /** For a game that can't say who's out: frames of nothing pressed before a player's seat can be taken (shorter in tests). */
+    @Volatile internal var idleLimit = FALLBACK_IDLE_SECONDS * 60
+
+    // When each seat was last given to someone (System.currentTimeMillis).
+    private val seatedAt = java.util.concurrent.ConcurrentHashMap<Int, Long>()
 
     private fun players() = maxPlayers.coerceIn(2, 4)
 
@@ -927,6 +942,8 @@ class Room private constructor(
         next[localId] = (members[localId] ?: Member(localId, name, "", 0, 0, seat = 0))
             .copy(name = name, host = "", udpPort = udp.localPort, tcpPort = server.localPort, device = device)
         for ((id, seat) in moves) next[id]?.let { next[id] = it.copy(seat = seat) }
+        // A seat just given to someone: they get a moment to start in the game.
+        for ((id, seat) in moves) if (seat >= 0 && next[id] != null) seatedAt[seat] = System.currentTimeMillis()
         next.putAll(replace)
         if (hold != null) next[hold]?.let { next[hold] = it.copy(away = true) }
         // Held seats say how long they're held for.
@@ -978,8 +995,8 @@ class Room private constructor(
 
     /**
      * A watcher asks for a seat (on the worker, so the first request in gets
-     * it): the lowest free one, else the one whose player has been idle the
-     * longest, if IDLE_SECONDS or more (they go back to watching).
+     * it): the lowest free one, else the lowest one whose player the game
+     * shows out ([RoomListener.seatFree]); that player goes back to watching.
      */
     private fun sit(id: Int) {
         if (closed || !isOwner) return
@@ -995,21 +1012,29 @@ class Room private constructor(
             seat("${m.name} is player ${free + 1}", moves = mapOf(id to free))
             return
         }
-        val idle = synchronized(deliverLock) {
-            seats.values.map { it to relay.idleFrames(it.seat) }.filter { it.second >= idleLimit }.maxByOrNull { it.second }?.first
+        val now = System.currentTimeMillis()
+        val ln = listener
+        // The game's word for each seat; null where it can't say.
+        val word = seats.values.associate { p -> p.seat to ln?.let { runCatching { it.seatFree(p.seat) }.getOrNull() } }
+        val idle = synchronized(deliverLock) { seats.keys.associateWith { relay.idleFrames(it) } }
+        val out = seats.values.sortedBy { it.seat }.firstOrNull { p ->
+            now - (seatedAt[p.seat] ?: 0L) >= seatGraceMs &&
+                (word[p.seat] ?: ((idle[p.seat] ?: 0) >= idleLimit))
         }
-        if (idle == null) {
+        if (out == null) {
             val h = held.values.minByOrNull { it.seat }
             if (h != null) {
                 val left = ((holdEnds(h.id) - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
                 tell(id, "Player ${h.seat + 1}'s seat is held for ${h.name} (${left} s). The host can free it.")
             } else {
-                tell(id, "All seats are in use. One opens when its player presses nothing for $IDLE_SECONDS seconds.")
+                tell(id, "All seats are in use. One opens when a player's game is over.")
             }
             return
         }
-        tell(idle.id, "You were idle, so ${m.name} took your seat. Press COIN or START to play again.")
-        seat("${m.name} is player ${idle.seat + 1} (${idle.name} was idle)", moves = mapOf(id to idle.seat, idle.id to -1))
+        val why = if (word[out.seat] == null) "you weren't playing" else "your game was over"
+        tell(out.id, "${why.replaceFirstChar { it.uppercase() }}, so ${m.name} took your seat. Press COIN or START to play again.")
+        seat("${m.name} is player ${out.seat + 1} (${out.name}'s ${if (word[out.seat] == null) "turn was idle" else "game was over"})",
+            moves = mapOf(id to out.seat, out.id to -1))
     }
 
     /** A player gives up their seat (on the worker). */
@@ -1287,7 +1312,7 @@ class Room private constructor(
 
     /**
      * The owner's record of every player's inputs in this game (under the
-     * seating lock), to relay to watchers and to see who's idle.
+     * seating lock), to relay to watchers.
      */
     private inner class Relay {
         private var base = 0
@@ -1317,7 +1342,7 @@ class Room private constructor(
 
         fun has(frame: Int) = frame >= base
 
-        /** Frames since [seat] last pressed anything. */
+        /** Frames since [seat] last pressed anything (for a game that can't say who's out). */
         fun idleFrames(seat: Int): Int = (base + masks[seat].size) - lastActive[seat]
 
         /** Every playing seat's inputs for [from] until at most [max] frames on, up to [frontier]. */
@@ -1899,7 +1924,10 @@ class Room private constructor(
         private const val READY_MS = 3_000L
         private const val PING_MS = 1_000L
         private const val FEED_MS = 16L
-        private const val IDLE_FRAMES = IDLE_SECONDS * 60
+        private const val SEAT_GRACE_MS = 8_000L
+
+        /** A game that can't say who's out: a seat whose player pressed nothing this long is free (about a continue countdown). */
+        const val FALLBACK_IDLE_SECONDS = 10
         private const val HOLD_SECONDS = 60
         // Inputs the owner keeps beyond what watchers need, for newcomers' snapshots.
         private const val KEEP_FRAMES = 600
