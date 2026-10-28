@@ -1,6 +1,6 @@
 # Online play: the plan
 
-**Status: Step 1 planned (2026-10-28).** The owner asked to build online
+**Status: Step 1, phase 1.0 under way (2026-10-28).** The owner asked to build online
 play. Step 1 is broken down phase by phase below
 ([Step 1](#step-1-foundation-work-breakdown)), each phase one PR. Steps 2-4
 follow it. Today's multiplayer (same Wi-Fi or hotspot) is unchanged and
@@ -153,6 +153,40 @@ one Wi-Fi with no internet.
   Codes expire when the room closes.
 
 ### Phase 1.0: Decisions and owner setup
+
+**Results (2026-10-28):**
+
+- **D1 confirmed by the owner: WebRTC.** D2-D7 go ahead as written.
+- **APK size (1.0.2):** `io.getstream:stream-webrtc-android` 1.3.10 (Sept
+  2025):
+  - native libraries: 11.5 MB (arm64-v8a) and 6.6 MB (armeabi-v7a) raw;
+    5.4 + 3.9 MB compressed;
+  - Java code: 0.5 MB.
+
+  The app packs native libraries compressed (`useLegacyPackaging = true`),
+  so the **APK grows by about 10 MB, from 54 to about 64 MB**. Taking only
+  the two ABIs we already ship drops its x86 libraries.
+- **Cloudflare TURN (1.0.5), from Cloudflare's docs:**
+  - the server calls
+    `POST https://rtc.live.cloudflare.com/v1/turn/keys/{TURN_KEY_ID}/credentials/generate-ice-servers`
+    with `Authorization: Bearer {TURN_KEY_API_TOKEN}` and `{"ttl": seconds}`;
+  - it answers 201 with `iceServers`: Cloudflare's STUN plus TURN over
+    UDP, TCP and TLS on several ports, ready for WebRTC;
+  - credentials can be revoked;
+  - port 53 is in the list; with trickle ICE (which we use) it costs
+    nothing.
+- **Supabase Realtime limits (1.0.5), free plan:**
+  - 200 connections at once;
+  - **100 messages a second for the whole project**;
+  - 100 channel joins a second;
+  - 256 KB per broadcast.
+
+  Setting up a pair of phones takes about 10-20 small messages (offer,
+  answer, candidates), so this is fine. But **the app connects to Realtime
+  only on the Online screen and while setting up or healing a room**, never
+  for a whole game, and no game data goes through it.
+- **Owner setup:** the steps are in [online-setup.md](online-setup.md).
+  Waiting on 1.0.3 and 1.0.4.
 
 | # | Work | Who | Output |
 |---|---|---|---|
