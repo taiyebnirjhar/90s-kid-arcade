@@ -1,12 +1,12 @@
 # Notes for working on this repo
 
-## Online play: parked, with a plan
+## Online play: Step 1 planned, built phase by phase
 
-Online play (internet rooms, profiles, friends, public challenges, bots,
-chat, voice) is **not being built now**. If the owner asks for it, follow
-[docs/online-plan.md](docs/online-plan.md): its principles, connection order
-(nearby, then direct, then relay), steps 1-4 and settled decisions. Don't
-start on it without being asked.
+The owner asked for online play. Follow [docs/online-plan.md](docs/online-plan.md):
+its principles, connection order (nearby, then direct, then relay), settled
+decisions, and Step 1's work breakdown (phases 1.0-1.9, one PR each, each
+keeping same-Wi-Fi play and its tests working). Start a phase only when the
+owner says so, and record what's decided and learned in the doc as you go.
 
 ## Money: none while the app uses FBNeo
 
