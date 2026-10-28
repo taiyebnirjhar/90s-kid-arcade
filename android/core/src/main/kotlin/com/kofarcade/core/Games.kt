@@ -69,8 +69,39 @@ private val SUPER_ART = Regex("""^Super Art (I{1,3})\b""")
  * START takes such a seat, as on the cabinet. Found by watching the bytes in
  * FBNeo (tools/emu.py) through start, continue and game over.
  */
-class SeatStatus(val offsets: List<Int>, private val free: Set<Int>) {
+class SeatStatus(
+    val offsets: List<Int>,
+    private val free: Set<Int>,
+    /**
+     * For a game whose byte only says "in the fight" (it drops when the
+     * continue countdown starts, not when it ends): how long the game's own
+     * countdown lasts, measured in the game. The seat is free once the byte
+     * has said "out" that long. 0: the byte itself says game over.
+     */
+    val outForMs: Long = 0,
+) {
     fun isFree(value: Int): Boolean = value in free
+}
+
+/**
+ * Follows a game's seat bytes over time ([sample] them every half second or
+ * so): for a game with [SeatStatus.outForMs], a seat is free once its byte
+ * has said "out" for that long; otherwise as soon as it says so.
+ */
+class SeatWatch(private val status: SeatStatus) {
+    private val outSince = LongArray(status.offsets.size) { -1 }
+
+    /** [value] is [seat]'s byte now; returns whether the seat is free. */
+    @Synchronized
+    fun sample(seat: Int, value: Int, nowMs: Long): Boolean {
+        if (seat !in outSince.indices) return false
+        if (!status.isFree(value)) {
+            outSince[seat] = -1
+            return false
+        }
+        if (outSince[seat] < 0) outSince[seat] = nowMs
+        return nowMs - outSince[seat] >= status.outForMs
+    }
 }
 
 /**
@@ -260,6 +291,11 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Throw", "AD"), Move("Overhead", "BE")),
     neoGeo = false,
     pad = PadMap.CAPCOM_6,
+    // Each player's "in the fight" flag (1 in, 0 out; P1's at raw 0x156E1).
+    // It drops when the loser's continue countdown starts; the game keeps no
+    // byte for the countdown itself that could be found. Measured: GAME OVER
+    // 17 s after the drop alone, "PRESS 1P START" back 16-19 s after it in versus.
+    seats = SeatStatus(listOf(0x156E1, 0x156E0), setOf(0), outForMs = 18_000),
 ) + Game(
     // Capcom CPS-2, 1998: no BIOS, but each version's zip carries its .key.
     // Two-character teams: HP+HK tags, MP+MK calls the Special Partner.
@@ -272,6 +308,11 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Tag", "CF"), Move("Partner", "BE")),
     neoGeo = false,
     pad = PadMap.CAPCOM_6,
+    // Each player's state, in their first fighter block (68000 RAM 0xFF32B0,
+    // 0xFF36B0): 0 out, 6 playing, 8 continue countdown, then 10 and 12 when
+    // it ran out (game over), back to 0. Checked in versus: the loser went
+    // 6, 8, 12, 0 while the winner stayed at 6.
+    seats = SeatStatus(listOf(0x32B1, 0x36B1), setOf(0, 10, 12)),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

@@ -384,6 +384,9 @@ change the secret to lock out a lost phone.
   move tester built on it (bring your own core and ROMs).
 - `docs/kof-ram.md` — the KOF RAM map fighter detection reads (the other
   games' addresses are documented in `Detect.kt`).
+- `docs/adding-a-game.md` — what every new game needs, including the seat
+  rule (seats follow the game's own countdown) and how to find a game's
+  player status bytes.
 - `docs/online-plan.md` — the plan for online play (not started: parked
   until it's wanted).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the

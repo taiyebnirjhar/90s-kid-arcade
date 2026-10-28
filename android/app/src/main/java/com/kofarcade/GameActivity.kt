@@ -36,6 +36,7 @@ import com.kofarcade.core.Detection
 import com.kofarcade.core.FACE_KEYS
 import com.kofarcade.core.FaceKeeper
 import com.kofarcade.core.Game
+import com.kofarcade.core.SeatWatch
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
@@ -114,6 +115,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         const val EXTRA_NETPLAY = "netplay"
         private const val MAX_MOVES = 6
         private const val CORE = "libfbneo_libretro_android.so"
+        // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
+        private const val SEAT_SAMPLE_MS = 500L
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
         // Looking for a lost room: as long as a seat is held, every couple of seconds.
@@ -651,6 +654,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // The room runs on its own threads; it seats this phone (from the owner's
     // game) whenever someone joins or leaves, and the game waits meanwhile.
     private fun startNetplay(room: Room) {
+        // Who's in each seat, from the game itself (Game.seats). A game whose
+        // byte only says "in the fight" is watched over time, so its seat goes
+        // free once the game's own countdown has run (SeatStatus.outForMs).
+        val seats = game.seats
+        val seatWatch = seats?.let { SeatWatch(it) }
+        fun seatByte(seat: Int): Int? {
+            val offset = seats?.offsets?.getOrNull(seat) ?: return null
+            return LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF)
+        }
+        if (seats != null && seats.outForMs > 0) lifecycleScope.launch(Dispatchers.Default) {
+            while (isActive && this@GameActivity.room === room) {
+                delay(SEAT_SAMPLE_MS)
+                val now = System.currentTimeMillis()
+                for (seat in seats.offsets.indices) seatByte(seat)?.let { seatWatch?.sample(seat, it, now) }
+            }
+        }
         lifecycleScope.launch {
             if (room.isOwner) {
                 // The state the room starts from, for rematches and newcomers.
@@ -693,13 +712,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 override fun onRoster() = runOnUiThread { updateRoomUi() }
 
                 // The game's own word: this seat's player never started, or
-                // their game is over (Game.seats). One byte, read from any
-                // thread. Null where the game can't say.
+                // their game is over. Null where the game can't say.
                 override fun seatFree(seat: Int): Boolean? {
-                    val seats = game.seats ?: return null
-                    val offset = seats.offsets.getOrNull(seat) ?: return null
-                    val value = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull() ?: return null
-                    return seats.isFree(value.toInt() and 0xFF)
+                    val value = seatByte(seat) ?: return null
+                    return seatWatch?.sample(seat, value, System.currentTimeMillis())
                 }
 
                 // A newcomer watches from the newest frame every input is in for.
