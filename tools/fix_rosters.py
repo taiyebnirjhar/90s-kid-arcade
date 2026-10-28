@@ -150,9 +150,14 @@ redo('benimaru', 'Benimaru Collider', '623+A', 'P: A or C; close range; ' + NEW 
 redo('iori', 'Kuzukaze', '41236+B', 'K: B or D; close range; ' + NEW + ' (632146+P)')
 redo('joe', 'Ougon no Tiger Kick', '2368+B', 'DM: 1 power stock; K: B or D; ' + NEW + ' (2369; kofcn.org)')
 redo('k9999', 'Tsuki...', '6321463214+A', 'DM: 1 power stock; P: A or C; ' + NEW + ' (1632143)')
+# The kick DM (arm cannon) moved to the same long motion: up close it makes
+# 2002's animation, which 1632143+B no longer does.
+redo('k9999', 'Temee mo oucchimae!!', '6321463214+B', 'DM: 1 power stock; K: B or D; ' + NEW + ' (1632143)')
 # No input brings these out in 2005 Unique (2002's, the sources', or a scan of
-# every common motion), so they're left out rather than guessed.
-for cid, name in (('k9999', 'Temee mo oucchimae!!'), ('k9999', 'Chikara ga...katte ni...uwaaaa!!'),
+# every common motion), so they're left out rather than guessed. K9999's SDM
+# (2002: 263+ABCD) and his air HSDM (back, forward x4) didn't come out either;
+# his DMs with two buttons in MAX mode are just the DMs.
+for cid, name in (('k9999', 'Chikara ga...katte ni...uwaaaa!!'),
                   ('mary', 'M. Typhoon'), ('mary', 'M. Dynamite Swing'), ('mary', 'M. Dynamite Swing (MAX)'),
                   ('vice', 'Overkill'), ('daimon', 'Fu Rin Ka Zan'),
                   # 214214 + any button (ddooo.com) only starts his wind-up, as 2002's does; the super never follows.
