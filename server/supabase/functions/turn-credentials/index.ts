@@ -18,8 +18,10 @@ function json(status: number, body: unknown): Response {
 const deps: Deps = {
   now: () => new Date(),
   async inRoom(user, room) {
-    const { data } = await db.from("rooms").select("status, room_members!inner(member)")
+    const { data, error } = await db.from("rooms").select("status, room_members!inner(member)")
       .eq("code", room).eq("status", "open").eq("room_members.member", user).maybeSingle();
+    // A read that fails is an error, not "not a member".
+    if (error) throw error;
     return data != null;
   },
   async readUsage(month) {
@@ -67,7 +69,8 @@ const deps: Deps = {
     if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
   },
   async markRevoked(username) {
-    await db.from("relay_credentials").update({ revoked: true }).eq("username", username);
+    const { error } = await db.from("relay_credentials").update({ revoked: true }).eq("username", username);
+    if (error) throw error;
   },
   log: (text) => console.log(text),
 };

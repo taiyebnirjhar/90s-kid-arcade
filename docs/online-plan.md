@@ -355,6 +355,13 @@ one Wi-Fi with no internet.
 - **Not yet, and where:** Realtime's limit on people at once (D8) can't be
   read from the database; room creation checks it in phase 1.5, when
   signaling starts.
+- **Found later (2026-10-30), by a live check against the project:** the
+  project opens no table to any role by itself, the server's own (service
+  role) included, so `turn-credentials` couldn't read rooms or the relay's
+  tables and told every member "You're not in that room". Fixed by
+  `20261030000100_server_grants.sql`; the tests' stub of Supabase now grants
+  nothing by itself either, so the tests catch it, and the function reports
+  a failed read as an error instead of "not a member".
 
 ### Phase 1.3: Profile and sign-in (app)
 
