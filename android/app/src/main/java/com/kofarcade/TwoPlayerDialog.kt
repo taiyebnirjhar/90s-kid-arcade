@@ -50,6 +50,7 @@ import com.kofarcade.core.gameForSet
 import com.kofarcade.core.net.Beacon
 import com.kofarcade.core.net.BeaconListener
 import com.kofarcade.core.net.Redirected
+import com.kofarcade.core.net.explainConnectionTrouble
 import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
@@ -261,7 +262,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                     else -> say(m)
                 }
             } catch (e: Exception) {
-                if (isActive) say("Couldn't join: ${e.message}")
+                if (isActive) say(explainConnectionTrouble(e) ?: "Couldn't join: ${e.message}")
             }
             busy = false
         }
@@ -291,7 +292,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                 connect(found)
             } catch (e: Exception) {
                 busy = false
-                if (isActive) say("No room $key here. Check the key, and that both phones are on the same Wi-Fi or hotspot.")
+                if (isActive) say(explainConnectionTrouble(e) ?: "No room $key here. Check the key, and that both phones are on the same Wi-Fi or hotspot.")
             }
         }
     }
