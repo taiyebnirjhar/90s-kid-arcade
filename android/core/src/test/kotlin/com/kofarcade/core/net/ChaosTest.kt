@@ -13,9 +13,13 @@ import kotlin.test.fail
  * own seat, the games in step and every input where it belongs.
  *
  * KOF_SOAK_SEEDS (e.g. "1,2,3") and KOF_SOAK_SECONDS run longer soaks.
+ * [ChaosOverInternetTest] runs the same over a simulated internet.
  */
-class ChaosTest {
-    private val phones = Phones { println(it) }
+open class ChaosTest {
+    /** The network the phones are on: null for real sockets on this machine. */
+    protected open val net: FakeNet? = null
+
+    protected val phones by lazy { Phones({ println(it) }, net) }
 
     @AfterTest
     fun cleanUp() = phones.closeAll()
@@ -157,7 +161,7 @@ class ChaosTest {
     }
 
     // Everyone back in one room, the players in their seats, the games in step.
-    private fun settled(all: List<Phone>, players: Set<String>) {
+    protected fun settled(all: List<Phone>, players: Set<String>) {
         var why = ""
         waitFor("settled", ms = 120_000, why = { why }) {
             why = problem(all, players) ?: return@waitFor true
@@ -199,7 +203,7 @@ class ChaosTest {
         return null
     }
 
-    private fun waitFor(what: String, ms: Long = 20_000, why: () -> String = { "" }, condition: () -> Boolean) {
+    protected fun waitFor(what: String, ms: Long = 20_000, why: () -> String = { "" }, condition: () -> Boolean) {
         val until = System.currentTimeMillis() + ms
         while (!condition()) {
             if (System.currentTimeMillis() > until) fail("timed out waiting for $what: ${why()}")

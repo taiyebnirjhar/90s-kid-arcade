@@ -61,7 +61,7 @@ used.
 
 ## Step 1: Foundation (work breakdown)
 
-**Status: planned (2026-10-28), not started.** The owner asked to build
+**Status: in progress.** Phase 1.0 done (2026-10-28); phase 1.1 built (2026-10-29). The owner asked to build
 Step 1. Each phase below is one PR (or a few), merged before the next
 starts. Every phase keeps today's same-Wi-Fi play working and its tests
 green.
@@ -242,6 +242,47 @@ one Wi-Fi with no internet.
 - the same rooms pass over the fake transport.
 
 **Risk:** this is the riskiest refactor of the whole step, because `Session.kt` (2,135 lines) mixes logic and sockets. It ships alone so any regression shows up in Wi-Fi play before anything else changes.
+
+**Results (2026-10-29):**
+
+- **The seam (`core/net/Transport.kt`):**
+  - `Link`: reliable, ordered messages to one phone; several sent together
+    arrive back to back (a seating and its game state).
+  - `Datagrams`: quick, unreliable packets for inputs.
+  - `Transport`: listen for links, connect to an `Address`, make datagram
+    endpoints, and give the room's key.
+  - `Address` (host and port) is all the room keeps of where a phone is. It
+    only stores and compares it, so the wire messages (`Member.host`, ports,
+    `Moved`) are unchanged.
+- **`LanTransport`:** today's TCP and UDP sockets, room ports, the Wi-Fi
+  traffic class and the room key from the LAN address, moved out of
+  `Session.kt` unchanged. Beacons stay the LAN way of finding rooms; a room
+  sends none when `beaconPort` is -1.
+- **`Room` uses only the seam.** It gets a `transport` when it's made
+  (`Room.host(..., transport)`, `Room.join(transport, address, ...)`); the
+  old `Room.join(InetAddress, port, ...)` and `probe(InetAddress, ...)` are
+  kept for the app and use `LanTransport`. The tests' fault switches
+  (`Faults`: cuts, stalls, resets, loss, delay) stay in the room, so they
+  work the same over any transport.
+- **The app's only change:** `Redirected.at` is an `Address` now.
+- **`FakeNet` (tests):** a simulated network in memory. Each way between two
+  phones has its own latency, jitter (datagrams overtake each other), datagram
+  loss and outages (links stall, datagrams are lost, nobody new gets through).
+- **Tests:**
+  - every existing test passes unchanged over real sockets;
+  - `RoomOverInternetTest` runs all 25 room tests, and
+    `ChaosOverInternetTest` the 4 soaks, over `FakeNet` with 20-80 ms of
+    latency, 20 ms of jitter and 2% loss on each way;
+  - a new one there: a 2.5 s outage between host and guest passes with
+    nobody dropped and no new seating;
+  - CI takes about 3.5 minutes longer.
+- **Learned, for phase 1.4:** a new owner taking the room over still
+  *connects* to each member (`TAKEOVER`). That works over the LAN and
+  `FakeNet`, but a phone on the internet can't be connected to. The WebRTC
+  transport's `connect` must reuse the peer connection the two phones
+  already have (D4), not open a new one. Finding a room that was lost
+  (`rejoin`, the owner's scouting) also connects to remembered addresses;
+  online, those become the room code looked up on the server.
 
 ### Phase 1.2: Backend (Supabase)
 
