@@ -62,6 +62,58 @@ private val AIR = Regex("""\bin (the )?air\b""", RegexOption.IGNORE_CASE)
 private val SUPER_ART = Regex("""^Super Art (I{1,3})\b""")
 
 /**
+ * Where a game keeps whether each player is in: one status byte per seat, at
+ * these offsets into the emulator's system RAM (as libretro hands it out),
+ * and the values that mean the seat is free: the player never started, or
+ * their game is over and its continue countdown ran out. A watcher's COIN or
+ * START takes such a seat, as on the cabinet. Found by watching the bytes in
+ * FBNeo (tools/emu.py) through start, continue and game over.
+ */
+class SeatStatus(
+    val offsets: List<Int>,
+    private val free: Set<Int>,
+    /**
+     * For a game whose byte only says "in the fight" (it drops when the
+     * continue countdown starts, not when it ends): how long the game's own
+     * countdown lasts, measured in the game. The seat is free once the byte
+     * has said "out" that long. 0: the byte itself says game over.
+     */
+    val outForMs: Long = 0,
+) {
+    fun isFree(value: Int): Boolean = value in free
+}
+
+/**
+ * Follows a game's seat bytes over time ([sample] them every half second or
+ * so): for a game with [SeatStatus.outForMs], a seat is free once its byte
+ * has said "out" for that long; otherwise as soon as it says so.
+ */
+class SeatWatch(private val status: SeatStatus) {
+    private val outSince = LongArray(status.offsets.size) { -1 }
+
+    /** [value] is [seat]'s byte now; returns whether the seat is free. */
+    @Synchronized
+    fun sample(seat: Int, value: Int, nowMs: Long): Boolean {
+        if (seat !in outSince.indices) return false
+        if (!status.isFree(value)) {
+            outSince[seat] = -1
+            return false
+        }
+        if (outSince[seat] < 0) outSince[seat] = nowMs
+        return nowMs - outSince[seat] >= status.outForMs
+    }
+}
+
+/**
+ * Every Neo Geo game: the BIOS's player status (BIOS_PLAYER_MOD1 and 2 at
+ * 0x10FDB6, 0x10FDB7; 0 never played, 1 playing, 2 continue, 3 game over),
+ * which the system requires games to keep. Checked in KOF '97 (1, then 2 for
+ * the countdown, then 3 when it ran out) and Metal Slug X. The RAM's bytes
+ * are swapped in pairs, so P1's is at offset 0xFDB7.
+ */
+val NEO_GEO_SEATS = SeatStatus(listOf(0xFDB7, 0xFDB6), setOf(0, 3))
+
+/**
  * A supported game.
  *
  * [sets] are the FBNeo ROM set names (zip names) accepted for it; the first is
@@ -93,6 +145,8 @@ data class Game(
     val players: Int = 2,
     /** Which emulator button each of A-F is (FBNeo's layout for the board). */
     val pad: PadMap = PadMap.NEO_GEO,
+    /** Where the game says each player is in or out, for seats in a room; null: not known. */
+    val seats: SeatStatus? = if (neoGeo) NEO_GEO_SEATS else null,
 ) {
     /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
     val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
@@ -195,6 +249,9 @@ val GAMES: List<Game> = listOf(
     run = true,
     neoGeo = false,
     players = 3,
+    // Each player's state, 0x180 apart (68000 RAM 0xFFB316 on): 0 out, 4
+    // choosing a fighter, 6 playing, 8 continue countdown, back to 0 when it ran out.
+    seats = SeatStatus(listOf(0xB317, 0xB497, 0xB617), setOf(0)),
 ) + Game(
     // Neo Geo, 2000: a graveyard platformer for two. Checked in FBNeo
     // (tools/emu.py): A throws the lantern's fire, B jumps, C fires too, D
@@ -214,6 +271,8 @@ val GAMES: List<Game> = listOf(
     layout = Layout.SHOOTER, art = "Penguin Brothers (Japan)",
     labels = mapOf('A' to "Bomb", 'B' to "Jump"),
     neoGeo = false,
+    // Each player's state: 0 out, 2 playing, 4 continue countdown, 6 game over.
+    seats = SeatStatus(listOf(0x35B2, 0x362E), setOf(0, 6)),
 ) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
@@ -232,6 +291,11 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Throw", "AD"), Move("Overhead", "BE")),
     neoGeo = false,
     pad = PadMap.CAPCOM_6,
+    // Each player's "in the fight" flag (1 in, 0 out; P1's at raw 0x156E1).
+    // It drops when the loser's continue countdown starts; the game keeps no
+    // byte for the countdown itself that could be found. Measured: GAME OVER
+    // 17 s after the drop alone, "PRESS 1P START" back 16-19 s after it in versus.
+    seats = SeatStatus(listOf(0x156E1, 0x156E0), setOf(0), outForMs = 18_000),
 ) + Game(
     // Capcom CPS-2, 1998: no BIOS, but each version's zip carries its .key.
     // Two-character teams: HP+HK tags, MP+MK calls the Special Partner.
@@ -244,6 +308,11 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Tag", "CF"), Move("Partner", "BE")),
     neoGeo = false,
     pad = PadMap.CAPCOM_6,
+    // Each player's state, in their first fighter block (68000 RAM 0xFF32B0,
+    // 0xFF36B0): 0 out, 6 playing, 8 continue countdown, then 10 and 12 when
+    // it ran out (game over), back to 0. Checked in versus: the loser went
+    // 6, 8, 12, 0 while the winner stayed at 6.
+    seats = SeatStatus(listOf(0x32B1, 0x36B1), setOf(0, 10, 12)),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

@@ -75,6 +75,8 @@ class RoomTest {
         @Volatile var running = true
         // Presses nothing.
         @Volatile var idle = false
+        // Seats whose player this phone's game shows out (game over); null: the game can't say.
+        @Volatile var outSeats: Set<Int>? = emptySet()
         @Volatile var closedReason: String? = null
         @Volatile var lostReason: String? = null
         @Volatile var error: String? = null
@@ -88,6 +90,8 @@ class RoomTest {
         }
 
         override fun captureState(): ByteArray = byteArrayOf(7, room.localId.toByte())
+
+        override fun seatFree(seat: Int): Boolean? = outSeats?.let { seat in it }
 
         // The game at its newest frame with every input in.
         override fun snapshot(): Pair<Int, ByteArray> = synchronized(lock) {
@@ -265,10 +269,49 @@ class RoomTest {
     }
 
     @Test
-    fun aWatcherTakesTheSeatOfAPlayerWhoStoppedPlaying() {
+    fun aWatcherTakesTheSeatOfAPlayerWhoseGameIsOver() {
+        val h = host()
+        h.seatGraceMs = 60_000
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g1 = join(h, "Loser")
+        val b = FakeGame(g1).apply { play() }
+        waitFor("watching") { b.epoch == 1 }
+        g1.requestSeat()
+        waitFor("seated") { a.epoch == 2 && g1.localPlayer == 1 }
+        val g2 = join(h, "Next")
+        val c = FakeGame(g2).apply { play() }
+        waitFor("watching") { c.epoch == 2 }
+
+        // Everyone's playing: no seat to take.
+        g2.requestSeat()
+        waitFor("told") { c.news.any { "All seats are in use" in it } }
+        assertEquals(2, a.epoch)
+
+        // The loser's game is over, but they only just sat down: still theirs.
+        a.outSeats = setOf(1)
+        c.news.clear()
+        g2.requestSeat()
+        waitFor("told again") { c.news.any { "All seats are in use" in it } }
+        assertEquals(2, a.epoch)
+
+        // Once they've had their moment, the game's word frees the seat.
+        h.seatGraceMs = 0
+        g2.requestSeat()
+        waitFor("swapped") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
+        assertEquals(1, g2.localPlayer)
+        assertTrue(g1.watching)
+        waitFor("told the loser") { b.news.any { "Your game was over" in it } }
+        waitFor("frames") { a.framesOf(1) >= 60 && b.framesOf(1) >= 60 }
+        assertTrue(a.matches(1, c, 60) && b.matches(0, a, 60) && b.matches(1, c, 60))
+    }
+
+    @Test
+    fun inAGameThatCantSayWhosOutAWatcherTakesAnIdlePlayersSeat() {
         val h = host()
         h.idleLimit = 60
-        val a = FakeGame(h).apply { play() }
+        h.seatGraceMs = 0
+        val a = FakeGame(h).apply { outSeats = null; play() }
         waitFor("host seated") { a.epoch == 1 }
         val g1 = join(h, "Loser")
         val b = FakeGame(g1).apply { play() }
@@ -291,9 +334,7 @@ class RoomTest {
         waitFor("swapped") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
         assertEquals(1, g2.localPlayer)
         assertTrue(g1.watching)
-        waitFor("told the loser") { b.news.any { "You were idle" in it } }
-        waitFor("frames") { a.framesOf(1) >= 60 && b.framesOf(1) >= 60 }
-        assertTrue(a.matches(1, c, 60) && b.matches(0, a, 60) && b.matches(1, c, 60))
+        waitFor("told the loser") { b.news.any { "You weren't playing" in it } }
     }
 
     @Test

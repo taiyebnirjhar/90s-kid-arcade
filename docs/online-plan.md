@@ -1,8 +1,10 @@
 # Online play: the plan
 
-**Status: not started (parked, 2026-10-27).** Online play isn't being built
-now. If it is, it follows this plan. Today's multiplayer (same Wi-Fi or
-hotspot) is unchanged and stays.
+**Status: Step 1, phase 1.0 under way (2026-10-28).** The owner asked to build online
+play. Step 1 is broken down phase by phase below
+([Step 1](#step-1-foundation-work-breakdown)), each phase one PR. Steps 2-4
+follow it. Today's multiplayer (same Wi-Fi or hotspot) is unchanged and
+stays.
 
 **Making money** (customization, a subscription) comes only after licensing:
 FBNeo's license forbids any profit or donations, and the games are SNK's and
@@ -57,33 +59,300 @@ used.
   fastest" badge.
 - **Home screen:** "Play together anywhere, even without internet."
 
-## Step 1: Foundation
+## Step 1: Foundation (work breakdown)
 
-- **Sign-in:** guest with one tap; link Google later so the profile
-  survives a phone change.
-- **Profile:** name, an icon, a friend code (`TAIYEB#4821`), and games and
-  wins for each game.
-- **Online rooms:** create a room and share the code. Joining mid-game,
-  rematches and host handover work as on Wi-Fi.
-- **Watch and queue** (the existing watchers, brought online):
-  - A full room makes you a watcher: "You're 2nd in line".
-  - When a seat frees up, the next in line takes it.
-  - You can leave the line and keep watching. Players see "3 watching".
-  - Watchers receive button presses, not video, and never slow the
-    players down.
-- **Input delay set from the measured ping.** The current `DelayTuner`
-  stayed at 1 frame at 70 ms ping, which means more corrections.
-- **Room security:** a secret per room, so outsiders can't send inputs.
-- **Control messages over the internet:** they move off direct TCP, through
-  the server or a reliable channel on the same link. This is the largest
-  piece of the step.
-- **Tests:**
-  - `SmoothnessTest` at internet pings;
-  - the fault tests;
-  - two real phones on different networks.
+**Status: planned (2026-10-28), not started.** The owner asked to build
+Step 1. Each phase below is one PR (or a few), merged before the next
+starts. Every phase keeps today's same-Wi-Fi play working and its tests
+green.
 
-**Done when:** two friends on different networks play a smooth game, and the
-same flow works on one Wi-Fi with no internet.
+**Done when:** two friends on different networks (Wi-Fi and 4G, or two 4G
+phones) play a smooth game from a room code, and the same flow still works on
+one Wi-Fi with no internet.
+
+### Notes from the code (why Step 1 is shaped this way)
+
+- **Today's rooms are a star plus a mesh** (`Session.kt`).
+  - Control messages go over TCP between each phone and the owner (`Line`):
+    joining (`HELLO`/`WELCOME`), seatings, the game state, pause, seat
+    requests, watchers' feeds.
+  - Inputs go over UDP, from every phone to every other.
+- **The room key is the owner's local address and port** (`RoomKey.kt`),
+  and phones find rooms with a broadcast beacon. Both only work on one
+  network.
+- **When the owner leaves, the new owner opens a TCP connection to every
+  member** (`TAKEOVER`). Over the internet a phone can't accept incoming
+  connections (home routers, and mobile networks' shared addresses), so this
+  can't work there.
+- **What carries over unchanged:** the rollback and time sync (`Lockstep`,
+  `TimeSync`, `DelayTuner`), the room logic (seats, holds, watchers,
+  rematch, desync resync), and the ROM fingerprint check. They need a
+  different way to carry their messages, not new logic.
+- **`core` is plain Kotlin on the JVM**, tested without Android. The room
+  logic is tested over real sockets on one machine (`Phones.kt`,
+  `RoomTest`, `ChaosTest`, with network faults injected), and
+  `SmoothnessTest` simulates timing. Internet transport must keep the room
+  logic testable that way.
+
+### Architecture decisions (proposed; the owner confirms in phase 1.0)
+
+- **D1. Internet transport: WebRTC.** One peer connection per pair of
+  phones, each with two data channels:
+  - a reliable, ordered one for control messages (today's TCP `Line`);
+  - an unreliable, unordered one for inputs (today's UDP).
+
+  Why:
+  - **The connection order is built in.** WebRTC's ICE tries the local
+    network first, then direct over the internet (STUN), then the relay
+    (TURN). That's exactly "nearby, then direct, then relay".
+  - **Cloudflare's TURN is made for it.**
+  - **Everything is encrypted (DTLS).**
+  - **Voice (Step 4) runs on the same connections.**
+
+  Library: `io.getstream:stream-webrtc-android`, a maintained prebuilt of
+  Google's WebRTC; Google stopped publishing one.
+  - *To confirm in 1.0:* how much it adds to the APK (arm64-v8a and
+    armeabi-v7a only, like the FBNeo core).
+  - *The alternative, if it's too big:* our own STUN, hole punching, a TURN
+    client and a reliable channel over UDP. Pure Kotlin and smaller, but much
+    more to build and test, and voice would still need WebRTC later.
+- **D2. Offline nearby play stays on today's transport.** With no internet
+  there's no server to set up WebRTC through. So the beacon, TCP and UDP
+  rooms stay exactly as they are and are what the Nearby card uses. When
+  online, two phones on one Wi-Fi still connect locally: ICE picks the local
+  path.
+- **D3. The room logic gets a transport seam.** `Room` talks to two small
+  interfaces instead of sockets:
+  - `Link`: a reliable message channel to one member;
+  - `Datagrams`: inputs to and from members.
+
+  Today's sockets become the LAN implementation and WebRTC the internet one.
+  The tests run the room logic over a fake transport that can add internet
+  latency, jitter, loss and drop-outs.
+- **D4. Host takeover over the internet reuses the mesh.** Every pair
+  already has a peer connection for inputs, so a new owner already has a
+  reliable channel to each member: no new connections needed.
+- **D5. Server: Supabase.**
+  - Auth: guest sign-in, Google linked later, keeping the same user id.
+  - Postgres: profiles, rooms.
+  - Realtime: signaling, meaning the WebRTC offers, answers and candidates
+    for each room, on a private channel only that room's members can join.
+  - Edge Functions: room codes, and minting short-lived TURN credentials.
+
+  Android client: `supabase-kt`.
+  - *To confirm in 1.0:* Realtime's message size and rate limits. Signaling
+    messages are a few KB; game states never go through Supabase.
+- **D6. Relay: Cloudflare Realtime TURN.**
+  - The TURN key stays in a Supabase secret.
+  - An Edge Function calls Cloudflare's credentials API and hands each phone
+    short-lived `iceServers`, valid 1 hour and renewed while the room
+    lasts (D8).
+  - *To confirm in 1.0:* the exact endpoint. The docs show
+    `.../credentials/generate-ice-servers`; older pages show `.../generate`.
+- **D7. Room codes come from the server.** Six characters from the same
+  alphabet as today's keys (no 0/O, 1/I), so they're easy to read out.
+  Codes expire when the room closes.
+
+- **D8. Never past a free allowance: a hard stop, owner's rule
+  (2026-10-29).** A feature that would go past its service's free allowance
+  for the month switches itself off until the month resets, with a note in
+  the app. Nothing is ever billed.
+  - **The relay (1,000 GB a month).** Cloudflare doesn't stop at the free
+    amount; it bills $0.05/GB after it. So our server stops it:
+    - `turn-credentials` reads this month's relay use from Cloudflare's
+      analytics (GraphQL `callsTurnUsageAdaptiveGroups`, egress plus
+      ingress bytes), at most every 5 minutes, and keeps it in the database.
+    - **At 900 GB** (90%, a margin for the analytics' delay) it gives out no
+      new credentials. Credentials last 1 hour, and the app asks for fresh
+      ones each hour, so use stops within the hour.
+    - **At 950 GB** it revokes every credential still live
+      (`.../credentials/{username}/revoke`), and relayed games end.
+    - Every credential carries the room as its custom identifier, so one
+      room or user using too much shows up and can be cut off on its own.
+    - The app: "Online play through the relay is paused until the 1st.
+      Nearby play and direct connections still work." Games that connect
+      directly don't use the relay and go on.
+    - For scale: a two-player game uses about 40 MB an hour, so 900 GB is
+      over 20,000 relayed hours a month.
+  - **Supabase:** the free plan can't be billed; it stops or slows at its
+    limits. The app still checks: when sign-in, room creation or
+    signaling fails because a limit was reached, it says online play is
+    paused, instead of failing quietly. Room creation also refuses when
+    Realtime is near its limit of people at once.
+  - **Every new paid service** gets the same kind of stop before it ships.
+
+### Phase 1.0: Decisions and owner setup
+
+**Results (2026-10-28):**
+
+- **D1 confirmed by the owner: WebRTC.** D2-D7 go ahead as written.
+- **APK size (1.0.2):** `io.getstream:stream-webrtc-android` 1.3.10 (Sept
+  2025):
+  - native libraries: 11.5 MB (arm64-v8a) and 6.6 MB (armeabi-v7a) raw;
+    5.4 + 3.9 MB compressed;
+  - Java code: 0.5 MB.
+
+  The app packs native libraries compressed (`useLegacyPackaging = true`),
+  so the **APK grows by about 10 MB, from 54 to about 64 MB**. Taking only
+  the two ABIs we already ship drops its x86 libraries.
+- **Cloudflare TURN (1.0.5), from Cloudflare's docs:**
+  - the server calls
+    `POST https://rtc.live.cloudflare.com/v1/turn/keys/{TURN_KEY_ID}/credentials/generate-ice-servers`
+    with `Authorization: Bearer {TURN_KEY_API_TOKEN}` and `{"ttl": seconds}`;
+  - it answers 201 with `iceServers`: Cloudflare's STUN plus TURN over
+    UDP, TCP and TLS on several ports, ready for WebRTC;
+  - credentials can be revoked;
+  - port 53 is in the list; with trickle ICE (which we use) it costs
+    nothing.
+- **Supabase Realtime limits (1.0.5), free plan:**
+  - 200 connections at once;
+  - **100 messages a second for the whole project**;
+  - 100 channel joins a second;
+  - 256 KB per broadcast.
+
+  Setting up a pair of phones takes about 10-20 small messages (offer,
+  answer, candidates), so this is fine. But **the app connects to Realtime
+  only on the Online screen and while setting up or healing a room**, never
+  for a whole game, and no game data goes through it.
+- **Owner setup:** the steps are in [online-setup.md](online-setup.md).
+  Waiting on 1.0.3 and 1.0.4.
+
+| # | Work | Who | Output |
+|---|---|---|---|
+| 1.0.1 | Confirm D1–D7 (especially WebRTC vs our own transport) | Owner | Decisions noted here |
+| 1.0.2 | Measure the APK growth from `stream-webrtc-android` (two ABIs) in a throwaway build | Claude | Size in this doc |
+| 1.0.3 | Create the Supabase project; turn on anonymous sign-in; note the project URL and anon key | Owner (guide from Claude) | `docs/online-setup.md` |
+| 1.0.4 | Create a Cloudflare TURN key; store its id and token as Supabase secrets | Owner (guide) | Secrets set, never in the repo |
+| 1.0.5 | Confirm Realtime limits and the TURN endpoint against current docs | Claude | Notes here |
+
+**Exit:** decisions confirmed; Supabase and TURN ready.
+
+### Phase 1.1: Transport seam (no visible change)
+
+| # | Work | Output |
+|---|---|---|
+| 1.1.1 | `Link` and `Datagrams` interfaces in `core/net`; what `Room` needs from each | Interfaces |
+| 1.1.2 | Move today's TCP `Line` and UDP code behind them (the LAN transport) | `LanTransport` |
+| 1.1.3 | `Room` uses only the interfaces; addresses (`Member.host`, ports) become opaque transport addresses | Refactored `Session.kt` |
+| 1.1.4 | A fake transport for tests: latency, jitter, loss, drop-outs, per pair of phones | `FakeTransport` |
+| 1.1.5 | Run `RoomTest`, `ChaosTest` and the soak tests over both the real sockets and the fake transport | Tests |
+
+**Tests:**
+- every existing test passes unchanged;
+- the same rooms pass over the fake transport.
+
+**Risk:** this is the riskiest refactor of the whole step, because `Session.kt` (2,135 lines) mixes logic and sockets. It ships alone so any regression shows up in Wi-Fi play before anything else changes.
+
+### Phase 1.2: Backend (Supabase)
+
+| # | Work | Output |
+|---|---|---|
+| 1.2.1 | Schema: `profiles` (user id, name, icon, friend code, created), `rooms` (code, owner user, game set, ROM fingerprint, max players, status, created, last seen) | `server/supabase/migrations/*.sql` |
+| 1.2.2 | Row-level security: everyone reads profiles' public fields; users write only their own; rooms readable by code, written by their owner | Policies |
+| 1.2.3 | Edge Function `create-room`: a unique code; at most a few open rooms per user | Function |
+| 1.2.4 | Edge Function `turn-credentials`: short-lived TURN servers for a signed-in user | Function |
+| 1.2.4a | The relay's hard stop (D8): this month's use from Cloudflare's analytics, no new credentials at 900 GB, revoke live ones at 950 GB, 1-hour credentials tagged with the room | Function + `usage` table |
+| 1.2.5 | Realtime authorization: only a room's members join its signaling channel | Policy |
+| 1.2.6 | Clean-up: rooms not seen for 10 minutes close | Scheduled job |
+| 1.2.7 | Tests: SQL policy tests (a user can't edit another's profile or room) and function tests, including the relay's stop at 900 GB and revoke at 950 GB | Tests |
+
+**Exit:** a signed-in test user can create a room, read it by code, get TURN credentials, and is refused what isn't theirs; with the month's use set past 900 GB, no credentials are given.
+
+### Phase 1.3: Profile and sign-in (app)
+
+| # | Work | Output |
+|---|---|---|
+| 1.3.1 | Add `supabase-kt` (Auth, Postgrest, Realtime, Functions); URL and anon key in the build config | Dependency |
+| 1.3.2 | Guest sign-in on first opening the Online screen, never at app start; the session is kept on the phone | Sign-in |
+| 1.3.3 | Profile screen: name, an icon from our own set (palette colors, no game art), friend code; edit name and icon | UI |
+| 1.3.4 | Stats: games played per game, counted on the phone and synced. *Wins need each game's winner read from memory, which Step 3 builds; they're shown from then on* | Stats |
+| 1.3.5 | Offline: the profile shows from the phone's copy; nothing online blocks the app | Behavior |
+| 1.3.6 | Tests: sign-in once, reuse after restart, offline start; UI snapshots | Tests |
+
+### Phase 1.4: Internet transport (WebRTC)
+
+| # | Work | Output |
+|---|---|---|
+| 1.4.1 | Add `stream-webrtc-android`; one `PeerConnectionFactory`; ICE servers from `turn-credentials` (plus STUN) | Setup |
+| 1.4.2 | Signaling over the room's Realtime channel: offer, answer, candidates, addressed to a member | `Signaling` |
+| 1.4.3 | Per pair: a reliable, ordered channel (control) and an unreliable, unordered one (inputs) as `Link` and `Datagrams` | `WebRtcTransport` |
+| 1.4.4 | Path and quality: which path ICE chose (local, direct, relay), round-trip time, loss; into the connection report | Diagnostics |
+| 1.4.5 | Recovery: ICE restart on a network change (Wi-Fi to 4G); the room's existing hold and rejoin logic covers the gap | Behavior |
+| 1.4.6 | Tests: transport contract tests shared with the LAN and fake transports; on-phone checks with two phones (1.9) | Tests |
+
+### Phase 1.5: Online rooms
+
+| # | Work | Output |
+|---|---|---|
+| 1.5.1 | Host: create the room (code), join its signaling channel, wait for members | Flow |
+| 1.5.2 | Join by code: look the room up, check the game and ROM fingerprint before connecting ("You need KOF '97 (kof97) to join") | Flow |
+| 1.5.3 | Everyone connects to everyone (mesh); the owner runs the room as today | Behavior |
+| 1.5.4 | Host takeover and rejoin over the mesh (D4); the room record follows the owner | Behavior |
+| 1.5.5 | Room security: only members the owner admitted are in the channel; WebRTC encrypts | Security |
+| 1.5.6 | Share the code: copy, the Android share sheet, and a QR code | UI |
+| 1.5.7 | Tests: the room tests over the fake transport at internet conditions (join, leave, takeover, drop and rejoin, three players) | Tests |
+
+### Phase 1.6: Smoothness on the internet
+
+| # | Work | Output |
+|---|---|---|
+| 1.6.1 | Starting input delay from measured round-trip time (about one frame per 33 ms of round trip, 1–4 frames), then `DelayTuner` adapts | Delay |
+| 1.6.2 | `DelayTuner` tuned for internet ping (it stayed at 1 frame at 70 ms) | Tuner |
+| 1.6.3 | `SmoothnessTest` internet cases become real tests with limits: no freezes up to 250 ms; corrections stay small up to 110 ms | Tests |
+| 1.6.4 | Rollback cost on slow phones: measure replays of the heavy games (SF3, Penguin Brothers) and cap the rollback window by phone speed if needed | Measured |
+
+### Phase 1.7: Watch and queue
+
+| # | Work | Output |
+|---|---|---|
+| 1.7.1 | The owner keeps an ordered line of watchers waiting for a seat | Queue |
+| 1.7.2 | A freed seat goes to the first in line (today: whoever presses COIN first) | Behavior |
+| 1.7.3 | UI: "You're 2nd in line", "Leave line" (keep watching), and "3 watching" for players | UI |
+| 1.7.4 | A watcher limit per room, so watchers never slow the players | Limit |
+| 1.7.5 | Tests: line order through joins, leaves, takeovers | Tests |
+
+### Phase 1.8: One Online screen
+
+| # | Work | Output |
+|---|---|---|
+| 1.8.1 | Home: one **Online** entry (replacing the separate Wi-Fi flow) | UI |
+| 1.8.2 | With internet: create room, join by code, nearby rooms on top ("Nearby · fastest") | UI |
+| 1.8.3 | No internet: the gold **Nearby play** card ("no internet needed, zero lag, no data used"), today's nearby rooms, **Create nearby room** | UI |
+| 1.8.4 | Ping bars before joining, and in the room | UI |
+| 1.8.5 | Plain-language errors (code not found, room full, different ROM, no connection) | Copy |
+| 1.8.6 | Paparazzi snapshots of every screen, light and offline states | Tests |
+
+### Phase 1.9: Hardening and real-phone tests
+
+| # | Work | Output |
+|---|---|---|
+| 1.9.1 | A two-phone test checklist the owner runs: Wi-Fi + 4G, 4G + 4G, same Wi-Fi online, hotspot with no internet, network switch mid-game, owner leaves mid-game | `docs/online-testing.md` |
+| 1.9.2 | Connection reports from those runs, read and fixed | Fixes |
+| 1.9.3 | Data use and battery over a 30-minute game | Numbers here |
+| 1.9.4 | README and site: how online play works | Docs |
+
+**Exit:** the Step 1 "Done when" above, on the owner's phones.
+
+### Order and dependencies
+
+```
+1.0 ─┬─ 1.1 (seam) ───────┬─ 1.4 (WebRTC) ─ 1.5 (rooms) ─┬─ 1.7 (queue) ─┬─ 1.8 (UI) ─ 1.9
+     └─ 1.2 (backend) ─ 1.3 (profile) ┘                   └─ 1.6 (smooth) ┘
+```
+
+- **1.1 and 1.2 can go in parallel**, since they're independent.
+- **1.6 and 1.7 build on 1.5.**
+- **1.8 needs everything before it.**
+
+### Risks
+
+| Risk | Handling |
+|---|---|
+| The refactor (1.1) breaks Wi-Fi play | Ships alone; every existing test passes unchanged |
+| WebRTC adds too much to the APK | Measured in 1.0; fall back to our own transport (D1) |
+| Two 4G phones can't connect directly | The relay; measured in 1.9 |
+| Supabase's free project pauses after a week idle | Fine while building; Pro once people play |
+| Rollback replays too slow on old phones | Measured in 1.6; the window capped by phone speed |
 
 ## Step 2: Friends
 
@@ -179,7 +448,7 @@ the relay.
 | Sign-in, profiles, friends, stats, chat history | Supabase Auth + Postgres | 50,000 users a month, 500 MB |
 | Who's online, lobbies, invites, chat delivery, connection setup | Supabase Realtime | ~200 at once, 2M messages a month |
 | Matchmaking, bot fallback, relay keys, notifications | Supabase Edge Functions | 500,000 calls a month |
-| Game relay, voice | Cloudflare TURN / SFU | 1,000 GB a month, then $0.05/GB |
+| Game relay, voice | Cloudflare TURN / SFU | 1,000 GB a month, then $0.05/GB; **we stop at 900 GB (D8)** |
 | Notifications | Firebase Cloud Messaging | free |
 | ROM library | Cloudflare R2 (as now) | unchanged |
 
@@ -211,6 +480,8 @@ the relay.
 ## Order
 
 Steps 1 → 2 → 3 → 4, each shipped and tested on its own (one PR or a few).
+Step 1's phases are detailed above. Steps 2-4 get the same breakdown when
+Step 1 is done.
 
 - Step 1 is the biggest: multiplayer moves from Wi-Fi-only to hybrid.
 - In Step 3, the fighter bot is the largest piece.
@@ -342,6 +613,12 @@ The unlicensed games would have to leave the paid app.
 - [Evercade maker partners with SNK](https://www.videogameschronicle.com/news/evercade-manufacturer-announces-partnership-with-snk/)
 - [Cadillacs and Dinosaurs: why it was never re-released](https://www.hardcoregaming101.net/cadillacs-dinosaurs/)
 - [Supabase pricing](https://supabase.com/pricing)
+- [Supabase anonymous sign-ins](https://supabase.com/docs/guides/auth/auth-anonymous)
+  and [linking Google later](https://supabase.com/blog/anonymous-sign-ins)
+- [Cloudflare TURN: generating credentials](https://developers.cloudflare.com/calls/turn/generate-credentials)
+- [stream-webrtc-android](https://github.com/GetStream/webrtc-android): prebuilt WebRTC for Android
+- [Cloudflare TURN analytics](https://developers.cloudflare.com/realtime/turn/analytics/)
+  and [revoking credentials](https://developers.cloudflare.com/realtime/turn/generate-credentials/)
 - [Cloudflare Realtime TURN/SFU pricing](https://developers.cloudflare.com/realtime/sfu/platform/pricing/)
 - [GGPO](https://en.wikipedia.org/wiki/GGPO),
   [Fightcade](https://en.wikipedia.org/wiki/Fightcade): the rollback

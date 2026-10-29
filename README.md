@@ -191,9 +191,12 @@ BIOS for Neo Geo games; the library has them).
   **Watch instead**, and Leave. News (someone joined, left, took a seat)
   slides in at the top; getting a seat says "You're player 2!".
 - **Take a seat**: while watching, press **COIN** or **START** (or Take a
-  seat). You get a free seat, or the seat of a player who has pressed
-  nothing for 20 seconds (say, the challenger who lost): they go back to
-  watching. If two ask at once, the first request to reach the host wins;
+  seat). You get a free seat, or the seat of a player whose game is over,
+  as on the cabinet: the game's own continue countdown ran out (say, the
+  challenger who lost). They go back to watching. The app reads this from
+  the game itself (every Neo Geo game, Cadillacs and Dinosaurs, Penguin
+  Brothers); in Street Fighter III and Marvel vs Capcom, for now, a player
+  who pressed nothing for 10 seconds. If two ask at once, the first request to reach the host wins;
   the other is told. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.
@@ -381,6 +384,9 @@ change the secret to lock out a lost phone.
   move tester built on it (bring your own core and ROMs).
 - `docs/kof-ram.md` — the KOF RAM map fighter detection reads (the other
   games' addresses are documented in `Detect.kt`).
+- `docs/adding-a-game.md` — what every new game needs, including the seat
+  rule (seats follow the game's own countdown) and how to find a game's
+  player status bytes.
 - `docs/online-plan.md` — the plan for online play (not started: parked
   until it's wanted).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
