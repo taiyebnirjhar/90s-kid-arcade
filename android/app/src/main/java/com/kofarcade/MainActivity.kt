@@ -49,6 +49,12 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         refresh++
+        // Games played since: sent quietly, only for a phone that signed in
+        // before (a first sign-in waits for the profile page).
+        val account = Online.account(this)
+        if (account.signedIn && account.dirty()) {
+            lifecycleScope.launch(Dispatchers.IO) { runCatching { account.sync(Online.defaultName()) } }
+        }
     }
 
     private fun play(game: Game, netplay: Boolean = false, set: String? = roms.setFor(game)) {
@@ -61,7 +67,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private enum class Page { HOME, LIBRARY, MULTIPLAYER }
+    private enum class Page { HOME, LIBRARY, MULTIPLAYER, PROFILE }
 
     /** What the "add" dialog is for: the BIOS, or a game's ROM. */
     private sealed interface Pick {
@@ -76,11 +82,13 @@ class MainActivity : ComponentActivity() {
         var result by remember { mutableStateOf<RomCheck?>(null) }
         var library by rememberSaveable { mutableStateOf(false) }
         var twoPlayer by remember { mutableStateOf(false) }
+        var profilePage by rememberSaveable { mutableStateOf(false) }
         var crash by remember { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
         val hasBios = remember(refresh) { roms.has(BIOS) }
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
         val last = remember(refresh) { prefs.lastGame?.let(::gameById) }
+        val profile = remember(refresh, profilePage) { Online.account(this).profile() }
 
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
@@ -130,16 +138,20 @@ class MainActivity : ComponentActivity() {
             },
             heroTitle = if (needsBios(hero)) "Add the Neo Geo BIOS" else null,
             heroText = if (needsBios(hero)) "neogeo.zip: every Neo Geo game needs it to start." else null,
+            profileName = profile?.name,
+            profileIcon = profile?.icon,
         )
 
         // Pages fade into each other instead of cutting.
         val page = when {
             library -> Page.LIBRARY
             twoPlayer -> Page.MULTIPLAYER
+            profilePage -> Page.PROFILE
             else -> Page.HOME
         }
         Crossfade(page, animationSpec = tween(220), label = "page") { shown ->
             when (shown) {
+                Page.PROFILE -> ProfileDialog(onClose = { profilePage = false })
                 Page.LIBRARY -> LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
                 Page.MULTIPLAYER -> TwoPlayerDialog(
                     roms,
@@ -161,6 +173,7 @@ class MainActivity : ComponentActivity() {
                     onHero = { open(hero) },
                     onGame = ::open,
                     onLongGame = { if (sets[it.id] != null) remove = it },
+                    onProfile = { profilePage = true },
                 )
             }
         }

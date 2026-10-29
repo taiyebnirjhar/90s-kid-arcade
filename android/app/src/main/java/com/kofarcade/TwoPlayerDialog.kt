@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -92,7 +91,6 @@ data class HostChoice(
     val set: String? = null,
 )
 
-private fun playerName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Player"
 
 /**
  * Which FBNeo build this app runs (a hash of the core library), so phones
@@ -148,7 +146,7 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(playerName(), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                    Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
                 }
                 if (!isActive) {
                     room.close()
@@ -231,7 +229,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                     try {
                         link.await(500)
                         fun joinAt(address: java.net.InetAddress, port: Int) =
-                            Room.join(address, port, playerName(), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                            Room.join(address, port, Online.playerName(context), set, rom, bios, build = emulatorBuild(context), device = Prefs(context).deviceId)
                         // A phone of the room that isn't its host (the key's from before a
                         // takeover) says who is: straight there.
                         val joined = try {

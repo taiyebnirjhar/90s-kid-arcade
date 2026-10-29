@@ -63,8 +63,8 @@ and settings.
 3. **COIN**, then **START**.
 
 The home screen opens on the game you played last, with **Continue**, and
-lists every game by series as picture cards. **Multiplayer** and
-**Library** are at the top. The pictures (each game's title and play
+lists every game by series as picture cards. **Multiplayer**,
+**Library** and your **Profile** are at the top. The pictures (each game's title and play
 screens) ship inside the app: they show offline, from the first launch.
 
 In a game, the pause button opens the pause menu: Resume, save and load
@@ -346,6 +346,15 @@ How it works, the way GGPO / Fightcade do it (rollback netcode):
   frames a second, the other used to run 12-16 frames ahead, replaying
   thousands of frames and stopping at the limit; now it stays within 1-2.
 
+## Profile
+
+Home → **Profile** (the chip with your icon): a name, one of 16 icons and
+a friend code, for online play. It's a guest profile: the first time you
+open it the app signs in as a guest (it never does at start), and it
+works offline from the phone's copy, saving changes once you're back
+online. It also counts the games you start, per game. Rooms show your
+profile's name.
+
 ## Move lists
 
 `android/core/src/main/resources/rosters/` has one list per game: `kof97`,
@@ -411,8 +420,11 @@ change the secret to lock out a lost phone.
 - `docs/adding-a-game.md` — what every new game needs, including the seat
   rule (seats follow the game's own countdown) and how to find a game's
   player status bytes.
-- `docs/online-plan.md` — the plan for online play (not started: parked
-  until it's wanted).
+- `docs/online-plan.md` — the plan for online play, built phase by phase
+  (the profile is in; internet rooms are next), and `docs/online-setup.md`,
+  the server's one-time setup.
+- `server/supabase/` — the online server: the database's tables and rules,
+  and the relay function (`server/test.sh` tests them).
 - `.github/workflows/android.yml` — downloads the FBNeo core from the
   libretro buildbot and builds the APK.
 - The games' pictures (`android/app/art.txt`, kept in step with the game

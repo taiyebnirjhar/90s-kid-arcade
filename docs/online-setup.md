@@ -89,20 +89,22 @@ workflow says so and does nothing.
 
 1. **Database:** in Supabase, **SQL Editor → New query**. Paste the whole of
    `server/supabase/migrations/20261029000000_online.sql`, then **Run**;
-   then the same for `20261029000100_cleanup_job.sql`. Run each once.
+   then the same for each later file in that folder, in name order
+   (`20261029000100_cleanup_job.sql`, `20261030000000_profile_and_plays.sql`,
+   ...). Run each once.
 2. **Function:** **Edge Functions → Deploy a new function → Via Editor**,
    named `turn-credentials`. Add the two files from
    `server/supabase/functions/turn-credentials/` (`index.ts` and
    `relay.ts`, same names), then **Deploy**. Leave "Verify JWT" on.
 
-**Check it worked:** **Table Editor** shows `profiles`, `rooms`,
+**Check it worked:** **Table Editor** shows `profiles`, `plays`, `rooms`,
 `room_members`, `relay_usage` and `relay_credentials`; **Integrations →
 Cron** shows `close-quiet-rooms` every minute; **Edge Functions** shows
 `turn-credentials`.
 
 ## The project
 
-Public values only; they go into the app in phase 1.2.
+Public values only; they're in the app (`android/app/build.gradle.kts`) since phase 1.3.
 
 - **Project URL:** `https://ysbskjtvccdbhnfuccso.supabase.co`
 - **Publishable key:** `sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE`
@@ -117,4 +119,4 @@ Public values only; they go into the app in phase 1.2.
 - [x] Cloudflare TURN key created (2026-10-29)
 - [x] `CF_TURN_KEY_ID` and `CF_TURN_KEY_TOKEN` saved as Supabase secrets
 - [x] `CF_ANALYTICS_TOKEN` (Account Analytics: Read) and `CF_ACCOUNT_ID` saved as Supabase secrets
-- [ ] Server parts on the project: GitHub secrets for automatic deploys (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`), or by hand
+- [x] Server parts on the project: GitHub secrets for automatic deploys (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`); first deployed 2026-10-29

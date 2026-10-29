@@ -21,6 +21,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1"
+        // Online play's server (docs/online-setup.md): the project's address and
+        // its public key. Only what the database's rules let a guest do is
+        // possible with it; the secret keys never leave the server.
+        buildConfigField("String", "SUPABASE_URL", "\"https://ysbskjtvccdbhnfuccso.supabase.co\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE\"")
         ndk {
             // The FBNeo core is downloaded for these ABIs (see the CI workflow).
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
@@ -50,6 +55,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     // The games' pictures, fetched when the app is built (fetchGameArt), never at run time.
