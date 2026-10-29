@@ -307,6 +307,55 @@ one Wi-Fi with no internet.
 
 **Exit:** a signed-in test user can create a room, read it by code, get TURN credentials, and is refused what isn't theirs; with the month's use set past 900 GB, no credentials are given.
 
+**Results (2026-10-29), in `server/`:**
+
+- **Database** (`supabase/migrations/20261029000000_online.sql`):
+  - `profiles`: name (1-24 characters), icon, a friend code (8 characters,
+    for Step 2). Anyone signed in reads them; you write only your own, and
+    never your friend code.
+  - `rooms` and `room_members`. You see only the rooms you're in. A room is
+    found by its code through `find_room` (any case, dashes and spaces
+    ignored), which shows only that one.
+  - Room codes: 6 characters from the room keys' alphabet (no 0/O, 1/I),
+    made by the server, unique.
+  - Made and changed only through functions (`create_room`, `join_room`,
+    `touch_room`, `leave_room`): at most 3 open rooms each, 8 phones a room;
+    the last one out closes it.
+  - **Decided while building:** room creation is a database function, not
+    an Edge Function as planned (1.2.3). Same rules, one less thing to
+    deploy, and testable in plain Postgres.
+- **Clean-up** (`20261029000100_cleanup_job.sql`): every minute (pg_cron),
+  rooms nobody touched for 10 minutes close; closed codes are kept a day
+  (so an old code says the room ended), then freed.
+- **Signaling:** only a room's members read or write its channel
+  (`room:CODE`, Realtime's private channels).
+- **Relay credentials and the hard stop (D8):** the Edge Function
+  `turn-credentials`, with its rules in `relay.ts`.
+  - A member of an open room gets relay servers for an hour, tagged with
+    the room.
+  - It reads this month's use from Cloudflare's analytics (egress plus
+    ingress, one sum, as Cloudflare advises for billing) at most every 5
+    minutes, and keeps the highest reading.
+  - At 900 GB it gives out none, with "paused until the 1st"; at 950 GB
+    it also revokes every live credential.
+  - **Decided while building:** if Cloudflare can't be asked and the last
+    reading is over an hour old, it gives out none, rather than go on
+    without knowing.
+  - The relay's tables are the server's alone (no access for players).
+- **Tests** (`server/test.sh`, and in CI as "Server"):
+  - the database's rules, as each kind of user, on a stub of Supabase in
+    Postgres 16: your profile only; strangers see no rooms but find one by
+    code; members only on the channel; 3 rooms, 8 phones; closing; the
+    relay's tables closed;
+  - the relay's rules in Node: credentials, strangers, 900 GB, 950 GB, just
+    under, 5-minute checks, a lower reading, Cloudflare down, a new month;
+  - the function's Deno code type-checked and linted.
+- **Deploy:** the "Server deploy" workflow, once the owner adds three repo
+  secrets; or by hand (docs/online-setup.md).
+- **Not yet, and where:** Realtime's limit on people at once (D8) can't be
+  read from the database; room creation checks it in phase 1.5, when
+  signaling starts.
+
 ### Phase 1.3: Profile and sign-in (app)
 
 | # | Work | Output |
