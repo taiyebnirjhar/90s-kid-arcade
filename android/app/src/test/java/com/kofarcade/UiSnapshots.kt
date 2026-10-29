@@ -161,6 +161,50 @@ class UiSnapshots {
     }
 
     @Test
+    fun roomSheetOnline() {
+        landscape()
+        shot("room_sheet_online") {
+            OverGame {
+                SheetFrame(width = 880) {
+                    RoomSheetContent(RoomUi("K7Q-2MX", 2, listOf(RoomPerson("You", 0, you = true, host = true)), watching = false, online = true), first = true, {}, {}, {}, {}, {}, {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomSheetInLine() {
+        landscape()
+        shot("room_sheet_in_line") {
+            OverGame {
+                SheetFrame(width = 880) {
+                    RoomSheetContent(
+                        RoomUi(
+                            "K7Q-2MX", 2,
+                            listOf(
+                                RoomPerson("Rafi", 0, host = true), RoomPerson("Mim", 1),
+                                RoomPerson("Tanu", -1, line = 1), RoomPerson("You", -1, you = true, line = 2), RoomPerson("Pixel 8", -1),
+                            ),
+                            watching = true, online = true, pingMs = 86,
+                        ),
+                        first = false, {}, {}, {}, {}, {}, {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun twoPlayerMenuOnline() = shot("twoplayer_menu_online") {
+        MultiplayerHub(emptyList(), "K7Q-2MX", {}, MpStatus("Looking for room K7Q-2MX…", bad = false), true, {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun twoPlayerMenuNoInternet() = shot("twoplayer_menu_no_internet") {
+        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {}, internet = false)
+    }
+
+    @Test
     fun roomSheetPortrait() = shot("room_sheet_portrait") {
         OverGame {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

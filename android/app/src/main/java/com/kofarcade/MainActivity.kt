@@ -37,13 +37,21 @@ class MainActivity : ComponentActivity() {
     private lateinit var roms: RomStore
     private lateinit var prefs: Prefs
     private var refresh by mutableIntStateOf(0)
+    // An internet room's code from a link (shared, or its QR code): Multiplayer opens with it.
+    private var linkCode by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         roms = RomStore(this)
         prefs = Prefs(this)
+        linkCode = codeFromLink(intent?.data)
         setContent { KofTheme { Home() } }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        codeFromLink(intent.data)?.let { linkCode = it }
     }
 
     override fun onResume() {
@@ -83,6 +91,14 @@ class MainActivity : ComponentActivity() {
         var library by rememberSaveable { mutableStateOf(false) }
         var twoPlayer by remember { mutableStateOf(false) }
         var profilePage by rememberSaveable { mutableStateOf(false) }
+        // A room link: straight to Multiplayer, joining it.
+        androidx.compose.runtime.LaunchedEffect(linkCode) {
+            if (linkCode != null) {
+                library = false
+                profilePage = false
+                twoPlayer = true
+            }
+        }
         var crash by remember { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
         val hasBios = remember(refresh) { roms.has(BIOS) }
@@ -155,6 +171,8 @@ class MainActivity : ComponentActivity() {
                 Page.LIBRARY -> LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
                 Page.MULTIPLAYER -> TwoPlayerDialog(
                     roms,
+                    joinCode = linkCode,
+                    onCodeTaken = { linkCode = null },
                     onStart = { game, set ->
                         twoPlayer = false
                         play(game, netplay = true, set = set)

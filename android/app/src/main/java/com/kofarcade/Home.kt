@@ -111,7 +111,7 @@ fun HomeScreen(
         val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         val chips: @Composable () -> Unit = {
-            HeaderChip("Multiplayer", gold = true, onClick = onTwoPlayer)
+            HeaderChip("Online", gold = true, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
@@ -172,7 +172,7 @@ fun HomeScreen(
 
 @Composable
 private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, onClick: () -> Unit) {
-    // The hero's button is the gold one: Multiplayer is gold-edged beside it, not filled.
+    // The hero's button is the gold one: Online is gold-edged beside it, not filled.
     val source = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically,

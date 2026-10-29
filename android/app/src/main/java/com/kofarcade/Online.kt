@@ -5,7 +5,11 @@ import android.content.SharedPreferences
 import android.os.Build
 import com.kofarcade.core.online.Account
 import com.kofarcade.core.online.KeyValue
+import com.kofarcade.core.online.OnlineRooms
+import com.kofarcade.core.online.RealtimeSignaling
+import com.kofarcade.core.online.RelayServers
 import com.kofarcade.core.online.Supabase
+import com.kofarcade.core.online.SupabaseRooms
 import kotlin.random.Random
 
 /**
@@ -17,12 +21,30 @@ import kotlin.random.Random
 object Online {
     @Volatile
     private var account: Account? = null
+    @Volatile
+    private var supabase: Supabase? = null
 
     fun account(context: Context): Account = account ?: synchronized(this) {
         account ?: run {
             val store = PrefsStore(context.applicationContext.getSharedPreferences("online", Context.MODE_PRIVATE))
-            Account(Supabase(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY, store), store)
+            val supa = Supabase(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY, store).also { supabase = it }
+            Account(supa, store)
         }.also { account = it }
+    }
+
+    /**
+     * Internet rooms (phase 1.5): made on the server, joined by code, the
+     * phones connected over WebRTC, signaling on the room's Realtime channel.
+     */
+    fun rooms(context: Context): OnlineRooms {
+        account(context)
+        val supa = supabase!!
+        return OnlineRooms(
+            SupabaseRooms(supa),
+            AndroidRtc.get(context),
+            { code, me -> RealtimeSignaling(supa, code, me) },
+            { code -> RelayServers(supa, code)::get },
+        )
     }
 
     /** A first profile's name, until the player picks one. */
@@ -41,4 +63,20 @@ object Online {
             sp.edit().apply { if (value == null) remove(key) else putString(key, value) }.commit()
         }
     }
+}
+
+/**
+ * A link that opens an internet room's code in the app (an Android link the
+ * app takes), or, without the app, the website's page for it (get the app,
+ * then join). Also the room's QR code.
+ */
+fun joinLink(code: String): String = "https://taiyebnirjhar.github.io/90s-kid-arcade/join.html?code=" + code.uppercase().filter { it.isLetterOrDigit() }
+
+/** The code in a [joinLink] (or the website's "open in the app" link, kidarcade://join?code=…), or null if it isn't one. */
+fun codeFromLink(uri: android.net.Uri?): String? {
+    if (uri == null) return null
+    val ours = (uri.scheme == "https" && uri.host == "taiyebnirjhar.github.io" && uri.path?.endsWith("/join.html") == true) ||
+        (uri.scheme == "kidarcade" && uri.host == "join")
+    if (!ours) return null
+    return runCatching { uri.getQueryParameter("code") }.getOrNull()?.uppercase()?.filter { it.isLetterOrDigit() }?.takeIf { it.length == 6 }
 }

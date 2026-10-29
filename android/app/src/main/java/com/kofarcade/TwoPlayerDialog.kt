@@ -54,6 +54,10 @@ import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
 import com.kofarcade.core.net.probe
+import com.kofarcade.core.online.CantJoin
+import com.kofarcade.core.online.OnlineError
+import com.kofarcade.core.online.OnlineRooms
+import com.kofarcade.core.online.explainOnline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.isActive
@@ -64,6 +68,9 @@ import java.net.InetAddress
 /** The room handed from the MULTIPLAYER screen to the game screen. */
 object Netplay {
     @Volatile var room: Room? = null
+
+    /** An internet room's connections and server record, closed with the game (null on Wi-Fi). */
+    @Volatile var online: com.kofarcade.core.online.OnlineRoom? = null
 }
 
 /** Where the latest app downloads from (the website's button). */
@@ -71,7 +78,8 @@ const val APP_DOWNLOAD = "https://github.com/taiyebnirjhar/90s-kid-arcade/releas
 
 private sealed interface TwoPlayer {
     data object Hub : TwoPlayer
-    data object PickGame : TwoPlayer
+    /** Picking the game to host: on this Wi-Fi, or [online] over the internet. */
+    data class PickGame(val online: Boolean = false) : TwoPlayer
 }
 
 /** What a found host looks like in the list. */
@@ -116,7 +124,15 @@ private fun emulatorBuild(context: Context): String = runCatching {
  * watch until they take a seat with COIN or START.
  */
 @Composable
-fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: () -> Unit, onClose: () -> Unit) {
+fun TwoPlayerDialog(
+    roms: RomStore,
+    onStart: (Game, String) -> Unit,
+    onLibrary: () -> Unit,
+    onClose: () -> Unit,
+    /** An internet room's code from a link: joined at once. */
+    joinCode: String? = null,
+    onCodeTaken: () -> Unit = {},
+) {
     var screen by remember { mutableStateOf<TwoPlayer>(TwoPlayer.Hub) }
     val context = LocalContext.current
 
@@ -135,27 +151,37 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
     val scope = rememberCoroutineScope()
     var opening by remember { mutableStateOf(false) }
 
-    // Opens a room for the game and starts playing; the game screen shows its key.
-    fun host(game: Game, set: String) {
+    // Opens a room for the game and starts playing; the game screen shows its key
+    // (or, [online], its code: the room is made on the server, friends anywhere join).
+    fun host(game: Game, set: String, online: Boolean) {
         if (opening) return
         opening = true
         scope.launch {
             try {
                 // Never dropped half-made: if the screen's gone by the time
                 // the room is open, it's closed again.
-                val room = withContext(NonCancellable + Dispatchers.IO) {
+                val (room, internet) = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
-                    Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                    if (online) {
+                        // Signed in, with a profile (its name is the room's).
+                        Online.account(context).sync(Online.defaultName())
+                        val r = Online.rooms(context).host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, emulatorBuild(context), Prefs(context).deviceId)
+                        r.room to r
+                    } else {
+                        Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId) to null
+                    }
                 }
                 if (!isActive) {
-                    room.close()
+                    internet?.close() ?: room.close()
                     return@launch
                 }
                 Netplay.room = room
+                Netplay.online = internet
                 onStart(game, set)
             } catch (e: Exception) {
-                if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                val why = (e as? com.kofarcade.core.online.OnlineError)?.let(::explainOnline) ?: e.message
+                if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: $why", android.widget.Toast.LENGTH_LONG).show()
             }
             opening = false
         }
@@ -163,11 +189,20 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
 
     Crossfade(screen, animationSpec = tween(220), label = "multiplayer") { shown ->
         when (shown) {
-            TwoPlayer.Hub -> Hub(roms, onHost = { screen = TwoPlayer.PickGame }, onLibrary = onLibrary, onBack = back, onJoined = onStart)
-            TwoPlayer.PickGame -> {
+            TwoPlayer.Hub -> Hub(
+                roms,
+                onHost = { screen = TwoPlayer.PickGame() },
+                onHostOnline = { screen = TwoPlayer.PickGame(online = true) },
+                onLibrary = onLibrary,
+                onBack = back,
+                onJoined = onStart,
+                joinCode = joinCode,
+                onCodeTaken = onCodeTaken,
+            )
+            is TwoPlayer.PickGame -> {
                 val hasBios = remember { roms.has(BIOS) }
                 val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
-                PickGameScreen(ready, onPick = { (g, set) -> host(g, set) }, onLibrary = onLibrary, onBack = back)
+                PickGameScreen(ready, onPick = { (g, set) -> host(g, set, shown.online) }, onLibrary = onLibrary, onBack = back, online = shown.online)
             }
         }
     }
@@ -175,10 +210,20 @@ fun TwoPlayerDialog(roms: RomStore, onStart: (Game, String) -> Unit, onLibrary: 
 
 // The hub: finds rooms nearby, joins by key or by tap.
 @Composable
-private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBack: () -> Unit, onJoined: (Game, String) -> Unit) {
+private fun Hub(
+    roms: RomStore,
+    onHost: () -> Unit,
+    onHostOnline: () -> Unit,
+    onLibrary: () -> Unit,
+    onBack: () -> Unit,
+    onJoined: (Game, String) -> Unit,
+    joinCode: String? = null,
+    onCodeTaken: () -> Unit = {},
+) {
     val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
     var key by remember { mutableStateOf("") }
+    val internet = rememberInternet()
     var status by remember { mutableStateOf<MpStatus?>(null) }
     var action by remember { mutableStateOf<(() -> Unit)?>(null) }
     var busy by remember { mutableStateOf(false) }
@@ -295,6 +340,92 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
         }
     }
 
+    // An internet room, by its code: looked up on the server, checked against
+    // this phone's games, then joined over WebRTC.
+    fun joinByCode(clean: String, nearby: (() -> Unit)?) {
+        busy = true
+        say("Looking for room ${OnlineRooms.pretty(clean)}…", bad = false)
+        scope.launch {
+            try {
+                val rooms = Online.rooms(context)
+                val info = withContext(Dispatchers.IO) {
+                    Online.account(context).sync(Online.defaultName())
+                    rooms.find(clean)
+                }
+                val game = gameForSet(info.set)
+                val title = game?.fullTitle ?: info.set
+                if (game == null || !roms.has("${info.set}.zip") || (game.neoGeo && !roms.has(BIOS))) {
+                    busy = false
+                    val what = if (game?.neoGeo == true && roms.has("${info.set}.zip")) "the Neo Geo BIOS" else "$title (${info.set})"
+                    say("You need $what to join ${info.ownerName ?: "this"} room.", "Get it from the library", onAction = onLibrary)
+                    return@launch
+                }
+                say("Joining ${info.ownerName ?: "the"} room…", bad = false)
+                val online = withContext(NonCancellable + Dispatchers.IO) {
+                    val rom = roms.fingerprint("${info.set}.zip") ?: error("Can't read ${info.set}.zip")
+                    val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
+                    if (rom != info.rom || bios != info.bios) {
+                        throw Refused("Your copy of $title differs from the host's. Download it from the library on every phone, so all play the same version.")
+                    }
+                    rooms.join(info, Online.playerName(context), info.set, rom, bios, emulatorBuild(context), Prefs(context).deviceId)
+                        .also { if (left.get()) it.close() }
+                }
+                if (left.get() || !isActive) {
+                    online.close()
+                    return@launch
+                }
+                Netplay.room = online.room
+                Netplay.online = online
+                status = null
+                onJoined(game, info.set)
+            } catch (e: Refused) {
+                val m = e.message.orEmpty()
+                when {
+                    "app builds" in m || "app versions" in m -> say(m, "Get the latest app") {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(APP_DOWNLOAD)))
+                    }
+                    "differs" in m -> say(m, "Open the library", onAction = onLibrary)
+                    else -> say(m)
+                }
+            } catch (e: CantJoin) {
+                // Not an online room: a nearby room's key, perhaps.
+                if (nearby != null) {
+                    busy = false
+                    nearby()
+                    return@launch
+                }
+                say(e.message.orEmpty())
+            } catch (e: OnlineError) {
+                say(explainOnline(e))
+            } catch (e: Exception) {
+                if (isActive) say("Couldn't join: ${e.message}")
+            }
+            busy = false
+        }
+    }
+
+    // One field for both: an online room's code (6 characters), else (or if
+    // there's no such room) a nearby room's key.
+    fun joinAny() {
+        val clean = key.uppercase().filter { it.isLetterOrDigit() }
+        val nearby = if (parseRoomKey(key) != null) ::joinByKey else null
+        when {
+            internet && clean.length == 6 -> joinByCode(clean, nearby)
+            nearby != null -> nearby()
+            clean.length == 6 -> say("No internet: joining by code needs it. A nearby room's key works without (same Wi-Fi or hotspot).")
+            else -> say("That's not a room code. It looks like K7Q-2MX: your friend sees it in their room.")
+        }
+    }
+
+    // From a room link: its code, joined at once.
+    androidx.compose.runtime.LaunchedEffect(joinCode) {
+        if (joinCode != null) {
+            key = formatKeyInput(joinCode)
+            onCodeTaken()
+            joinByCode(joinCode, null)
+        }
+    }
+
     MultiplayerHub(
         rooms = hosts.map {
             HostChoice(
@@ -308,9 +439,11 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
         busy = busy,
         onStatusAction = { action?.invoke() },
         onHost = onHost,
-        onJoinKey = ::joinByKey,
+        onJoinKey = ::joinAny,
         onJoinRoom = { i -> hosts.getOrNull(i)?.let(::connect) },
         onBack = onBack,
+        internet = internet,
+        onHostOnline = onHostOnline,
     )
 }
 
@@ -328,24 +461,34 @@ fun MultiplayerHub(
     onJoinKey: () -> Unit,
     onJoinRoom: (Int) -> Unit,
     onBack: () -> Unit,
+    /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
+    internet: Boolean = true,
+    onHostOnline: () -> Unit = {},
 ) {
     ArcadeScreen(
-        title = "Multiplayer",
-        kicker = "Play together",
+        title = "Online",
+        kicker = if (internet) "Play together, anywhere" else "Nearby play",
         onBack = onBack,
-        // Hosting is the page's main action: pinned at the bottom, in thumb reach.
-        bottomBar = { GoldButton("Host a game", onHost, Modifier.fillMaxWidth(), play = true) },
+        // Making a room is the page's main action: pinned at the bottom, in thumb reach.
+        bottomBar = {
+            GoldButton(if (internet) "Create a room" else "Create nearby room", if (internet) onHostOnline else onHost, Modifier.fillMaxWidth(), play = true)
+        },
     ) {
         status?.let {
             StatusPanel(it, onStatusAction)
             Spacer(Modifier.height(8.dp))
         }
-        // Rooms nearby.
-        SectionLabel("Rooms nearby")
+        // No internet: not an error, a feature.
+        if (!internet) {
+            NearbyPlayCard()
+            Spacer(Modifier.height(8.dp))
+        }
+        // Rooms nearby: first, they're the fastest.
+        SectionLabel(if (internet) "Nearby · fastest" else "Rooms nearby")
         if (rooms.isEmpty()) {
             EmptyState(
                 "Looking for rooms…",
-                "On this Wi-Fi or hotspot. A friend's room shows up here; not appearing? Type its key below.",
+                "On this Wi-Fi or hotspot. A friend's room nearby shows up here.",
                 icon = { RadarIcon(Modifier.size(28.dp)) },
             )
         } else {
@@ -353,13 +496,28 @@ fun MultiplayerHub(
                 rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
             }
         }
-        // Join with a key.
-        SectionLabel("Join with a key")
+        // Join with a code: an online room's (friends anywhere) or a nearby room's key.
+        SectionLabel("Join with a code")
         Panel {
             Row(verticalAlignment = Alignment.Bottom) {
-                ArcadeField(key, onKey, "Room key", Modifier.weight(1f), placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
+                ArcadeField(key, onKey, "Room code", Modifier.weight(1f), placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii)
                 Spacer(Modifier.width(12.dp))
                 GoldButton("Join", onJoinKey, enabled = !busy && key.isNotBlank())
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                if (internet) "The code your friend sees in their room. Works from anywhere." else "The key your friend sees in their room (same Wi-Fi or hotspot).",
+                color = Palette.muted,
+                fontSize = 12.sp,
+            )
+        }
+        // With internet, a nearby room is still there: no data used.
+        if (internet) {
+            SectionLabel("Saving data?")
+            Panel {
+                Text("Create a nearby room: friends on the same Wi-Fi or hotspot only. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Spacer(Modifier.height(12.dp))
+                GhostButton("Create nearby room", onHost, Modifier.fillMaxWidth(), enabled = !busy)
             }
         }
         // How it works.
@@ -367,14 +525,53 @@ fun MultiplayerHub(
         StepsStrip()
         Spacer(Modifier.height(16.dp))
         Text(
-            "All phones on the same Wi-Fi or one phone's hotspot: no internet needed. Each needs the game (and the " +
-                "Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3.",
+            "Each phone needs the game (and the Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3, " +
+                "Mystic Warriors and Sunset Riders 4. Others watch, and take a seat when one opens.",
             color = Palette.muted,
             fontSize = 12.sp,
             lineHeight = 18.sp,
         )
         Spacer(Modifier.height(24.dp))
     }
+}
+
+/** No internet: nearby play, as a feature (gold), not an error. */
+@Composable
+private fun NearbyPlayCard() {
+    Panel(highlight = true) {
+        Kicker("Nearby play")
+        Spacer(Modifier.height(4.dp))
+        Text("No internet needed", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+        Spacer(Modifier.height(4.dp))
+        Text("Play with friends on the same Wi-Fi or hotspot. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+    }
+}
+
+/** Whether this phone has the internet now (a validated network), kept up to date. */
+@Composable
+private fun rememberInternet(): Boolean {
+    val context = LocalContext.current
+    val cm = remember { context.getSystemService(android.net.ConnectivityManager::class.java) }
+    fun now(): Boolean = cm?.getNetworkCapabilities(cm.activeNetwork)?.let {
+        it.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            it.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    } == true
+    var internet by remember { mutableStateOf(now()) }
+    DisposableEffect(cm) {
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(network: android.net.Network, caps: android.net.NetworkCapabilities) {
+                main.post { internet = now() }
+            }
+
+            override fun onLost(network: android.net.Network) {
+                main.post { internet = now() }
+            }
+        }
+        runCatching { cm?.registerDefaultNetworkCallback(callback) }
+        onDispose { runCatching { cm?.unregisterNetworkCallback(callback) } }
+    }
+    return internet
 }
 
 /** Rings around a dot: looking for rooms on the network. */
@@ -390,8 +587,8 @@ private fun RadarIcon(modifier: Modifier) {
 
 /** Host: the games on this phone, as on the home screen. */
 @Composable
-fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit) {
-    ArcadeScreen(title = "Host a game", kicker = "Pick the game", onBack = onBack) {
+fun PickGameScreen(ready: List<Pair<Game, String>>, onPick: (Pair<Game, String>) -> Unit, onLibrary: () -> Unit, onBack: () -> Unit, online: Boolean = false) {
+    ArcadeScreen(title = if (online) "Host online" else "Host a game", kicker = "Pick the game", onBack = onBack) {
         if (ready.isEmpty()) {
             EmptyState(
                 "No games to host yet",

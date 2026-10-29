@@ -48,6 +48,7 @@ import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.online.OnlineRooms
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.net.NetLog
@@ -122,6 +123,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
+
+        // How often an internet room's ping is shown afresh.
+        private const val PING_SHOW_MS = 5_000L
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
         // Looking for a lost room: as long as a seat is held, every couple of seconds.
@@ -261,8 +265,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
         if (room != null) {
             holdWifi()
-            // Multiplayer stays on the room's Wi-Fi, whatever Android prefers (LanLink).
-            lanLink = LanLink(this, target = ::roomAddress, onBack = { runOnUiThread { tryRejoinNow() } })
+            if (room?.overInternet == true) {
+                // An internet room goes over whatever network the phone has: on a
+                // change (Wi-Fi to 4G), a new way to the others at once.
+                watchNetwork()
+            } else {
+                // Multiplayer stays on the room's Wi-Fi, whatever Android prefers (LanLink).
+                lanLink = LanLink(this, target = ::roomAddress, onBack = { runOnUiThread { tryRejoinNow() } })
+            }
         }
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
@@ -529,13 +539,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val roomStatus: String? get() = room?.status()
 
     /** The connection's story (NetLog) and this phone, to send when multiplayer misbehaves. */
-    fun shareConnectionReport() {
+    fun shareConnectionReport() = lifecycleScope.launch {
+        // Off the main thread: an internet room's connections are asked how they're doing.
+        val online = withContext(Dispatchers.IO) {
+            Netplay.online?.let { o ->
+                val ways = o.transport.paths().entries.joinToString(", ") { (who, p) -> "$who ${p.kind}" + (p.rttMs?.let { " $it ms" } ?: "") }
+                "Online room ${OnlineRooms.pretty(o.code)}; ways to the others: ${ways.ifEmpty { "none open" }}" +
+                    (room?.pingMs?.let { "; ping $it ms" } ?: "")
+            }
+        }
         val report = buildString {
             appendLine(if (room != null) "90s Kid Arcade connection report" else "90s Kid Arcade performance report")
             appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}, screen ${screenHz()} Hz")
             appendLine("Game: ${game.title} ($set)")
             appendLine(playbackStatus)
             room?.let { appendLine(it.status()) }
+            online?.let { appendLine(it) }
             appendLine()
             append(NetLog.dump())
         }
@@ -604,10 +623,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     host = it.id == r.owner,
                     away = it.away,
                     holdEnds = if (it.away) r.holdEnds(it.id) else 0L,
+                    line = it.line,
                 )
             }
         }
-        roomUi = RoomUi(r.key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner)
+        val key = if (r.overInternet) OnlineRooms.pretty(r.key) else r.key
+        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs)
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -619,9 +640,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** Sends the room's key through any app (messages, WhatsApp…). */
     fun shareRoomKey() {
         val key = roomKey ?: return
-        val text = "Play with me on 90s Kid Arcade! Room key: $key\n" +
-            "Open Multiplayer and type the key (same Wi-Fi or hotspot).\n" +
-            "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        val text = if (room?.overInternet == true) {
+            val code = OnlineRooms.pretty(key)
+            "Play with me on 90s Kid Arcade! Room code: $code\n" +
+                "Open Online in the app and type the code, or tap: ${joinLink(key)}\n" +
+                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        } else {
+            "Play with me on 90s Kid Arcade! Room key: $key\n" +
+                "Open Online in the app and type the key (same Wi-Fi or hotspot).\n" +
+                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         runCatching { startActivity(Intent.createChooser(send, "Share the room key")) }
     }
@@ -655,7 +683,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     /** Copies the room's key, to send to friends. */
     fun copyRoomKey() {
-        val key = roomKey ?: return
+        val key = roomKey?.let { if (room?.overInternet == true) OnlineRooms.pretty(it) else it } ?: return
         val clipboard = getSystemService(android.content.ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Room key", key))
         announce("Room key $key copied")
@@ -667,6 +695,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // The room runs on its own threads; it seats this phone (from the owner's
     // game) whenever someone joins or leaves, and the game waits meanwhile.
     private fun startNetplay(room: Room) {
+        // An internet room's ping changes with the network: the pill's bars follow it.
+        if (room.overInternet) lifecycleScope.launch {
+            while (isActive && this@GameActivity.room === room) {
+                delay(PING_SHOW_MS)
+                updateRoomUi()
+            }
+        }
         // Who's in each seat, from the game itself (Game.seats). A game whose
         // byte only says "in the fight" is watched over time, so its seat goes
         // free once the game's own countdown has run (SeatStatus.outForMs).
@@ -1045,6 +1080,26 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }.getOrNull()
     }
 
+    // An internet room: the phone's network, watched for changes.
+    private var networkWatch: android.net.ConnectivityManager.NetworkCallback? = null
+
+    private fun watchNetwork() {
+        val cm = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+        var current: android.net.Network? = null
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                // The first one is where the game started; a different one later is a switch.
+                if (current != null && current != network) {
+                    NetLog.add("The phone's network changed: finding a new way to the others")
+                    Netplay.online?.transport?.networkChanged()
+                    runOnUiThread { tryRejoinNow() }
+                }
+                current = network
+            }
+        }
+        runCatching { cm.registerDefaultNetworkCallback(callback) }.onSuccess { networkWatch = callback }
+    }
+
     override fun onDestroy() {
         // The room first: its threads may still ask the emulator for its
         // state, which the emulator can't answer once it's gone.
@@ -1053,6 +1108,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             if (Netplay.room === it) Netplay.room = null
             LibretroDroid.setNetplay(false, 0, 2, 0, 0)
         }
+        // An internet room: its connections, and this phone's place on the server.
+        Netplay.online?.let { online ->
+            Netplay.online = null
+            Thread { online.close() }.start()
+        }
+        networkWatch?.let { runCatching { getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(it) } }
         super.onDestroy()
         wifiLock?.let { if (it.isHeld) it.release() }
         lanLink?.stop()

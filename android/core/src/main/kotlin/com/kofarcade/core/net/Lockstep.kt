@@ -140,6 +140,17 @@ const val MAX_IDS = 16
  * the delay is a whole frame more than needed, it goes back down, so buttons
  * feel as quick as the connection allows.
  */
+/**
+ * An internet room's first input delay, from the round trip measured to the
+ * other players: about a frame per 33 ms (half the trip is a frame's time
+ * at 60 a second), so most inputs arrive before they're needed; [DelayTuner]
+ * adapts it from there.
+ */
+fun startingDelay(rttMs: Int): Int = ((rttMs + 16) / 33).coerceIn(1, MAX_ONLINE_DELAY)
+
+/** Input delay at most, over the internet (on Wi-Fi: 3). */
+const val MAX_ONLINE_DELAY = 4
+
 class DelayTuner(private val min: Int = 1, private val max: Int = 3, private val window: Int = 180) {
     private var total = 0
     private var count = 0

@@ -1,6 +1,6 @@
 # Online play: the plan
 
-**Status: Step 1, phase 1.0 under way (2026-10-28).** The owner asked to build online
+**Status: Step 1 built (2026-10-30), waiting on the two-phone checklist ([docs/online-testing.md](online-testing.md)).** The owner asked to build online
 play. Step 1 is broken down phase by phase below
 ([Step 1](#step-1-foundation-work-breakdown)), each phase one PR. Steps 2-4
 follow it. Today's multiplayer (same Wi-Fi or hotspot) is unchanged and
@@ -61,7 +61,7 @@ used.
 
 ## Step 1: Foundation (work breakdown)
 
-**Status: in progress.** Phase 1.0 done (2026-10-28); phases 1.1 and 1.2 merged, the server deployed (2026-10-29); phase 1.3 built (2026-10-30). The owner asked to build
+**Status: built, waiting on real-phone tests.** Phase 1.0 done (2026-10-28); phases 1.1 and 1.2 merged, the server deployed (2026-10-29); phases 1.3 to 1.9 built (2026-10-30), each its own PR; the two-phone checklist (docs/online-testing.md) is next. The owner asked to build
 Step 1. Each phase below is one PR (or a few), merged before the next
 starts. Every phase keeps today's same-Wi-Fi play working and its tests
 green.
@@ -496,6 +496,44 @@ one Wi-Fi with no internet.
 | 1.5.6 | Share the code: copy, the Android share sheet, and a QR code | UI |
 | 1.5.7 | Tests: the room tests over the fake transport at internet conditions (join, leave, takeover, drop and rejoin, three players) | Tests |
 
+**Results (2026-10-30):**
+
+- **`OnlineRooms`** (core): a room made on the server (`create_room`, its
+  code), then the same room logic as on Wi-Fi over `WebRtcTransport`.
+  - **Host:** sign in, make the room, run it; the room's key is its code.
+    While open, the server's record is touched every minute.
+  - **Join by code (1.5.2):** `find_room` first (its game, ROM and BIOS
+    fingerprints, who made it). The app checks this phone has the game
+    ("You need KOF '97 (kof97) to join Rafi's room", with the library) and
+    the same version before connecting; the room checks again on joining.
+  - **Who to reach (1.5.3, 1.5.4):** the one who made it, then the room's
+    other phones (members see each other). Every phone takes links on the
+    same port, so a room taken over sends a newcomer to its new host, and a
+    latecomer still gets in after the maker left.
+  - **Leaving:** the room, the connections (what's still being sent goes
+    first, so the others hear the goodbye before the connection ends), and
+    `leave_room` (the last one out closes it).
+  - **Security (1.5.5):** only the room's members join its signaling
+    channel (the database's rules); WebRTC encrypts everything.
+- **App:** Multiplayer gets **Play over the internet**: a code field with
+  Join, and **Host online** (the same game picker). The room sheet shows
+  the code with a **QR code**, Copy and Share (1.5.6). The shared text and
+  the QR code carry a link (`join.html?code=…`) that the app opens straight
+  into joining; without the app, the website's page shows the code and
+  where to get the app ("Open in the app" uses `kidarcade://join`).
+- **On the game screen:** an internet room isn't tied to the Wi-Fi (no
+  LanLink); when the phone's network changes (Wi-Fi to 4G) it asks for an
+  ICE restart to every phone at once, and tries to rejoin if the room was
+  lost. Closing the game closes the internet room.
+- **Tests:** `OnlineRoomsTest` (5, a fake of the server's rules and the
+  simulated internet): made and joined by code, no such code, a different
+  ROM refused with the reason and not left in the room, the last one out
+  closes it, a latecomer after the maker left. Screenshots of the
+  Multiplayer screen and the internet room's sheet.
+- **Not yet:** the one Online screen, ping bars and nearby-first (1.8);
+  the queue for seats (1.7); delay tuned for internet pings (1.6). Phones
+  on two networks are tested in 1.9.
+
 ### Phase 1.6: Smoothness on the internet
 
 | # | Work | Output |
@@ -504,6 +542,34 @@ one Wi-Fi with no internet.
 | 1.6.2 | `DelayTuner` tuned for internet ping (it stayed at 1 frame at 70 ms) | Tuner |
 | 1.6.3 | `SmoothnessTest` internet cases become real tests with limits: no freezes up to 250 ms; corrections stay small up to 110 ms | Tests |
 | 1.6.4 | Rollback cost on slow phones: measure replays of the heavy games (SF3, Penguin Brothers) and cap the rollback window by phone speed if needed | Measured |
+
+**Results (2026-10-30):**
+
+- **Starting delay (1.6.1):** an internet room's first game with partners
+  starts at the input delay for the ping to them (`startingDelay`: about a
+  frame per 33 ms of round trip, 1 to 4), measured by WebRTC's stats every
+  5 seconds. `DelayTuner` adapts it from there.
+- **Tuner (1.6.2):** up to 4 frames over the internet (3 on Wi-Fi). Its rule
+  is unchanged: it kept the delay at 1 at 70 ms because it starts there and
+  raises only on a lead of 1.5 frames on average; starting at the ping's
+  delay fixes that.
+- **Simulated (1.6.3), two phones, 2 minutes, 3 runs each, 1% loss, a
+  hiccup of up to 0.2 s every ~8 s; rollbacks a minute per phone:**
+
+  | Ping | Starting at 1 (before) | At the ping's delay (now) | Freezes |
+  | --- | --- | --- | --- |
+  | 35 ms | 5-57 | the same (delay 1) | none |
+  | 70 ms | 83-352 | 4-81 | none |
+  | 110 ms | 73-452 | 31-92 | none |
+  | 160 ms | 466-483 | 146-326 | none |
+  | 250 ms | 474-483 | 474-483 (3.3 frames each, was 4.3) | none |
+
+  Now tests with limits (`SmoothnessTest`): no freezes up to 250 ms; up to
+  110 ms, at most 120 corrections a minute of about a frame each; fewer
+  corrections than starting at 1 at 70-160 ms.
+- **Rollback cost on slow phones (1.6.4):** not measurable without the
+  phones; measured in 1.9 (the heavy games, SF3 and Penguin Brothers, on the
+  owner's phones), with the rollback window capped by phone speed if needed.
 
 ### Phase 1.7: Watch and queue
 
@@ -514,6 +580,28 @@ one Wi-Fi with no internet.
 | 1.7.3 | UI: "You're 2nd in line", "Leave line" (keep watching), and "3 watching" for players | UI |
 | 1.7.4 | A watcher limit per room, so watchers never slow the players | Limit |
 | 1.7.5 | Tests: line order through joins, leaves, takeovers | Tests |
+
+**Results (2026-10-30), on Wi-Fi and internet rooms alike:**
+
+- **The line (1.7.1, 1.7.2):** a watcher's COIN or START with no seat to
+  take puts it in line; the next seat that opens goes to the first in line,
+  not to whoever presses next. "Opens" is as before: a free seat, or one
+  whose player the game itself shows out (game over once its countdown ran
+  out): the room's owner looks every second, and the game's own countdown
+  still decides. Each phone's place travels with the room's members
+  (`Member.line`), so everyone sees it, and an owner that takes the room
+  over keeps the same line. Protocol 12.
+- **UI (1.7.3):** the room pill says "2ND IN LINE"; the room sheet says
+  "You're 2nd in line" with **Leave line** (still watching), and lists the
+  watchers in line order ("1. Tanu"). Players see "3 watching" (the eye and
+  count, as before). News: "All seats are in use: you're 2nd in line."
+- **Watcher limit (1.7.4):** the room's limit of 8 phones stands (players
+  and watchers). Each watcher is fed from its own thread, so a slow one
+  only falls behind itself and never holds the players up.
+- **Tests (1.7.5):** `watchersWaitInLineAndSeatsGoInOrder` (three in line,
+  one leaves the line, a player stands, a game ends: the seats go in order)
+  and `theLineSurvivesATakeover`, over sockets, the simulated internet and
+  WebRTC. A screenshot of the room sheet in line.
 
 ### Phase 1.8: One Online screen
 
@@ -526,6 +614,31 @@ one Wi-Fi with no internet.
 | 1.8.5 | Plain-language errors (code not found, room full, different ROM, no connection) | Copy |
 | 1.8.6 | Paparazzi snapshots of every screen, light and offline states | Tests |
 
+**Results (2026-10-30):**
+
+- **One Online entry (1.8.1):** home's gold chip is **Online** (it was
+  Multiplayer); the share texts and the room sheet say Online too.
+- **With internet (1.8.2):** **Create a room** (pinned at the bottom) makes
+  an online room; nearby rooms come first, as "Nearby · fastest"; **Join
+  with a code** takes an online room's code or a nearby room's key (an
+  online code is tried first, then the key, so a 6-character key still
+  works); **Create nearby room** stays, for no data used.
+- **No internet (1.8.3):** the gold **Nearby play** card ("No internet
+  needed … Zero lag, no data used"), nearby rooms, **Create nearby room**,
+  and the field takes nearby keys. The screen follows the network as it
+  changes.
+- **Ping bars (1.8.4):** nearby rooms show full green bars and "Nearby";
+  in an internet room the pill shows bars for the round trip to the others
+  (green to 120 ms, gold to 200, red beyond), refreshed every 5 seconds.
+- **Plain words (1.8.5):** no such code; a room full ("The room is full: 8
+  phones at most") and too many rooms open now say so, in the database's
+  own words: they came back as HTTP 503 and read as "online is paused".
+  Only a refusal with no SQL state (a real limit or outage) means paused
+  now. Plus: a different ROM, no internet, and the game or BIOS missing
+  (with the library).
+- **Tests (1.8.6):** screenshots of the Online screen with internet, without,
+  joining by code, and with nearby rooms; `AccountTest`'s full-room case.
+
 ### Phase 1.9: Hardening and real-phone tests
 
 | # | Work | Output |
@@ -536,6 +649,25 @@ one Wi-Fi with no internet.
 | 1.9.4 | README and site: how online play works | Docs |
 
 **Exit:** the Step 1 "Done when" above, on the owner's phones.
+
+**Results (2026-10-30), what can be done without the phones:**
+
+- **The checklist (1.9.1):** [docs/online-testing.md](online-testing.md):
+  Wi-Fi + 4G, 4G + 4G, one Wi-Fi online, a hotspot with no internet, a
+  network switch mid-game, the maker leaving mid-game, the share link, and
+  three phones with the line; plus data, battery and the heavy games.
+- **Connection reports (1.9.2):** an internet room's report now says the
+  room's code, which way each phone is reached (nearby, direct or relay)
+  with its round trip, and the ping, with the room's log. Read and fixed as
+  the owner sends them.
+- **Data and battery (1.9.3):** measured on the owner's phones (the
+  checklist says how). Expected data: about 40 MB an hour for two players.
+- **README and site (1.9.4):** how online and nearby play work, the code,
+  QR code and link, the line, and data use.
+
+**Still open, on the owner's phones:** the checklist's runs, the data and
+battery numbers, and the heavy games' rollback cost (1.6.4). Step 1 is done
+when runs 1 and 2 pass ("Done when", above).
 
 ### Order and dependencies
 
