@@ -30,6 +30,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.kofarcade.core.BUTTONS
 import com.kofarcade.core.Character
 import com.kofarcade.core.DetectSpec
 import com.kofarcade.core.Detection
@@ -64,6 +65,7 @@ import com.kofarcade.core.parseCommand
 import com.kofarcade.core.toArrows
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
+import com.swordfish.libretrodroid.Variable
 import com.swordfish.libretrodroid.LibretroDroid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -86,6 +88,9 @@ sealed interface GameDialog {
 
     /** Multiplayer: the room (key, seats, who watches). [first]: it just opened, here. */
     data class Room(val first: Boolean = false) : GameDialog
+
+    /** Multiplayer: load this phone's saved state for everyone? */
+    data object LoadForEveryone : GameDialog
 }
 
 /** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
@@ -277,6 +282,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             savesDirectory = File(filesDir, if (room != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
+            // The cabinet's settings (four players, say): the same on every phone.
+            variables = game.coreOptions(set).map { (key, value) -> Variable(key, value) }.toTypedArray()
         }
         retroView = GLRetroView(this, data)
         lifecycle.addObserver(retroView)
@@ -404,7 +411,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // RetroPad button ids: the game's layout for A-F (Game.pad), then coin, start and the stick.
     private fun retroId(key: Key) = when (key) {
         Key.COIN -> 2 // SELECT
-        Key.START -> 3
+        // A cabinet without START: the fire button players join with.
+        Key.START -> game.startWith?.let { game.pad.id(BUTTONS.indexOf(it)) } ?: 3
         Key.UP -> 4
         Key.DOWN -> 5
         Key.LEFT -> 6
@@ -659,15 +667,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // free once the game's own countdown has run (SeatStatus.outForMs).
         val seats = game.seats
         val seatWatch = seats?.let { SeatWatch(it) }
-        fun seatByte(seat: Int): Int? {
-            val offset = seats?.offsets?.getOrNull(seat) ?: return null
-            return LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF)
-        }
+        fun readByte(offset: Int): Int? = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF)
         if (seats != null && seats.outForMs > 0) lifecycleScope.launch(Dispatchers.Default) {
             while (isActive && this@GameActivity.room === room) {
                 delay(SEAT_SAMPLE_MS)
                 val now = System.currentTimeMillis()
-                for (seat in seats.offsets.indices) seatByte(seat)?.let { seatWatch?.sample(seat, it, now) }
+                for (seat in seats.offsets.indices) seats.isOut(seat, ::readByte)?.let { seatWatch?.sample(seat, it, now) }
             }
         }
         lifecycleScope.launch {
@@ -714,8 +719,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 // The game's own word: this seat's player never started, or
                 // their game is over. Null where the game can't say.
                 override fun seatFree(seat: Int): Boolean? {
-                    val value = seatByte(seat) ?: return null
-                    return seatWatch?.sample(seat, value, System.currentTimeMillis())
+                    val out = seats?.isOut(seat, ::readByte) ?: return null
+                    return seatWatch?.sample(seat, out, System.currentTimeMillis())
+                }
+
+                // A saved game fits this game if it's a state of the same size:
+                // another game's or another version's isn't.
+                override fun canLoad(state: ByteArray): Boolean {
+                    val now = LibretroDroid.getNetState()
+                    val size = if (now.size > 4) now.size - 4 else runCatching { retroView.serializeState(useEmulationThread = false).size }.getOrDefault(-1)
+                    return state.size == size
                 }
 
                 // A newcomer watches from the newest frame every input is in for.
@@ -1500,14 +1513,36 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // Save states run on the emulation thread, so they're done with the game running.
     fun saveState() = close {
-        if (room != null) return@close
-        val bytes = withContext(Dispatchers.IO) { retroView.serializeState() }
+        val bytes = withContext(Dispatchers.IO) {
+            // In a room: the game at the newest frame every input is in for, not a guess.
+            room?.let { LibretroDroid.getNetState().takeIf { raw -> raw.size > 4 }?.let { raw -> raw.copyOfRange(4, raw.size) } } ?: retroView.serializeState()
+        }
         withContext(Dispatchers.IO) { stateFile.writeBytes(bytes) }
         Toast.makeText(this, "State saved", Toast.LENGTH_SHORT).show()
     }
 
-    fun loadState() = close {
-        if (room != null) return@close
+    fun loadState() {
+        if (room != null) {
+            if (!stateFile.exists()) {
+                close()
+                Toast.makeText(this, "No saved state yet: save one first", Toast.LENGTH_SHORT).show()
+            } else {
+                show(GameDialog.LoadForEveryone)
+            }
+            return
+        }
+        loadAlone()
+    }
+
+    /** Multiplayer: everyone carries on from this phone's saved state, once the host has checked it. */
+    fun loadForEveryone() = close {
+        val r = room ?: return@close
+        val bytes = withContext(Dispatchers.IO) { runCatching { stateFile.readBytes() }.getOrNull() }
+        val asked = bytes != null && withContext(Dispatchers.IO) { r.loadForEveryone(bytes) }
+        if (!asked) Toast.makeText(this, "Couldn't reach the host: try again in a moment", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun loadAlone() = close {
         val file = stateFile
         if (!file.exists()) {
             Toast.makeText(this, "No saved state yet", Toast.LENGTH_SHORT).show()

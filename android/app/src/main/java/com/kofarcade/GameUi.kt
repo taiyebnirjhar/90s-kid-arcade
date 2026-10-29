@@ -168,11 +168,9 @@ fun PauseContent(
 
                 item("Resume", onClick = onResume)
                 if (netplay) item("Room & players", onClick = onRoom)
-                // Alone: save states. (Multiplayer has none: a state can't be loaded on one phone of several.)
-                if (!netplay) {
-                    item("Save state", onClick = onSave)
-                    item("Load state", onClick = onLoad)
-                }
+                // Save states. In a room, a player's save is loaded for everyone (the host checks it first).
+                item("Save state", onClick = onSave)
+                if (!netplay) item("Load state", onClick = onLoad) else if (!watching) item("Load state for everyone", onClick = onLoad)
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
                 item(if (soundOn) "Sound: on" else "Sound: off", onClick = onSound)
                 item("Settings", onClick = onControls)

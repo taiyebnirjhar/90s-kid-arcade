@@ -84,6 +84,8 @@ open class RoomTest {
         @Volatile var error: String? = null
         @Volatile var partnerPaused: Boolean? = null
         @Volatile var loaded: ByteArray? = null
+        // Whether this game takes a saved game (another game's or version's doesn't).
+        @Volatile var loadable = true
         @Volatile var seatings = 0
         val news = CopyOnWriteArrayList<String>()
 
@@ -94,6 +96,8 @@ open class RoomTest {
         override fun captureState(): ByteArray = byteArrayOf(7, room.localId.toByte())
 
         override fun seatFree(seat: Int): Boolean? = outSeats?.let { seat in it }
+
+        override fun canLoad(state: ByteArray): Boolean = loadable
 
         // The game at its newest frame with every input in.
         override fun snapshot(): Pair<Int, ByteArray> = synchronized(lock) {
@@ -727,6 +731,65 @@ open class RoomTest {
         waitFor("restart") { a.epoch == 3 && b.epoch == 3 }
         assertTrue(byteArrayOf(9, 9).contentEquals(a.loaded))
         assertTrue(byteArrayOf(9, 9).contentEquals(b.loaded))
+    }
+
+    @Test
+    fun aPlayersSavedGameIsLoadedForEveryone() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Guest")
+        val b = FakeGame(g).apply { play() }
+        val w = join(h, "Watcher")
+        val c = FakeGame(w).apply { play() }
+        waitFor("watching") { b.epoch == 1 && c.epoch == 1 }
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 2 && b.epoch == 2 }
+        val save = byteArrayOf(5, 5, 5)
+        assertTrue(g.loadForEveryone(save))
+        waitFor("everyone on the saved game") { a.epoch == 3 && b.epoch == 3 && c.epoch == 3 }
+        for (game in listOf(a, b, c)) assertTrue(save.contentEquals(game.loaded), "${game.room.localId} loaded ${game.loaded?.toList()}")
+        waitFor("told") { a.news.any { "Guest loaded a saved game" in it } }
+        // And they play on from it, every input where it belongs.
+        val from = a.framesOf(1)
+        waitFor("playing on") { a.framesOf(1) > from + 30 && b.framesOf(0) > 30 }
+        assertTrue(a.matches(1, b, 30) && b.matches(0, a, 30))
+        assertNull(a.error ?: b.error ?: c.error)
+        // The host's own save, after a moment.
+        Thread.sleep(3_100)
+        assertTrue(h.loadForEveryone(byteArrayOf(6)))
+        waitFor("the host's save") { a.epoch == 4 && b.epoch == 4 && byteArrayOf(6).contentEquals(b.loaded) }
+    }
+
+    @Test
+    fun aSavedGameTheHostCantLoadOrAWatchersChangesNothing() {
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Guest")
+        val b = FakeGame(g).apply { play() }
+        val w = join(h, "Watcher")
+        val c = FakeGame(w).apply { play() }
+        waitFor("watching") { b.epoch == 1 && c.epoch == 1 }
+        g.requestSeat()
+        waitFor("seated") { a.epoch == 2 && b.epoch == 2 }
+        // A watcher can't replace the players' game.
+        assertTrue(!w.loadForEveryone(byteArrayOf(1)))
+        // Another game's save: refused, and the game goes on.
+        a.loadable = false
+        assertTrue(g.loadForEveryone(byteArrayOf(2)))
+        waitFor("told why") { b.news.any { "doesn't load here" in it } }
+        assertEquals(2, a.epoch)
+        assertEquals(2, b.epoch)
+        // Two at once: the first one counts.
+        a.loadable = true
+        g.loadForEveryone(byteArrayOf(3))
+        h.loadForEveryone(byteArrayOf(4))
+        waitFor("one load") { a.epoch == 3 && b.epoch == 3 }
+        waitFor("the other told") { (a.news + b.news).any { "just loaded" in it } }
+        Thread.sleep(500)
+        assertEquals(3, a.epoch)
+        assertTrue(a.loaded.contentEquals(b.loaded))
     }
 
     @Test

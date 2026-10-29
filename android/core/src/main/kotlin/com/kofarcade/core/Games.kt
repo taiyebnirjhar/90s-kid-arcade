@@ -79,8 +79,25 @@ class SeatStatus(
      * has said "out" that long. 0: the byte itself says game over.
      */
     val outForMs: Long = 0,
+    /**
+     * For a game whose attract demo sets the players' bytes too (Snow Bros.,
+     * Sunset Riders): a byte that says whether a real game is on, which it is
+     * while the byte reads one of [inGame]. Otherwise every seat counts as out.
+     */
+    val game: Int? = null,
+    private val inGame: Set<Int> = emptySet(),
 ) {
     fun isFree(value: Int): Boolean = value in free
+
+    /** Whether [seat]'s player is out now, reading the game's bytes (by offset) with [read]; null if it can't say. */
+    fun isOut(seat: Int, read: (Int) -> Int?): Boolean? {
+        val offset = offsets.getOrNull(seat) ?: return null
+        if (game != null) {
+            val on = read(game) ?: return null
+            if (on !in inGame) return true
+        }
+        return read(offset)?.let(::isFree)
+    }
 }
 
 /**
@@ -91,11 +108,11 @@ class SeatStatus(
 class SeatWatch(private val status: SeatStatus) {
     private val outSince = LongArray(status.offsets.size) { -1 }
 
-    /** [value] is [seat]'s byte now; returns whether the seat is free. */
+    /** [out]: the game says [seat]'s player is out now ([SeatStatus.isOut]); returns whether the seat is free. */
     @Synchronized
-    fun sample(seat: Int, value: Int, nowMs: Long): Boolean {
+    fun sample(seat: Int, out: Boolean, nowMs: Long): Boolean {
         if (seat !in outSince.indices) return false
-        if (!status.isFree(value)) {
+        if (!out) {
             outSince[seat] = -1
             return false
         }
@@ -147,7 +164,17 @@ data class Game(
     val pad: PadMap = PadMap.NEO_GEO,
     /** Where the game says each player is in or out, for seats in a room; null: not known. */
     val seats: SeatStatus? = if (neoGeo) NEO_GEO_SEATS else null,
+    /**
+     * The cabinet's settings (DIP switches) the game needs, by FBNeo's name:
+     * "Number_of_Players" to "4". Every phone sets the same, for every version.
+     */
+    val dips: Map<String, String> = emptyMap(),
+    /** A cabinet with no START button (players join with a fire button): the button START presses. */
+    val startWith: Char? = null,
 ) {
+    /** The emulator's options for version [set]: its DIP switches ([dips]). */
+    fun coreOptions(set: String): Map<String, String> = dips.entries.associate { (name, value) -> "fbneo-dipswitch-$set-$name" to value }
+
     /** "KOF 2002 Magic Plus": the title with its subtitle, where one name is needed. */
     val fullTitle: String get() = listOfNotNull(title, subtitle).joinToString(" ")
 
@@ -273,6 +300,70 @@ val GAMES: List<Game> = listOf(
     neoGeo = false,
     // Each player's state: 0 out, 2 playing, 4 continue countdown, 6 game over.
     seats = SeatStatus(listOf(0x35B2, 0x362E), setOf(0, 6)),
+) + Game(
+    // Toaplan, 1990 (Kaneko Pandora board): no BIOS. Checked in FBNeo
+    // (tools/emu.py): A throws snow, B jumps, C does nothing; a held A throws
+    // once, so it has rapid fire. Runs at 57.5 frames a second.
+    id = "snowbros", series = "Snow Bros.", title = "Snow Bros.", subtitle = "Nick & Tom",
+    // The bootlegs on other boards (The Winter Bobble) keep their RAM elsewhere: not listed.
+    sets = listOf("snowbros", "snowbrosa", "snowbrosb", "snowbrosc", "snowbrosd", "snowbrosj"),
+    layout = Layout.SHOOTER, art = "Snow Bros. - Nick & Tom (set 1)",
+    labels = mapOf('A' to "Snow", 'B' to "Jump"),
+    rapid = Key.A,
+    neoGeo = false,
+    // Each player's "in the game" byte (68000 RAM 0x40 and 0x4A, bytes
+    // swapped in pairs): non-zero while they play, 0 once out. A player who's
+    // out can join again any time while the other plays; with both out the
+    // game runs one "continue?" countdown, about 14 s from the last one out
+    // to the title. The attract demo's players set these bytes too, so 0x2D
+    // says whether a real game is on (128) or not (0).
+    seats = SeatStatus(listOf(0x40, 0x4A), setOf(0), outForMs = 17_000, game = 0x2D, inGame = setOf(128)),
+) + Game(
+    // Athena, 1993 (Seta board): no BIOS. Checked in FBNeo: A attacks (a held
+    // A attacks once, so it has rapid fire), B jumps, C does nothing.
+    id = "jjsquawk", series = "J.J. Squawkers", title = "J.J. Squawkers",
+    // The bootlegs run on other boards: not listed.
+    sets = listOf("jjsquawk", "jjsquawko"),
+    layout = Layout.SHOOTER, art = "J. J. Squawkers",
+    labels = mapOf('A' to "Attack", 'B' to "Jump"),
+    rapid = Key.A,
+    neoGeo = false,
+    // Each player's status (raw 0x561D, 0x561C): 127 out (126 for a moment
+    // between attract screens), 0 or 1 playing, 255 during the "continue?"
+    // countdown, back to 127 when it ran out.
+    seats = SeatStatus(listOf(0x561D, 0x561C), setOf(126, 127)),
+) + Game(
+    // Konami, 1993: four ninjas at once. No BIOS. FBNeo runs it as the
+    // 2-player cabinet unless told otherwise, and with shared coins only the
+    // first two slots take one: four players, a coin slot each. Checked in
+    // FBNeo: A attacks (holding it keeps throwing), B jumps, C does nothing.
+    id = "mystwarr", series = "Mystic Warriors", title = "Mystic Warriors",
+    sets = listOf("mystwarr", "mystwarru", "mystwarrj", "mystwarra", "mystwarraa"),
+    layout = Layout.BRAWLER, art = "Mystic Warriors (ver EAA)",
+    labels = mapOf('A' to "Attack", 'B' to "Jump"),
+    neoGeo = false,
+    players = 4,
+    dips = mapOf("Number_of_Players" to "4", "Coin_Mechanism" to "Independent"),
+    // Each player's state, 0x40 apart (raw 0x20D on): 0 out, 2 choosing a
+    // ninja, 4 playing and through the "continue?" countdown, back to 0 at
+    // game over. The attract demo leaves them alone.
+    seats = SeatStatus(listOf(0x20D, 0x24D, 0x28D, 0x2CD), setOf(0)),
+) + Game(
+    // Konami, 1991: the 4-player cabinet, a cowboy per slot. No BIOS. It has
+    // no START: a player joins with a fire button, so START presses A. Checked
+    // in FBNeo: A shoots (holding it keeps shooting), B jumps. The 2-player
+    // versions aren't listed: they'd leave two of the four seats empty.
+    id = "ssriders", series = "Sunset Riders", title = "Sunset Riders",
+    sets = listOf("ssriders", "ssridersadd", "ssriderseaa", "ssridersjac", "ssridersjad", "ssridersuab", "ssridersuac", "ssridersuda"),
+    layout = Layout.SHOOTER, art = "Sunset Riders (4 Players ver EAC)",
+    labels = mapOf('A' to "Shoot", 'B' to "Jump"),
+    neoGeo = false,
+    players = 4,
+    startWith = 'A',
+    // Each player's state, 0x40 apart (raw 0x211 on): 129 playing, 1 during
+    // the "continue?" countdown, 0 out. The attract demo's cowboys set them
+    // too; raw 0x0 is 2 only while a real game is on (1 in attract).
+    seats = SeatStatus(listOf(0x211, 0x251, 0x291, 0x2D1), setOf(0), game = 0x0, inGame = setOf(2)),
 ) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two

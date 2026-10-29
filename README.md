@@ -1,8 +1,9 @@
 # 90s Kid Arcade
 
 An Android app for a handful of famous arcade games (Neo Geo, Capcom's
-Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, and
-Subsino's Penguin Brothers), with
+Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, Konami's
+Mystic Warriors and Sunset Riders, Toaplan's Snow Bros., Athena's J.J.
+Squawkers and Subsino's Penguin Brothers), with
 touch controls built for each one: one-tap specials and supers for every
 fighter in KOF, Double Dragon, Street Fighter III and Marvel vs Capcom, big
 Shoot / Jump / Bomb buttons with rapid fire for Metal Slug and Nightmare in
@@ -23,9 +24,13 @@ the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 | Double Dragon (Neo Geo, 1995) | `doubledr` |
 | Marvel vs Capcom (Capcom CPS-2) | `mvsc` (or `mvscu`, `mvscur1`, `mvscj`, `mvsca`...): the zip must include its `.key` file |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
+| Mystic Warriors (Konami, 1993) | `mystwarr` (or `mystwarru`, `mystwarrj`, `mystwarra`, `mystwarraa`) |
+| Sunset Riders (Konami, 1991), the 4-player version | `ssriders` (or `ssridersuda`, `ssridersjad`... any "4 Players" one) |
+| Snow Bros. - Nick & Tom (Toaplan, 1990) | `snowbros` (or `snowbrosa`... `snowbrosj`) |
+| J.J. Squawkers (Athena, 1993) | `jjsquawk` (or `jjsquawko`) |
 
-The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the Capcom
-games and Penguin Brothers don't. No ROMs or BIOS are included: use dumps
+The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the others
+don't. No ROMs or BIOS are included: use dumps
 of games you own.
 
 File names don't matter. The app checks each zip against the files and CRCs
@@ -129,6 +134,18 @@ and **Log escape** (A+B+C: you swap places with a log, for some life).
 (the spinning attack). Run with the Run button or by pushing the stick to the
 edge.
 
+**Mystic Warriors:** Attack and Jump, for up to four (hold Attack to keep
+throwing). The app sets the cabinet up for four players, a coin slot each.
+
+**Sunset Riders:** Shoot and Jump, for up to four (hold Shoot to keep
+shooting). This cabinet has no START button: you join with Shoot, so START
+does that.
+
+**Snow Bros.:** Snow and Jump, for one or two, with rapid fire on Snow.
+
+**J.J. Squawkers:** Attack and Jump, for one or two, with rapid fire on
+Attack.
+
 Pause → **Settings**, in four tabs: **Screen** (picture width, controls
 opacity, detection readout), **Controls** (stick style: floating, fixed or
 hidden; button size; buttons on the left; vibration; rapid fire),
@@ -170,7 +187,7 @@ how the game runs (frames a second, late frames made up, sound gaps), with
 ## Multiplayer
 
 One phone per player, as many as the game takes: 2 for most games, 3 for
-Cadillacs and Dinosaurs. All phones on the same Wi-Fi, or on one phone's
+Cadillacs and Dinosaurs, 4 for Mystic Warriors and Sunset Riders. All phones on the same Wi-Fi, or on one phone's
 hotspot (no internet needed). Every phone needs the same game zip (and the
 BIOS for Neo Geo games; the library has them).
 
@@ -194,12 +211,19 @@ BIOS for Neo Geo games; the library has them).
   seat). You get a free seat, or the seat of a player whose game is over,
   as on the cabinet: the game's own continue countdown ran out (say, the
   challenger who lost). They go back to watching. The app reads this from
-  the game itself (every Neo Geo game, Cadillacs and Dinosaurs, Penguin
-  Brothers); in Street Fighter III and Marvel vs Capcom, for now, a player
-  who pressed nothing for 10 seconds. If two ask at once, the first request to reach the host wins;
+  the game itself, in every game (see
+  [docs/adding-a-game.md](docs/adding-a-game.md)); it adds no timer of its
+  own. If two ask at once, the first request to reach the host wins;
   the other is told. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.
+- **Play from a saved state**: the host or any player picks **Load state
+  for everyone** in the pause menu (and confirms). The host's phone checks
+  the save fits this game (a save of another game or another version of it
+  is refused, and the game goes on), then everyone carries on from it
+  together, in the seats they have now; watchers too. Two at once: the
+  first counts. **Save state** works in a room too: it saves the newest
+  moment every phone agrees on.
 - **Leave any time**: tapping **Leave** empties your seat at once and the
   game goes on for the others. If the host leaves, the next phone takes the
   room over (and the key changes to its address).

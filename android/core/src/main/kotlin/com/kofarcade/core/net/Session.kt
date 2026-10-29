@@ -116,6 +116,13 @@ interface RoomListener {
      */
     fun seatFree(seat: Int): Boolean? = null
 
+    /**
+     * Owner: whether this phone's game takes [state], a saved game a player
+     * wants everyone to carry on from (a save of another game, or of another
+     * version of it, doesn't). Asked before anyone's game is replaced.
+     */
+    fun canLoad(state: ByteArray): Boolean = true
+
     /** Something to tell the player: "Rafi joined", "You're the host now". */
     fun onNews(message: String) {}
 }
@@ -694,6 +701,21 @@ class Room private constructor(
         if (isOwner) worker.execute { rematch() } else control(Msg.REMATCH)
     }
 
+    /**
+     * A player (or the owner) wants everyone to carry on from [state], a saved
+     * game: the owner checks its game takes it, then seats everyone from it.
+     * False if this phone can't ask (it watches, or isn't connected to the owner).
+     */
+    fun loadForEveryone(state: ByteArray): Boolean {
+        if (watching && !isOwner) return false
+        if (isOwner) {
+            worker.execute { loadSaved(localId, state) }
+            return true
+        }
+        val line = ownerLine ?: return false
+        return runCatching { line.send(Msg.LOAD, pack(state)) }.isSuccess
+    }
+
     /** Owner: frees a seat held for a player who dropped out, now. */
     fun freeHeldSeat(seat: Int) {
         if (isOwner) worker.execute { release(held[seat]?.id ?: return@execute, "Player ${seat + 1}'s seat is free", now = true) }
@@ -827,6 +849,10 @@ class Room private constructor(
                     Msg.SIT -> worker.execute { sit(from) }
                     Msg.STAND -> worker.execute { stand(from) }
                     Msg.REWATCH -> worker.execute { if (members[from]?.seat == -1) watch(from) }
+                    Msg.LOAD -> {
+                        val state = runCatching { unpack(payload) }.getOrNull()
+                        worker.execute { if (state != null) loadSaved(from, state) else tell(from, "That saved game didn't arrive whole. Try again.") }
+                    }
                 }
             }
         } catch (e: IOException) {
@@ -915,6 +941,8 @@ class Room private constructor(
         fromStart: Boolean = false,
         replace: Map<Int, Member> = emptyMap(),
         hold: Int? = null,
+        /** A saved game everyone carries on from (the owner's game too), instead of the owner's game as it stands. */
+        fromState: ByteArray? = null,
     ) {
         if (closed || !isOwner) return
         val ln = listener ?: return
@@ -939,7 +967,7 @@ class Room private constructor(
         // Phones whose connection is gone aren't in (a held player stays, away).
         val live = ownerLines().associateBy { it.id }
         next.keys.retainAll { it == localId || it in live || next[it]?.away == true }
-        val state = if (fromStart) startState else null
+        val state = fromState ?: if (fromStart) startState else null
         val sent = state ?: runCatching { ln.captureState() }.getOrElse { return }
         val packed = pack(sent)
         val nextEpoch = epoch + 1
@@ -967,7 +995,7 @@ class Room private constructor(
                 line.close()
             }
         }
-        apply(Seating(nextEpoch, localId, next.values.toList()), if (fromStart) state else null, 0)
+        apply(Seating(nextEpoch, localId, next.values.toList()), if (fromStart || fromState != null) state else null, 0)
         // Watchers through their feeds, so a slow one holds nobody up.
         synchronized(lines) {
             for ((id, feed) in feeds) {
@@ -1176,6 +1204,33 @@ class Room private constructor(
         lastResync = now
         seat(null)
     }
+
+    /**
+     * [id] wants everyone to carry on from a saved game (on the worker): a
+     * player's or the owner's, never a watcher's (it would replace the game
+     * under the players). One at a time: two at once mean the first.
+     */
+    private fun loadSaved(id: Int, state: ByteArray) {
+        if (closed || !isOwner) return
+        val m = members[id]
+        if (m == null || (m.seat < 0 && id != localId)) {
+            tell(id, "Only players can load a saved game for everyone.")
+            return
+        }
+        val now = System.nanoTime()
+        if (now - lastLoad < 3_000_000_000L) {
+            tell(id, "A saved game was just loaded. Try again in a moment.")
+            return
+        }
+        if (state.isEmpty() || runCatching { listener?.canLoad(state) }.getOrNull() != true) {
+            tell(id, "That saved game doesn't load here: it's from another game or another version of it.")
+            return
+        }
+        lastLoad = now
+        seat("${m.name} loaded a saved game", fromState = state)
+    }
+
+    @Volatile private var lastLoad = 0L
 
     private fun rematch() {
         // Two players tapping Restart at once mean one restart.
