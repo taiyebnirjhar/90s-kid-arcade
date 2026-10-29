@@ -147,6 +147,8 @@ void LibretroDroid::setControllerType(unsigned int port, unsigned int type) {
 
 bool LibretroDroid::unserializeState(int8_t *data, size_t size) {
     std::lock_guard<std::mutex> lock(coreLock);
+    // Gone (the screen closed while a room still handed in a game).
+    if (!core) return false;
 
     return core->retro_unserialize(data, size);
 }
@@ -487,17 +489,22 @@ void LibretroDroid::destroy() {
 
 void LibretroDroid::resume() {
     LOGD("Performing libretrodroid resume");
+    // Under coreLock: the GL thread reads input in retro_run (step holds the lock there).
+    std::lock_guard<std::mutex> lock(coreLock);
 
     input = std::make_unique<Input>();
 
-    fpsSync->reset();
-    audio->start();
-    refreshAspectRatio();
+    // A game that didn't load has no sound or pacing (afterGameLoad never ran).
+    if (fpsSync) fpsSync->reset();
+    if (audio) audio->start();
+    if (video) refreshAspectRatio();
 }
 
 void LibretroDroid::pause() {
     LOGD("Performing libretrodroid pause");
-    audio->stop();
+    // Under coreLock: freeing input while retro_run reads it was a use-after-free.
+    std::lock_guard<std::mutex> lock(coreLock);
+    if (audio) audio->stop();
 
     input = nullptr;
 }
@@ -676,6 +683,7 @@ void LibretroDroid::reset() {
 
 std::pair<int8_t*, size_t> LibretroDroid::serializeState() {
     std::lock_guard<std::mutex> lock(coreLock);
+    if (!core) return std::pair(new int8_t[0], (size_t) 0);
 
     size_t size = core->retro_serialize_size();
     auto data = new int8_t[size];
@@ -839,6 +847,7 @@ std::pair<int32_t, std::vector<uint8_t>> LibretroDroid::getNetState() {
     // The order step() takes them in.
     std::lock_guard<std::mutex> coreGuard(coreLock);
     std::lock_guard<std::mutex> lock(netMutex);
+    if (!core) return {netFrame, {}};
     int32_t frame = std::min(std::min(netRemoteKnown(), netFirstWrong), netFrame);
     if (frame == netFrame) {
         // Nothing run on a guess: the game as it is now.

@@ -39,19 +39,30 @@ class MainActivity : ComponentActivity() {
     private var refresh by mutableIntStateOf(0)
     // An internet room's code from a link (shared, or its QR code): Multiplayer opens with it.
     private var linkCode by mutableStateOf<String?>(null)
+    // A zip being copied in (across rotations: the copy itself carries on).
+    private var importing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         roms = RomStore(this)
         prefs = Prefs(this)
-        linkCode = codeFromLink(intent?.data)
+        // A link is taken once: not again when the activity is rebuilt (rotation, back from a game).
+        if (savedInstanceState == null) linkCode = takeLink(intent)
         setContent { KofTheme { Home() } }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        codeFromLink(intent.data)?.let { linkCode = it }
+        setIntent(intent)
+        takeLink(intent)?.let { linkCode = it }
+    }
+
+    // A room link's code, cleared from the intent so nothing reads it twice.
+    private fun takeLink(intent: Intent?): String? {
+        val code = codeFromLink(intent?.data) ?: return null
+        intent?.data = null
+        return code
     }
 
     override fun onResume() {
@@ -89,7 +100,7 @@ class MainActivity : ComponentActivity() {
         var remove by remember { mutableStateOf<Game?>(null) }
         var result by remember { mutableStateOf<RomCheck?>(null) }
         var library by rememberSaveable { mutableStateOf(false) }
-        var twoPlayer by remember { mutableStateOf(false) }
+        var twoPlayer by rememberSaveable { mutableStateOf(false) }
         var profilePage by rememberSaveable { mutableStateOf(false) }
         // A room link: straight to Multiplayer, joining it.
         androidx.compose.runtime.LaunchedEffect(linkCode) {
@@ -99,7 +110,8 @@ class MainActivity : ComponentActivity() {
                 twoPlayer = true
             }
         }
-        var crash by remember { mutableStateOf(CrashLog.take(this)) }
+        // Taken (and its file deleted) once: kept across rotation until it's answered.
+        var crash by rememberSaveable { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
         val hasBios = remember(refresh) { roms.has(BIOS) }
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
@@ -108,15 +120,26 @@ class MainActivity : ComponentActivity() {
 
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
+            // One at a time: a second pick while one's copying would only race it.
+            if (importing) {
+                Toast.makeText(this, "Still adding the last zip…", Toast.LENGTH_SHORT).show()
+                return@rememberLauncherForActivityResult
+            }
+            importing = true
             // Copying and checking a big zip takes seconds: off the main thread.
             Toast.makeText(this, "Checking the zip…", Toast.LENGTH_SHORT).show()
             lifecycleScope.launch {
                 try {
                     result = withContext(Dispatchers.IO) { roms.import(uri) }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // The screen went (rotated): the zip's still added; home shows it on return.
+                    throw e
                 } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Couldn't add the file: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, "Couldn't add the file: ${e.message ?: e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+                } finally {
+                    importing = false
+                    refresh++
                 }
-                refresh++
             }
         }
         fun launch() {

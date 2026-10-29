@@ -124,6 +124,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
 
+        // A tried move plays out before the editor comes back.
+        private const val TEST_MOVE_MS = 1_800L
+
         // How often an internet room's ping is shown afresh.
         private const val PING_SHOW_MS = 5_000L
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
@@ -213,6 +216,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun heldWaiting(): List<String> = room?.let { r -> r.held.values.filter { r.heldFor(it.id) < HELD_WAIT_MS }.map { it.name } }.orEmpty()
     private val waitingForHeld: Boolean get() = heldWaiting().isNotEmpty()
     private val heldCheck = Runnable { applyNetFreeze() }
+
+    // Set first thing in onDestroy: a room's callbacks still under way leave the emulator alone.
+    @Volatile private var destroyed = false
     private var playedOnFor: Set<String> = emptySet()
     private lateinit var netStatus: TextView
     private var paused = false
@@ -661,6 +667,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         askedWith = Key.COIN
         sendNet { it.requestSeat() }
         announce("Asking for a seat…")
+        // As with COIN on the pad: a request that got no answer (lost in a host change) can be made again.
+        root.postDelayed({ if (askedWith == Key.COIN && room?.watching == true) askedWith = null }, 5_000)
         close()
     }
 
@@ -694,6 +702,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     // The room runs on its own threads; it seats this phone (from the owner's
     // game) whenever someone joins or leaves, and the game waits meanwhile.
+    // How long the room's game has run, in ms of game time (frames at 60 a second).
+    private fun gameMs(): Long = LibretroDroid.getNetFrame().toLong() * 1000 / 60
+
     private fun startNetplay(room: Room) {
         // An internet room's ping changes with the network: the pill's bars follow it.
         if (room.overInternet) lifecycleScope.launch {
@@ -711,7 +722,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         if (seats != null && seats.outForMs > 0) lifecycleScope.launch(Dispatchers.Default) {
             while (isActive && this@GameActivity.room === room) {
                 delay(SEAT_SAMPLE_MS)
-                val now = System.currentTimeMillis()
+                // The game's own time (its frames), not the clock's: a pause or a wait doesn't count down a seat.
+                val now = gameMs()
                 for (seat in seats.offsets.indices) seats.isOut(seat, ::readByte)?.let { seatWatch?.sample(seat, it, now) }
             }
         }
@@ -760,12 +772,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 // their game is over. Null where the game can't say.
                 override fun seatFree(seat: Int): Boolean? {
                     val out = seats?.isOut(seat, ::readByte) ?: return null
-                    return seatWatch?.sample(seat, out, System.currentTimeMillis())
+                    return seatWatch?.sample(seat, out, gameMs())
                 }
 
                 // A saved game fits this game if it's a state of the same size:
                 // another game's or another version's isn't.
                 override fun canLoad(state: ByteArray): Boolean {
+                    if (destroyed) return false
                     val now = LibretroDroid.getNetState()
                     val size = if (now.size > 4) now.size - 4 else runCatching { retroView.serializeState(useEmulationThread = false).size }.getOrDefault(-1)
                     return state.size == size
@@ -773,6 +786,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
                 // A newcomer watches from the newest frame every input is in for.
                 override fun snapshot(): Pair<Int, ByteArray>? {
+                    if (destroyed) return null
                     val raw = LibretroDroid.getNetState()
                     if (raw.size <= 4) return null
                     val frame = java.nio.ByteBuffer.wrap(raw, 0, 4).int
@@ -781,13 +795,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
                 // The owner's game, to seat everyone from: stop it first.
                 override fun captureState(): ByteArray {
+                    check(!destroyed) { "The game screen closed" }
                     seating = true
                     LibretroDroid.setFrozen(true)
                     // Straight from here (see onSeating): the emulator's lock keeps it apart from a frame.
-                    return retroView.serializeState(useEmulationThread = false)
+                    return try {
+                        retroView.serializeState(useEmulationThread = false)
+                    } catch (e: Exception) {
+                        // No seating follows (the room gives up on it): the game mustn't stay frozen.
+                        seating = false
+                        LibretroDroid.setFrozen(false)
+                        throw e
+                    }
                 }
 
                 override fun onSeating(epoch: Int, activeMask: Int, state: ByteArray?, startFrame: Int) {
+                    if (destroyed) return
                     seating = true
                     LibretroDroid.setFrozen(true)
                     LibretroDroid.setNetplay(true, room.localPlayer, game.players, MAX_ROLLBACK, activeMask)
@@ -1014,6 +1037,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 val until = android.os.SystemClock.elapsedRealtime() + RECONNECT_MS
                 while (isActive && android.os.SystemClock.elapsedRealtime() < until) {
                     val back = withContext(Dispatchers.IO) { runCatching { lost.rejoin() }.getOrNull() }
+                    // Back after the screen closed (or this wait was cancelled): not left open.
+                    if (back != null && (destroyed || !isActive)) {
+                        Thread { back.close() }.start()
+                        return@launch
+                    }
                     if (back != null) {
                         room = back
                         Netplay.room = back
@@ -1036,9 +1064,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
+    // One at a time, in order: a pause and its resume must reach the others in that order.
+    private val netSends = Dispatchers.IO.limitedParallelism(1)
+
     private fun sendNet(action: (Room) -> Unit) {
         val r = room ?: return
-        lifecycleScope.launch(Dispatchers.IO) { action(r) }
+        lifecycleScope.launch(netSends) { action(r) }
     }
 
     /**
@@ -1101,6 +1132,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     override fun onDestroy() {
+        destroyed = true
+        root.removeCallbacks(heldCheck)
         // The room first: its threads may still ask the emulator for its
         // state, which the emulator can't answer once it's gone.
         room?.let {
@@ -1310,12 +1343,27 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         .filter { superArt == null || it.superArt == null || it.superArt == superArt }
         .take(MAX_MOVES)
 
-    /** The editor shows the moves on the ring; the other Super Arts' stay in the list. */
+    /**
+     * The editor shows the moves on the ring; the rest stay in the list (the
+     * other Super Arts', and those past the ring's [MAX_MOVES]). Saved as the
+     * built-in list (after Reset, or unchanged): no custom list, so later fixes
+     * to the built-in moves reach this fighter.
+     */
     fun saveMoves(c: Character, moves: List<Move>) {
-        val hidden = (prefs.customMoves(movesKey(c)) ?: c.moves)
-            .filter { superArt != null && it.superArt != null && it.superArt != superArt }
-        prefs.setCustomMoves(movesKey(c), moves + hidden)
+        moveDraft = null
+        val full = prefs.customMoves(movesKey(c)) ?: c.moves
+        val shown = full.filter { superArt == null || it.superArt == null || it.superArt == superArt }.take(MAX_MOVES).toSet()
+        val result = moves + full.filter { it !in shown }
+        prefs.setCustomMoves(movesKey(c), result.takeIf { it != c.moves })
         updateHud()
+    }
+
+    /** The move editor's rows while a move is tried in the game: back in the editor afterwards. */
+    var moveDraft: Pair<String, List<Move>>? = null
+        private set
+
+    fun dropMoveDraft() {
+        moveDraft = null
     }
 
     fun pickCharacter(slot: Int, id: String) {
@@ -1619,6 +1667,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         Toast.makeText(this, if (ok) "State loaded" else "Couldn't load the state", Toast.LENGTH_SHORT).show()
     }
 
-    /** Fires a move from the editor so you can check it in the game. */
-    fun testMove(cmd: String) = close { pad.play(cmd) }
+    /**
+     * Fires a move from the editor so you can check it in the game, then
+     * brings the editor back with what was being edited.
+     */
+    fun testMove(c: Character, cmd: String, draft: List<Move>) {
+        moveDraft = c.id to draft
+        close {
+            pad.play(cmd)
+            delay(TEST_MOVE_MS)
+            if (dialog == null && !isFinishing) show(GameDialog.Editor(c))
+        }
+    }
 }

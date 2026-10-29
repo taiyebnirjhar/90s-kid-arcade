@@ -47,6 +47,18 @@ class GamesTest {
     }
 
     @Test
+    fun aSeatsCountdownGoesByGameTimeAndStartsOverWithANewGame() {
+        // Game time: frames run (a pause doesn't count), from 0 again at each new game.
+        val status = SeatStatus(listOf(1, 2), setOf(0), outForMs = 18_000)
+        val watch = SeatWatch(status)
+        assertEquals(false, watch.sample(0, true, 50_000))
+        // A new game (a seating): game time is back near 0; the old start doesn't count.
+        assertEquals(false, watch.sample(0, true, 1_000), "a new game: the countdown starts over")
+        assertEquals(false, watch.sample(0, true, 18_999))
+        assertEquals(true, watch.sample(0, true, 19_000))
+    }
+
+    @Test
     fun aSeatWithACountdownByteFreesAtOnce() {
         val status = SeatStatus(listOf(1, 2), setOf(0, 3))
         val watch = SeatWatch(status)

@@ -52,6 +52,7 @@ import com.kofarcade.core.RomCheck
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.setName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -69,7 +70,8 @@ sealed interface RowState {
     data object Idle : RowState
     data object OnPhone : RowState
     data class Downloading(val fraction: Float) : RowState
-    data class Done(val message: String, val ok: Boolean) : RowState
+    /** [retry]: it didn't come (the network, or cancelled): it can be got again. */
+    data class Done(val message: String, val ok: Boolean, val retry: Boolean = false) : RowState
 }
 
 /** Everything the library page shows. */
@@ -82,7 +84,7 @@ data class LibraryUi(
 )
 
 /** One library file's download: bytes so far, then what the check found. */
-private data class Download(val done: Long = 0, val result: String? = null, val ok: Boolean = false)
+private data class Download(val done: Long = 0, val result: String? = null, val ok: Boolean = false, val retry: Boolean = false)
 
 /**
  * Your private ROM library: asks for the key once (the address is built
@@ -98,6 +100,8 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
     var loading by remember { mutableStateOf(false) }
     val downloads = remember { mutableStateMapOf<String, Download>() }
     var busy by remember { mutableStateOf(false) }
+    var job by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     var key by remember { mutableStateOf(prefs.libraryKey.orEmpty()) }
     var url by remember { mutableStateOf(prefs.libraryUrl) }
     var showUrl by remember { mutableStateOf(prefs.libraryUrl != Library.DEFAULT_URL) }
@@ -131,7 +135,15 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
                 // screen can't trip over the next one.
                 val tmp = roms.partFile("library")
                 try {
-                    library().download(entry.name, tmp) { downloads[entry.name] = Download(it) }
+                    // The card's progress moves by whole percents: not a redraw of the page per 64 KB.
+                    var shown = -1L
+                    library().download(entry.name, tmp, cancelled = { !coroutineContext.isActive }) {
+                        val pct = if (entry.size > 0) it * 100 / entry.size else it shr 20
+                        if (pct != shown) {
+                            shown = pct
+                            downloads[entry.name] = Download(it)
+                        }
+                    }
                 } catch (e: Exception) {
                     tmp.delete()
                     throw e
@@ -150,21 +162,35 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
             downloads[entry.name] = Download(entry.size, check.message(), ok = set != null)
             onChanged()
         } catch (e: Exception) {
-            downloads[entry.name] = Download(0, "Download failed: ${e.message}")
+            val why = if (e is kotlinx.coroutines.CancellationException || e is java.io.InterruptedIOException) "Cancelled" else "Download failed: ${e.message ?: e.javaClass.simpleName}"
+            downloads[entry.name] = Download(0, "$why. Tap to try again.", retry = true)
+            if (e is kotlinx.coroutines.CancellationException) throw e
         }
     }
 
     fun downloadAll(picked: List<Library.Entry>) {
         busy = true
-        scope.launch {
-            // The BIOS first, so the games can be played as soon as they land.
-            picked.sortedBy { if (setName(it.name).startsWith("neogeo")) 0 else 1 }.forEach { download(it) }
-            busy = false
+        job = scope.launch {
+            try {
+                // The BIOS first, so the games can be played as soon as they land.
+                picked.sortedBy { if (setName(it.name).startsWith("neogeo")) 0 else 1 }.forEach { download(it) }
+            } finally {
+                busy = false
+                job = null
+            }
         }
     }
 
     LaunchedEffect(Unit) { if (!editing) load() }
-    BackHandler { if (!busy) onClose() }
+    // Back while downloading stops the downloads (what's done stays); back again leaves.
+    BackHandler {
+        if (busy) {
+            job?.cancel()
+            android.widget.Toast.makeText(context, "Downloads stopped", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+            onClose()
+        }
+    }
 
     val rows = entries.orEmpty().map { e ->
         // Once downloaded, the check says what it is; before, the file name
@@ -181,7 +207,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
             detail = (if (title != null) e.name + " · " else "") + "%.1f MB".format(e.size / 1_048_576.0),
             state = when {
                 d != null && d.result == null -> RowState.Downloading(if (e.size > 0) d.done.toFloat() / e.size else 0f)
-                d?.result != null -> RowState.Done(d.result, d.ok)
+                d?.result != null -> RowState.Done(d.result, d.ok, d.retry)
                 installed(e) -> RowState.OnPhone
                 else -> RowState.Idle
             },
@@ -227,7 +253,7 @@ fun LibraryScreen(
     onBack: () -> Unit,
 ) {
     val listed = !ui.askKey && !ui.loading && ui.error == null && ui.rows.isNotEmpty()
-    val waiting = ui.rows.count { it.state == RowState.Idle }
+    val waiting = ui.rows.count { it.state == RowState.Idle || (it.state as? RowState.Done)?.retry == true }
     ArcadeScreen(
         title = "My Library",
         kicker = "Your games, one tap away",
@@ -258,7 +284,7 @@ fun LibraryScreen(
                 Spacer(Modifier.height(8.dp))
                 Text("Enter your library key to download your games. It stays on this phone.", color = Palette.muted, fontSize = 14.sp, lineHeight = 20.sp)
                 Spacer(Modifier.height(16.dp))
-                ArcadeField(key, onKey, "Key", password = true, placeholder = "••••••••")
+                ArcadeField(key, onKey, "Key", password = true, placeholder = "••••••••", onDone = { if (key.isNotBlank() && url.isNotBlank()) onConnect() })
                 if (showUrl) {
                     Spacer(Modifier.height(12.dp))
                     ArcadeField(url, onUrl, "Library address", keyboardType = KeyboardType.Uri)
@@ -367,7 +393,7 @@ private fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = P
  */
 @Composable
 private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, onDownload: () -> Unit) {
-    val canGet = row.state == RowState.Idle && !busy
+    val canGet = (row.state == RowState.Idle || (row.state as? RowState.Done)?.retry == true) && !busy
     val shape = RoundedCornerShape(16.dp)
     val source = remember { MutableInteractionSource() }
     val gold = row.state is RowState.Downloading || lit(source)

@@ -31,6 +31,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -194,7 +199,8 @@ fun ProfileScreen(
                     ProfileIcon(
                         i,
                         52.dp,
-                        Modifier.clip(CircleShape).clickable { icon = i },
+                        Modifier.clip(CircleShape).clickable { icon = i }
+                            .semantics { contentDescription = "Icon ${i + 1}"; selected = i == icon; role = Role.RadioButton },
                         ring = if (i == icon) Palette.text else null,
                     )
                 }
