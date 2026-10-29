@@ -338,6 +338,9 @@ class Room private constructor(
     /** For tests: how this phone reaches the others. */
     internal val via: Transport get() = transport
 
+    /** An internet room (WebRTC), not one on this Wi-Fi: it isn't tied to the Wi-Fi, and has no beacon. */
+    val overInternet: Boolean get() = transport is WebRtcTransport
+
     // This game's first frame on this phone: 0, or where it came in to watch.
     @Volatile private var startFrame = 0
     // Watching (not the owner): each seat's next frame of relayed inputs.

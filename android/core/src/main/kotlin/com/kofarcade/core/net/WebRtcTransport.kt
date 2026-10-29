@@ -44,7 +44,8 @@ class WebRtcTransport(
     private val listeners = ConcurrentHashMap<Int, RtcListener>()
     private val endpoints = ConcurrentHashMap<Int, RtcDatagrams>()
     private val peers = ConcurrentHashMap<String, Peer>()
-    private var nextPort = 1
+    // Ports it picks itself start high: low ones are left for those asked for by number (OnlineRooms.PORT).
+    private var nextPort = 100
     @Volatile private var closed = false
 
     // Every connection's state changes here, one at a time (see Peer).
@@ -99,6 +100,10 @@ class WebRtcTransport(
     /** Leaves: every connection ends, and the others are told. */
     fun close() {
         if (closed) return
+        // What the room said last (its goodbye) goes out before the connections end.
+        val until = System.nanoTime() + DRAIN_NS
+        while (System.nanoTime() < until && peers.values.any { p -> p.pc?.let { it.buffered(RtcPeer.RELIABLE) > 0 } == true }) Thread.sleep(10)
+        Thread.sleep(GOODBYE_MS)
         closed = true
         actor.shutdown()
         runCatching { actor.awaitTermination(2, TimeUnit.SECONDS) }
@@ -714,6 +719,9 @@ class WebRtcTransport(
         const val HELLO_AGAIN_NS = 1_000_000_000L
         const val OFFER_AGAIN_MS = 1_500L
         const val MAX_AHEAD = 64
+        const val DRAIN_NS = 1_000_000_000L
+        /** After the last bytes leave, time for them to arrive before the goodbye (BYE) does. */
+        const val GOODBYE_MS = 250L
         /** An offer unanswered this many times (30 s) ends the try. */
         const val OFFER_TRIES = 20
     }

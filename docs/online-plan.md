@@ -496,6 +496,44 @@ one Wi-Fi with no internet.
 | 1.5.6 | Share the code: copy, the Android share sheet, and a QR code | UI |
 | 1.5.7 | Tests: the room tests over the fake transport at internet conditions (join, leave, takeover, drop and rejoin, three players) | Tests |
 
+**Results (2026-10-30):**
+
+- **`OnlineRooms`** (core): a room made on the server (`create_room`, its
+  code), then the same room logic as on Wi-Fi over `WebRtcTransport`.
+  - **Host:** sign in, make the room, run it; the room's key is its code.
+    While open, the server's record is touched every minute.
+  - **Join by code (1.5.2):** `find_room` first (its game, ROM and BIOS
+    fingerprints, who made it). The app checks this phone has the game
+    ("You need KOF '97 (kof97) to join Rafi's room", with the library) and
+    the same version before connecting; the room checks again on joining.
+  - **Who to reach (1.5.3, 1.5.4):** the one who made it, then the room's
+    other phones (members see each other). Every phone takes links on the
+    same port, so a room taken over sends a newcomer to its new host, and a
+    latecomer still gets in after the maker left.
+  - **Leaving:** the room, the connections (what's still being sent goes
+    first, so the others hear the goodbye before the connection ends), and
+    `leave_room` (the last one out closes it).
+  - **Security (1.5.5):** only the room's members join its signaling
+    channel (the database's rules); WebRTC encrypts everything.
+- **App:** Multiplayer gets **Play over the internet**: a code field with
+  Join, and **Host online** (the same game picker). The room sheet shows
+  the code with a **QR code**, Copy and Share (1.5.6). The shared text and
+  the QR code carry a link (`join.html?code=…`) that the app opens straight
+  into joining; without the app, the website's page shows the code and
+  where to get the app ("Open in the app" uses `kidarcade://join`).
+- **On the game screen:** an internet room isn't tied to the Wi-Fi (no
+  LanLink); when the phone's network changes (Wi-Fi to 4G) it asks for an
+  ICE restart to every phone at once, and tries to rejoin if the room was
+  lost. Closing the game closes the internet room.
+- **Tests:** `OnlineRoomsTest` (5, a fake of the server's rules and the
+  simulated internet): made and joined by code, no such code, a different
+  ROM refused with the reason and not left in the room, the last one out
+  closes it, a latecomer after the maker left. Screenshots of the
+  Multiplayer screen and the internet room's sheet.
+- **Not yet:** the one Online screen, ping bars and nearby-first (1.8);
+  the queue for seats (1.7); delay tuned for internet pings (1.6). Phones
+  on two networks are tested in 1.9.
+
 ### Phase 1.6: Smoothness on the internet
 
 | # | Work | Output |

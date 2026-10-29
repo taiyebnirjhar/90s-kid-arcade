@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join a room · 90s Kid Arcade</title>
+<meta name="description" content="A friend invited you to an online room in 90s Kid Arcade.">
+<meta name="theme-color" content="#0B0B12">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B12'/%3E%3Ctext x='32' y='42' font-family='Arial Black,Arial' font-weight='900' font-style='italic' font-size='26' text-anchor='middle' fill='%23E8B21A'%3E90s%3C/text%3E%3C/svg%3E">
+<style>
+  :root { --bg: #0b0b12; --panel: #171724; --line: #2c2c40; --text: #f1f0f7; --muted: #9a98b0; --gold: #e8b21a; --on-gold: #1a1406; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px 16px; }
+  main { width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 28px 24px; text-align: center; }
+  .kicker { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 2.4px; text-transform: uppercase; }
+  h1 { margin: 6px 0 4px; font-size: 26px; font-style: italic; font-weight: 900; }
+  .code { font-size: 44px; font-weight: 900; letter-spacing: 6px; color: var(--gold); margin: 12px 0 4px; }
+  p { color: var(--muted); margin: 8px 0; }
+  .btn { display: flex; align-items: center; justify-content: center; margin-top: 14px; padding: 15px 22px; border-radius: 999px;
+    font-weight: 800; text-decoration: none; border: 1px solid var(--line); color: var(--text); }
+  .btn.gold { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+  ol { text-align: left; color: var(--muted); padding-left: 20px; margin: 18px 0 0; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">90s Kid Arcade</div>
+  <h1>You're invited to a room</h1>
+  <div class="code" id="code">······</div>
+  <p>Play over the internet, on any network.</p>
+  <a class="btn gold" id="open" href="#">Open in the app</a>
+  <a class="btn" href="https://taiyebnirjhar.github.io/90s-kid-arcade/90s-Kid-Arcade.apk">Get the app (Android)</a>
+  <ol>
+    <li>Install the app and add the same game (the room tells you which).</li>
+    <li>Tap <b>Open in the app</b>, or in the app: <b>Multiplayer</b> → <b>Play over the internet</b> → type the code.</li>
+  </ol>
+</main>
+<script>
+  // The room's code, from ?code=K7Q2MX (as the app's link and QR code give it).
+  var raw = (new URLSearchParams(location.search).get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  var code = raw.length === 6 ? raw : "";
+  document.getElementById("code").textContent = code ? code.slice(0, 3) + "-" + code.slice(3) : "No code";
+  var open = document.getElementById("open");
+  if (code) open.href = "kidarcade://join?code=" + code;
+  else open.style.display = "none";
+</script>
+</body>
+</html>

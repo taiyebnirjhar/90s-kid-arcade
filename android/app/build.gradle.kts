@@ -77,6 +77,10 @@ dependencies {
 
     // Internet rooms: Google's WebRTC, prebuilt (docs/online-plan.md, D1; about 10 MB for our two ABIs).
     implementation("io.getstream:stream-webrtc-android:1.3.10")
+    // Internet rooms' QR codes (the encoder only: about 0.5 MB).
+    implementation("com.google.zxing:core:3.5.3")
+    // Core's online signaling uses it (Supabase Realtime's WebSocket).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")

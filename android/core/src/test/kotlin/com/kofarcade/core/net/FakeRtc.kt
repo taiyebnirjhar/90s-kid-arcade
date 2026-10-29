@@ -27,7 +27,10 @@ class RtcNet(val net: FakeNet = FakeNet()) : TestNet {
     override fun phone(): Transport = transport("phone${++count}")
 
     /** A phone's transport; again for the same [host]: that phone's app started over. */
-    fun transport(host: String) = WebRtcTransport(hub.join(host), { _, events -> FakePeer(this, host, events).also { conns[it.id] = it } }, { emptyList() })
+    fun transport(host: String) = WebRtcTransport(hub.join(host), factory(host), { emptyList() })
+
+    /** Simulated WebRTC for the phone [host]. */
+    fun factory(host: String): RtcFactory = RtcFactory { _, events -> FakePeer(this, host, events).also { conns[it.id] = it } }
 
     override fun path(a: String, b: String): Path = net.path(a, b)
 

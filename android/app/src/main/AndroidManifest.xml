@@ -27,6 +27,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- An internet room's link (shared, or its QR code): straight to joining it. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="taiyebnirjhar.github.io" android:pathPattern="/90s-kid-arcade/join.html" />
+            </intent-filter>
+            <!-- The website's "Open in the app" button. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kidarcade" android:host="join" />
+            </intent-filter>
         </activity>
 
         <activity

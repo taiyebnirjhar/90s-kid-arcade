@@ -79,6 +79,8 @@ data class RoomUi(
     val watching: Boolean,
     /** This phone runs the room: it can free a seat held for someone who dropped out. */
     val canFree: Boolean = false,
+    /** An internet room: [key] is its code, for friends anywhere. */
+    val online: Boolean = false,
 ) {
     val players: List<RoomPerson> get() = people.filter { it.seat >= 0 }.sortedBy { it.seat }
     val watchers: List<RoomPerson> get() = people.filter { it.seat < 0 }
@@ -269,9 +271,22 @@ private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: 
         }
     } else {
         Panel(highlight = true) {
-            Kicker("Room key", Palette.muted)
-            Text(ui.key, color = Palette.gold, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
-            Text("Friends: Multiplayer → type this key. Same Wi-Fi or hotspot.", color = Palette.muted, fontSize = 12.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Kicker(if (ui.online) "Room code" else "Room key", Palette.muted)
+                    Text(ui.key, color = Palette.gold, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+                    Text(
+                        if (ui.online) "Friends anywhere: Multiplayer → Play over the internet → type this code, or scan it." else "Friends: Multiplayer → type this key. Same Wi-Fi or hotspot.",
+                        color = Palette.muted,
+                        fontSize = 12.sp,
+                    )
+                }
+                if (ui.online) {
+                    Spacer(Modifier.width(12.dp))
+                    // Scanned with a phone's camera: opens the room in the app (or the website's page to get it).
+                    QrCode(joinLink(ui.key), Modifier.size(96.dp))
+                }
+            }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GhostButton("Copy", onCopy, Modifier.weight(1f))

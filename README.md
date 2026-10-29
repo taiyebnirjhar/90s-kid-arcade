@@ -196,6 +196,12 @@ BIOS for Neo Geo games; the library has them).
   `K7Q-2M`) with **Copy** and **Share** (send it through any app). The key
   holds the host phone's address on the Wi-Fi or hotspot, so typing it
   connects straight there: no server, no internet, no searching.
+- **Over the internet**: Multiplayer → **Play over the internet** →
+  **Host online** gives a room code (like `K7Q-2MX`) with a QR code; friends
+  on any network type it (or scan it, or tap the shared link) to join. The
+  room works as on Wi-Fi: watching, seats, taking over. It needs a free
+  sign-in (your profile) and internet; the game goes phone to phone, through
+  the relay only when a direct way is blocked.
 - **Join**: on the same Multiplayer screen, type the key (it formats itself
   as you type) or tap a room nearby (each shows its game, host and seats).
   Nobody has to let you in: you watch the game as it stands (up to 8 phones

@@ -48,6 +48,7 @@ import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.online.OnlineRooms
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.net.NetLog
@@ -261,8 +262,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
         if (room != null) {
             holdWifi()
-            // Multiplayer stays on the room's Wi-Fi, whatever Android prefers (LanLink).
-            lanLink = LanLink(this, target = ::roomAddress, onBack = { runOnUiThread { tryRejoinNow() } })
+            if (room?.overInternet == true) {
+                // An internet room goes over whatever network the phone has: on a
+                // change (Wi-Fi to 4G), a new way to the others at once.
+                watchNetwork()
+            } else {
+                // Multiplayer stays on the room's Wi-Fi, whatever Android prefers (LanLink).
+                lanLink = LanLink(this, target = ::roomAddress, onBack = { runOnUiThread { tryRejoinNow() } })
+            }
         }
         // The emulator is one object for the whole app: a game left frozen
         // (quit from the menu) mustn't start the next one frozen.
@@ -607,7 +614,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 )
             }
         }
-        roomUi = RoomUi(r.key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner)
+        val key = if (r.overInternet) OnlineRooms.pretty(r.key) else r.key
+        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet)
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -619,9 +627,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** Sends the room's key through any app (messages, WhatsApp…). */
     fun shareRoomKey() {
         val key = roomKey ?: return
-        val text = "Play with me on 90s Kid Arcade! Room key: $key\n" +
-            "Open Multiplayer and type the key (same Wi-Fi or hotspot).\n" +
-            "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        val text = if (room?.overInternet == true) {
+            val code = OnlineRooms.pretty(key)
+            "Play with me on 90s Kid Arcade! Room code: $code\n" +
+                "Open Multiplayer and type the code under \"Play over the internet\", or tap: ${joinLink(key)}\n" +
+                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        } else {
+            "Play with me on 90s Kid Arcade! Room key: $key\n" +
+                "Open Multiplayer and type the key (same Wi-Fi or hotspot).\n" +
+                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+        }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         runCatching { startActivity(Intent.createChooser(send, "Share the room key")) }
     }
@@ -655,7 +670,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     /** Copies the room's key, to send to friends. */
     fun copyRoomKey() {
-        val key = roomKey ?: return
+        val key = roomKey?.let { if (room?.overInternet == true) OnlineRooms.pretty(it) else it } ?: return
         val clipboard = getSystemService(android.content.ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Room key", key))
         announce("Room key $key copied")
@@ -1045,6 +1060,26 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }.getOrNull()
     }
 
+    // An internet room: the phone's network, watched for changes.
+    private var networkWatch: android.net.ConnectivityManager.NetworkCallback? = null
+
+    private fun watchNetwork() {
+        val cm = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+        var current: android.net.Network? = null
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                // The first one is where the game started; a different one later is a switch.
+                if (current != null && current != network) {
+                    NetLog.add("The phone's network changed: finding a new way to the others")
+                    Netplay.online?.transport?.networkChanged()
+                    runOnUiThread { tryRejoinNow() }
+                }
+                current = network
+            }
+        }
+        runCatching { cm.registerDefaultNetworkCallback(callback) }.onSuccess { networkWatch = callback }
+    }
+
     override fun onDestroy() {
         // The room first: its threads may still ask the emulator for its
         // state, which the emulator can't answer once it's gone.
@@ -1053,6 +1088,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             if (Netplay.room === it) Netplay.room = null
             LibretroDroid.setNetplay(false, 0, 2, 0, 0)
         }
+        // An internet room: its connections, and this phone's place on the server.
+        Netplay.online?.let { online ->
+            Netplay.online = null
+            Thread { online.close() }.start()
+        }
+        networkWatch?.let { runCatching { getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(it) } }
         super.onDestroy()
         wifiLock?.let { if (it.isHeld) it.release() }
         lanLink?.stop()
