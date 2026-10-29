@@ -67,11 +67,20 @@ The database tables, rules and functions will live in the repo
 - **By hand:** paste the SQL into Supabase's **SQL Editor** and create the
   functions in the dashboard. Step-by-step instructions come with that PR.
 
+## The project
+
+Public values only; they go into the app in phase 1.2.
+
+- **Project URL:** `https://ysbskjtvccdbhnfuccso.supabase.co`
+- **Publishable key:** `sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE`
+- **Settings:** Data API on; new tables not exposed automatically; automatic
+  RLS on.
+
 ## Checklist
 
-- [ ] Supabase project created (Mumbai, Free)
-- [ ] Anonymous sign-ins on
-- [ ] Project URL and publishable key sent
+- [x] Supabase project created (Mumbai, Free)
+- [x] Anonymous sign-ins on (captcha off until the app can solve one)
+- [x] Project URL and publishable key sent
 - [ ] Cloudflare TURN key created
 - [ ] `CF_TURN_KEY_ID` and `CF_TURN_KEY_TOKEN` saved as Supabase secrets
 - [ ] (For phase 1.2) GitHub secrets for automatic deploys, or by hand
