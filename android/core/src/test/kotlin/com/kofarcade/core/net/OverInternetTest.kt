@@ -38,3 +38,20 @@ class ChaosOverInternetTest : ChaosTest() {
         assertTrue(guest.news.none { "lost" in it }, "${guest.news}")
     }
 }
+
+// And over WebRtcTransport, as internet rooms run: each pair of phones on
+// its own (simulated) peer connection, set up through signaling.
+
+private fun webRtc() = RtcNet(internet())
+
+class RoomOverWebRtcTest : RoomTest() {
+    override val net = webRtc()
+
+    init {
+        NetLog.echo = { println(it) }
+    }
+}
+
+class ChaosOverWebRtcTest : ChaosTest() {
+    override val net = webRtc()
+}

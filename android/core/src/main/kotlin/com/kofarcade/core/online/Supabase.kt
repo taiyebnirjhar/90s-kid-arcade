@@ -124,6 +124,16 @@ class Supabase(
         }.getOrNull()
     }
 
+    /** The signed-in guest's token now (refreshed if it's running out): for Realtime. */
+    fun accessToken(): String = session().access
+
+    /** The project's public key. */
+    val publicKey: String get() = key
+
+    /** An Edge Function, as the signed-in guest; its answer as JSON. */
+    fun function(name: String, body: JsonObject): JsonElement =
+        Json.parseToJsonElement(signedInCall("POST", "/functions/v1/$name", body.toString()).ifEmpty { "null" })
+
     /** A database function, as the signed-in guest; its result as JSON. */
     fun rpc(name: String, args: JsonObject): JsonElement = Json.parseToJsonElement(signedInCall("POST", "/rest/v1/rpc/$name", args.toString()).ifEmpty { "null" })
 

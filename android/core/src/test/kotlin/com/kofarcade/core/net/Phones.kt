@@ -15,7 +15,7 @@ fun pressedBy(f: Int, id: Int) = (f * 13 + id) and 0xFFF or 1
 class Phones(
     private val log: (String) -> Unit = {},
     /** The network the phones are on: null for real sockets on this machine. */
-    private val net: FakeNet? = null,
+    private val net: TestNet? = null,
 ) {
     val all = CopyOnWriteArrayList<Phone>()
     private val start = System.nanoTime()
