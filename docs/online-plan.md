@@ -427,6 +427,63 @@ one Wi-Fi with no internet.
 | 1.4.5 | Recovery: ICE restart on a network change (Wi-Fi to 4G); the room's existing hold and rejoin logic covers the gap | Behavior |
 | 1.4.6 | Tests: transport contract tests shared with the LAN and fake transports; on-phone checks with two phones (1.9) | Tests |
 
+**Results (2026-10-30):**
+
+- **`WebRtcTransport`** (core): the room's transport over WebRTC. A phone's
+  address is its player id plus a port of the transport's own, so the room
+  logic runs over it unchanged.
+  - One peer connection per pair, with two data channels set up in advance
+    (negotiated ids): reliable and ordered for links, unordered without
+    resends for inputs. Several links share a connection; messages are cut
+    into 16 KB pieces (a game state is hundreds of KB), and a sender waits
+    while over 1 MB is queued.
+  - **Who offers:** always the phone with the lower id; the other asks with
+    a hello. Two phones never offer at once.
+  - **Signals get lost while a phone joins:** offers are sent again every
+    1.5 s until answered (30 s), a repeated offer gets the same answer, and
+    candidates that arrive before their offer wait for it.
+  - **A phone that starts over** (app restarted, crashed, goodbye lost) is
+    told apart by its run's id: the other side makes a fresh connection
+    instead of trying to continue the old one. Connections are numbered from
+    the clock, so a restarted offerer's are always newer.
+  - **Recovery (1.4.5):** disconnected for 2 s, or failed: an ICE restart
+    (the same connection and links, a new way); `networkChanged()` asks for
+    one at once (Wi-Fi to 4G). Links wait through it, as TCP does.
+- **`Rtc` adapter:** what the transport needs of a WebRTC library, so its
+  logic is plain Kotlin. Three behind it: Google's WebRTC on Android
+  (`AndroidRtc`, `stream-webrtc-android`), the same library's desktop build
+  (`webrtc-java`, tests only), and a simulated one over the fake internet.
+- **Signaling (1.4.2):** `RealtimeSignaling` speaks Supabase Realtime's
+  protocol (Phoenix channels over OkHttp's WebSocket) on the room's private
+  channel: join with the guest's token, heartbeat, a fresh token each hour,
+  reconnect with backoff; signals sent while it's down wait (15 s at most).
+  A stranger's join is refused by the database's rules.
+- **Relay (D6, D8):** `RelayServers` asks `turn-credentials` for an hour's
+  TURN servers and asks again 5 minutes before they run out. When the relay
+  is paused (900 GB) or can't be asked, connections go on with public STUN
+  alone, and its note says why.
+- **Path (1.4.4):** `paths()` says, per phone, which way ICE chose (nearby,
+  direct, relay) and the round trip, from WebRTC's stats; logged when a
+  connection opens.
+- **Tests:**
+  - `WebRtcTransportTest` (14, simulated WebRTC): order, both directions,
+    either phone first, a 700 KB state, close, many links, refused, nobody
+    there, datagrams, a short outage, a network change, a restart, a crash
+    (either side), leaving.
+  - **Every room test and chaos soak runs again over it**
+    (`RoomOverWebRtcTest`, `ChaosOverWebRtcTest`), on the simulated
+    internet: join, leave, takeover, drop and rejoin, three players.
+  - `RealWebRtcTest`: two transports over real WebRTC on this machine
+    (ICE, DTLS, SCTP): a 500 KB state, inputs, close.
+  - `RealtimeSignalingTest` (4, a fake of Realtime's protocol over a real
+    WebSocket): signals reach only the phone they're for, a stranger's join
+    is refused with the reason, signals sent before joining wait and go, a
+    socket the server closes comes back and joins again.
+  - `LiveServerTest` (only with `KOF_LIVE=1`): two guests, a room, its
+    Realtime channel, a stranger refused, relay servers. Run against the
+    project on 2026-10-30: all as expected, and it found #44's missing
+    grants (fixed in #45).
+
 ### Phase 1.5: Online rooms
 
 | # | Work | Output |

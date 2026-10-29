@@ -75,6 +75,9 @@ dependencies {
     implementation("com.kofarcade:core:1.0")
     implementation(project(":libretrodroid"))
 
+    // Internet rooms: Google's WebRTC, prebuilt (docs/online-plan.md, D1; about 10 MB for our two ABIs).
+    implementation("io.getstream:stream-webrtc-android:1.3.10")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")

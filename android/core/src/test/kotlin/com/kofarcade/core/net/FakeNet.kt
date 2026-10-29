@@ -29,7 +29,7 @@ class Path(
 class FakeNet(
     /** Every new way between two phones starts like this. */
     private val start: () -> Path = { Path() },
-) {
+) : TestNet {
     private val hosts = ConcurrentHashMap<String, FakeTransport>()
     private val paths = ConcurrentHashMap<Pair<String, String>, Path>()
     private var count = 0
@@ -38,13 +38,13 @@ class FakeNet(
 
     /** A new phone on this network. */
     @Synchronized
-    fun phone(): FakeTransport {
+    override fun phone(): FakeTransport {
         val host = "phone${++count}"
         return FakeTransport(this, host).also { hosts[host] = it }
     }
 
     /** The way between [a] and [b] (hosts), to change it. */
-    fun path(a: String, b: String): Path = paths.getOrPut(if (a < b) a to b else b to a, start)
+    override fun path(a: String, b: String): Path = paths.getOrPut(if (a < b) a to b else b to a, start)
 
     internal fun host(name: String): FakeTransport? = hosts[name]
 
@@ -207,8 +207,8 @@ class FakeTransport internal constructor(private val net: FakeNet, val host: Str
     }
 }
 
-/** For tests: a room's network (null: real sockets). */
-val Room.fakeHost: String? get() = (via as? FakeTransport)?.host
+/** For tests: a room's host on its simulated network (null: real sockets). */
+val Room.fakeHost: String? get() = (via as? FakeTransport)?.host ?: (via as? WebRtcTransport)?.self
 
 /** For tests: where to reach a room's phone: its host on the fake network, or this machine. */
 val Room.address: Address get() = Address(fakeHost ?: "127.0.0.1", roomPort)

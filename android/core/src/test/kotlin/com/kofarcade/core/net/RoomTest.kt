@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 /** Rooms over real sockets on this machine; [RoomOverInternetTest] runs them over a simulated internet. */
 open class RoomTest {
     /** The network the phones are on: null for real sockets on this machine. */
-    protected open val net: FakeNet? = null
+    protected open val net: TestNet? = null
 
     // A new phone's way of reaching the others.
     private fun transport(): Transport = net?.phone() ?: LanTransport

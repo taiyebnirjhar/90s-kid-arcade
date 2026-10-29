@@ -19,7 +19,13 @@ kotlin {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    // Online signaling: Supabase Realtime is a WebSocket (OkHttp's, as Android apps use).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation(kotlin("test"))
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    // Real WebRTC for the transport's tests (Google's library, its desktop build; Linux x86-64, as CI runs).
+    testImplementation("dev.onvoid.webrtc:webrtc-java:0.14.0")
+    testRuntimeOnly("dev.onvoid.webrtc:webrtc-java:0.14.0:linux-x86_64")
 }
 
 tasks.test {

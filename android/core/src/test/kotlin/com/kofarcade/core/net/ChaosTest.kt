@@ -17,7 +17,7 @@ import kotlin.test.fail
  */
 open class ChaosTest {
     /** The network the phones are on: null for real sockets on this machine. */
-    protected open val net: FakeNet? = null
+    protected open val net: TestNet? = null
 
     protected val phones by lazy { Phones({ println(it) }, net) }
 
