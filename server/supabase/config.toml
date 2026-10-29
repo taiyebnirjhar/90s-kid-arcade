@@ -1,0 +1,8 @@
+# Supabase CLI settings for deploying this folder (server/supabase): the
+# database migrations and the Edge Functions. The project itself is linked
+# by its ref (docs/online-setup.md), never written here.
+project_id = "90s-kid-arcade"
+
+[functions.turn-credentials]
+# Only signed-in players (guests included) reach it.
+verify_jwt = true

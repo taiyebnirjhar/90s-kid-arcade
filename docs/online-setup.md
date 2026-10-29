@@ -64,19 +64,41 @@ This is the same Cloudflare account as the ROM library.
 The app never sees these. A small server function (phase 1.2) uses them to
 hand each phone relay credentials that expire, as Cloudflare recommends.
 
-## 3. Deploying the server parts (phase 1.2, later)
+## 3. Putting the server parts on the project
 
-The database tables, rules and functions will live in the repo
-(`server/supabase/`). To put them on the project, one of:
+The database (tables, rules, room codes, the clean-up job) and the relay
+function live in the repo, in `server/supabase/`. Two ways to put them on
+the project; the automatic one also keeps it up to date.
 
-- **Automatic (recommended):** add two GitHub secrets to the repo
-  (**Settings → Secrets and variables → Actions**):
-  - `SUPABASE_ACCESS_TOKEN`: from Supabase **Account → Access Tokens**;
-  - `SUPABASE_PROJECT_REF`: the `xxxx` part of the project URL.
+**Automatic (recommended).** Add three secrets to the GitHub repo
+(**Settings → Secrets and variables → Actions → New repository secret**):
 
-  A workflow deploys on each merge to main.
-- **By hand:** paste the SQL into Supabase's **SQL Editor** and create the
-  functions in the dashboard. Step-by-step instructions come with that PR.
+- `SUPABASE_ACCESS_TOKEN`: in Supabase, your avatar (top right) →
+  **Account preferences → Access Tokens → Generate new token**, named
+  `90s-kid-arcade-deploy`;
+- `SUPABASE_PROJECT_REF`: `ysbskjtvccdbhnfuccso` (not secret, but kept with
+  the others);
+- `SUPABASE_DB_PASSWORD`: the database password you saved when you made the
+  project.
+
+Then **Actions → Server deploy → Run workflow** (and after that, on its
+own, whenever the server changes on main). Without the secrets the
+workflow says so and does nothing.
+
+**By hand.**
+
+1. **Database:** in Supabase, **SQL Editor → New query**. Paste the whole of
+   `server/supabase/migrations/20261029000000_online.sql`, then **Run**;
+   then the same for `20261029000100_cleanup_job.sql`. Run each once.
+2. **Function:** **Edge Functions → Deploy a new function → Via Editor**,
+   named `turn-credentials`. Add the two files from
+   `server/supabase/functions/turn-credentials/` (`index.ts` and
+   `relay.ts`, same names), then **Deploy**. Leave "Verify JWT" on.
+
+**Check it worked:** **Table Editor** shows `profiles`, `rooms`,
+`room_members`, `relay_usage` and `relay_credentials`; **Integrations →
+Cron** shows `close-quiet-rooms` every minute; **Edge Functions** shows
+`turn-credentials`.
 
 ## The project
 
@@ -95,4 +117,4 @@ Public values only; they go into the app in phase 1.2.
 - [x] Cloudflare TURN key created (2026-10-29)
 - [x] `CF_TURN_KEY_ID` and `CF_TURN_KEY_TOKEN` saved as Supabase secrets
 - [x] `CF_ANALYTICS_TOKEN` (Account Analytics: Read) and `CF_ACCOUNT_ID` saved as Supabase secrets
-- [ ] (For phase 1.2) GitHub secrets for automatic deploys, or by hand
+- [ ] Server parts on the project: GitHub secrets for automatic deploys (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`), or by hand
