@@ -1,5 +1,5 @@
 {
- "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp",
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp, konami/d_mystwarr.cpp, konami/d_tmnt.cpp, pst90s/d_hyperpac.cpp, pst90s/d_seta.cpp",
  "bios": [
   {
    "name": "sp-s3.sp1",
@@ -3502,6 +3502,404 @@
      "size": 1048576,
      "crc": "0e2616ab",
      "optional": false
+    }
+   ]
+  },
+  {
+   "name": "jjsquawk",
+   "parent": null,
+   "base": "jjsquawk",
+   "title": "J. J. Squawkers",
+   "files": [
+    {
+     "name": "fe2002001.u3",
+     "size": 524288,
+     "crc": "7b9af960",
+     "optional": false
+    },
+    {
+     "name": "fe2002002.u4",
+     "size": 524288,
+     "crc": "47dd71a3",
+     "optional": false
+    },
+    {
+     "name": "fe2001009",
+     "size": 524288,
+     "crc": "27441cd3",
+     "optional": false
+    },
+    {
+     "name": "fe2001010",
+     "size": 524288,
+     "crc": "ca2b42c4",
+     "optional": false
+    },
+    {
+     "name": "fe2001007",
+     "size": 524288,
+     "crc": "62c45658",
+     "optional": false
+    },
+    {
+     "name": "fe2001008",
+     "size": 524288,
+     "crc": "2690c57b",
+     "optional": false
+    },
+    {
+     "name": "fe2001011",
+     "size": 524288,
+     "crc": "98b9f4b4",
+     "optional": false
+    },
+    {
+     "name": "fe2001012",
+     "size": 524288,
+     "crc": "d4aa916c",
+     "optional": false
+    },
+    {
+     "name": "fe2001003",
+     "size": 524288,
+     "crc": "a5a35caf",
+     "optional": false
+    },
+    {
+     "name": "fe2001014",
+     "size": 524288,
+     "crc": "274bbb48",
+     "optional": false
+    },
+    {
+     "name": "fe2001013",
+     "size": 524288,
+     "crc": "51e29871",
+     "optional": false
+    },
+    {
+     "name": "fe2001004",
+     "size": 524288,
+     "crc": "a235488e",
+     "optional": false
+    },
+    {
+     "name": "fe2001005.u69",
+     "size": 524288,
+     "crc": "d99f2879",
+     "optional": false
+    },
+    {
+     "name": "fe2001006.u70",
+     "size": 524288,
+     "crc": "9df1e478",
+     "optional": false
+    },
+    {
+     "name": "m-009.u206",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-010.u116",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m2-011.u14",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-012.u35",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-013.u36",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-014.u76",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "jjsquawkb",
+   "parent": "jjsquawk",
+   "base": "jjsquawk",
+   "title": "J. J. Squawkers (bootleg)",
+   "files": [
+    {
+     "name": "3",
+     "size": 524288,
+     "crc": "afd5bd07",
+     "optional": false
+    },
+    {
+     "name": "2",
+     "size": 524288,
+     "crc": "740a7366",
+     "optional": false
+    },
+    {
+     "name": "4.bin",
+     "size": 2097152,
+     "crc": "969502f7",
+     "optional": false
+    },
+    {
+     "name": "2.bin",
+     "size": 2097152,
+     "crc": "765253d1",
+     "optional": false
+    },
+    {
+     "name": "3.bin",
+     "size": 2097152,
+     "crc": "b1e3a4bb",
+     "optional": false
+    },
+    {
+     "name": "1.bin",
+     "size": 2097152,
+     "crc": "a5d37cf7",
+     "optional": false
+    },
+    {
+     "name": "1",
+     "size": 1048576,
+     "crc": "181a55b8",
+     "optional": false
+    },
+    {
+     "name": "fj-111.u50",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "fj-012.u51",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "fj-013.u52",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "fj-014.u53",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "fj-015.u54",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "jjsquawkb2",
+   "parent": "jjsquawk",
+   "base": "jjsquawk",
+   "title": "J. J. Squawkers (bootleg, Blandia Conversion)",
+   "files": [
+    {
+     "name": "u3.3a",
+     "size": 524288,
+     "crc": "f94c913b",
+     "optional": false
+    },
+    {
+     "name": "u4.4a",
+     "size": 524288,
+     "crc": "0227a2be",
+     "optional": false
+    },
+    {
+     "name": "u64.3l",
+     "size": 1048576,
+     "crc": "11d8713a",
+     "optional": false
+    },
+    {
+     "name": "u63.2l",
+     "size": 1048576,
+     "crc": "7a385ef0",
+     "optional": false
+    },
+    {
+     "name": "u66.5l",
+     "size": 1048576,
+     "crc": "bbaf40c5",
+     "optional": false
+    },
+    {
+     "name": "u65.4l",
+     "size": 524288,
+     "crc": "a5a35caf",
+     "optional": false
+    },
+    {
+     "name": "u68.7l",
+     "size": 1048576,
+     "crc": "ae9ae01f",
+     "optional": false
+    },
+    {
+     "name": "u67.6l",
+     "size": 524288,
+     "crc": "a235488e",
+     "optional": false
+    },
+    {
+     "name": "u70.10l",
+     "size": 1048576,
+     "crc": "181a55b8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "jjsquawko",
+   "parent": "jjsquawk",
+   "base": "jjsquawk",
+   "title": "J. J. Squawkers (older)",
+   "files": [
+    {
+     "name": "fe2001001.u3",
+     "size": 524288,
+     "crc": "921c9762",
+     "optional": false
+    },
+    {
+     "name": "fe2001002.u4",
+     "size": 524288,
+     "crc": "0227a2be",
+     "optional": false
+    },
+    {
+     "name": "fe2001009",
+     "size": 524288,
+     "crc": "27441cd3",
+     "optional": false
+    },
+    {
+     "name": "fe2001010",
+     "size": 524288,
+     "crc": "ca2b42c4",
+     "optional": false
+    },
+    {
+     "name": "fe2001007",
+     "size": 524288,
+     "crc": "62c45658",
+     "optional": false
+    },
+    {
+     "name": "fe2001008",
+     "size": 524288,
+     "crc": "2690c57b",
+     "optional": false
+    },
+    {
+     "name": "fe2001011",
+     "size": 524288,
+     "crc": "98b9f4b4",
+     "optional": false
+    },
+    {
+     "name": "fe2001012",
+     "size": 524288,
+     "crc": "d4aa916c",
+     "optional": false
+    },
+    {
+     "name": "fe2001003",
+     "size": 524288,
+     "crc": "a5a35caf",
+     "optional": false
+    },
+    {
+     "name": "fe2001014",
+     "size": 524288,
+     "crc": "274bbb48",
+     "optional": false
+    },
+    {
+     "name": "fe2001013",
+     "size": 524288,
+     "crc": "51e29871",
+     "optional": false
+    },
+    {
+     "name": "fe2001004",
+     "size": 524288,
+     "crc": "a235488e",
+     "optional": false
+    },
+    {
+     "name": "fe2001005.u69",
+     "size": 524288,
+     "crc": "d99f2879",
+     "optional": false
+    },
+    {
+     "name": "fe2001006.u70",
+     "size": 524288,
+     "crc": "9df1e478",
+     "optional": false
+    },
+    {
+     "name": "m-009.u206",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-010.u116",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m2-011.u14",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-012.u35",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-013.u36",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
+    },
+    {
+     "name": "m-014.u76",
+     "size": 260,
+     "crc": "00000000",
+     "optional": true
     }
    ]
   },
@@ -17540,6 +17938,556 @@
    ]
   },
   {
+   "name": "mystwarr",
+   "parent": null,
+   "base": "mystwarr",
+   "title": "Mystic Warriors (ver EAA)",
+   "files": [
+    {
+     "name": "128eaa01.20f",
+     "size": 262144,
+     "crc": "508f249c",
+     "optional": false
+    },
+    {
+     "name": "128eaa02.20g",
+     "size": 262144,
+     "crc": "f8ffa352",
+     "optional": false
+    },
+    {
+     "name": "128a03.19f",
+     "size": 524288,
+     "crc": "e98094f3",
+     "optional": false
+    },
+    {
+     "name": "128a04.19g",
+     "size": 524288,
+     "crc": "88c6a3e4",
+     "optional": false
+    },
+    {
+     "name": "128a05.6b",
+     "size": 131072,
+     "crc": "0e5194e0",
+     "optional": false
+    },
+    {
+     "name": "128a08.1h",
+     "size": 1048576,
+     "crc": "63d6cfa0",
+     "optional": false
+    },
+    {
+     "name": "128a09.1k",
+     "size": 1048576,
+     "crc": "573a7725",
+     "optional": false
+    },
+    {
+     "name": "128a10.3h",
+     "size": 524288,
+     "crc": "558e545a",
+     "optional": false
+    },
+    {
+     "name": "128a16.22k",
+     "size": 1048576,
+     "crc": "459b6407",
+     "optional": false
+    },
+    {
+     "name": "128a15.20k",
+     "size": 1048576,
+     "crc": "6bbfedf4",
+     "optional": false
+    },
+    {
+     "name": "128a14.19k",
+     "size": 1048576,
+     "crc": "f7bd89dd",
+     "optional": false
+    },
+    {
+     "name": "128a13.17k",
+     "size": 1048576,
+     "crc": "e89b66a2",
+     "optional": false
+    },
+    {
+     "name": "128a12.12k",
+     "size": 524288,
+     "crc": "63de93e2",
+     "optional": false
+    },
+    {
+     "name": "128a11.10k",
+     "size": 524288,
+     "crc": "4eac941a",
+     "optional": false
+    },
+    {
+     "name": "128a06.2d",
+     "size": 2097152,
+     "crc": "88ed598c",
+     "optional": false
+    },
+    {
+     "name": "128a07.1d",
+     "size": 2097152,
+     "crc": "db79a66e",
+     "optional": false
+    },
+    {
+     "name": "mystwarr.nv",
+     "size": 128,
+     "crc": "28df2269",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mystwarra",
+   "parent": "mystwarr",
+   "base": "mystwarr",
+   "title": "Mystic Warriors (ver AAB)",
+   "files": [
+    {
+     "name": "128aab01.20f",
+     "size": 262144,
+     "crc": "3dc89153",
+     "optional": false
+    },
+    {
+     "name": "128aab02.20g",
+     "size": 262144,
+     "crc": "8fe92ad2",
+     "optional": false
+    },
+    {
+     "name": "128a03.19f",
+     "size": 524288,
+     "crc": "e98094f3",
+     "optional": false
+    },
+    {
+     "name": "128a04.19g",
+     "size": 524288,
+     "crc": "88c6a3e4",
+     "optional": false
+    },
+    {
+     "name": "128a05.6b",
+     "size": 131072,
+     "crc": "0e5194e0",
+     "optional": false
+    },
+    {
+     "name": "128a08.1h",
+     "size": 1048576,
+     "crc": "63d6cfa0",
+     "optional": false
+    },
+    {
+     "name": "128a09.1k",
+     "size": 1048576,
+     "crc": "573a7725",
+     "optional": false
+    },
+    {
+     "name": "128a10.3h",
+     "size": 524288,
+     "crc": "558e545a",
+     "optional": false
+    },
+    {
+     "name": "128a16.22k",
+     "size": 1048576,
+     "crc": "459b6407",
+     "optional": false
+    },
+    {
+     "name": "128a15.20k",
+     "size": 1048576,
+     "crc": "6bbfedf4",
+     "optional": false
+    },
+    {
+     "name": "128a14.19k",
+     "size": 1048576,
+     "crc": "f7bd89dd",
+     "optional": false
+    },
+    {
+     "name": "128a13.17k",
+     "size": 1048576,
+     "crc": "e89b66a2",
+     "optional": false
+    },
+    {
+     "name": "128a12.12k",
+     "size": 524288,
+     "crc": "63de93e2",
+     "optional": false
+    },
+    {
+     "name": "128a11.10k",
+     "size": 524288,
+     "crc": "4eac941a",
+     "optional": false
+    },
+    {
+     "name": "128a06.2d",
+     "size": 2097152,
+     "crc": "88ed598c",
+     "optional": false
+    },
+    {
+     "name": "128a07.1d",
+     "size": 2097152,
+     "crc": "db79a66e",
+     "optional": false
+    },
+    {
+     "name": "eeprom",
+     "size": 128,
+     "crc": "fd6a25b4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mystwarraa",
+   "parent": "mystwarr",
+   "base": "mystwarr",
+   "title": "Mystic Warriors (ver AAA)",
+   "files": [
+    {
+     "name": "128aaa01.20f",
+     "size": 262144,
+     "crc": "633ead86",
+     "optional": false
+    },
+    {
+     "name": "128aaa02.20g",
+     "size": 262144,
+     "crc": "69ab81a2",
+     "optional": false
+    },
+    {
+     "name": "128a03.19f",
+     "size": 524288,
+     "crc": "e98094f3",
+     "optional": false
+    },
+    {
+     "name": "128a04.19g",
+     "size": 524288,
+     "crc": "88c6a3e4",
+     "optional": false
+    },
+    {
+     "name": "128a05.6b",
+     "size": 131072,
+     "crc": "0e5194e0",
+     "optional": false
+    },
+    {
+     "name": "128a08.1h",
+     "size": 1048576,
+     "crc": "63d6cfa0",
+     "optional": false
+    },
+    {
+     "name": "128a09.1k",
+     "size": 1048576,
+     "crc": "573a7725",
+     "optional": false
+    },
+    {
+     "name": "128a10.3h",
+     "size": 524288,
+     "crc": "558e545a",
+     "optional": false
+    },
+    {
+     "name": "128a16.22k",
+     "size": 1048576,
+     "crc": "459b6407",
+     "optional": false
+    },
+    {
+     "name": "128a15.20k",
+     "size": 1048576,
+     "crc": "6bbfedf4",
+     "optional": false
+    },
+    {
+     "name": "128a14.19k",
+     "size": 1048576,
+     "crc": "f7bd89dd",
+     "optional": false
+    },
+    {
+     "name": "128a13.17k",
+     "size": 1048576,
+     "crc": "e89b66a2",
+     "optional": false
+    },
+    {
+     "name": "128a12.12k",
+     "size": 524288,
+     "crc": "63de93e2",
+     "optional": false
+    },
+    {
+     "name": "128a11.10k",
+     "size": 524288,
+     "crc": "4eac941a",
+     "optional": false
+    },
+    {
+     "name": "128a06.2d",
+     "size": 2097152,
+     "crc": "88ed598c",
+     "optional": false
+    },
+    {
+     "name": "128a07.1d",
+     "size": 2097152,
+     "crc": "db79a66e",
+     "optional": false
+    },
+    {
+     "name": "mystwarra.nv",
+     "size": 128,
+     "crc": "38951263",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mystwarrj",
+   "parent": "mystwarr",
+   "base": "mystwarr",
+   "title": "Mystic Warriors (ver JAA)",
+   "files": [
+    {
+     "name": "128jaa01.20f",
+     "size": 262144,
+     "crc": "49c37bfe",
+     "optional": false
+    },
+    {
+     "name": "128jaa02.20g",
+     "size": 262144,
+     "crc": "e39fb3bb",
+     "optional": false
+    },
+    {
+     "name": "128a03.19f",
+     "size": 524288,
+     "crc": "e98094f3",
+     "optional": false
+    },
+    {
+     "name": "128a04.19g",
+     "size": 524288,
+     "crc": "88c6a3e4",
+     "optional": false
+    },
+    {
+     "name": "128a05.6b",
+     "size": 131072,
+     "crc": "0e5194e0",
+     "optional": false
+    },
+    {
+     "name": "128a08.1h",
+     "size": 1048576,
+     "crc": "63d6cfa0",
+     "optional": false
+    },
+    {
+     "name": "128a09.1k",
+     "size": 1048576,
+     "crc": "573a7725",
+     "optional": false
+    },
+    {
+     "name": "128a10.3h",
+     "size": 524288,
+     "crc": "558e545a",
+     "optional": false
+    },
+    {
+     "name": "128a16.22k",
+     "size": 1048576,
+     "crc": "459b6407",
+     "optional": false
+    },
+    {
+     "name": "128a15.20k",
+     "size": 1048576,
+     "crc": "6bbfedf4",
+     "optional": false
+    },
+    {
+     "name": "128a14.19k",
+     "size": 1048576,
+     "crc": "f7bd89dd",
+     "optional": false
+    },
+    {
+     "name": "128a13.17k",
+     "size": 1048576,
+     "crc": "e89b66a2",
+     "optional": false
+    },
+    {
+     "name": "128a12.12k",
+     "size": 524288,
+     "crc": "63de93e2",
+     "optional": false
+    },
+    {
+     "name": "128a11.10k",
+     "size": 524288,
+     "crc": "4eac941a",
+     "optional": false
+    },
+    {
+     "name": "128a06.2d",
+     "size": 2097152,
+     "crc": "88ed598c",
+     "optional": false
+    },
+    {
+     "name": "128a07.1d",
+     "size": 2097152,
+     "crc": "db79a66e",
+     "optional": false
+    },
+    {
+     "name": "mystwarrj.nv",
+     "size": 128,
+     "crc": "8e259918",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "mystwarru",
+   "parent": "mystwarr",
+   "base": "mystwarr",
+   "title": "Mystic Warriors (ver UAA)",
+   "files": [
+    {
+     "name": "128uaa01.20f",
+     "size": 262144,
+     "crc": "3a89aafd",
+     "optional": false
+    },
+    {
+     "name": "128uaa02.20g",
+     "size": 262144,
+     "crc": "de07410f",
+     "optional": false
+    },
+    {
+     "name": "128a03.19f",
+     "size": 524288,
+     "crc": "e98094f3",
+     "optional": false
+    },
+    {
+     "name": "128a04.19g",
+     "size": 524288,
+     "crc": "88c6a3e4",
+     "optional": false
+    },
+    {
+     "name": "128a05.6b",
+     "size": 131072,
+     "crc": "0e5194e0",
+     "optional": false
+    },
+    {
+     "name": "128a08.1h",
+     "size": 1048576,
+     "crc": "63d6cfa0",
+     "optional": false
+    },
+    {
+     "name": "128a09.1k",
+     "size": 1048576,
+     "crc": "573a7725",
+     "optional": false
+    },
+    {
+     "name": "128a10.3h",
+     "size": 524288,
+     "crc": "558e545a",
+     "optional": false
+    },
+    {
+     "name": "128a16.22k",
+     "size": 1048576,
+     "crc": "459b6407",
+     "optional": false
+    },
+    {
+     "name": "128a15.20k",
+     "size": 1048576,
+     "crc": "6bbfedf4",
+     "optional": false
+    },
+    {
+     "name": "128a14.19k",
+     "size": 1048576,
+     "crc": "f7bd89dd",
+     "optional": false
+    },
+    {
+     "name": "128a13.17k",
+     "size": 1048576,
+     "crc": "e89b66a2",
+     "optional": false
+    },
+    {
+     "name": "128a12.12k",
+     "size": 524288,
+     "crc": "63de93e2",
+     "optional": false
+    },
+    {
+     "name": "128a11.10k",
+     "size": 524288,
+     "crc": "4eac941a",
+     "optional": false
+    },
+    {
+     "name": "128a06.2d",
+     "size": 2097152,
+     "crc": "88ed598c",
+     "optional": false
+    },
+    {
+     "name": "128a07.1d",
+     "size": 2097152,
+     "crc": "db79a66e",
+     "optional": false
+    },
+    {
+     "name": "mystwarru.nv",
+     "size": 128,
+     "crc": "1a2597c7",
+     "optional": false
+    }
+   ]
+  },
+  {
    "name": "nitd",
    "parent": null,
    "base": "nitd",
@@ -22539,6 +23487,1492 @@
      "name": "sfiii3-simm6.7",
      "size": 2097152,
      "crc": "cc5f4187",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "simpsonjr",
+   "parent": "jjsquawk",
+   "base": "jjsquawk",
+   "title": "Simpson Junior (bootleg of J. J. Squawkers)",
+   "files": [
+    {
+     "name": "4.bin",
+     "size": 524288,
+     "crc": "469cc203",
+     "optional": false
+    },
+    {
+     "name": "3.bin",
+     "size": 524288,
+     "crc": "740a7366",
+     "optional": false
+    },
+    {
+     "name": "5.bin",
+     "size": 4194304,
+     "crc": "82952780",
+     "optional": false
+    },
+    {
+     "name": "6.bin",
+     "size": 4194304,
+     "crc": "5a22bb87",
+     "optional": false
+    },
+    {
+     "name": "1.bin",
+     "size": 524288,
+     "crc": "d99f2879",
+     "optional": false
+    },
+    {
+     "name": "2.bin",
+     "size": 524288,
+     "crc": "9df1e478",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbros",
+   "parent": null,
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (set 1)",
+   "files": [
+    {
+     "name": "sn6.bin",
+     "size": 131072,
+     "crc": "4899ddcf",
+     "optional": false
+    },
+    {
+     "name": "sn5.bin",
+     "size": 131072,
+     "crc": "ad310d3f",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbrosa",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (set 2)",
+   "files": [
+    {
+     "name": "sbros-3a.5",
+     "size": 131072,
+     "crc": "10cb37e1",
+     "optional": false
+    },
+    {
+     "name": "sbros-2a.6",
+     "size": 131072,
+     "crc": "ab91cc1e",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbrosb",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (set 3)",
+   "files": [
+    {
+     "name": "sbros3-a",
+     "size": 131072,
+     "crc": "301627d6",
+     "optional": false
+    },
+    {
+     "name": "sbros2-a",
+     "size": 131072,
+     "crc": "f6689f41",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbrosc",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (set 4)",
+   "files": [
+    {
+     "name": "3-a.ic5",
+     "size": 131072,
+     "crc": "e1bc346b",
+     "optional": false
+    },
+    {
+     "name": "2-a.ic6",
+     "size": 131072,
+     "crc": "1be27f9d",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbrosd",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (Dooyong license)",
+   "files": [
+    {
+     "name": "sbk_3-a.bin",
+     "size": 131072,
+     "crc": "97174d40",
+     "optional": false
+    },
+    {
+     "name": "sbk_2-a.bin",
+     "size": 131072,
+     "crc": "80cc80e5",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbrosj",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (Japan)",
+   "files": [
+    {
+     "name": "snowbros.3",
+     "size": 131072,
+     "crc": "3f504f9e",
+     "optional": false
+    },
+    {
+     "name": "snowbros.2",
+     "size": 131072,
+     "crc": "854b02bc",
+     "optional": false
+    },
+    {
+     "name": "sbros-1.41",
+     "size": 524288,
+     "crc": "16f06b3a",
+     "optional": false
+    },
+    {
+     "name": "sbros-4.29",
+     "size": 32768,
+     "crc": "e6eab4e4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "snowbroswb",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "Snow Bros. - Nick & Tom (The Winter Bobble hardware bootleg)",
+   "files": [
+    {
+     "name": "toa3.bin",
+     "size": 65536,
+     "crc": "55d302da",
+     "optional": false
+    },
+    {
+     "name": "toa1.bin",
+     "size": 65536,
+     "crc": "3c64e145",
+     "optional": false
+    },
+    {
+     "name": "wb04.bin",
+     "size": 65536,
+     "crc": "53be758d",
+     "optional": false
+    },
+    {
+     "name": "wb02.bin",
+     "size": 65536,
+     "crc": "fc8e292e",
+     "optional": false
+    },
+    {
+     "name": "wb13.bin",
+     "size": 65536,
+     "crc": "426921de",
+     "optional": false
+    },
+    {
+     "name": "wb06.bin",
+     "size": 65536,
+     "crc": "68204937",
+     "optional": false
+    },
+    {
+     "name": "wb12.bin",
+     "size": 65536,
+     "crc": "ef4e04c7",
+     "optional": false
+    },
+    {
+     "name": "wb07.bin",
+     "size": 65536,
+     "crc": "53f40978",
+     "optional": false
+    },
+    {
+     "name": "wb11.bin",
+     "size": 65536,
+     "crc": "41cb4563",
+     "optional": false
+    },
+    {
+     "name": "wb08.bin",
+     "size": 65536,
+     "crc": "9497b88c",
+     "optional": false
+    },
+    {
+     "name": "wb10.bin",
+     "size": 65536,
+     "crc": "5fa22b1e",
+     "optional": false
+    },
+    {
+     "name": "wb09.bin",
+     "size": 65536,
+     "crc": "9be718ca",
+     "optional": false
+    },
+    {
+     "name": "wb05.bin",
+     "size": 65536,
+     "crc": "53fe59df",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ssriders",
+   "parent": null,
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver EAC)",
+   "files": [
+    {
+     "name": "064eac02.8e",
+     "size": 262144,
+     "crc": "5a5425f4",
+     "optional": false
+    },
+    {
+     "name": "064eac03.8g",
+     "size": 262144,
+     "crc": "093c00fb",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_eac.nv",
+     "size": 128,
+     "crc": "f6d641a7",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersabd",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (2 Players ver ABD)",
+   "files": [
+    {
+     "name": "064abd02.8e",
+     "size": 262144,
+     "crc": "713406cb",
+     "optional": false
+    },
+    {
+     "name": "064abd03.8g",
+     "size": 262144,
+     "crc": "680feb3c",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_abd.nv",
+     "size": 128,
+     "crc": "bfdafedf",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersadd",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver ADD)",
+   "files": [
+    {
+     "name": "064add02.8e",
+     "size": 262144,
+     "crc": "06b0138e",
+     "optional": false
+    },
+    {
+     "name": "064add03.8g",
+     "size": 262144,
+     "crc": "03eb8b91",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_add.nv",
+     "size": 128,
+     "crc": "f06242d5",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssriderseaa",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver EAA)",
+   "files": [
+    {
+     "name": "064eaa02.8e",
+     "size": 262144,
+     "crc": "4844660f",
+     "optional": false
+    },
+    {
+     "name": "064eaa03.8g",
+     "size": 262144,
+     "crc": "0b9bcc7c",
+     "optional": false
+    },
+    {
+     "name": "064eaa04.10e",
+     "size": 131072,
+     "crc": "5d917c1c",
+     "optional": false
+    },
+    {
+     "name": "064eaa05.10g",
+     "size": 131072,
+     "crc": "f4647b74",
+     "optional": false
+    },
+    {
+     "name": "064eaa01.2f",
+     "size": 65536,
+     "crc": "bce45d82",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_eaa.nv",
+     "size": 128,
+     "crc": "74a45ef5",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersebc",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (2 Players ver EBC)",
+   "files": [
+    {
+     "name": "064ebc02.8e",
+     "size": 262144,
+     "crc": "9bd7d164",
+     "optional": false
+    },
+    {
+     "name": "064ebc03.8g",
+     "size": 262144,
+     "crc": "40fd4165",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_ebc.nv",
+     "size": 128,
+     "crc": "1918e90f",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersebd",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (2 Players ver EBD)",
+   "files": [
+    {
+     "name": "064ebd02.8e",
+     "size": 262144,
+     "crc": "8deef9ac",
+     "optional": false
+    },
+    {
+     "name": "064ebd03.8g",
+     "size": 262144,
+     "crc": "2370c107",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_ebd.nv",
+     "size": 128,
+     "crc": "cbc903f6",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridershs",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (Hack Series)",
+   "files": [
+    {
+     "name": "064eac02_1v4.8e",
+     "size": 262144,
+     "crc": "f6bce510",
+     "optional": false
+    },
+    {
+     "name": "064eac03_1v4.8g",
+     "size": 262144,
+     "crc": "9e998ebe",
+     "optional": false
+    },
+    {
+     "name": "064eab04_1v4.10e",
+     "size": 131072,
+     "crc": "06755c89",
+     "optional": false
+    },
+    {
+     "name": "064eab05_1v4.10g",
+     "size": 131072,
+     "crc": "0aad4619",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_eac.nv",
+     "size": 128,
+     "crc": "f6d641a7",
+     "optional": true
+    },
+    {
+     "name": "064eac02_fp.8e",
+     "size": 262144,
+     "crc": "ec967819",
+     "optional": false
+    },
+    {
+     "name": "064eac03_fp.8g",
+     "size": 262144,
+     "crc": "11437187",
+     "optional": false
+    },
+    {
+     "name": "064eab04_fp.10e",
+     "size": 131072,
+     "crc": "f21e4481",
+     "optional": false
+    },
+    {
+     "name": "064eab05_fp.10g",
+     "size": 131072,
+     "crc": "81de0fd8",
+     "optional": false
+    },
+    {
+     "name": "064eac02_sr.8e",
+     "size": 262144,
+     "crc": "734f4b4c",
+     "optional": false
+    },
+    {
+     "name": "064eac03_sr.8g",
+     "size": 262144,
+     "crc": "d50e01fd",
+     "optional": false
+    },
+    {
+     "name": "064eab04_sr.10e",
+     "size": 131072,
+     "crc": "56bb2e75",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "ssridersjac",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver JAC)",
+   "files": [
+    {
+     "name": "064jac02.8e",
+     "size": 262144,
+     "crc": "64a35f6f",
+     "optional": false
+    },
+    {
+     "name": "064jac03.8g",
+     "size": 262144,
+     "crc": "b5957946",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_jac.nv",
+     "size": 128,
+     "crc": "eeb0c55f",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersjad",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver JAD)",
+   "files": [
+    {
+     "name": "064jad02.8e",
+     "size": 262144,
+     "crc": "13709ee6",
+     "optional": false
+    },
+    {
+     "name": "064jad03.8g",
+     "size": 262144,
+     "crc": "2fa32229",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_jad.nv",
+     "size": 128,
+     "crc": "8962058c",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersjbd",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (2 Players ver JBD)",
+   "files": [
+    {
+     "name": "064jbd02.8e",
+     "size": 262144,
+     "crc": "7acdc1e3",
+     "optional": false
+    },
+    {
+     "name": "064jbd03.8g",
+     "size": 262144,
+     "crc": "6a424918",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_jbd.nv",
+     "size": 128,
+     "crc": "006200e3",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersuab",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver UAB)",
+   "files": [
+    {
+     "name": "064uab02.8e",
+     "size": 262144,
+     "crc": "f1a3c548",
+     "optional": false
+    },
+    {
+     "name": "064uab03.8g",
+     "size": 262144,
+     "crc": "66a61287",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_uab.nv",
+     "size": 128,
+     "crc": "fe08b210",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersuac",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver UAC)",
+   "files": [
+    {
+     "name": "064uac02.8e",
+     "size": 262144,
+     "crc": "870473b6",
+     "optional": false
+    },
+    {
+     "name": "064uac03.8g",
+     "size": 262144,
+     "crc": "eadf289a",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_uac.nv",
+     "size": 128,
+     "crc": "26c8f1a0",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersubc",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (2 Players ver UBC)",
+   "files": [
+    {
+     "name": "064ubc02.8e",
+     "size": 262144,
+     "crc": "aca7fda5",
+     "optional": false
+    },
+    {
+     "name": "064ubc03.8g",
+     "size": 262144,
+     "crc": "bb1fdeff",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_ubc.nv",
+     "size": 128,
+     "crc": "31c5504f",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "ssridersuda",
+   "parent": "ssriders",
+   "base": "ssriders",
+   "title": "Sunset Riders (4 Players ver UDA)",
+   "files": [
+    {
+     "name": "064uda02.8e",
+     "size": 262144,
+     "crc": "5129a6b7",
+     "optional": false
+    },
+    {
+     "name": "064uda03.8g",
+     "size": 262144,
+     "crc": "9f887214",
+     "optional": false
+    },
+    {
+     "name": "064eab04.10e",
+     "size": 131072,
+     "crc": "ef2315bd",
+     "optional": false
+    },
+    {
+     "name": "064eab05.10g",
+     "size": 131072,
+     "crc": "51d6fbc4",
+     "optional": false
+    },
+    {
+     "name": "064e01.2f",
+     "size": 65536,
+     "crc": "44b9bc52",
+     "optional": false
+    },
+    {
+     "name": "064e12.16k",
+     "size": 524288,
+     "crc": "e2bdc619",
+     "optional": false
+    },
+    {
+     "name": "064e11.12k",
+     "size": 524288,
+     "crc": "2d8ca8b0",
+     "optional": false
+    },
+    {
+     "name": "064e09.7l",
+     "size": 1048576,
+     "crc": "4160c372",
+     "optional": false
+    },
+    {
+     "name": "064e07.3l",
+     "size": 1048576,
+     "crc": "64dd673c",
+     "optional": false
+    },
+    {
+     "name": "064e06.1d",
+     "size": 1048576,
+     "crc": "59810df9",
+     "optional": false
+    },
+    {
+     "name": "ssriders_uda.nv",
+     "size": 128,
+     "crc": "148c6d64",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "wintbob",
+   "parent": "snowbros",
+   "base": "snowbros",
+   "title": "The Winter Bobble (bootleg of Snow Bros.)",
+   "files": [
+    {
+     "name": "wb3",
+     "size": 65536,
+     "crc": "b9719767",
+     "optional": false
+    },
+    {
+     "name": "wb1",
+     "size": 65536,
+     "crc": "a4488998",
+     "optional": false
+    },
+    {
+     "name": "wb04.bin",
+     "size": 65536,
+     "crc": "53be758d",
+     "optional": false
+    },
+    {
+     "name": "wb02.bin",
+     "size": 65536,
+     "crc": "fc8e292e",
+     "optional": false
+    },
+    {
+     "name": "wb13.bin",
+     "size": 65536,
+     "crc": "426921de",
+     "optional": false
+    },
+    {
+     "name": "wb06.bin",
+     "size": 65536,
+     "crc": "68204937",
+     "optional": false
+    },
+    {
+     "name": "wb12.bin",
+     "size": 65536,
+     "crc": "ef4e04c7",
+     "optional": false
+    },
+    {
+     "name": "wb07.bin",
+     "size": 65536,
+     "crc": "53f40978",
+     "optional": false
+    },
+    {
+     "name": "wb11.bin",
+     "size": 65536,
+     "crc": "41cb4563",
+     "optional": false
+    },
+    {
+     "name": "wb08.bin",
+     "size": 65536,
+     "crc": "9497b88c",
+     "optional": false
+    },
+    {
+     "name": "wb10.bin",
+     "size": 65536,
+     "crc": "5fa22b1e",
+     "optional": false
+    },
+    {
+     "name": "wb09.bin",
+     "size": 65536,
+     "crc": "9be718ca",
+     "optional": false
+    },
+    {
+     "name": "wb05.bin",
+     "size": 65536,
+     "crc": "53fe59df",
      "optional": false
     }
    ]

@@ -32,23 +32,38 @@ class GamesTest {
 
     @Test
     fun aSeatWithNoCountdownByteFreesOnlyAfterStayingOutForTheCountdown() {
-        val watch = SeatWatch(SeatStatus(listOf(1, 2), setOf(0), outForMs = 18_000))
-        assertEquals(false, watch.sample(0, 1, 0))
-        assertEquals(false, watch.sample(0, 0, 1_000), "the countdown just started")
-        assertEquals(false, watch.sample(0, 0, 18_999))
-        assertEquals(false, watch.sample(0, 1, 19_000), "the player continued")
-        assertEquals(false, watch.sample(0, 0, 20_000), "the count starts over")
-        assertEquals(false, watch.sample(0, 0, 37_999))
-        assertEquals(true, watch.sample(0, 0, 38_000))
-        assertEquals(false, watch.sample(1, 1, 38_000), "each seat on its own")
-        assertEquals(false, watch.sample(5, 0, 38_000), "no such seat")
+        val status = SeatStatus(listOf(1, 2), setOf(0), outForMs = 18_000)
+        val watch = SeatWatch(status)
+        fun out(value: Int) = status.isOut(0) { value }!!
+        assertEquals(false, watch.sample(0, out(1), 0))
+        assertEquals(false, watch.sample(0, out(0), 1_000), "the countdown just started")
+        assertEquals(false, watch.sample(0, out(0), 18_999))
+        assertEquals(false, watch.sample(0, out(1), 19_000), "the player continued")
+        assertEquals(false, watch.sample(0, out(0), 20_000), "the count starts over")
+        assertEquals(false, watch.sample(0, out(0), 37_999))
+        assertEquals(true, watch.sample(0, out(0), 38_000))
+        assertEquals(false, watch.sample(1, out(1), 38_000), "each seat on its own")
+        assertEquals(false, watch.sample(5, true, 38_000), "no such seat")
     }
 
     @Test
     fun aSeatWithACountdownByteFreesAtOnce() {
-        val watch = SeatWatch(SeatStatus(listOf(1, 2), setOf(0, 3)))
-        assertEquals(false, watch.sample(0, 2, 0))
-        assertEquals(true, watch.sample(0, 3, 0))
+        val status = SeatStatus(listOf(1, 2), setOf(0, 3))
+        val watch = SeatWatch(status)
+        assertEquals(false, watch.sample(0, status.isOut(0) { 2 }!!, 0))
+        assertEquals(true, watch.sample(0, status.isOut(0) { 3 }!!, 0))
+        assertNull(status.isOut(0) { null }, "can't read it: can't say")
+    }
+
+    @Test
+    fun whileNoGameIsOnEverySeatIsOut() {
+        // Snow Bros.: the attract demo's players set the seats' bytes too.
+        val status = SeatStatus(listOf(0x40, 0x4A), setOf(0), game = 0x2D, inGame = setOf(128))
+        val demo = mapOf(0x2D to 0, 0x40 to 2, 0x4A to 3)
+        val playing = mapOf(0x2D to 128, 0x40 to 2, 0x4A to 0)
+        assertEquals(true, status.isOut(0, demo::get))
+        assertEquals(false, status.isOut(0, playing::get))
+        assertEquals(true, status.isOut(1, playing::get))
     }
 
     @Test

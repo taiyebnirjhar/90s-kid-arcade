@@ -11,7 +11,15 @@ committed or placed in the repo; keep them in a scratch folder.
    - its sets, layout, labels and players;
    - `neoGeo` (needs the BIOS or not);
    - `pad` (which emulator button each of A-F is);
-   - its libretro thumbnail name in `art`.
+   - its libretro thumbnail name in `art`;
+   - `dips`, if the cabinet must be set up a certain way (FBNeo's DIP
+     switch names, as the core asks for them: Mystic Warriors needs
+     `Number_of_Players` 4 and `Coin_Mechanism` Independent, or only two
+     players can join);
+   - `startWith`, for a cabinet with no START button (Sunset Riders' 4-player
+     one: players join with fire).
+
+   Check players 3 and 4 too: their coin and start must work.
 
    Check every button in the game: what A, B, C, D do, whether holding fires
    once or keeps firing (`rapid`), and the frame rate.
@@ -57,9 +65,19 @@ Known so far:
 | Penguin Brothers | `0x35B2`, `0x362E` | 0 out, 2 playing, 4 continue, 6 game over. Free: 0, 6 |
 | Marvel vs. Capcom | `0x32B1`, `0x36B1` | 0 out, 6 playing, 8 continue, 10 or 12 game over. Free: 0, 10, 12 |
 | Street Fighter III 3rd Strike | `0x156E1` (P1), `0x156E0` (P2): the in-fight flag | 1 in the fight, 0 out. Free: 0 for 18 s (`outForMs`) |
+| Mystic Warriors | `0x20D`, `0x24D`, `0x28D`, `0x2CD` | 0 out, 2 choosing a ninja, 4 playing and counting down. Free: 0 |
+| Sunset Riders (4 players) | `0x211`, `0x251`, `0x291`, `0x2D1`; game byte `0x0` | 129 playing, 1 countdown, 0 out. Free: 0, or no game on (`0x0` not 2) |
+| J.J. Squawkers | `0x561D`, `0x561C` | 127 out (126 a moment in attract), 0 or 1 playing, 255 countdown. Free: 126, 127 |
+| Snow Bros. | `0x40`, `0x4A`; game byte `0x2D` | Not 0 while in, 0 out. Free: 0 (or no game on: `0x2D` not 128) for 17 s (`outForMs`) |
 
 **Neo Geo games get this automatically** (`seats` defaults to the BIOS bytes
 when `neoGeo` is true). Every other board needs its own.
+
+**When the attract demo sets the players' bytes too** (Snow Bros., Sunset
+Riders), find a byte that says whether a real game is on, and give it as
+`game` with the values it has then (`inGame`); while it has any other,
+every seat counts as out. Compare the attract demo's stretches with a real
+game's.
 
 **When a game has no countdown byte** (Street Fighter III: its flag drops
 when the countdown *starts*), set `outForMs` to the countdown's measured

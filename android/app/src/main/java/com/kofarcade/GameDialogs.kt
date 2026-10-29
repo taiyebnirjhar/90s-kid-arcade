@@ -86,6 +86,12 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             GoldButton("Back to games", { game.finish() }, Modifier.fillMaxWidth())
         }
+        GameDialog.LoadForEveryone -> Sheet(onDismiss = { game.close() }) {
+            Title("Load your saved state?")
+            Text("Everyone's game goes back to your save, the players in their seats now. The game as it is now is gone.", color = Palette.muted)
+            Spacer(Modifier.size(16.dp))
+            GoldButton("Load for everyone", { game.loadForEveryone() }, Modifier.fillMaxWidth())
+        }
         is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 880 else 460) {
             val ui = game.roomUi
             if (ui != null) {

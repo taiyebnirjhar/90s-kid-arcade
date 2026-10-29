@@ -29,12 +29,18 @@ POLL_CB = C.CFUNCTYPE(None)
 STATE_CB = C.CFUNCTYPE(C.c_int16, C.c_uint, C.c_uint, C.c_uint, C.c_uint)
 
 
+class Variable(C.Structure):
+    _fields_ = [("key", C.c_char_p), ("value", C.c_char_p)]
+
+
 class GameInfo(C.Structure):
     _fields_ = [("path", C.c_char_p), ("data", C.c_void_p), ("size", C.c_size_t), ("meta", C.c_char_p)]
 
 
 class Emu:
-    def __init__(self, game):
+    def __init__(self, game, options=None):
+        # Core options, as the app sets them (Game.options): {"fbneo-dipswitch-mystwarr-Number_of_Players": "4"}.
+        self.options = {k.encode(): C.c_char_p(v.encode()) for k, v in (options or {}).items()}
         # Street Fighter III (CPS-3): SH-2 RAM from 0x02000000 in 32-bit words.
         cps3 = game.startswith("sfiii")
         # Marvel vs Capcom (CPS-2): 68000 RAM from 0xFF0000.
@@ -44,7 +50,7 @@ class Emu:
         self.lib = C.CDLL(os.path.join(EMU, "fbneo_libretro.so"))
         self.fmt = 0
         self.frame = None
-        self.held = [set(), set()]
+        self.held = [set() for _ in range(4)]
         self.sysdir = C.c_char_p(os.path.join(EMU, "roms").encode())
         self.savedir = C.c_char_p(os.path.join(EMU, "saves").encode())
         os.makedirs(os.path.join(EMU, "saves"), exist_ok=True)
@@ -79,6 +85,12 @@ class Emu:
         if cmd == 3:  # can dupe
             C.cast(data, C.POINTER(C.c_bool))[0] = True
             return True
+        if cmd == 15:  # get variable
+            var = C.cast(data, C.POINTER(Variable)).contents
+            if var.key in self.options:
+                var.value = self.options[var.key].value
+                return True
+            return False
         if cmd == 17:  # variable update
             C.cast(data, C.POINTER(C.c_bool))[0] = False
             return True
@@ -96,7 +108,7 @@ class Emu:
         self.frame = img
 
     def _state(self, port, device, index, id):
-        if device != 1 or port > 1:
+        if device != 1 or port > 3:
             return 0
         return 1 if id in {self.pad[b] for b in self.held[port]} else 0
 

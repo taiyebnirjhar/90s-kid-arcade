@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 // (small, frequent, and resent until acknowledged, so a lost packet costs
 // nothing).
 
-const val PROTOCOL = 10
+const val PROTOCOL = 11
 const val TCP_PORT = 7845
 
 /** Rooms listen on the first free one of these TCP ports from [TCP_PORT] (the room key says which). */
@@ -177,6 +177,8 @@ internal object Msg {
     const val MOVED: Byte = 21
     /** A member to a phone taking the room over ([TAKEOVER]): yes, you're my host now. */
     const val TAKEN: Byte = 22
+    /** A player to the owner: everyone carries on from this saved game (the state, packed). */
+    const val LOAD: Byte = 23
 }
 
 /**

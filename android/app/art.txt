@@ -1,6 +1,8 @@
 Named_Snaps/Cadillacs and Dinosaurs (World 930201).png
 Named_Snaps/Double Dragon (Neo-Geo).png
 Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
+Named_Snaps/J. J. Squawkers (older).png
+Named_Snaps/J. J. Squawkers.png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
@@ -17,13 +19,32 @@ Named_Snaps/Metal Slug 3 (NGM-2560).png
 Named_Snaps/Metal Slug 4 (NGM-2630).png
 Named_Snaps/Metal Slug 5 (NGM-2680).png
 Named_Snaps/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
+Named_Snaps/Mystic Warriors (ver AAA).png
+Named_Snaps/Mystic Warriors (ver AAB).png
+Named_Snaps/Mystic Warriors (ver EAA).png
+Named_Snaps/Mystic Warriors (ver JAA).png
+Named_Snaps/Mystic Warriors (ver UAA).png
 Named_Snaps/Nightmare in the Dark.png
 Named_Snaps/Penguin Brothers (Japan).png
 Named_Snaps/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
+Named_Snaps/Snow Bros. - Nick _ Tom (Dooyong license).png
+Named_Snaps/Snow Bros. - Nick _ Tom (Japan).png
+Named_Snaps/Snow Bros. - Nick _ Tom (set 1).png
+Named_Snaps/Snow Bros. - Nick _ Tom (set 2).png
+Named_Snaps/Snow Bros. - Nick _ Tom (set 3).png
+Named_Snaps/Snow Bros. - Nick _ Tom (set 4).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990608, NO CD).png
+Named_Snaps/Sunset Riders (4 Players ver ADD).png
+Named_Snaps/Sunset Riders (4 Players ver EAA).png
+Named_Snaps/Sunset Riders (4 Players ver EAC).png
+Named_Snaps/Sunset Riders (4 Players ver JAC).png
+Named_Snaps/Sunset Riders (4 Players ver JAD).png
+Named_Snaps/Sunset Riders (4 Players ver UAB).png
+Named_Snaps/Sunset Riders (4 Players ver UAC).png
+Named_Snaps/Sunset Riders (4 Players ver UDA).png
 Named_Snaps/The King of Fighters '97 (NGM-2320).png
 Named_Snaps/The King of Fighters '97 Plus (bootleg).png
 Named_Snaps/The King of Fighters 10th Anniversary (bootleg of The King of Fighters 2002).png
@@ -36,6 +57,8 @@ Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
 Named_Titles/Cadillacs and Dinosaurs (World 930201).png
 Named_Titles/Double Dragon (Neo-Geo).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
+Named_Titles/J. J. Squawkers (older).png
+Named_Titles/J. J. Squawkers.png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980123).png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Brazil 980123).png
@@ -52,13 +75,32 @@ Named_Titles/Metal Slug 3 (NGM-2560).png
 Named_Titles/Metal Slug 4 (NGM-2630).png
 Named_Titles/Metal Slug 5 (NGM-2680).png
 Named_Titles/Metal Slug X - Super Vehicle-001 (NGM-2500 ~ NGH-2500).png
+Named_Titles/Mystic Warriors (ver AAA).png
+Named_Titles/Mystic Warriors (ver AAB).png
+Named_Titles/Mystic Warriors (ver EAA).png
+Named_Titles/Mystic Warriors (ver JAA).png
+Named_Titles/Mystic Warriors (ver UAA).png
 Named_Titles/Nightmare in the Dark.png
 Named_Titles/Penguin Brothers (Japan).png
 Named_Titles/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
+Named_Titles/Snow Bros. - Nick _ Tom (Dooyong license).png
+Named_Titles/Snow Bros. - Nick _ Tom (Japan).png
+Named_Titles/Snow Bros. - Nick _ Tom (set 1).png
+Named_Titles/Snow Bros. - Nick _ Tom (set 2).png
+Named_Titles/Snow Bros. - Nick _ Tom (set 3).png
+Named_Titles/Snow Bros. - Nick _ Tom (set 4).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990608, NO CD).png
+Named_Titles/Sunset Riders (4 Players ver ADD).png
+Named_Titles/Sunset Riders (4 Players ver EAA).png
+Named_Titles/Sunset Riders (4 Players ver EAC).png
+Named_Titles/Sunset Riders (4 Players ver JAC).png
+Named_Titles/Sunset Riders (4 Players ver JAD).png
+Named_Titles/Sunset Riders (4 Players ver UAB).png
+Named_Titles/Sunset Riders (4 Players ver UAC).png
+Named_Titles/Sunset Riders (4 Players ver UDA).png
 Named_Titles/The King of Fighters '97 (NGM-2320).png
 Named_Titles/The King of Fighters '97 Plus (bootleg).png
 Named_Titles/The King of Fighters 10th Anniversary (bootleg of The King of Fighters 2002).png
