@@ -276,6 +276,13 @@ one Wi-Fi with no internet.
   - a new one there: a 2.5 s outage between host and guest passes with
     nobody dropped and no new seating;
   - CI takes about 3.5 minutes longer.
+- **Found and fixed, a bug that was already there on Wi-Fi:** when everyone
+  lost the room at once, a phone finding it again could reach another of the
+  room's phones that was itself still rejoining: listening, but not
+  answering yet. It then waited 30 s for an answer, long enough for its
+  held seat to run out (it came back watching). Rejoining now waits 5 s for
+  an answer and tries the next place. The internet soak with seed 4 found
+  it.
 - **Learned, for phase 1.4:** a new owner taking the room over still
   *connects* to each member (`TAKEOVER`). That works over the LAN and
   `FakeNet`, but a phone on the internet can't be connected to. The WebRTC

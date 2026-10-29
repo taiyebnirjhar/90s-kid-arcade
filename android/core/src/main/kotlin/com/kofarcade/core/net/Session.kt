@@ -1894,6 +1894,7 @@ class Room private constructor(
         private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME)
         private const val TAKEOVER_MS = 12_000L
         private const val REJOIN_CONNECT_MS = 2_000
+        private const val REJOIN_ANSWER_MS = 5_000
         private const val LOOK_MS = 1_500
         // An owner missing phones looks for another owner every 2 to 4 s.
         private const val SCOUT_MS = 2_000L
@@ -1972,7 +1973,10 @@ class Room private constructor(
             var link: Link? = null
             try {
                 val l = transport.connect(at, connectMs).also { link = it }
-                l.timeoutMs = 30_000
+                // Finding a lost room, a phone that doesn't answer soon is
+                // one of the room's phones finding it too (listening, not
+                // in yet): the next place, rather than a long wait.
+                l.timeoutMs = if (session != 0) REJOIN_ANSWER_MS else 30_000
                 val line = Line(l, 0, "Host", faults)
                 line.send(Msg.HELLO, encode(Hello(PROTOCOL, name, set, rom, bios, packets.port, incoming.port, build, device, session)))
                 val (t, payload) = line.receive()
