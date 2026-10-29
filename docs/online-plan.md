@@ -275,6 +275,7 @@ one Wi-Fi with no internet.
     latency, 20 ms of jitter and 2% loss on each way;
   - a new one there: a 2.5 s outage between host and guest passes with
     nobody dropped and no new seating;
+  - after the fix below, the soaks pass with seeds 2 to 7 over both networks;
   - CI takes about 3.5 minutes longer.
 - **Found and fixed, a bug that was already there on Wi-Fi:** when everyone
   lost the room at once, a phone finding it again could reach another of the
