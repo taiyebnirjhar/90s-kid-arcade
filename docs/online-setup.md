@@ -50,6 +50,17 @@ This is the same Cloudflare account as the ROM library.
    - `CF_TURN_KEY_ID`: the Turn Token ID;
    - `CF_TURN_KEY_TOKEN`: the API Token.
 
+4. **For the usage stop** (the relay switches off before 1,000 GB a month;
+   see D8 in the plan), the server needs to read the relay's use:
+   - In Cloudflare, **Manage account → Account API tokens → Create token →
+     Custom token**. Name it `90s-kid-arcade-usage`, permission **Account →
+     Account Analytics → Read**, this account only. Create it and copy it
+     once.
+   - In Supabase secrets, add:
+     - `CF_ANALYTICS_TOKEN`: that token;
+     - `CF_ACCOUNT_ID`: the long id in the Cloudflare address bar, after
+       `dash.cloudflare.com/` (not secret, but it lives with the token).
+
 The app never sees these. A small server function (phase 1.2) uses them to
 hand each phone relay credentials that expire, as Cloudflare recommends.
 
@@ -83,4 +94,5 @@ Public values only; they go into the app in phase 1.2.
 - [x] Project URL and publishable key sent
 - [ ] Cloudflare TURN key created
 - [ ] `CF_TURN_KEY_ID` and `CF_TURN_KEY_TOKEN` saved as Supabase secrets
+- [ ] `CF_ANALYTICS_TOKEN` (Account Analytics: Read) and `CF_ACCOUNT_ID` saved as Supabase secrets
 - [ ] (For phase 1.2) GitHub secrets for automatic deploys, or by hand

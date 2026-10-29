@@ -145,12 +145,41 @@ one Wi-Fi with no internet.
 - **D6. Relay: Cloudflare Realtime TURN.**
   - The TURN key stays in a Supabase secret.
   - An Edge Function calls Cloudflare's credentials API and hands each phone
-    short-lived `iceServers`, valid for the room's life and at most 48 h.
+    short-lived `iceServers`, valid 1 hour and renewed while the room
+    lasts (D8).
   - *To confirm in 1.0:* the exact endpoint. The docs show
     `.../credentials/generate-ice-servers`; older pages show `.../generate`.
 - **D7. Room codes come from the server.** Six characters from the same
   alphabet as today's keys (no 0/O, 1/I), so they're easy to read out.
   Codes expire when the room closes.
+
+- **D8. Never past a free allowance: a hard stop, owner's rule
+  (2026-10-29).** A feature that would go past its service's free allowance
+  for the month switches itself off until the month resets, with a note in
+  the app. Nothing is ever billed.
+  - **The relay (1,000 GB a month).** Cloudflare doesn't stop at the free
+    amount; it bills $0.05/GB after it. So our server stops it:
+    - `turn-credentials` reads this month's relay use from Cloudflare's
+      analytics (GraphQL `callsTurnUsageAdaptiveGroups`, egress plus
+      ingress bytes), at most every 5 minutes, and keeps it in the database.
+    - **At 900 GB** (90%, a margin for the analytics' delay) it gives out no
+      new credentials. Credentials last 1 hour, and the app asks for fresh
+      ones each hour, so use stops within the hour.
+    - **At 950 GB** it revokes every credential still live
+      (`.../credentials/{username}/revoke`), and relayed games end.
+    - Every credential carries the room as its custom identifier, so one
+      room or user using too much shows up and can be cut off on its own.
+    - The app: "Online play through the relay is paused until the 1st.
+      Nearby play and direct connections still work." Games that connect
+      directly don't use the relay and go on.
+    - For scale: a two-player game uses about 40 MB an hour, so 900 GB is
+      over 20,000 relayed hours a month.
+  - **Supabase:** the free plan can't be billed; it stops or slows at its
+    limits. The app still checks: when sign-in, room creation or
+    signaling fails because a limit was reached, it says online play is
+    paused, instead of failing quietly. Room creation also refuses when
+    Realtime is near its limit of people at once.
+  - **Every new paid service** gets the same kind of stop before it ships.
 
 ### Phase 1.0: Decisions and owner setup
 
@@ -222,11 +251,12 @@ one Wi-Fi with no internet.
 | 1.2.2 | Row-level security: everyone reads profiles' public fields; users write only their own; rooms readable by code, written by their owner | Policies |
 | 1.2.3 | Edge Function `create-room`: a unique code; at most a few open rooms per user | Function |
 | 1.2.4 | Edge Function `turn-credentials`: short-lived TURN servers for a signed-in user | Function |
+| 1.2.4a | The relay's hard stop (D8): this month's use from Cloudflare's analytics, no new credentials at 900 GB, revoke live ones at 950 GB, 1-hour credentials tagged with the room | Function + `usage` table |
 | 1.2.5 | Realtime authorization: only a room's members join its signaling channel | Policy |
 | 1.2.6 | Clean-up: rooms not seen for 10 minutes close | Scheduled job |
-| 1.2.7 | Tests: SQL policy tests (a user can't edit another's profile or room) and function tests | Tests |
+| 1.2.7 | Tests: SQL policy tests (a user can't edit another's profile or room) and function tests, including the relay's stop at 900 GB and revoke at 950 GB | Tests |
 
-**Exit:** a signed-in test user can create a room, read it by code, get TURN credentials, and is refused what isn't theirs.
+**Exit:** a signed-in test user can create a room, read it by code, get TURN credentials, and is refused what isn't theirs; with the month's use set past 900 GB, no credentials are given.
 
 ### Phase 1.3: Profile and sign-in (app)
 
@@ -418,7 +448,7 @@ the relay.
 | Sign-in, profiles, friends, stats, chat history | Supabase Auth + Postgres | 50,000 users a month, 500 MB |
 | Who's online, lobbies, invites, chat delivery, connection setup | Supabase Realtime | ~200 at once, 2M messages a month |
 | Matchmaking, bot fallback, relay keys, notifications | Supabase Edge Functions | 500,000 calls a month |
-| Game relay, voice | Cloudflare TURN / SFU | 1,000 GB a month, then $0.05/GB |
+| Game relay, voice | Cloudflare TURN / SFU | 1,000 GB a month, then $0.05/GB; **we stop at 900 GB (D8)** |
 | Notifications | Firebase Cloud Messaging | free |
 | ROM library | Cloudflare R2 (as now) | unchanged |
 
@@ -587,6 +617,8 @@ The unlicensed games would have to leave the paid app.
   and [linking Google later](https://supabase.com/blog/anonymous-sign-ins)
 - [Cloudflare TURN: generating credentials](https://developers.cloudflare.com/calls/turn/generate-credentials)
 - [stream-webrtc-android](https://github.com/GetStream/webrtc-android): prebuilt WebRTC for Android
+- [Cloudflare TURN analytics](https://developers.cloudflare.com/realtime/turn/analytics/)
+  and [revoking credentials](https://developers.cloudflare.com/realtime/turn/generate-credentials/)
 - [Cloudflare Realtime TURN/SFU pricing](https://developers.cloudflare.com/realtime/sfu/platform/pricing/)
 - [GGPO](https://en.wikipedia.org/wiki/GGPO),
   [Fightcade](https://en.wikipedia.org/wiki/Fightcade): the rollback

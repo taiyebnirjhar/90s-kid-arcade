@@ -23,6 +23,15 @@ ran out. No timer of our own. Every game says where it keeps each player's
 status (`Game.seats`), checked in the game; `GamesTest` fails without it.
 Adding a game: follow [docs/adding-a-game.md](docs/adding-a-game.md).
 
+## Never past a free allowance
+
+Online services run only on free plans. Each one has a hard stop below its
+free allowance for the month, and the feature switches off with a note in
+the app until the month resets (the relay: no new credentials at 900 GB of
+Cloudflare's 1,000 GB, live ones revoked at 950 GB). Nothing is ever
+billed. A new paid service gets its stop before it ships. Details: D8 in
+[docs/online-plan.md](docs/online-plan.md).
+
 ## Money: none while the app uses FBNeo
 
 FBNeo's license forbids selling, any other profit, and asking for donations
