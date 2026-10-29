@@ -1031,8 +1031,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun inStickZone(x: Float, y: Float): Boolean {
+        val near = hypot(x - homeX, y - homeY)
+        // Fixed: the stick stays where it is, so it takes touches on it and around it (generously), not across the screen.
+        if (state.stick == StickMode.FIXED) return near <= stickRadius() * FIXED_REACH
         // On the stick wherever your layout put it, or anywhere on its side of the screen.
-        if (hypot(x - homeX, y - homeY) <= stickRadius() * 1.5f) return true
+        if (near <= stickRadius() * 1.5f) return true
         val side = if (state.leftHanded) x > width * 0.58f else x < width * 0.42f
         return side && y > height * 0.2f
     }
@@ -1253,11 +1256,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun stickRadius() = 64 * d * state.size * tweak("stick").scale
 
+    // How far from a fixed stick's centre a touch still takes it (in radii).
+    private val FIXED_REACH = 2.5f
+
     private fun startStick(id: Int, x: Float, y: Float) {
         stickPointer = id
-        // Fixed: a touch near the drawn stick uses its centre; anywhere else
-        // (and always when floating) the stick jumps under the thumb.
-        if (state.stick == StickMode.FIXED && hypot(x - homeX, y - homeY) < stickRadius() * 1.5f) {
+        // Fixed: always steered from its own centre, wherever the thumb lands on
+        // it; floating (and hidden): the stick comes to the thumb.
+        if (state.stick == StickMode.FIXED) {
             stickCx = homeX
             stickCy = homeY
         } else {
@@ -1272,9 +1278,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         var dy = y - stickCy
         val dist = hypot(dx, dy)
         // The centre follows a thumb that drifts too far, so you never end up
-        // pushing against the edge.
+        // pushing against the edge (not a fixed stick: it stays in its place).
         val follow = stickRadius() * 1.4f
-        if (dist > follow) {
+        if (dist > follow && state.stick != StickMode.FIXED) {
             stickCx += dx * (dist - follow) / dist
             stickCy += dy * (dist - follow) / dist
             dx = x - stickCx
