@@ -236,7 +236,7 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                         val joined = try {
                             joinAt(found.address, found.beacon.tcpPort)
                         } catch (e: Redirected) {
-                            joinAt(e.at.address, e.at.port)
+                            joinAt(InetAddress.getByName(e.at.host), e.at.port)
                         }
                         joined.also { room -> if (left.get()) room.close() }
                     } finally {
@@ -283,7 +283,8 @@ private fun Hub(roms: RomStore, onHost: () -> Unit, onLibrary: () -> Unit, onBac
                         FoundHost(probe(ip, port).copy(tcpPort = port), ip)
                     } catch (e: Redirected) {
                         // The key's phone isn't the host any more: it says who is.
-                        FoundHost(probe(e.at.address, e.at.port).copy(tcpPort = e.at.port), e.at.address)
+                        val at = InetAddress.getByName(e.at.host)
+                        FoundHost(probe(at, e.at.port).copy(tcpPort = e.at.port), at)
                     }
                 }
                 busy = false

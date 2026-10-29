@@ -13,7 +13,14 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class RoomTest {
+/** Rooms over real sockets on this machine; [RoomOverInternetTest] runs them over a simulated internet. */
+open class RoomTest {
+    /** The network the phones are on: null for real sockets on this machine. */
+    protected open val net: FakeNet? = null
+
+    // A new phone's way of reaching the others.
+    private fun transport(): Transport = net?.phone() ?: LanTransport
+
     private val localhost = InetAddress.getLoopbackAddress()
     private val open = ArrayList<Room>()
     private val games = ArrayList<FakeGame>()
@@ -33,7 +40,7 @@ class RoomTest {
     }
 
     private fun host(set: String = "kof97", seats: Int = 2, device: String = "") =
-        Room.host("Host", set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1, device = device).also { open += it }
+        Room.host("Host", set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1, device = device, transport = transport()).also { open += it }
 
     // Quick to notice a phone gone, for the outage tests.
     private fun quick(vararg rooms: Room) = rooms.forEach {
@@ -54,12 +61,7 @@ class RoomTest {
     }
 
     private fun join(room: Room, name: String, set: String = "kof97", rom: Long = 1, device: String = "") =
-        Room.join(localhost, port(room), name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1, device = device).also { open += it }
-
-    private fun port(room: Room): Int {
-        val f = Room::class.java.getDeclaredField("server").apply { isAccessible = true }
-        return (f.get(room) as java.net.ServerSocket).localPort
-    }
+        Room.join(transport(), room.address, name, set, rom = rom, bios = 2, listenPort = 0, beaconPort = -1, device = device).also { open += it }
 
     // What a phone presses on frame f (so each phone's inputs can be told apart).
     private fun pressed(f: Int, id: Int) = (f * 13 + id) and 0xFFF or 1
@@ -566,11 +568,11 @@ class RoomTest {
         val b = FakeGame(g).apply { play() }
         waitFor("watching") { b.epoch >= 1 }
         val e = assertFailsWith<Refused> {
-            Room.join(localhost, port(other), "Rafi", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, device = "rafi", session = 12345)
+            Room.join(transport(), other.address, "Rafi", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, device = "rafi", session = 12345)
         }
         assertEquals("That room has ended.", e.message)
         // Only the phone running a room answers for it.
-        assertFailsWith<Refused> { probe(localhost, port(g)) }
+        assertFailsWith<Refused> { probe(transport(), g.address) }
     }
 
     @Test
@@ -699,10 +701,10 @@ class RoomTest {
         val game = assertFailsWith<Refused> { join(h, "Other", set = "kof98") }
         assertTrue("different game" in game.message!!, game.message)
         // Another emulator build: told to update.
-        val built = Room.host("Host", "kof97", "Game", rom = 1, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1, build = "aaaa").also { open += it }
+        val built = Room.host("Host", "kof97", "Game", rom = 1, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1, build = "aaaa", transport = transport()).also { open += it }
         FakeGame(built).play()
         val build = assertFailsWith<Refused> {
-            Room.join(localhost, port(built), "Old", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, build = "bbbb").also { open += it }
+            Room.join(transport(), built.address, "Old", "kof97", rom = 1, bios = 2, listenPort = 0, beaconPort = -1, build = "bbbb").also { open += it }
         }
         assertTrue("different app builds" in build.message!!, build.message)
         repeat(MAX_MEMBERS - 1) { join(h, "Watcher $it") }
@@ -751,9 +753,9 @@ class RoomTest {
 
     @Test
     fun aProbeLearnsTheRoomsGame() {
-        val h = Room.host("Host", "kf2k5uni", "KOF 2005", rom = 7, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1).also { open += it }
+        val h = Room.host("Host", "kf2k5uni", "KOF 2005", rom = 7, bios = 2, maxPlayers = 2, port = 0, beaconPort = -1, transport = transport()).also { open += it }
         FakeGame(h).play()
-        val b = probe(localhost, port(h))
+        val b = probe(transport(), h.address)
         assertEquals("kf2k5uni", b.set)
         assertEquals("KOF 2005", b.title)
         assertEquals(h.key, b.key)

@@ -1,6 +1,5 @@
 package com.kofarcade.core.net
 
-import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.thread
 
@@ -13,7 +12,11 @@ import kotlin.concurrent.thread
 /** What a phone presses on frame [f] (so every phone's inputs can be told apart). */
 fun pressedBy(f: Int, id: Int) = (f * 13 + id) and 0xFFF or 1
 
-class Phones(private val log: (String) -> Unit = {}) {
+class Phones(
+    private val log: (String) -> Unit = {},
+    /** The network the phones are on: null for real sockets on this machine. */
+    private val net: FakeNet? = null,
+) {
     val all = CopyOnWriteArrayList<Phone>()
     private val start = System.nanoTime()
 
@@ -26,7 +29,12 @@ class Phones(private val log: (String) -> Unit = {}) {
 
     fun host(name: String, set: String = "kof97", seats: Int = 2, timings: (Room) -> Unit = {}): Phone {
         val p = Phone(this, name, timings)
-        p.attach(Room.host(name, set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1, device = name, faults = p.faults))
+        p.attach(
+            Room.host(
+                name, set, "Game", rom = 1, bios = 2, maxPlayers = seats, port = 0, beaconPort = -1, device = name, faults = p.faults,
+                transport = transport(),
+            ),
+        )
         all += p
         return p
     }
@@ -35,7 +43,7 @@ class Phones(private val log: (String) -> Unit = {}) {
         val p = Phone(this, name, timings)
         p.attach(
             Room.join(
-                InetAddress.getLoopbackAddress(), to.room.port, name, set, rom = 1, bios = 2,
+                transport(), to.room.address, name, set, rom = 1, bios = 2,
                 listenPort = 0, beaconPort = -1, device = name, faults = p.faults,
             ),
         )
@@ -44,14 +52,10 @@ class Phones(private val log: (String) -> Unit = {}) {
     }
 
     fun closeAll() = all.forEach { it.shutDown() }
-}
 
-/** For tests: the TCP port a room listens on. */
-val Room.port: Int
-    get() {
-        val f = Room::class.java.getDeclaredField("server").apply { isAccessible = true }
-        return (f.get(this) as java.net.ServerSocket).localPort
-    }
+    // A new phone's way of reaching the others.
+    private fun transport(): Transport = net?.phone() ?: LanTransport
+}
 
 class Phone(private val phones: Phones, val name: String, private val timings: (Room) -> Unit) {
     /** This phone's network: every room it's in shares it. */
