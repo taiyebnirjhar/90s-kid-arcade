@@ -238,6 +238,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         set = s
         prefs = Prefs(this)
         prefs.lastGame = game.id
+        // Games played, for the profile (counted on the phone; synced from home).
+        if (savedInstanceState == null) {
+            val account = Online.account(this)
+            lifecycleScope.launch(Dispatchers.IO) { account.recordPlay(game.id) }
+        }
         roster = game.roster?.let(::loadRoster)
         if (game.layout == Layout.FIGHTER) {
             ramMap = detectSpec(game.roster)

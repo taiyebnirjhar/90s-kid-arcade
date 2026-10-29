@@ -235,6 +235,37 @@ class UiSnapshots {
         shot("home_first_run_landscape") { HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {}) }
     }
 
+    private val rafi = com.kofarcade.core.online.Profile("Rafi", 2, "K7Q2M9XA", pending = false, savedFor = "u")
+    private val rafiPlays = listOf(gameById("kof97")!! to 12, gameById("dino")!! to 3, gameById("snowbros")!! to 1)
+
+    @Test
+    fun profile() = shot("profile") { ProfileScreen(ProfileUi(rafi, SyncState.Synced, rafiPlays), {}, {}, { _, _ -> }, {}) }
+
+    @Test
+    fun profileFirstSignIn() = shot("profile_signing_in") { ProfileScreen(ProfileUi(null, SyncState.Syncing, emptyList()), {}, {}, { _, _ -> }, {}) }
+
+    @Test
+    fun profileOffline() = shot("profile_offline") {
+        ProfileScreen(
+            ProfileUi(rafi.copy(pending = true), SyncState.Offline("No internet right now. Your profile shows from this phone and syncs when you're back online."), rafiPlays),
+            {}, {}, { _, _ -> }, {},
+        )
+    }
+
+    @Test
+    fun profileNeverOnline() = shot("profile_never_online") { ProfileScreen(ProfileUi(null, SyncState.Offline(""), emptyList()), {}, {}, { _, _ -> }, {}) }
+
+    @Test
+    fun profilePaused() = shot("profile_paused") {
+        ProfileScreen(
+            ProfileUi(rafi, SyncState.Failed("Online is paused for now: the free server's limit was reached. Nearby play still works. Try again later."), rafiPlays),
+            {}, {}, { _, _ -> }, {},
+        )
+    }
+
+    @Test
+    fun homeWithProfile() = shot("home_profile") { HomeScreen(homeUi.copy(profileName = "Rafi", profileIcon = 2), {}, {}, {}, {}, {}, {}) }
+
     @Test
     fun librarySmall() {
         small()

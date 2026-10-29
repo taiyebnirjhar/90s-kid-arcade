@@ -82,6 +82,9 @@ data class HomeUi(
     /** The banner's title and line under it, when it's about a step (adding the BIOS) rather than the game. */
     val heroTitle: String? = null,
     val heroText: String? = null,
+    /** Your profile's name and icon, once made (else the chip just says Profile). */
+    val profileName: String? = null,
+    val profileIcon: Int? = null,
 )
 
 /**
@@ -99,6 +102,7 @@ fun HomeScreen(
     onHero: () -> Unit,
     onGame: (Game) -> Unit,
     onLongGame: (Game) -> Unit,
+    onProfile: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -114,7 +118,7 @@ fun HomeScreen(
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             // Landscape has room for the chips beside the logo; portrait puts them under the banner.
-            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { landscape })
+            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { landscape }, onProfile)
             Column(Modifier.windowInsetsPadding(sides)) {
                 if (!landscape) {
                     Row(
@@ -195,6 +199,45 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
     }
 }
 
+/** Your profile, top right: its icon and name, or "Profile" before it's made. */
+@Composable
+private fun ProfileChip(name: String?, icon: Int?, onClick: () -> Unit, iconOnly: Boolean = false) {
+    val source = remember { MutableInteractionSource() }
+    if (iconOnly) {
+        ProfileIcon(
+            icon ?: 0,
+            44.dp,
+            Modifier.pressScale(source).clip(CircleShape)
+                .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick),
+        )
+        return
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .pressScale(source)
+            .height(44.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Palette.bg.copy(alpha = 0.6f))
+            .border(1.dp, Palette.line, RoundedCornerShape(50))
+            .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick)
+            .padding(start = 6.dp, end = 14.dp),
+    ) {
+        ProfileIcon(icon ?: 0, 32.dp)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            name ?: "PROFILE",
+            color = Palette.text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = if (name == null) 1.sp else 0.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 96.dp),
+        )
+    }
+}
+
 // The banner: the game's gameplay picture across the whole width, fading into
 // the page, with the logo on top and the title and button at the bottom.
 @Composable
@@ -204,6 +247,7 @@ private fun Hero(
     landscape: Boolean,
     onClick: () -> Unit,
     chips: (@Composable () -> Unit)?,
+    onProfile: () -> Unit,
 ) {
     val game = ui.hero
     val action = ui.heroAction
@@ -232,10 +276,14 @@ private fun Hero(
         ) {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
+            Spacer(Modifier.weight(1f))
             if (chips != null) {
-                Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { chips() }
+                Spacer(Modifier.width(8.dp))
             }
+            // Your profile, top right, as on a console.
+            // Portrait has room for the icon alone beside the logo.
+            ProfileChip(ui.profileName.takeIf { landscape }, ui.profileIcon, onProfile, iconOnly = !landscape)
         }
         Column(
             Modifier

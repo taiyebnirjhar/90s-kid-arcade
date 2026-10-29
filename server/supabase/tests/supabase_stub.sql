@@ -21,5 +21,5 @@ grant usage on schema realtime to authenticated;
 grant select, insert on realtime.messages to authenticated;
 grant usage on sequence realtime.messages_id_seq to authenticated;
 grant usage on schema public to anon, authenticated, service_role;
-grant all on all tables in schema public to service_role;
-alter default privileges in schema public grant all on tables to service_role;
+-- Like the project (Data API: new tables aren't exposed automatically):
+-- no table is open to any role, the server's own included, unless granted.

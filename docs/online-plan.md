@@ -61,7 +61,7 @@ used.
 
 ## Step 1: Foundation (work breakdown)
 
-**Status: in progress.** Phase 1.0 done (2026-10-28); phase 1.1 built (2026-10-29). The owner asked to build
+**Status: in progress.** Phase 1.0 done (2026-10-28); phases 1.1 and 1.2 merged, the server deployed (2026-10-29); phase 1.3 built (2026-10-30). The owner asked to build
 Step 1. Each phase below is one PR (or a few), merged before the next
 starts. Every phase keeps today's same-Wi-Fi play working and its tests
 green.
@@ -355,6 +355,13 @@ one Wi-Fi with no internet.
 - **Not yet, and where:** Realtime's limit on people at once (D8) can't be
   read from the database; room creation checks it in phase 1.5, when
   signaling starts.
+- **Found later (2026-10-30), by a live check against the project:** the
+  project opens no table to any role by itself, the server's own (service
+  role) included, so `turn-credentials` couldn't read rooms or the relay's
+  tables and told every member "You're not in that room". Fixed by
+  `20261030000100_server_grants.sql`; the tests' stub of Supabase now grants
+  nothing by itself either, so the tests catch it, and the function reports
+  a failed read as an error instead of "not a member".
 
 ### Phase 1.3: Profile and sign-in (app)
 
@@ -366,6 +373,48 @@ one Wi-Fi with no internet.
 | 1.3.4 | Stats: games played per game, counted on the phone and synced. *Wins need each game's winner read from memory, which Step 3 builds; they're shown from then on* | Stats |
 | 1.3.5 | Offline: the profile shows from the phone's copy; nothing online blocks the app | Behavior |
 | 1.3.6 | Tests: sign-in once, reuse after restart, offline start; UI snapshots | Tests |
+
+**Results (2026-10-30):**
+
+- **Decided while building: no `supabase-kt` (1.3.1).** The app makes a
+  handful of calls (guest sign-in, a token refresh, two database functions,
+  one read), so `core/online` makes them over plain HTTP with the JDK's own
+  client and the JSON library `core` already has. No Ktor, nothing added to
+  the APK, and it's tested on the JVM against a fake server. Realtime
+  (phase 1.4) needs a WebSocket; that choice is made there.
+- **Sign-in** (`Supabase.kt`): a guest (Supabase's anonymous sign-in) the
+  first time the player opens their profile, never at app start. Checked
+  live against the project: guest sign-in is on, and a guest reads
+  profiles.
+  - The session is kept on the phone and refreshed when under a minute is
+    left. A token the server stops taking is refreshed once and retried.
+  - A guest the server no longer knows (refresh token refused) is lost for
+    good: a new guest is made, and the phone's profile and counts are saved
+    for it again. Only the friend code changes.
+  - Plain words for every failure (`explainOnline`): no internet; **online
+    paused** when Supabase answers 402, 429, 503 or 540 (D8: a limit
+    reached; nothing is billed); guest sign-in switched off.
+- **Profile** (`Account.kt`, `ProfilePage.kt`): name (1-24 characters, one
+  line), one of 16 icons of our own (8 drawn shapes, two styles, the
+  palette's colours), the friend code (tap to copy). Saved through a new
+  database function, `save_profile`: Android's HTTP client can't send
+  PATCH, and one call that makes or changes the profile is simpler anyway.
+- **Games played** (1.3.4): counted on the phone when a game starts, sent
+  through `record_plays`, which keeps the highest count it was sent (a
+  count never goes down). Sent quietly when home opens, only on a phone
+  that signed in before.
+- **Offline** (1.3.5): the profile page shows the phone's copy at once;
+  edits wait on the phone and go up with the next sync. Never online yet:
+  the player can still pick a name and icon.
+- **Rooms** show the profile's name instead of the phone's model.
+- **Tests:** `AccountTest` (15, over real HTTP against a fake server): no
+  sign-in until asked, sign in once, the same guest after a restart,
+  refresh, a dropped token, a lost guest, a new phone, edits and counts
+  waiting offline, never online, a server at its limit, guest sign-in
+  off, a refused save kept. The server's rules (`profile.test.sql`): your
+  own profile through `save_profile`, the friend code kept, counts only up,
+  bad names, icons, game ids and too many games refused, nothing for the
+  signed out. Screenshots of every profile state.
 
 ### Phase 1.4: Internet transport (WebRTC)
 

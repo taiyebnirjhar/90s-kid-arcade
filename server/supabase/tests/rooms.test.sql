@@ -8,7 +8,7 @@ insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000b'), -- Mim
   ('00000000-0000-0000-0000-00000000000c'); -- Tanu
 create temp table t (k text primary key, v text);
-grant all on t to authenticated;
+grant all on t to authenticated, service_role;
 
 set local role authenticated;
 
@@ -136,6 +136,26 @@ do $$ begin
   if public.close_quiet_rooms() < 1 then raise exception 'FAIL: a quiet room stayed open'; end if;
   if (select status from public.rooms where code = (select v from t where k = 'full')) <> 'closed' then raise exception 'FAIL: not closed'; end if;
   if exists (select 1 from public.room_members where room = (select v from t where k = 'full')) then raise exception 'FAIL: members kept'; end if;
+end $$;
+
+-- The server (the relay function, as the service role) reads rooms and who's
+-- in them, and keeps the relay's month and credentials: granted, since
+-- the project grants nothing by itself.
+reset role;
+insert into t select 'open', (select code from public.rooms where status = 'open' limit 1);
+set local role service_role;
+do $$ begin
+  if not exists (select 1 from public.rooms r join public.room_members m on m.room = r.code
+                 where r.code = (select v from t where k = 'open') and r.status = 'open') then
+    raise exception 'FAIL: the server can''t see an open room''s members';
+  end if;
+  insert into public.relay_usage (month, bytes, checked_at) values ('2026-10-01', 5, now())
+    on conflict (month) do update set bytes = excluded.bytes;
+  update public.relay_usage set bytes = 6 where month = '2026-10-01';
+  insert into public.relay_credentials (username, member, room, expires_at)
+    values ('u1', '00000000-0000-0000-0000-00000000000a', 'ABCDEF', now() + interval '1 hour');
+  update public.relay_credentials set revoked = true where username = 'u1';
+  perform count(*) from public.relay_credentials where not revoked;
 end $$;
 
 -- Strangers who aren't signed in get nothing.
