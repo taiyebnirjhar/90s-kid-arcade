@@ -223,7 +223,7 @@ private fun Hub(
     val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
     var key by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
+    val internet = rememberInternet()
     var status by remember { mutableStateOf<MpStatus?>(null) }
     var action by remember { mutableStateOf<(() -> Unit)?>(null) }
     var busy by remember { mutableStateOf(false) }
@@ -342,12 +342,7 @@ private fun Hub(
 
     // An internet room, by its code: looked up on the server, checked against
     // this phone's games, then joined over WebRTC.
-    fun joinByCode() {
-        val clean = code.uppercase().filter { it.isLetterOrDigit() }
-        if (clean.length != 6) {
-            say("Room codes have 6 letters and digits, like K7Q-2MX: the host sees it in the game.")
-            return
-        }
+    fun joinByCode(clean: String, nearby: (() -> Unit)?) {
         busy = true
         say("Looking for room ${OnlineRooms.pretty(clean)}…", bad = false)
         scope.launch {
@@ -393,6 +388,12 @@ private fun Hub(
                     else -> say(m)
                 }
             } catch (e: CantJoin) {
+                // Not an online room: a nearby room's key, perhaps.
+                if (nearby != null) {
+                    busy = false
+                    nearby()
+                    return@launch
+                }
                 say(e.message.orEmpty())
             } catch (e: OnlineError) {
                 say(explainOnline(e))
@@ -403,12 +404,25 @@ private fun Hub(
         }
     }
 
+    // One field for both: an online room's code (6 characters), else (or if
+    // there's no such room) a nearby room's key.
+    fun joinAny() {
+        val clean = key.uppercase().filter { it.isLetterOrDigit() }
+        val nearby = if (parseRoomKey(key) != null) ::joinByKey else null
+        when {
+            internet && clean.length == 6 -> joinByCode(clean, nearby)
+            nearby != null -> nearby()
+            clean.length == 6 -> say("No internet: joining by code needs it. A nearby room's key works without (same Wi-Fi or hotspot).")
+            else -> say("That's not a room code. It looks like K7Q-2MX: your friend sees it in their room.")
+        }
+    }
+
     // From a room link: its code, joined at once.
     androidx.compose.runtime.LaunchedEffect(joinCode) {
         if (joinCode != null) {
-            code = formatKeyInput(joinCode)
+            key = formatKeyInput(joinCode)
             onCodeTaken()
-            joinByCode()
+            joinByCode(joinCode, null)
         }
     }
 
@@ -425,13 +439,11 @@ private fun Hub(
         busy = busy,
         onStatusAction = { action?.invoke() },
         onHost = onHost,
-        onJoinKey = ::joinByKey,
+        onJoinKey = ::joinAny,
         onJoinRoom = { i -> hosts.getOrNull(i)?.let(::connect) },
         onBack = onBack,
-        code = code,
-        onCode = { code = formatKeyInput(it) },
+        internet = internet,
         onHostOnline = onHostOnline,
-        onJoinCode = ::joinByCode,
     )
 }
 
@@ -449,28 +461,34 @@ fun MultiplayerHub(
     onJoinKey: () -> Unit,
     onJoinRoom: (Int) -> Unit,
     onBack: () -> Unit,
-    code: String = "",
-    onCode: (String) -> Unit = {},
+    /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
+    internet: Boolean = true,
     onHostOnline: () -> Unit = {},
-    onJoinCode: () -> Unit = {},
 ) {
     ArcadeScreen(
-        title = "Multiplayer",
-        kicker = "Play together",
+        title = "Online",
+        kicker = if (internet) "Play together, anywhere" else "Nearby play",
         onBack = onBack,
-        // Hosting is the page's main action: pinned at the bottom, in thumb reach.
-        bottomBar = { GoldButton("Host a game", onHost, Modifier.fillMaxWidth(), play = true) },
+        // Making a room is the page's main action: pinned at the bottom, in thumb reach.
+        bottomBar = {
+            GoldButton(if (internet) "Create a room" else "Create nearby room", if (internet) onHostOnline else onHost, Modifier.fillMaxWidth(), play = true)
+        },
     ) {
         status?.let {
             StatusPanel(it, onStatusAction)
             Spacer(Modifier.height(8.dp))
         }
-        // Rooms nearby.
-        SectionLabel("Rooms nearby")
+        // No internet: not an error, a feature.
+        if (!internet) {
+            NearbyPlayCard()
+            Spacer(Modifier.height(8.dp))
+        }
+        // Rooms nearby: first, they're the fastest.
+        SectionLabel(if (internet) "Nearby · fastest" else "Rooms nearby")
         if (rooms.isEmpty()) {
             EmptyState(
                 "Looking for rooms…",
-                "On this Wi-Fi or hotspot. A friend's room shows up here; not appearing? Type its key below.",
+                "On this Wi-Fi or hotspot. A friend's room nearby shows up here.",
                 icon = { RadarIcon(Modifier.size(28.dp)) },
             )
         } else {
@@ -478,41 +496,82 @@ fun MultiplayerHub(
                 rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
             }
         }
-        // Join with a key.
-        SectionLabel("Join with a key")
+        // Join with a code: an online room's (friends anywhere) or a nearby room's key.
+        SectionLabel("Join with a code")
         Panel {
             Row(verticalAlignment = Alignment.Bottom) {
-                ArcadeField(key, onKey, "Room key", Modifier.weight(1f), placeholder = "K7Q-2M", keyboardType = KeyboardType.Ascii)
+                ArcadeField(key, onKey, "Room code", Modifier.weight(1f), placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii)
                 Spacer(Modifier.width(12.dp))
                 GoldButton("Join", onJoinKey, enabled = !busy && key.isNotBlank())
             }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                if (internet) "The code your friend sees in their room. Works from anywhere." else "The key your friend sees in their room (same Wi-Fi or hotspot).",
+                color = Palette.muted,
+                fontSize = 12.sp,
+            )
         }
-        // Over the internet: a room made on the server, joined by its code.
-        SectionLabel("Play over the internet")
-        Panel {
-            Text("Friends anywhere, on any network: the host gets a room code to share.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                ArcadeField(code, onCode, "Room code", Modifier.weight(1f), placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii)
-                Spacer(Modifier.width(12.dp))
-                GoldButton("Join", onJoinCode, enabled = !busy && code.isNotBlank())
+        // With internet, a nearby room is still there: no data used.
+        if (internet) {
+            SectionLabel("Saving data?")
+            Panel {
+                Text("Create a nearby room: friends on the same Wi-Fi or hotspot only. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Spacer(Modifier.height(12.dp))
+                GhostButton("Create nearby room", onHost, Modifier.fillMaxWidth(), enabled = !busy)
             }
-            Spacer(Modifier.height(12.dp))
-            GhostButton("Host online", onHostOnline, Modifier.fillMaxWidth(), enabled = !busy)
         }
         // How it works.
         SectionLabel("How it works")
         StepsStrip()
         Spacer(Modifier.height(16.dp))
         Text(
-            "All phones on the same Wi-Fi or one phone's hotspot: no internet needed. Each needs the game (and the " +
-                "Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3.",
+            "Each phone needs the game (and the Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3, " +
+                "Mystic Warriors and Sunset Riders 4. Others watch, and take a seat when one opens.",
             color = Palette.muted,
             fontSize = 12.sp,
             lineHeight = 18.sp,
         )
         Spacer(Modifier.height(24.dp))
     }
+}
+
+/** No internet: nearby play, as a feature (gold), not an error. */
+@Composable
+private fun NearbyPlayCard() {
+    Panel(highlight = true) {
+        Kicker("Nearby play")
+        Spacer(Modifier.height(4.dp))
+        Text("No internet needed", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+        Spacer(Modifier.height(4.dp))
+        Text("Play with friends on the same Wi-Fi or hotspot. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+    }
+}
+
+/** Whether this phone has the internet now (a validated network), kept up to date. */
+@Composable
+private fun rememberInternet(): Boolean {
+    val context = LocalContext.current
+    val cm = remember { context.getSystemService(android.net.ConnectivityManager::class.java) }
+    fun now(): Boolean = cm?.getNetworkCapabilities(cm.activeNetwork)?.let {
+        it.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            it.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    } == true
+    var internet by remember { mutableStateOf(now()) }
+    DisposableEffect(cm) {
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(network: android.net.Network, caps: android.net.NetworkCapabilities) {
+                main.post { internet = now() }
+            }
+
+            override fun onLost(network: android.net.Network) {
+                main.post { internet = now() }
+            }
+        }
+        runCatching { cm?.registerDefaultNetworkCallback(callback) }
+        onDispose { runCatching { cm?.unregisterNetworkCallback(callback) } }
+    }
+    return internet
 }
 
 /** Rings around a dot: looking for rooms on the network. */

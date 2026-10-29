@@ -89,6 +89,12 @@ class WebRtcTransport(
 
     override fun key(host: String, port: Int): String = code
 
+    // Each phone's latest round trip (ms), from WebRTC's stats.
+    private val rtts = ConcurrentHashMap<String, Int>()
+
+    /** The latest round trip to [host] in ms, if measured yet (for the input delay). */
+    fun rttMs(host: String): Int? = rtts[host]
+
     /** Which way each phone is reached, and how quick it is: for the connection report. */
     fun paths(): Map<String, PathInfo> = peers.values.mapNotNull { p ->
         runCatching { p.pc?.path()?.get(500, TimeUnit.MILLISECONDS) }.getOrNull()?.let { p.id to it }
@@ -439,12 +445,30 @@ class WebRtcTransport(
                     lock.notifyAll()
                 }
                 if (open) {
-                    pc?.path()?.whenComplete { p, _ -> if (p != null) NetLog.add("rtc: $id ${p.kind}" + (p.rttMs?.let { ", $it ms" } ?: "")) }
+                    pc?.path()?.whenComplete { p, _ ->
+                        if (p == null) return@whenComplete
+                        p.rttMs?.let { rtts[id] = it }
+                        NetLog.add("rtc: $id ${p.kind}" + (p.rttMs?.let { ", $it ms" } ?: ""))
+                    }
+                    measure(this)
                 }
             }
 
             override fun onMessage(channel: Int, data: ByteArray) {
                 if (current()) this@Peer.onMessage(channel, data)
+            }
+        }
+
+        // The round trip again every few seconds while connected (it changes with the network).
+        private fun measure(events: Events) {
+            runCatching {
+                timers.schedule({
+                    val c = events.pc
+                    if (c != null && c === pc && !closed) {
+                        c.path().whenComplete { p, _ -> p?.rttMs?.let { rtts[id] = it } }
+                        measure(events)
+                    }
+                }, MEASURE_MS, TimeUnit.MILLISECONDS)
             }
         }
 
@@ -720,6 +744,7 @@ class WebRtcTransport(
         const val OFFER_AGAIN_MS = 1_500L
         const val MAX_AHEAD = 64
         const val DRAIN_NS = 1_000_000_000L
+        const val MEASURE_MS = 5_000L
         /** After the last bytes leave, time for them to arrive before the goodbye (BYE) does. */
         const val GOODBYE_MS = 250L
         /** An offer unanswered this many times (30 s) ends the try. */

@@ -123,6 +123,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
+
+        // How often an internet room's ping is shown afresh.
+        private const val PING_SHOW_MS = 5_000L
         private const val SYSTEM_RAM = 2 // RETRO_MEMORY_SYSTEM_RAM: the Neo Geo's 68000 RAM
         private const val DETECT_MS = 250L
         // Looking for a lost room: as long as a seat is held, every couple of seconds.
@@ -536,13 +539,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val roomStatus: String? get() = room?.status()
 
     /** The connection's story (NetLog) and this phone, to send when multiplayer misbehaves. */
-    fun shareConnectionReport() {
+    fun shareConnectionReport() = lifecycleScope.launch {
+        // Off the main thread: an internet room's connections are asked how they're doing.
+        val online = withContext(Dispatchers.IO) {
+            Netplay.online?.let { o ->
+                val ways = o.transport.paths().entries.joinToString(", ") { (who, p) -> "$who ${p.kind}" + (p.rttMs?.let { " $it ms" } ?: "") }
+                "Online room ${OnlineRooms.pretty(o.code)}; ways to the others: ${ways.ifEmpty { "none open" }}" +
+                    (room?.pingMs?.let { "; ping $it ms" } ?: "")
+            }
+        }
         val report = buildString {
             appendLine(if (room != null) "90s Kid Arcade connection report" else "90s Kid Arcade performance report")
             appendLine("Phone: ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}, screen ${screenHz()} Hz")
             appendLine("Game: ${game.title} ($set)")
             appendLine(playbackStatus)
             room?.let { appendLine(it.status()) }
+            online?.let { appendLine(it) }
             appendLine()
             append(NetLog.dump())
         }
@@ -611,11 +623,12 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     host = it.id == r.owner,
                     away = it.away,
                     holdEnds = if (it.away) r.holdEnds(it.id) else 0L,
+                    line = it.line,
                 )
             }
         }
         val key = if (r.overInternet) OnlineRooms.pretty(r.key) else r.key
-        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet)
+        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs)
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -630,11 +643,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val text = if (room?.overInternet == true) {
             val code = OnlineRooms.pretty(key)
             "Play with me on 90s Kid Arcade! Room code: $code\n" +
-                "Open Multiplayer and type the code under \"Play over the internet\", or tap: ${joinLink(key)}\n" +
+                "Open Online in the app and type the code, or tap: ${joinLink(key)}\n" +
                 "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
         } else {
             "Play with me on 90s Kid Arcade! Room key: $key\n" +
-                "Open Multiplayer and type the key (same Wi-Fi or hotspot).\n" +
+                "Open Online in the app and type the key (same Wi-Fi or hotspot).\n" +
                 "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
         }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
@@ -682,6 +695,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // The room runs on its own threads; it seats this phone (from the owner's
     // game) whenever someone joins or leaves, and the game waits meanwhile.
     private fun startNetplay(room: Room) {
+        // An internet room's ping changes with the network: the pill's bars follow it.
+        if (room.overInternet) lifecycleScope.launch {
+            while (isActive && this@GameActivity.room === room) {
+                delay(PING_SHOW_MS)
+                updateRoomUi()
+            }
+        }
         // Who's in each seat, from the game itself (Game.seats). A game whose
         // byte only says "in the fight" is watched over time, so its seat goes
         // free once the game's own countdown has run (SeatStatus.outForMs).

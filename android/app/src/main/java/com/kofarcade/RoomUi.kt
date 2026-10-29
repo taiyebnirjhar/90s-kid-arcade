@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -68,6 +69,8 @@ data class RoomPerson(
     val host: Boolean = false,
     val away: Boolean = false,
     val holdEnds: Long = 0L,
+    /** Watching, in line for a seat: 1 is next (0: not in line). */
+    val line: Int = 0,
 )
 
 /** What the game screen shows of its room. */
@@ -81,10 +84,57 @@ data class RoomUi(
     val canFree: Boolean = false,
     /** An internet room: [key] is its code, for friends anywhere. */
     val online: Boolean = false,
+    /** An internet room's round trip to the others (ms), once measured. */
+    val pingMs: Int? = null,
 ) {
     val players: List<RoomPerson> get() = people.filter { it.seat >= 0 }.sortedBy { it.seat }
-    val watchers: List<RoomPerson> get() = people.filter { it.seat < 0 }
+    // Those in line first, in order, then the others.
+    val watchers: List<RoomPerson> get() = people.filter { it.seat < 0 }.sortedBy { if (it.line > 0) it.line else Int.MAX_VALUE }
+
+    /** This phone's place in line for a seat (0: not in line). */
+    val linePlace: Int get() = people.firstOrNull { it.you && it.seat < 0 }?.line ?: 0
     val freeSeats: Int get() = maxPlayers - players.size
+}
+
+/**
+ * How quick the way to the others is, as four bars: all four nearby ([ms]
+ * null: on the same Wi-Fi or hotspot) or under 60 ms, three under 120, two
+ * under 200, else one. Green, gold, then red.
+ */
+@Composable
+fun PingBars(ms: Int?, modifier: Modifier = Modifier) {
+    val bars = when {
+        ms == null || ms < 60 -> 4
+        ms < 120 -> 3
+        ms < 200 -> 2
+        else -> 1
+    }
+    val color = when (bars) {
+        4, 3 -> Palette.green
+        2 -> Palette.gold
+        else -> Palette.red
+    }
+    Canvas(modifier) {
+        val w = size.width / 4
+        for (i in 0 until 4) {
+            val h = size.height * (i + 1) / 4
+            drawRoundRect(
+                if (i < bars) color else Color.White.copy(alpha = 0.2f),
+                androidx.compose.ui.geometry.Offset(i * w + w * 0.15f, size.height - h),
+                androidx.compose.ui.geometry.Size(w * 0.7f, h),
+                androidx.compose.ui.geometry.CornerRadius(w * 0.2f),
+            )
+        }
+    }
+}
+
+/** 1 -> "1st", 2 -> "2nd"... */
+fun ordinal(n: Int): String = n.toString() + when {
+    n % 100 in 11..13 -> "th"
+    n % 10 == 1 -> "st"
+    n % 10 == 2 -> "nd"
+    n % 10 == 3 -> "rd"
+    else -> "th"
 }
 
 /** Something to announce over the game: "Rafi joined", or big: "You're player 2!". */
@@ -135,6 +185,10 @@ fun RoomPill(ui: RoomUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
                 Spacer(Modifier.width(8.dp))
             }
             SeatDots(ui.maxPlayers, ui.players.filter { !it.away }.map { it.seat }.toSet(), held = ui.players.filter { it.away }.map { it.seat }.toSet())
+            if (ui.online && ui.pingMs != null) {
+                Spacer(Modifier.width(8.dp))
+                PingBars(ui.pingMs, Modifier.size(width = 14.dp, height = 11.dp))
+            }
             if (ui.watchers.isNotEmpty()) {
                 Spacer(Modifier.width(8.dp))
                 EyeIcon(Modifier.size(12.dp), color = Palette.muted)
@@ -142,8 +196,22 @@ fun RoomPill(ui: RoomUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
                 Text("${ui.watchers.size}", color = Palette.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
+        // In line: where.
+        if (ui.watching && ui.linePlace > 0) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "${ordinal(ui.linePlace).uppercase()} IN LINE",
+                color = Color.White,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.7f))
+                    .border(1.dp, Palette.gold.copy(alpha = 0.7f), RoundedCornerShape(50))
+                    .clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
         // Watching with a seat free: say how to take it, so nobody misses it.
-        if (ui.watching && ui.freeSeats > 0) {
+        if (ui.watching && ui.freeSeats > 0 && ui.linePlace == 0) {
             Spacer(Modifier.height(6.dp))
             val pulse by rememberInfiniteTransition(label = "seat").animateFloat(
                 0.55f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "seat",
@@ -276,7 +344,7 @@ private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: 
                     Kicker(if (ui.online) "Room code" else "Room key", Palette.muted)
                     Text(ui.key, color = Palette.gold, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
                     Text(
-                        if (ui.online) "Friends anywhere: Multiplayer → Play over the internet → type this code, or scan it." else "Friends: Multiplayer → type this key. Same Wi-Fi or hotspot.",
+                        if (ui.online) "Friends anywhere: Online → type this code, or scan it." else "Friends: Online → type this key. Same Wi-Fi or hotspot.",
                         color = Palette.muted,
                         fontSize = 12.sp,
                     )
@@ -310,7 +378,10 @@ private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit) {
         Text("Nobody yet. Anyone who joins watches first.", color = Palette.muted, fontSize = 13.sp)
     } else {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (w in ui.watchers) Tag(w.name + if (w.you) " (you)" else "", if (w.you) Palette.gold else Palette.muted)
+            for (w in ui.watchers) {
+                val name = w.name + if (w.you && w.name != "You") " (you)" else ""
+                Tag(if (w.line > 0) "${w.line}. $name" else name, if (w.you) Palette.gold else Palette.muted)
+            }
         }
     }
 }
@@ -319,7 +390,14 @@ private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit) {
 private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
     Spacer(Modifier.height(18.dp))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (ui.watching) {
+        if (ui.watching && ui.linePlace > 0) {
+            Panel(highlight = true) {
+                Text("You're ${ordinal(ui.linePlace)} in line", color = Palette.gold, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                Text("The next seat that opens goes to the first in line.", color = Palette.muted, fontSize = 12.sp)
+                Spacer(Modifier.height(10.dp))
+                GhostButton("Leave line", onWatch, Modifier.fillMaxWidth())
+            }
+        } else if (ui.watching) {
             GoldButton("Take a seat", onSeat, Modifier.fillMaxWidth(), play = true)
         } else {
             GoldButton(if (first) "Start playing" else "Back to the game", onClose, Modifier.fillMaxWidth(), play = true)
@@ -397,8 +475,8 @@ private fun SeatRow(seat: Int, who: RoomPerson?, canFree: Boolean, onFree: (Int)
 fun StepsStrip() {
     BoxWithConstraints {
         val steps = listOf(
-            "Open a room" to "Pick the game. You get a key.",
-            "Friends join" to "They type the key and watch.",
+            "Create a room" to "Pick the game. You get a code.",
+            "Friends join" to "They type the code and watch.",
             "COIN + START" to "Takes a free seat. Play!",
         )
         val row = maxWidth > 420.dp
@@ -494,6 +572,11 @@ fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
             Text(room.hostName + if (room.key.isNotEmpty()) " · ${room.key}" else "", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Nearby: the fastest way (no internet in between).
+                PingBars(null, Modifier.size(width = 14.dp, height = 11.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Nearby", color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(8.dp))
                 SeatDots(room.maxPlayers, (0 until room.players.coerceAtMost(room.maxPlayers)).toSet(), size = 8)
                 if (room.watchers > 0) {
                     Spacer(Modifier.width(8.dp))

@@ -56,8 +56,10 @@ class SmoothnessTest {
         maxRollback: Int = 12,
         seconds: Double = 120.0,
         seed: Long = 1,
+        startDelay: Int = 1,
+        maxDelay: Int = 3,
     ): Result {
-        val sim = Sim(screens, air, sync, maxRollback, seed)
+        val sim = Sim(screens, air, sync, maxRollback, seed, startDelay, maxDelay)
         sim.run((seconds * 1e6).toLong())
         val r = Result(
             sim.phones.map { it.waits }.toIntArray(),
@@ -153,11 +155,55 @@ class SmoothnessTest {
         }
     }
 
+    // Over the internet (phase 1.6): two phones at a ping, with its jitter,
+    // 1% loss and a hiccup now and then. An internet room starts at an input
+    // delay for its ping (startingDelay) and may go up to 4 frames.
+    private fun internet(ping: Int) = Air(baseMs = ping / 2.0 - 3, jitterMs = 3.0 + ping / 40.0, loss = 0.01, hiccupEveryS = 8.0, hiccupMaxMs = 200.0)
+
+    private val pair = listOf(Screen(60.0, Pacing.VSYNC), Screen(60.01, Pacing.VSYNC))
+
+    private fun online(ping: Int, seed: Long) =
+        play(pair, internet(ping), seed = seed, startDelay = startingDelay(ping), maxDelay = MAX_ONLINE_DELAY)
+
+    @Test
+    fun noFreezesAtInternetPings() {
+        for (ping in listOf(35, 70, 110, 160, 250)) for (seed in 1L..3L) {
+            val r = online(ping, seed)
+            assertTrue(r.stalls.all { it == 0 }, "ping $ping: $r")
+            assertTrue(r.apart <= 2, "ping $ping: $r")
+        }
+    }
+
+    @Test
+    fun correctionsStaySmallUpTo110Ms() {
+        for (ping in listOf(35, 70, 110)) for (seed in 1L..3L) {
+            val r = online(ping, seed)
+            // A correction replays a frame or two, now and then: not seen as a jump.
+            assertTrue(r.perMinute(r.rollbacks).all { it <= 120 }, "ping $ping: $r")
+            assertTrue(r.replayed.sum() <= r.rollbacks.sum() * 2.2, "ping $ping: $r")
+        }
+    }
+
+    @Test
+    fun aDelayForThePingCorrectsLessThanStartingAtOne() {
+        for (ping in listOf(70, 110, 160)) for (seed in 1L..3L) {
+            val before = play(pair, internet(ping), seed = seed)
+            val now = online(ping, seed)
+            assertTrue(now.rollbacks.sum() < before.rollbacks.sum(), "ping $ping: before $before, now $now")
+        }
+    }
+
+    @Test
+    fun theStartingDelayFollowsThePing() {
+        assertTrue(startingDelay(5) == 1 && startingDelay(35) == 1 && startingDelay(70) == 2)
+        assertTrue(startingDelay(110) == 3 && startingDelay(160) == 4 && startingDelay(900) == MAX_ONLINE_DELAY)
+    }
+
     // ----- The simulation -----
 
     private class Packet(val from: Int, val start: Int, val masks: IntArray, val ack: Int, val advantage: Int, val delay: Int)
 
-    private inner class Sim(screens: List<Screen>, val air: Air, val sync: Sync, val maxRollback: Int, seed: Long) {
+    private inner class Sim(screens: List<Screen>, val air: Air, val sync: Sync, val maxRollback: Int, seed: Long, val startDelay: Int, val maxDelay: Int) {
         val random = Random(seed)
         var now = 0L
         private var seq = 0L
@@ -213,12 +259,12 @@ class SmoothnessTest {
             val pacing = screen.pacing
             val periodUs = 1e6 / screen.hz
             private val partners = (0 until players).filter { it != id }
-            val ls = Lockstep(1, id, players, partners)
-            private val tuner = DelayTuner()
+            val ls = Lockstep(startDelay, id, players, partners)
+            private val tuner = DelayTuner(max = maxDelay)
             private val timeSync = TimeSync()
             private val advantage = IntArray(MAX_IDS)
             private val theirAdvantage = IntArray(MAX_IDS)
-            private val theirDelay = IntArray(MAX_IDS) { 1 }
+            private val theirDelay = IntArray(MAX_IDS) { startDelay }
             private val lastHeard = LongArray(MAX_IDS)
             private var lastSent = 0L
             private var frames = 0L

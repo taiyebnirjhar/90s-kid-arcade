@@ -6,6 +6,7 @@ import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.net.RtcNet
+import com.kofarcade.core.net.startingDelay
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -60,7 +61,7 @@ class OnlineRoomsTest {
         }
     }
 
-    private val net = RtcNet(FakeNet { Path(latencyMs = 30, jitterMs = 10) })
+    private val net = RtcNet(FakeNet { Path(latencyMs = 60, jitterMs = 10) })
     private val server = FakeServer()
     private val opened = ArrayList<OnlineRoom>()
 
@@ -113,6 +114,17 @@ class OnlineRoomsTest {
         waitFor("watching") { host.room.watcherCount == 1 }
         assertEquals(listOf("aaa", "bbb"), server.members(host.code))
         assertTrue(guest.room.watching)
+    }
+
+    @Test
+    fun aGameStartsAtTheDelayForThePing() {
+        val host = phone("aaa").host("Host", "kof97", "KOF '97", rom = 11, bios = 22, maxPlayers = 2).started()
+        val guest = phone("bbb").join(phone("bbb").find(host.code), "Rafi", "kof97", 11, 22).started()
+        waitFor("watching") { host.room.watcherCount == 1 }
+        Thread.sleep(500) // a round trip measured (about 120-140 ms here)
+        guest.room.requestSeat()
+        waitFor("playing") { guest.room.localPlayer == 1 && host.room.epoch >= 2 && guest.room.epoch >= 2 }
+        assertTrue(host.room.delay >= 3 && guest.room.delay >= 3, "delays ${host.room.delay} / ${guest.room.delay}")
     }
 
     @Test

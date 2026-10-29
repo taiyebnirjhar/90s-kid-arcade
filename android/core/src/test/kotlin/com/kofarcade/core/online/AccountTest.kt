@@ -262,6 +262,20 @@ class AccountTest {
     }
 
     @Test
+    fun aFullRoomIsNotAPausedServer() {
+        // The API answers a database function's "limit" refusal (SQL state 53400) with 503.
+        val s = Supabase(fake.url, KEY, phone, http = { _, url, _, _ ->
+            if ("signup" in url) HttpResponse(200, """{"access_token":"a","refresh_token":"r","expires_in":3600,"user":{"id":"u"}}""")
+            else HttpResponse(503, """{"code":"53400","message":"The room is full: 8 phones at most"}""")
+        })
+        val e = assertFailsWith<OnlineError.Refused> { s.rpc("join_room", kotlinx.serialization.json.JsonObject(emptyMap())) }
+        assertEquals("The room is full: 8 phones at most", explainOnline(e))
+        // A paused project (no SQL state) is still paused.
+        val p = Supabase(fake.url, KEY, Prefs(), http = { _, _, _, _ -> HttpResponse(503, """{"message":"Service Unavailable"}""") })
+        assertFailsWith<OnlineError.Paused> { p.session() }
+    }
+
+    @Test
     fun guestSignInSwitchedOff() {
         val s = Supabase(fake.url, KEY, phone, http = { _, _, _, _ ->
             HttpResponse(422, """{"code":422,"error_code":"anonymous_provider_disabled","msg":"Anonymous sign-ins are disabled"}""")

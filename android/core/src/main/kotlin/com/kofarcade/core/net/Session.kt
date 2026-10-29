@@ -232,6 +232,20 @@ class Room private constructor(
     /** Phones watching. */
     val watcherCount: Int get() = members.values.count { it.seat < 0 }
 
+    /**
+     * An internet room's round trip to the other players (or, watching, the
+     * room's host), the slowest, in ms; null on Wi-Fi or before it's measured.
+     */
+    val pingMs: Int?
+        get() {
+            val t = transport as? WebRtcTransport ?: return null
+            val others = partners.ifEmpty { listOfNotNull(members[owner]?.takeIf { it.id != localId }) }
+            return others.mapNotNull { m -> m.host.takeIf { it.isNotEmpty() }?.let(t::rttMs) }.maxOrNull()
+        }
+
+    /** Watching and in line for a seat: this phone's place (1 is next), or 0. */
+    val linePlace: Int get() = members[localId]?.takeIf { it.seat < 0 }?.line ?: 0
+
     /** A seat nobody's in. */
     val hasFreeSeat: Boolean get() = seats.size + held.size < maxPlayers
 
@@ -252,7 +266,23 @@ class Room private constructor(
 
     /** This phone's input delay now: it adapts to the connection ([DelayTuner]). */
     val delay: Int get() = lockstep.delay
-    private val tuner = DelayTuner()
+    // Over the internet, up to 4 frames (higher pings); on Wi-Fi, 3.
+    private val tuner = DelayTuner(max = if (transport is WebRtcTransport) MAX_ONLINE_DELAY else 3)
+    // An internet room's delay was set from the measured ping (at the first game with partners).
+    private var delayFromPing = false
+
+    /**
+     * The input delay for a new game: as tuned so far; in an internet room's
+     * first game with partners, at least the delay for the ping to them
+     * ([startingDelay]), and the tuner adapts from there.
+     */
+    private fun delayFor(partnerHosts: List<String>): Int {
+        val t = transport as? WebRtcTransport ?: return lockstep.delay
+        if (delayFromPing || partnerHosts.isEmpty()) return lockstep.delay
+        val rtt = partnerHosts.mapNotNull(t::rttMs).maxOrNull() ?: return lockstep.delay
+        delayFromPing = true
+        return maxOf(lockstep.delay, startingDelay(rtt)).also { log("Ping to the others: $rtt ms, input delay $it") }
+    }
     private val timeSync = TimeSync()
 
     /** Seats taken, as a bit mask (bit p = seat p). */
@@ -610,6 +640,8 @@ class Room private constructor(
             val now = System.nanoTime()
             if (isOwner) {
                 releaseEnded()
+                // A seat that opened (a game over, its countdown run out) goes to the first in line.
+                if (members.values.any { it.line > 0 }) worker.execute { serveLine() }
                 val all = ownerLines()
                 for (line in all) {
                     val newcomer = synchronized(lines) { line.id in arriving }
@@ -724,9 +756,9 @@ class Room private constructor(
         if (isOwner) worker.execute { release(held[seat]?.id ?: return@execute, "Player ${seat + 1}'s seat is free", now = true) }
     }
 
-    /** Playing: gives up the seat, to watch (it's free for someone else). */
+    /** Playing: gives up the seat, to watch (it's free for someone else). In line for a seat: leaves the line. */
     fun requestWatch() {
-        if (watching) return
+        if (watching && linePlace == 0) return
         if (isOwner) worker.execute { stand(localId) } else control(Msg.STAND)
     }
 
@@ -962,6 +994,9 @@ class Room private constructor(
         for ((id, seat) in moves) if (seat >= 0 && next[id] != null) seatedAt[seat] = System.currentTimeMillis()
         next.putAll(replace)
         if (hold != null) next[hold]?.let { next[hold] = it.copy(away = true) }
+        // The line for seats: those seated now are out of it, the rest keep their order.
+        val waiting = next.values.filter { it.seat < 0 && it.line > 0 }.sortedBy { it.line }.map { it.id }
+        for ((id, m) in next) next[id] = m.copy(line = if (m.seat < 0) waiting.indexOf(id) + 1 else 0)
         // Held seats say how long they're held for.
         val nowMs = System.currentTimeMillis()
         for ((id, m) in next) {
@@ -1022,11 +1057,74 @@ class Room private constructor(
             return
         }
         if (m.seat >= 0) return
+        // Someone's in line before it: it joins the line, and they're seen to first.
+        val first = inLine().firstOrNull()
+        if (first != null && first != id) {
+            if (m.line == 0) {
+                setLine(inLine() + id)
+                tell(id, "You're ${ordinal(inLine().size)} in line for a seat.")
+            }
+            serveLine()
+            return
+        }
+        if (!seatFor(id, m)) {
+            // Nothing free: in line, and seated as soon as a seat opens.
+            if (m.line == 0) setLine(inLine() + id)
+            val place = inLine().indexOf(id) + 1
+            val h = held.values.minByOrNull { it.seat }
+            tell(
+                id,
+                if (h != null) {
+                    val left = ((holdEnds(h.id) - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+                    "Player ${h.seat + 1}'s seat is held for ${h.name} (${left} s). You're ${ordinal(place)} in line."
+                } else {
+                    "All seats are in use: you're ${ordinal(place)} in line. A seat opens when a player's game is over."
+                },
+            )
+        }
+    }
+
+    // ----- The line for seats (the owner keeps it; everyone sees it in the members) -----
+
+    private fun ordinal(n: Int): String = n.toString() + when {
+        n % 100 in 11..13 -> "th"
+        n % 10 == 1 -> "st"
+        n % 10 == 2 -> "nd"
+        n % 10 == 3 -> "rd"
+        else -> "th"
+    }
+
+    // The watchers in line, first first.
+    private fun inLine(): List<Int> = members.values.filter { it.line > 0 && it.seat < 0 }.sortedBy { it.line }.map { it.id }
+
+    // The line is now [order] (on the worker): everyone's told.
+    private fun setLine(order: List<Int>) {
+        val places = order.withIndex().associate { (i, id) -> id to i + 1 }
+        synchronized(deliverLock) {
+            members = members.mapValues { (id, m) -> m.copy(line = places[id] ?: 0) }
+        }
+        roster()
+    }
+
+    /** Owner (on the worker): a seat that's opened goes to the first in line. */
+    private fun serveLine() {
+        if (closed || !isOwner) return
+        val first = inLine().firstOrNull() ?: return
+        val m = members[first] ?: return
+        seatFor(first, m)
+    }
+
+    /**
+     * Seats watcher [id] (on the worker): the lowest free seat, else the
+     * lowest whose player the game shows out ([RoomListener.seatFree]; that
+     * player goes back to watching). False when there's none.
+     */
+    private fun seatFor(id: Int, m: Member): Boolean {
         val taken = members.values.map { it.seat }.toSet()
         val free = (0 until maxPlayers).firstOrNull { it !in taken }
         if (free != null) {
             seat("${m.name} is player ${free + 1}", moves = mapOf(id to free))
-            return
+            return true
         }
         val now = System.currentTimeMillis()
         val ln = listener
@@ -1037,27 +1135,25 @@ class Room private constructor(
             now - (seatedAt[p.seat] ?: 0L) >= seatGraceMs &&
                 (word[p.seat] ?: ((idle[p.seat] ?: 0) >= idleLimit))
         }
-        if (out == null) {
-            val h = held.values.minByOrNull { it.seat }
-            if (h != null) {
-                val left = ((holdEnds(h.id) - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
-                tell(id, "Player ${h.seat + 1}'s seat is held for ${h.name} (${left} s). The host can free it.")
-            } else {
-                tell(id, "All seats are in use. One opens when a player's game is over.")
-            }
-            return
-        }
+        if (out == null) return false
         val why = if (word[out.seat] == null) "you weren't playing" else "your game was over"
         tell(out.id, "${why.replaceFirstChar { it.uppercase() }}, so ${m.name} took your seat. Press COIN or START to play again.")
         seat("${m.name} is player ${out.seat + 1} (${out.name}'s ${if (word[out.seat] == null) "turn was idle" else "game was over"})",
             moves = mapOf(id to out.seat, out.id to -1))
+        return true
     }
 
     /** A player gives up their seat (on the worker). */
     private fun stand(id: Int) {
         if (closed || !isOwner) return
         val m = members[id] ?: return
-        if (m.seat < 0) return
+        if (m.seat < 0) {
+            if (m.line > 0) {
+                setLine(inLine() - id)
+                tell(id, "You left the line. You're still watching.")
+            }
+            return
+        }
         seat("${m.name} is watching now", moves = mapOf(id to -1))
     }
 
@@ -1092,7 +1188,8 @@ class Room private constructor(
             seat(news, gone = id)
         } else {
             synchronized(deliverLock) { members = members - id }
-            roster()
+            // Its place in line goes to those behind it (roster() tells everyone).
+            if (m.line > 0) setLine(inLine()) else roster()
             news(news)
         }
     }
@@ -1625,7 +1722,7 @@ class Room private constructor(
             // watches, to relay them); an owner who watches gets them from the
             // players; other watchers get them from the owner.
             lockstep = when {
-                playing -> Lockstep(lockstep.delay, localId, players(), players, if (ownerWatches && seating.owner != localId) listOf(seating.owner) else emptyList())
+                playing -> Lockstep(delayFor(players.mapNotNull { next[it]?.host }), localId, players(), players, if (ownerWatches && seating.owner != localId) listOf(seating.owner) else emptyList())
                 isOwner -> Lockstep(lockstep.delay, -1, players(), players)
                 else -> Lockstep(lockstep.delay, -1, players(), emptyList())
             }

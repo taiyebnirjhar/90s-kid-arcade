@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 // (small, frequent, and resent until acknowledged, so a lost packet costs
 // nothing).
 
-const val PROTOCOL = 11
+const val PROTOCOL = 12
 const val TCP_PORT = 7845
 
 /** Rooms listen on the first free one of these TCP ports from [TCP_PORT] (the room key says which). */
@@ -89,6 +89,8 @@ data class Member(
     /** Dropped out: its seat is held for it, for [holdLeft] seconds more (as of this seating). */
     val away: Boolean = false,
     val holdLeft: Int = 0,
+    /** Watching, in line for a seat: 1 is first (0: not in line). */
+    val line: Int = 0,
 )
 
 /**

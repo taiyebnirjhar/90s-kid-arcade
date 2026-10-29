@@ -248,6 +248,77 @@ open class RoomTest {
     }
 
     @Test
+    fun watchersWaitInLineAndSeatsGoInOrder() {
+        // Two seats, both taken: three watchers ask, one after another.
+        val h = host()
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val p = join(h, "Player")
+        val pg = FakeGame(p).apply { play() }
+        waitFor("watching") { pg.epoch == 1 }
+        p.requestSeat()
+        waitFor("player seated") { p.localPlayer == 1 }
+        val one = join(h, "One")
+        val g1 = FakeGame(one).apply { play() }
+        val two = join(h, "Two")
+        val g2 = FakeGame(two).apply { play() }
+        val three = join(h, "Three")
+        val g3 = FakeGame(three).apply { play() }
+        waitFor("all watching") { h.watcherCount == 3 && g1.epoch >= 2 && g2.epoch >= 2 && g3.epoch >= 2 }
+        one.requestSeat()
+        waitFor("one in line") { one.linePlace == 1 }
+        two.requestSeat()
+        waitFor("two in line") { two.linePlace == 2 }
+        three.requestSeat()
+        waitFor("three in line") { three.linePlace == 3 }
+        assertTrue(g2.news.any { "2nd in line" in it }, g2.news.toString())
+
+        // Two leaves the line: Three moves up, still watching.
+        two.requestWatch()
+        waitFor("two out of line") { two.linePlace == 0 && three.linePlace == 2 }
+        assertTrue(two.watching)
+
+        // The player gives the seat up: the first in line gets it, not whoever asks next.
+        p.requestWatch()
+        waitFor("one seated") { one.localPlayer == 1 }
+        waitFor("three next") { three.linePlace == 1 }
+        two.requestSeat()
+        waitFor("two behind three") { two.linePlace == 2 }
+
+        // Player 2's game ends (its countdown ran out): the seat goes to the first in line by itself.
+        a.outSeats = setOf(1)
+        g1.outSeats = setOf(1)
+        waitFor("three seated") { three.localPlayer == 1 }
+        assertEquals(0, three.linePlace)
+        waitFor("two first now") { two.linePlace == 1 }
+        // One's phone hears it's back to watching a moment later on a slow network.
+        waitFor("one watching") { one.watching }
+        assertEquals(null, a.error ?: g1.error ?: g2.error ?: g3.error)
+    }
+
+    @Test
+    fun theLineSurvivesATakeover() {
+        val h = host(seats = 1)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val one = join(h, "One")
+        val g1 = FakeGame(one).apply { play() }
+        val two = join(h, "Two")
+        val g2 = FakeGame(two).apply { play() }
+        waitFor("watching") { h.watcherCount == 2 && g1.epoch >= 1 && g2.epoch >= 1 }
+        one.requestSeat()
+        waitFor("one in line") { one.linePlace == 1 }
+        two.requestSeat()
+        waitFor("two in line") { two.linePlace == 2 }
+        // The host leaves: someone takes the room over, and its seat goes to the first in line.
+        h.close()
+        waitFor("one seated") { one.localPlayer == 0 || two.localPlayer == 0 }
+        assertEquals(0, one.localPlayer, "the first in line got the seat")
+        waitFor("two still in line") { two.linePlace == 1 }
+        assertEquals(null, g1.error ?: g2.error)
+    }
+
+    @Test
     fun theFirstToAskGetsTheSeatAndTheOthersKeepWatching() {
         val h = host()
         val a = FakeGame(h).apply { play() }

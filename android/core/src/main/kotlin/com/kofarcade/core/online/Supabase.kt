@@ -39,6 +39,8 @@ fun explainOnline(e: Throwable): String = when (e) {
     is OnlineError.Paused -> "Online is paused for now: the free server's limit was reached. Nearby play still works. Try again later."
     is OnlineError.Refused -> when (e.code) {
         "anonymous_provider_disabled" -> "Guest sign-in is switched off on the server."
+        // The database's own words: "The room is full: 8 phones at most", "You have 3 rooms open already".
+        "53400", "P0002" -> e.message.orEmpty()
         else -> "The server said no (${e.status}): ${e.message}"
     }
     else -> "Something went wrong: ${e.message}"
@@ -172,13 +174,17 @@ class Supabase(
         val err = runCatching { Json.parseToJsonElement(r.body).jsonObject }.getOrNull()
         fun field(vararg names: String) = names.firstNotNullOfOrNull { err?.get(it)?.jsonPrimitive?.contentOrNull }
         val message = field("msg", "message", "error_description", "error") ?: r.body.take(200).ifEmpty { "HTTP ${r.status}" }
+        val code = field("error_code", "code")
         // 402: over the plan's limits; 429: too many requests; 503 and 540: the project is down or paused.
-        if (r.status in PAUSED) throw OnlineError.Paused(r.status, message)
-        throw OnlineError.Refused(r.status, field("error_code", "code"), message)
+        // But a database function's own refusal (a room full: SQL state 53400, which the API answers
+        // with 503) says what it is, in its own words.
+        if (r.status in PAUSED && (code == null || !SQL_STATE.matches(code))) throw OnlineError.Paused(r.status, message)
+        throw OnlineError.Refused(r.status, code, message)
     }
 
     private companion object {
         const val SESSION = "online.session"
         val PAUSED = setOf(402, 429, 503, 540)
+        val SQL_STATE = Regex("[0-9A-Z]{5}")
     }
 }

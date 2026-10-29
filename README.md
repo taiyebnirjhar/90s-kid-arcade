@@ -63,7 +63,7 @@ and settings.
 3. **COIN**, then **START**.
 
 The home screen opens on the game you played last, with **Continue**, and
-lists every game by series as picture cards. **Multiplayer**,
+lists every game by series as picture cards. **Online**,
 **Library** and your **Profile** are at the top. The pictures (each game's title and play
 screens) ship inside the app: they show offline, from the first launch.
 
@@ -184,32 +184,37 @@ how the game runs (frames a second, late frames made up, sound gaps), with
   compares with the sound path as it was: on a 60 Hz screen with 3% of
   frames late, 106 sound gaps and 279 clicks a minute before, none now.
 
-## Multiplayer
+## Online and nearby play
 
 One phone per player, as many as the game takes: 2 for most games, 3 for
-Cadillacs and Dinosaurs, 4 for Mystic Warriors and Sunset Riders. All phones on the same Wi-Fi, or on one phone's
-hotspot (no internet needed). Every phone needs the same game zip (and the
-BIOS for Neo Geo games; the library has them).
+Cadillacs and Dinosaurs, 4 for Mystic Warriors and Sunset Riders; up to 8
+phones in a room, the rest watching. Every phone needs the same game zip
+(and the BIOS for Neo Geo games; the library has them). Everything is on
+Home → **Online**.
 
-- **Host a game** (Home → **Multiplayer**): pick the game (its picture, as on
-  the home screen) and it starts. The room sheet shows its key (like
-  `K7Q-2M`) with **Copy** and **Share** (send it through any app). The key
-  holds the host phone's address on the Wi-Fi or hotspot, so typing it
-  connects straight there: no server, no internet, no searching.
-- **Over the internet**: Multiplayer → **Play over the internet** →
-  **Host online** gives a room code (like `K7Q-2MX`) with a QR code; friends
-  on any network type it (or scan it, or tap the shared link) to join. The
-  room works as on Wi-Fi: watching, seats, taking over. It needs a free
-  sign-in (your profile) and internet; the game goes phone to phone, through
-  the relay only when a direct way is blocked.
-- **Join**: on the same Multiplayer screen, type the key (it formats itself
+- **With internet: Create a room.** Pick the game (its picture, as on the
+  home screen) and it starts. The room sheet shows its code (like
+  `K7Q-2MX`) with a QR code, **Copy** and **Share**. Friends on any network
+  type the code under **Join with a code**, scan the QR code, or tap the
+  shared link (it opens the app straight into the room). It needs a free
+  sign-in (your profile, made the first time). How it connects is hidden:
+  phones on the same Wi-Fi connect there, else directly over the internet,
+  else through the relay (only when a direct way is blocked). Only button
+  presses travel, phone to phone, encrypted.
+- **Without internet (or to use no data): Create nearby room.** All phones
+  on the same Wi-Fi, or on one phone's hotspot: no internet, no server, zero
+  lag. The room's key (like `K7Q-2M`) holds the host phone's address, so
+  typing it connects straight there; rooms nearby also show up by
+  themselves, first in the list.
+- **Join**: type a code or key under **Join with a code** (it formats itself
   as you type) or tap a room nearby (each shows its game, host and seats).
   Nobody has to let you in: you watch the game as it stands (up to 8 phones
   in a room), and watching never slows the players down. A problem says
   what to do, with a button for it (get the game, update the app).
 - **In the game**, a pill at the top right shows the room: its key, a dot
-  per seat (gold: taken) and how many watch, with **WATCHING** in front
-  while you watch, and "Seat free · press COIN" when there's room. Tap it
+  per seat (gold: taken), how many watch and, in an online room, bars for
+  the connection, with **WATCHING** in front while you watch, "Seat free ·
+  press COIN" when there's room, and your place when you're in line. Tap it
   for the room sheet: who sits where, who watches, **Take a seat** or
   **Watch instead**, and Leave. News (someone joined, left, took a seat)
   slides in at the top; getting a seat says "You're player 2!".
@@ -219,8 +224,8 @@ BIOS for Neo Geo games; the library has them).
   challenger who lost). They go back to watching. The app reads this from
   the game itself, in every game (see
   [docs/adding-a-game.md](docs/adding-a-game.md)); it adds no timer of its
-  own. If two ask at once, the first request to reach the host wins;
-  the other is told. The press goes in once you're seated, so in KOF COIN
+  own. No seat to take: you're in line ("You're 2nd in line", **Leave
+  line** to just watch), and the next seat that opens is yours in turn. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.
 - **Play from a saved state**: the host or any player picks **Load state
