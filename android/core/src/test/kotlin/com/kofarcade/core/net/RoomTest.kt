@@ -700,7 +700,8 @@ open class RoomTest {
         a.running = false
         h.close()
         waitFor("A owns the room") { g1.isOwner && g2.owner == g1.localId }
-        waitFor("seated without the host") { b.epoch == 4 && c.epoch == 4 && g2.seats.keys == setOf(1, 2) }
+        // Game 5, not 4: a new owner skips a number (the old one may have half-sent game 4).
+        waitFor("seated without the host") { b.epoch == 5 && c.epoch == 5 && g2.seats.keys == setOf(1, 2) }
         // Everyone carries on from the new owner's game.
         assertTrue(byteArrayOf(7, g1.localId.toByte()).contentEquals(c.loaded))
         waitFor("frames between the two left") { b.framesOf(2) >= 60 && c.framesOf(1) >= 60 }
@@ -712,9 +713,9 @@ open class RoomTest {
         // And the new owner takes someone in, who takes the free seat.
         val g3 = join(g1, "Guest C", "dino")
         val d = FakeGame(g3).apply { play() }
-        waitFor("C watching") { d.epoch == 4 }
+        waitFor("C watching") { d.epoch == 5 }
         g3.requestSeat()
-        waitFor("C seated") { b.epoch == 5 && c.epoch == 5 && d.epoch == 5 }
+        waitFor("C seated") { b.epoch == 6 && c.epoch == 6 && d.epoch == 6 }
         assertEquals(0, g3.localPlayer)
         waitFor("C's frames") { b.framesOf(0) >= 30 && c.framesOf(0) >= 30 }
         assertTrue(c.matches(0, d, 30))
@@ -737,7 +738,8 @@ open class RoomTest {
 
         a.running = false
         h.close()
-        waitFor("the watcher owns the room") { g1.isOwner && g2.owner == g1.localId && p.epoch == 3 && w.epoch == 3 }
+        // Game 4, not 3: a new owner skips a number (the old one may have half-sent game 3).
+        waitFor("the watcher owns the room") { g1.isOwner && g2.owner == g1.localId && p.epoch == 4 && w.epoch == 4 }
         assertTrue(g1.watching)
         assertEquals(setOf(1), g2.seats.keys)
         // It gets the player's inputs straight, and passes them on to a newcomer.
