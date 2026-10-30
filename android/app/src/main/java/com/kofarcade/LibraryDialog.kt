@@ -118,6 +118,8 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
             } catch (e: Library.WrongKey) {
                 error = "Wrong key. Check it and try again."
                 editing = true
+            } catch (e: Library.BusyLibrary) {
+                error = e.message
             } catch (e: Exception) {
                 error = "Couldn't reach the library: ${e.message}"
             }

@@ -13,8 +13,31 @@ async function sameKey(given, key) {
   return crypto.subtle.timingSafeEqual(a, b);
 }
 
+// R2 now and then fails a call (an internal error): asked again twice, a
+// moment apart, before the Worker says so (503, not a bare 500).
+async function retried(call) {
+  for (let i = 0; ; i++) {
+    try {
+      return await call();
+    } catch (e) {
+      if (i >= 2) throw e;
+      await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+    }
+  }
+}
+
 export default {
   async fetch(request, env) {
+    try {
+      return await serve(request, env);
+    } catch (e) {
+      return new Response(`The library's storage didn't answer: ${e && e.message}`, { status: 503 });
+    }
+  },
+};
+
+async function serve(request, env) {
+  {
     const given = request.headers.get("Authorization") || "";
     if (!env.ARCADE_KEY || !(await sameKey(given, `Bearer ${env.ARCADE_KEY}`))) {
       return new Response("Wrong key", { status: 401 });
@@ -28,7 +51,7 @@ export default {
       const files = [];
       let cursor;
       do {
-        const page = await env.ROMS.list({ cursor });
+        const page = await retried(() => env.ROMS.list({ cursor }));
         for (const o of page.objects) files.push({ name: o.key, size: o.size });
         cursor = page.truncated ? page.cursor : undefined;
       } while (cursor);
@@ -41,7 +64,7 @@ export default {
     } catch {
       return new Response("Bad file name", { status: 400 });
     }
-    const obj = await env.ROMS.get(name);
+    const obj = await retried(() => env.ROMS.get(name));
     if (!obj) return new Response("Not found", { status: 404 });
     return new Response(obj.body, {
       headers: {
@@ -51,5 +74,5 @@ export default {
         "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
       },
     });
-  },
-};
+  }
+}
