@@ -4,7 +4,6 @@ import dev.onvoid.webrtc.CreateSessionDescriptionObserver
 import dev.onvoid.webrtc.PeerConnectionFactory
 import dev.onvoid.webrtc.PeerConnectionObserver
 import dev.onvoid.webrtc.RTCConfiguration
-import dev.onvoid.webrtc.RTCIceTransportPolicy
 import dev.onvoid.webrtc.RTCDataChannel
 import dev.onvoid.webrtc.RTCDataChannelBuffer
 import dev.onvoid.webrtc.RTCDataChannelInit
@@ -34,11 +33,9 @@ import java.util.concurrent.CompletableFuture
 class DesktopRtc : RtcFactory {
     private val factory = PeerConnectionFactory(AudioDeviceModule(AudioLayer.kDummyAudio))
 
-    override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events, relayOnly = false)
+    override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events)
 
-    override fun peer(ice: List<IceServer>, events: RtcPeer.Events, relayOnly: Boolean): RtcPeer = Peer(ice, events, relayOnly)
-
-    private inner class Peer(ice: List<IceServer>, private val events: RtcPeer.Events, relayOnly: Boolean) : RtcPeer, PeerConnectionObserver {
+    private inner class Peer(ice: List<IceServer>, private val events: RtcPeer.Events) : RtcPeer, PeerConnectionObserver {
         private val pc: RTCPeerConnection
         private val channels: Array<RTCDataChannel>
 
@@ -51,7 +48,6 @@ class DesktopRtc : RtcFactory {
                         password = s.credential
                     }
                 }
-                if (relayOnly) iceTransportPolicy = RTCIceTransportPolicy.RELAY
             }
             pc = factory.createPeerConnection(config, this)
             channels = arrayOf(

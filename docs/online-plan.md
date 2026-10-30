@@ -733,10 +733,16 @@ fixes they led to. Still open, and why:
     joins; a locked one is listed without it, and tapping asks for the code.
     The maker picks Open or Locked when making the room (remembered); the
     host can lock an open room and open it again from the room sheet.
-  - **Open rooms are relay-only**, for every connection in them (the settled
-    decision: strangers never learn a player's address). That's fixed when
-    the room is made, so a room made locked (its phones connected directly)
-    can't be opened later. With the relay off (D8's stop), no open room is
+  - **Open rooms never share a player's internet address** (the settled
+    decision): a phone in one tells the others only the relay's address and
+    its address on its own Wi-Fi (`PrivateCandidates`). Strangers elsewhere
+    connect through the relay; phones on one Wi-Fi still connect directly.
+    That's fixed when the room is made, so a room made locked (its phones
+    share every way) can't be opened later.
+    - *Found on phones (2026-10-30):* at first open rooms were relay-only
+      (ICE policy RELAY), so two phones on one Wi-Fi went through
+      Cloudflare and back: the ping jumped and the game lagged. Sharing
+      local addresses keeps the privacy and the direct path. With the relay off (D8's stop), no open room is
     made or joined, and the app says to use a locked room instead.
   - Server: `rooms.open` and `rooms.relay_only`, `list_rooms()` (live:
     touched in the last 3 minutes; not full; not yours; 30 at most) and

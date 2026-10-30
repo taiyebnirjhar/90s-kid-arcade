@@ -179,8 +179,16 @@ class FakePeer(private val rtc: RtcNet, val host: String, target: RtcPeer.Events
         tryConnect()
     }
 
+    // As a phone gathers them: on its Wi-Fi, its internet address (STUN), the relay's.
     private fun candidateSoon() {
-        rtc.ticker.schedule({ if (!closed) events.onCandidate(Candidate("0", 0, "candidate:$host")) }, 5, TimeUnit.MILLISECONDS)
+        val n = (host.hashCode() and 0x7f) + 1
+        rtc.ticker.schedule({
+            if (!closed) {
+                events.onCandidate(Candidate("0", 0, "candidate:1 1 udp 2122260223 192.168.1.$n 50000 typ host generation 0"))
+                events.onCandidate(Candidate("0", 0, "candidate:2 1 udp 1686052607 203.0.113.$n 41000 typ srflx raddr 192.168.1.$n rport 50000 generation 0"))
+                events.onCandidate(Candidate("0", 0, "candidate:3 1 udp 41885439 198.51.100.7 3478 typ relay raddr 203.0.113.$n rport 41000 generation 0"))
+            }
+        }, 5, TimeUnit.MILLISECONDS)
     }
 
     private fun ready() = synchronized(lock) { hasLocal && hasRemote && gotCandidate && !closed }
