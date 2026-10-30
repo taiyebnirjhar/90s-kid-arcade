@@ -609,15 +609,21 @@ private fun controlName(id: String): String = when {
 @Composable
 private fun EditBar(game: GameActivity) {
     val id = game.editSelected
+    // The gear's settings for every control, open on the side away from the buttons (picked when opened).
+    var allFromLeft by remember { mutableStateOf<Boolean?>(null) }
     EditBarContent(
         picked = id?.let(::controlName),
         scale = game.editScale,
         canResize = id != null && id != "top" && id != "team",
         onScale = { game.changeEditScale(it) },
-        look = game.editLook,
-        onLook = { game.changeEditLook(it) },
+        onAll = { allFromLeft = !game.editLook.leftHanded },
         onReset = { game.resetLayout() },
         onCancel = { game.finishEditing(save = false) },
         onSave = { game.finishEditing(save = true) },
     )
+    allFromLeft?.let { fromLeft ->
+        // Back closes the panel first, then (as before) the editor.
+        androidx.activity.compose.BackHandler { allFromLeft = null }
+        EditAllSheet(game.editLook, { game.changeEditLook(it) }, fromLeft, onClose = { allFromLeft = null })
+    }
 }
