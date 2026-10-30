@@ -1,0 +1,708 @@
+{
+ "game": "samsho2",
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "Checked in FBNeo with tools/movetest.py (tools/samsho2_roster.py --test)"
+ ],
+ "characters": [
+  {
+   "id": "haohmaru",
+   "name": "Haohmaru",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Tenha Seikou Zan",
+     "cmd": "632146+A",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Ougi Senpuu Retsu Zan",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ougi Kogetsu Zan",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ougi Resshin Zan",
+     "cmd": "623+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Sake Kougeki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "reflects projectiles"
+    },
+    {
+     "name": "Fake Senpuu Retsu Zan",
+     "cmd": "236+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tenha Fuujin Zan",
+     "cmd": "341236421+BC",
+     "type": "sdm",
+     "note": "secret move"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321464+B",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "genjuro",
+   "name": "Genjuro Kibagami",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Gokou Zan",
+     "cmd": "632146+A",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Sanren Satsu",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "236+A twice more: Tsuno, Rin"
+    },
+    {
+     "name": "Touha Kouyoku Jin",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ouka Zan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "kyoshiro",
+   "name": "Kyoshiro Senryo",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Ketsuniku no Mai",
+     "cmd": "641236+C",
+     "type": "dm",
+     "note": "POW MAX; 4 or 6 to move"
+    },
+    {
+     "name": "Kaen Kyokubu",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kaiten Kyokubu: Ten",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Fuuretsu Sen",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Choubi Jishi",
+     "cmd": "214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Chikemuri Kuruwa",
+     "cmd": "2+AB",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6412364+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "hanzo",
+   "name": "Hanzo Hattori",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Tenma Rimetsu",
+     "cmd": "632146+D",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Ninpou Reppuu Shuriken",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Ninpou Baku'en Ryuu",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ninpou Mozu Otoshi",
+     "cmd": "623+C",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Ninpou Kage Bunshin",
+     "cmd": "641236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ninpou Utsusemi Tenbu",
+     "cmd": "63214+BCD",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kage Mai",
+     "cmd": "6464642+BCD",
+     "type": "sdm",
+     "note": "secret move"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6464642+A",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "sieger",
+   "name": "Neinhalt Sieger",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Operation Tiger",
+     "cmd": "632146+CD",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Wolf Fangen",
+     "cmd": "641236+AB",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Vulcan Weinen",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "mash A for Dryukken, Exploizon"
+    },
+    {
+     "name": "Blitz Jaeger",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tigerkopf",
+     "cmd": "236+C",
+     "type": "special",
+     "note": "then 236+B, then 63214+A"
+    },
+    {
+     "name": "Firestorm",
+     "cmd": "3+BC",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321464+A",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "charlotte",
+   "name": "Charlotte",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Splash Gradation",
+     "cmd": "632146+B",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Splash Fount",
+     "cmd": "A,A,A,A,A,A",
+     "type": "special",
+     "note": "mash a slash"
+    },
+    {
+     "name": "Power Gradation",
+     "cmd": "123+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tri-Slash",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321463214+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "galford",
+   "name": "Galford",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Mega Strike Dog",
+     "cmd": "632146+D",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Plasma Blade",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Rush Dog",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Machine Gun Dog",
+     "cmd": "214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Replica Dog",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Strike Heads",
+     "cmd": "623+C",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Shadow Copy",
+     "cmd": "641236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Replica Attack",
+     "cmd": "63214+BCD",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Invisibility",
+     "cmd": "6464642+BCD",
+     "type": "sdm",
+     "note": "secret move"
+    }
+   ]
+  },
+  {
+   "id": "wanfu",
+   "name": "Wan-Fu",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Shin Kikou Dai Bakuten",
+     "cmd": "641236+B",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Shin Kikou Bakutenhoh",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kikou Senpuu Geki",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kikou Dai Bokusatsu",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Benpatsu",
+     "cmd": "214+CD",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6412364+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "ukyo",
+   "name": "Ukyo Tachibana",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Tsubame Rokuren",
+     "cmd": "641236+AB",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Hiken Tsubame Gaeshi",
+     "cmd": "1236+A",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Hiken Sasame Yuki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hiken Oboro Gatana",
+     "cmd": "236+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Sasame Yuki: Damashi",
+     "cmd": "214+C",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "jubei",
+   "name": "Jubei Yagyu",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Zetsu Suigetsu Tou",
+     "cmd": "632146+C",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Hassou Happa",
+     "cmd": "A,A,A,A,A,A",
+     "type": "special",
+     "note": "mash a slash"
+    },
+    {
+     "name": "Kattotsu Suigetsu Tou",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nikkaku Ratou",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shingan Tou: Souha",
+     "cmd": "2146+A",
+     "type": "special",
+     "note": "counters a jump, high or mid attack"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321464+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "chamcham",
+   "name": "Cham Cham",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Mou Moto Nai Ndakarana",
+     "cmd": "641236+A",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Yokoni Nageru Ndazo!",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shouni Nageru Ndazo!",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tobi Hikkaki",
+     "cmd": "236+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mura Paku Paku",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Paku Paku Dios",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "PakuPaku Gaburu",
+     "cmd": "63214+CD",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "nakoruru",
+   "name": "Nakoruru",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Irusuka Yatoro Lise",
+     "cmd": "641236+A",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Annu Mutsube",
+     "cmd": "412+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Lela Mutsube",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Amube Yatoro",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kamui Rimse",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Taka ni Tsukamaru",
+     "cmd": "214+C",
+     "type": "special",
+     "note": "hangs from Mamahaha"
+    },
+    {
+     "name": "Apefuchi Kamui Rimse",
+     "cmd": "3214623+BC",
+     "type": "sdm",
+     "note": "secret move"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321463214+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "earthquake",
+   "name": "Earthquake",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Earth Got 'Em",
+     "cmd": "641236+CD",
+     "type": "dm",
+     "note": "POW MAX; 4 or 6 to move"
+    },
+    {
+     "name": "Fat Chainsaw",
+     "cmd": "A,A,A,A,A,A",
+     "type": "special",
+     "note": "mash a slash"
+    },
+    {
+     "name": "Fat Breath",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Fat Copy",
+     "cmd": "641236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Fat Replica Attack",
+     "cmd": "63214+BCD",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Fat Bound",
+     "cmd": "2+C",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6464642+B",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "genan",
+   "name": "Gen-An Shiranui",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Madou Diving Claw",
+     "cmd": "632146+AB",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Doku Fubuki",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nikuten Tsuki",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Tsume Tsunami",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "6321463214+C",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  },
+  {
+   "id": "nicotine",
+   "name": "Nicotine Caffeine",
+   "team": "Samurai",
+   "moves": [
+    {
+     "name": "Niou Furei Satsu",
+     "cmd": "641236+D",
+     "type": "dm",
+     "note": "POW MAX"
+    },
+    {
+     "name": "Shikigami Reifu Ikazuchi",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shikigami Reifu Hanoo",
+     "cmd": "236+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shitsue Rasen Ashi",
+     "cmd": "1236+C",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Rashin Jufu",
+     "cmd": "421+AB",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Bakusa Jougeki",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Nuigurumi",
+     "cmd": "412146+D",
+     "type": "special",
+     "note": "secret: turns into a stuffed doll for a moment"
+    }
+   ]
+  }
+ ]
+}

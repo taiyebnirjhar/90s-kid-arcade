@@ -257,7 +257,6 @@ CHARACTERS = [
         sp("Amatsu Tsumi Kiyomeru Ooharai", "214+A", "press again, up to 4 times"),
         sp("Kotoamatsu Konshin no Itto", "214+B", "press again, up to 4 times"),
         sp("Shoryuken", "214+C"),
-        sp("Hengi no Kamae", "BCD"),
     ]),
     ("kaedenormal", 0x11, "Kaede (normal)", "Secret", [
         dm("Kasshin: Fukuryuu", "21416+AB"),
@@ -270,6 +269,10 @@ CHARACTERS = [
         sp("Ittou Arashi Uchi", "41236+C", "close"),
     ]),
 ]
+
+# A+B is a stance every fighter has (the same animation, 0xFD, for all), so
+# Lee's Kasumi and Hibiki's Kamihitoe are tried with a follow-up only they have.
+TEST_CMD = {("lee", "AB"): "AB,C", ("hibiki", "AB"): "AB,4+C"}
 
 # Detection: game ID (block +0x61) to roster id. 18 (Hagure) and 19
 # (Kotetsu) are only select-screen picks: in the fight the byte holds the
@@ -413,7 +416,9 @@ def make_game(M):
             return fast(e, self.p + 0x17D)
 
         def used(self, e, acts, before):
-            return before - min(fast(e, self.p + 0x17D), before)
+            # A super empties the gauge; some specials take a little (Akari's Kawari Hito Gata: 8).
+            spent = before - min(fast(e, self.p + 0x17D), before)
+            return spent if spent >= 0x20 else 0
 
     # The other strength of a slash: A <-> B.
     M.variant = lambda cmd: cmd.translate(str.maketrans("AB", "BA"))
@@ -438,9 +443,10 @@ def test(ids):
             r = e.ram()
             game.bind(e)
             got = (e.byte(game.p + 0x61, r), e.byte(game.p + 0x17C, r))
-            ch = {"moves": [{"name": n, "cmd": c, "type": t, "note": note} for n, c, t, note, _ in sub]}
+            ch = {"moves": [{"name": n, "cmd": TEST_CMD.get((cid, c), c), "type": t, "note": note, "roster": c}
+                            for n, c, t, note, _ in sub]}
             for m, ok, tries in M.test_char(e, game, e.save(), ch):
-                res.setdefault((m["name"], m["cmd"]), {})[style] = (ok, tries)
+                res.setdefault((m["name"], m["roster"]), {})[style] = (ok, tries)
             print(cid, style, "ID/style read", got, flush=True)
         rows = []
         for n, c, t, note, modes in moves:

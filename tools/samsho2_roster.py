@@ -198,6 +198,12 @@ CHARACTERS = [
 DROPPED = {
     ("genan", "Utsusemi Dappi"): "321+BD (and 321+BC, 32/1/2/3/21/6321+BD, step 1 or 2, far or "
                                  "close) starts nothing new in FBNeo",
+    # These Nuigurumi motions pass through 214 + the same button, which the
+    # game reads first: the fighter's 214 special comes out instead.
+    ("genjuro", "Nuigurumi"): "6321464+B gives Ouka Zan (214+B)",
+    ("galford", "Nuigurumi"): "6321464+C gives Machine Gun Dog (214+C)",
+    ("ukyo", "Nuigurumi"): "63214623+B gives Sasame Yuki (214+B)",
+    ("chamcham", "Nuigurumi"): "6321463214+C gives Mura Paku Paku (63214+C)",
 }
 
 

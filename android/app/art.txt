@@ -33,6 +33,14 @@ Named_Snaps/Mystic Warriors (ver JAA).png
 Named_Snaps/Mystic Warriors (ver UAA).png
 Named_Snaps/Nightmare in the Dark.png
 Named_Snaps/Penguin Brothers (Japan).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Infinite Power, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Move Modeasy Special Attacks V4, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Optimized, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Perfect V. 3.0, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Special 2017, Hack).png
+Named_Snaps/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 1).png
+Named_Snaps/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 2).png
 Named_Snaps/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Snaps/Snow Bros. - Nick _ Tom (Dooyong license).png
 Named_Snaps/Snow Bros. - Nick _ Tom (Japan).png
@@ -107,6 +115,14 @@ Named_Titles/Mystic Warriors (ver JAA).png
 Named_Titles/Mystic Warriors (ver UAA).png
 Named_Titles/Nightmare in the Dark.png
 Named_Titles/Penguin Brothers (Japan).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Infinite Power, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Move Modeasy Special Attacks V4, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Optimized, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Perfect V. 3.0, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Special 2017, Hack).png
+Named_Titles/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 1).png
+Named_Titles/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 2).png
 Named_Titles/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Titles/Snow Bros. - Nick _ Tom (Dooyong license).png
 Named_Titles/Snow Bros. - Nick _ Tom (Japan).png

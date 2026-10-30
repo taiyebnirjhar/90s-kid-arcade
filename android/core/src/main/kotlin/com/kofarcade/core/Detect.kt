@@ -277,6 +277,38 @@ private val LAST_BLADE = DetectSpec(
     alternates = mapOf("kaede" to "kaedeawakened"),
 )
 
+// Samurai Shodown II (Neo Geo): the fighters are objects in a pool
+// (0x102000-0x1066E0) found through long pointers at 0x100A46 and 0x100A4A.
+// In an object: the character at +0x65, X at +0x4E, the Y speed at +0x56
+// (0 on the floor; also at the very start and end of a jump), facing left
+// while +0x7F is 1. The pick bytes are 0x100D0B and 0x100D1B. A round is
+// fought while the fight phase (0x100AE5) is 3, the clock (0x100AC6) runs,
+// there's been no KO (0x100AD5) and the countdown to BEGIN (0x100AD3, from
+// 0xFE) is over: false in the attract demo too. Checked in samsho2
+// (tools/samsho2_roster.py): every fighter on both sides, rounds, KOs.
+private val SAMSHO2_IDS = listOf(
+    "haohmaru", "nakoruru", "hanzo", "galford", "wanfu", "ukyo", "kyoshiro", "genan", "earthquake", "jubei",
+    null, "charlotte", "genjuro", "chamcham", "sieger", "nicotine",
+    null, null, // Mizuki (the boss) and Kuroko (home version)
+)
+
+private val SAMSHO2 = DetectSpec(
+    windows = listOf(0x100A40 to 0x10, 0x100AC0 to 0x30, 0x100D00 to 0x20, 0x102000 to 0x4700),
+    player = 0x100A46,
+    playerStride = 4,
+    pointBase = { ram, p -> (ram.word(p) shl 16) or ram.word(p + 2) },
+    character = 0x65,
+    x = 0x4E,
+    grounded = 0x56,
+    facing = { ram, base -> ram.byte(base + 0x7F) == 1 },
+    team = listOf(0x100D0B),
+    teamStride = 0x10,
+    inRound = {
+        it.byte(0x100AE5) == 3 && it.byte(0x100AC6) != 0 && it.byte(0x100AD5) == 0 && it.byte(0x100AD3) and 0x80 == 0
+    },
+    ids = SAMSHO2_IDS,
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
@@ -288,6 +320,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "mvsc" -> MVSC
     "garou" -> GAROU
     "lastblad" -> LAST_BLADE
+    "samsho2" -> SAMSHO2
     else -> null
 }
 

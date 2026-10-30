@@ -443,6 +443,19 @@ val GAMES: List<Game> = listOf(
     // D deflects a high attack, 2+D a low one. Power or Speed is picked
     // before each fight (left or right); the move notes say which needs which.
     system = listOf(Move("Repel", "D"), Move("Low repel", "2+D")),
+) + Game(
+    id = "samsho2", series = "Samurai Shodown", title = "Samurai Shodown II", subtitle = "Shin Samurai Spirits",
+    sets = listOf("samsho2", "samsho2k", "samsho2ka", "samsho2pe", "samsho2t", "samsh2sp", "samsh2jq", "ssho2emb"),
+    art = "Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063)",
+    layout = Layout.FIGHTER, roster = "samsho2", team = 1, block = true,
+    labels = mapOf('A' to "LS", 'B' to "MS", 'C' to "LK", 'D' to "MK"),
+    // A+B is the strong slash, C+D the strong kick (the game's own How to
+    // Play). Taunts need a long hold, so they aren't buttons here.
+    system = listOf(
+        Move("Strong slash", "AB"), Move("Strong kick", "CD"),
+        Move("Hop away", "BC"), Move("Hop forward", "6+BC"),
+        Move("Roll forward", "33"), Move("Roll back", "11"), Move("Lie down", "22"),
+    ),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }
