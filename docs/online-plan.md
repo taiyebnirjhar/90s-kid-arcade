@@ -829,6 +829,11 @@ the relay.
 - **Supabase's free plan pauses a project after a week with no activity.**
   The Pro plan removes the pause; check the price on supabase.com/pricing
   when it's needed.
+  **Kept awake (2026-10-30):** the "Keep Supabase awake" workflow
+  (`.github/workflows/keep-awake.yml`) calls `keep_awake()` every 3 days with
+  the app's public key; a failed call fails the run, so GitHub emails the
+  owner. GitHub turns a repo's scheduled workflows off after 60 days with no
+  commits (it emails first): re-enable it under Actions if that happens.
 - **Security:**
   - Row-level security on every table.
   - Only the public (anon) key in the app; the service key stays server
