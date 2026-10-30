@@ -16,6 +16,10 @@ class Library(url: String, private val key: String) {
     companion object {
         /** Our library. Only the key unlocks it; the app asks for that. */
         const val DEFAULT_URL = "https://arcade-roms.taiyebnirjhor.workers.dev"
+
+        /** Tries per request (the first, then again after 1 s and 2 s). */
+        private const val TRIES = 3
+        private const val RETRY_MS = 1_000L
     }
 
     data class Entry(val name: String, val size: Long)
@@ -53,22 +57,47 @@ class Library(url: String, private val key: String) {
         }
     }
 
+    /**
+     * Opens [path]. A hiccup on the library's side (a 5xx: Cloudflare's storage
+     * now and then fails a request) or a dropped connection is asked again,
+     * a few times, a moment apart, before it's an error.
+     */
     private fun open(path: String): Closeable {
-        val conn = URL("$base/$path").openConnection() as HttpURLConnection
-        conn.connectTimeout = 15_000
-        conn.readTimeout = 30_000
-        conn.setRequestProperty("Authorization", "Bearer $key")
-        val code = conn.responseCode
-        if (code == 401) {
-            conn.disconnect()
-            throw WrongKey()
+        var last: IOException? = null
+        for (attempt in 0 until TRIES) {
+            if (attempt > 0) Thread.sleep(RETRY_MS * attempt)
+            val conn = URL("$base/$path").openConnection() as HttpURLConnection
+            conn.connectTimeout = 15_000
+            conn.readTimeout = 30_000
+            conn.setRequestProperty("Authorization", "Bearer $key")
+            val code = try {
+                conn.responseCode
+            } catch (e: IOException) {
+                conn.disconnect()
+                last = e
+                continue
+            }
+            when {
+                code == 200 -> return Closeable(conn)
+                code == 401 -> {
+                    conn.disconnect()
+                    throw WrongKey()
+                }
+                code >= 500 -> {
+                    conn.disconnect()
+                    last = BusyLibrary(code)
+                }
+                else -> {
+                    conn.disconnect()
+                    throw IOException("The library answered $code")
+                }
+            }
         }
-        if (code != 200) {
-            conn.disconnect()
-            throw IOException("The library answered $code")
-        }
-        return Closeable(conn)
+        throw last ?: IOException("The library didn't answer")
     }
+
+    /** The library's server had trouble (a 5xx), even after asking again. */
+    class BusyLibrary(code: Int) : IOException("The library's server had a hiccup ($code). Try again in a moment.")
 
     /** An open connection, closed with use { }. */
     class Closeable(private val conn: HttpURLConnection) : java.io.Closeable {
