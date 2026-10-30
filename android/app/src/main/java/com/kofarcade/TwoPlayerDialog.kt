@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -720,7 +722,8 @@ fun PickGameScreen(
     ArcadeScreen(title = if (online) "Create a room" else "Create nearby room", kicker = "Pick the game", onBack = onBack) {
         if (online) {
             SectionLabel("Who can join")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Both cards as tall as the taller one (one's text may take two lines).
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
                 WhoCanJoin("Open", "Anyone: it's listed, one tap to join", open, Modifier.weight(1f), enabled = !opening) { onOpen(true) }
                 WhoCanJoin("Locked", "Listed, but only with its code", !open, Modifier.weight(1f), locked = true, enabled = !opening) { onOpen(false) }
             }
@@ -776,6 +779,7 @@ private fun WhoCanJoin(title: String, text: String, picked: Boolean, modifier: M
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier
+            .fillMaxHeight()
             .clip(shape)
             .background(if (picked) Palette.gold.copy(alpha = 0.14f) else Palette.panel)
             .border(2.dp, if (picked) Palette.gold else Palette.line, shape)
