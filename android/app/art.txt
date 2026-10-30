@@ -54,6 +54,10 @@ Named_Snaps/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAC).png
 Named_Titles/Cadillacs and Dinosaurs (World 930201).png
 Named_Titles/Double Dragon (Neo-Geo).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
@@ -110,3 +114,7 @@ Named_Titles/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Titles/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAC).png

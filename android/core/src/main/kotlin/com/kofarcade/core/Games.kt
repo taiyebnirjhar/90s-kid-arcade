@@ -366,6 +366,22 @@ val GAMES: List<Game> = listOf(
     // too; raw 0x0 is 2 only while a real game is on (1 in attract).
     seats = SeatStatus(listOf(0x211, 0x251, 0x291, 0x2D1), setOf(0), game = 0x0, inGame = setOf(2)),
 ) + Game(
+    // Konami, 1992: four cowboys at once. No BIOS. FBNeo runs it as the
+    // 3-player cabinet with shared coins unless told otherwise: four players,
+    // a coin slot each. Checked in FBNeo: A shoots (holding it keeps
+    // shooting), B jumps; 60 frames a second.
+    id = "moomesa", series = "Moo Mesa", title = "C.O.W.-Boys of Moo Mesa", subtitle = "Wild West",
+    sets = listOf("moomesa", "moomesaaab", "moomesauab", "moomesauac"),
+    layout = Layout.SHOOTER, art = "Wild West C.O.W.-Boys of Moo Mesa (ver EAB)",
+    labels = mapOf('A' to "Shoot", 'B' to "Jump"),
+    neoGeo = false,
+    players = 4,
+    dips = mapOf("Number_of_Players" to "4", "Coin_Mechanism" to "Independent"),
+    // Each player's state, 0x80 apart (raw 0x905 on): 255 from START through
+    // the "continue?" countdown, 0 once GAME OVER shows. The attract demo
+    // leaves them alone.
+    seats = SeatStatus(listOf(0x905, 0x985, 0xA05, 0xA85), setOf(0)),
+) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
     // buttons. Moves checked in FBNeo (tools/movetest.py).
