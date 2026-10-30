@@ -362,6 +362,9 @@ class Room private constructor(
     @Volatile private var peers: List<Address> = emptyList()
     // Found again: the owner who took the room over, tried first.
     @Volatile private var foundAt: Address? = null
+    // Back in after losing the room ([rejoin]): losing it again before the
+    // first game is lost again (try once more), not the end.
+    @Volatile private var rejoined = false
 
     private fun line(link: Link, id: Int, name: String) = Line(link, id, name, faults)
 
@@ -1803,7 +1806,10 @@ class Room private constructor(
         if (epoch == 0) {
             // Not in yet: nothing to take over.
             migrating.set(false)
-            listener?.onClosed("$news before you got in")
+            // Coming back from a drop: the room is still there (held seat and
+            // all), so it's lost again, to rejoin once more. Bad Wi-Fi can
+            // drop a phone twice in a row; it mustn't end its game for good.
+            if (rejoined) lost("$news. Reconnecting…") else listener?.onClosed("$news before you got in")
             return
         }
         // Dropped: maybe only this phone's connection broke, and the host is
@@ -1957,7 +1963,12 @@ class Room private constructor(
                 return join(
                     transport, at, name, set, rom, bios, ownPort(), beaconPort, build, device,
                     session = session, connectMs = connectMs, faults = faults,
-                )
+                ).also {
+                    // If it drops again before its first game: back here, to the same places.
+                    it.rejoined = true
+                    it.foundAt = at
+                    it.peers = peers
+                }
             } catch (e: Redirected) {
                 // A phone of the room that knows where it is now: there, next.
                 log("Rejoining at $at: the host is at ${e.at}")
