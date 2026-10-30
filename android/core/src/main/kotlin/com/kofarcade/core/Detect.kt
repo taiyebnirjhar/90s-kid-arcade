@@ -277,6 +277,38 @@ private val LAST_BLADE = DetectSpec(
     alternates = mapOf("kaede" to "kaedeawakened"),
 )
 
+// The Last Blade 2 (Neo Geo): the fighter blocks move with the stage; long
+// pointers at 0x10E344 (P2: 0x10E348) say where. In a block: the character
+// at +0x61, X at +0x80, the height at +0x88 (0 on the floor), facing right
+// while bit 0 of +0x41 is set. Fixed copies of the fighter on screen at
+// 0x10E3ED and 0x10E411 (the select screen's picks differ for Kotetsu and
+// Hagure, who play as others). A round is fought while 0x10E36C is 1 and
+// 0x10E443 and 0x10E46A are 0, with a BIOS player byte in (not the attract
+// demo). Checked in lastbld2 (tools/lastbld2_roster.py ram): every fighter
+// by name on both sides, facing, rounds, KOs and time over.
+private val LAST_BLADE_2_IDS = listOf(
+    "kaede", "moriya", "yuki", "okina", "akari", "juzoh", "washizuka", "mukuro", "amano",
+    "lee", "zantetsu", "shigen", "kagami", "kojiroh", "hibiki", "setsuna", "kouryu", "kaedenormal",
+)
+
+private val LAST_BLADE_2 = DetectSpec(
+    windows = listOf(0x100000 to 0x8000, 0x10E340 to 0x140, 0x10FDB6 to 2),
+    player = 0x10E344,
+    playerStride = 4,
+    pointBase = { ram, p -> 0x100000 or ram.word(p + 2) },
+    character = 0x61,
+    x = 0x80,
+    grounded = 0x88,
+    facing = { ram, base -> ram.byte(base + 0x41) and 1 == 0 },
+    team = listOf(0x10E3ED),
+    teamStride = 0x24,
+    inRound = {
+        it.byte(0x10E36C) == 1 && it.byte(0x10E443) == 0 && it.byte(0x10E46A) == 0 &&
+            (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1)
+    },
+    ids = LAST_BLADE_2_IDS,
+)
+
 // Samurai Shodown II (Neo Geo): the fighters are objects in a pool
 // (0x102000-0x1066E0) found through long pointers at 0x100A46 and 0x100A4A.
 // In an object: the character at +0x65, X at +0x4E, the Y speed at +0x56
@@ -320,6 +352,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "mvsc" -> MVSC
     "garou" -> GAROU
     "lastblad" -> LAST_BLADE
+    "lastbld2" -> LAST_BLADE_2
     "samsho2" -> SAMSHO2
     else -> null
 }

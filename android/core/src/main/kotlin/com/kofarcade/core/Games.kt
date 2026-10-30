@@ -444,6 +444,15 @@ val GAMES: List<Game> = listOf(
     // before each fight (left or right); the move notes say which needs which.
     system = listOf(Move("Repel", "D"), Move("Low repel", "2+D")),
 ) + Game(
+    id = "lastbld2", series = "The Last Blade", title = "The Last Blade 2", subtitle = "Bakumatsu Roman",
+    sets = listOf("lastbld2", "lastbd2b", "lastbd2e", "lastbd2i", "lastbd2p", "lastbd2t"),
+    art = "The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430)",
+    layout = Layout.FIGHTER, roster = "lastbld2", team = 1, block = true,
+    labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
+    // C+D throws up close; B+C is an unblockable in Power, an overhead in
+    // Speed and EX. Power, Speed or EX is picked after both fighters.
+    system = listOf(Move("Throw", "CD"), Move("Unblockable", "BC"), Move("Repel", "D"), Move("Low repel", "2+D")),
+) + Game(
     id = "samsho2", series = "Samurai Shodown", title = "Samurai Shodown II", subtitle = "Shin Samurai Spirits",
     sets = listOf("samsho2", "samsho2k", "samsho2ka", "samsho2pe", "samsho2t", "samsh2sp", "samsh2jq", "ssho2emb"),
     art = "Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063)",

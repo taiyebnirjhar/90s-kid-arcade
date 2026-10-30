@@ -69,6 +69,12 @@ Named_Snaps/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enable Hidden Characters V4).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enhanced, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Plus, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Team, Hack).png
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png
@@ -151,6 +157,12 @@ Named_Titles/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Titles/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enable Hidden Characters V4).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enhanced, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Plus, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Team, Hack).png
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png

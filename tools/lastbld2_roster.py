@@ -487,23 +487,30 @@ def ram_check():
 
 
 def replay():
-    """Load a state, play the same inputs twice, compare all of RAM and the state."""
+    """Load a state, play the same inputs twice (both players), compare RAM every frame.
+    The serialized states themselves differ in a few bytes near the start (14-16 of
+    415155: sound/timer bookkeeping, different bytes each run); RAM and the picture
+    match, and play continued from either end state matches too."""
     M, Emu = _emu()
     e, sel = boot(Emu)
-    to_fight(e, M, sel, 0x00, 0x01)
+    to_fight(e, M, sel, 0x04, 0x09)
     st = e.save()
-    inputs = [((i * 7) % 9 + 1, "ABCD"[(i // 3) % 4] if i % 5 == 0 else "") for i in range(600)]
+    inputs = [((i * 5) % 9 + 1, "ABCD"[(i // 4) % 4] if i % 3 == 0 else "") for i in range(1500)]
 
-    def go():
-        e.load(st)
+    def go(s):
+        e.load(s)
+        rams = []
         for d, b in inputs:
             e.run(1, *(M.DIRS[d] + tuple(b)))
             e.run(1, *(M.DIRS[10 - d] + tuple(b)), port=1)
-        return e.ram(), e.save()
+            rams.append(e.ram())
+        return rams, e.save()
 
-    (r1, s1), (r2, s2) = go(), go()
-    print("RAM identical:", r1 == r2, "state identical:", s1 == s2)
-    return r1 == r2 and s1 == s2
+    (r1, s1), (r2, s2) = go(st), go(st)
+    r3, r4 = go(s1)[0], go(s2)[0]
+    print("RAM identical every frame:", r1 == r2, "; continued from both end states:", r3 == r4,
+          "; state bytes differing:", sum(x != y for x, y in zip(s1, s2)), "of", len(s1))
+    return r1 == r2 and r3 == r4
 
 
 if __name__ == "__main__":
