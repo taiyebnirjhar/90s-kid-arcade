@@ -594,7 +594,7 @@ class UiSnapshots {
 
     /** The HUD over the game; [touches] runs once it's laid out, to press things. */
     @Composable
-    private fun Hud(editing: Boolean = false, faces: Boolean = false, touches: (HudView, Float) -> Unit = { _, _ -> }) {
+    private fun Hud(editing: Boolean = false, faces: Boolean = false, stick: StickMode = StickMode.FLOATING, touches: (HudView, Float) -> Unit = { _, _ -> }) {
         GameBehind {
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx ->
@@ -603,7 +603,7 @@ class UiSnapshots {
                             val face = syntheticFace()
                             faceOf = { if (it == "Iori Yagami") face else null }
                         }
-                        state = hudState()
+                        state = hudState().copy(stick = stick)
                         opacity = 0.46f
                         this.editing = editing
                         var done = false
@@ -646,6 +646,23 @@ class UiSnapshots {
                 touch(v, android.view.MotionEvent.ACTION_MOVE, sx + 50 * d, sy - 4 * d)
                 val (ax, ay) = facePos(v, d, -0.44f, 0.6f)
                 touch(v, android.view.MotionEvent.ACTION_DOWN, ax, ay)
+            }
+        }
+    }
+
+    // A fixed stick, thumb dragged far up and right of it: the stick stays in
+    // its place (the knob leans to its edge), it doesn't follow the thumb.
+    @Test
+    fun hudFixedStick() {
+        landscape()
+        shot("hud_fixed_stick") {
+            Hud(stick = StickMode.FIXED) { v, d ->
+                fun home(name: String) = HudView::class.java.getDeclaredField(name).apply { isAccessible = true }.getFloat(v)
+                val hx = home("homeX")
+                val hy = home("homeY")
+                touch(v, android.view.MotionEvent.ACTION_DOWN, hx + 30 * d, hy + 10 * d)
+                touch(v, android.view.MotionEvent.ACTION_MOVE, hx + 220 * d, hy - 160 * d)
+                touch(v, android.view.MotionEvent.ACTION_MOVE, hx + 420 * d, hy - 230 * d)
             }
         }
     }

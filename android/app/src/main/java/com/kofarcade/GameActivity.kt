@@ -235,6 +235,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var editSelected by mutableStateOf<String?>(null)
         private set
     var editScale by mutableFloatStateOf(1f)
+    /** The controls' opacity, set in the layout editor (all of them at once). */
+    var editOpacity by mutableFloatStateOf(DEFAULT_OPACITY)
         private set
     private var editBackup: Map<String, HudView.Tweak> = emptyMap()
 
@@ -1471,7 +1473,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         "${game.layout.name}${if (game.pad == PadMap.CAPCOM_6) "6" else ""}.${if (look.leftHanded) "L" else "R"}"
 
     /** What's on screen now: the saved settings, or a preview from Controls. */
-    private var look: Look = Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4)
+    private var look: Look = Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, DEFAULT_OPACITY, LabelMode.SUPERS, true, false, 2, 4)
 
     /** Applies the saved settings. */
     fun applyPrefs() = applyLook(prefs.look())
@@ -1524,8 +1526,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun startEditing() {
         dialog = null
         editBackup = hud.tweaks
+        editOpacity = look.opacity
         editing = true
         hud.editing = true
+    }
+
+    fun changeEditOpacity(v: Float) {
+        editOpacity = v
+        hud.opacity = v
     }
 
     fun changeEditScale(v: Float) {
@@ -1537,10 +1545,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun resetLayout() {
         hud.tweaks = emptyMap()
         editScale = 1f
+        changeEditOpacity(DEFAULT_OPACITY)
     }
 
     fun finishEditing(save: Boolean) {
-        if (save) prefs.setTweaks(layoutKey(), hud.tweaks) else hud.tweaks = editBackup
+        if (save) {
+            prefs.setTweaks(layoutKey(), hud.tweaks)
+            prefs.opacity = editOpacity
+            look = look.copy(opacity = editOpacity)
+        } else {
+            hud.tweaks = editBackup
+            hud.opacity = look.opacity
+        }
         editing = false
         editSelected = null
         hud.editing = false

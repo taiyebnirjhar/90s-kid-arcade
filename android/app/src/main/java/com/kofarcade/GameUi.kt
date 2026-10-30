@@ -411,7 +411,6 @@ fun ControlsPanel(
                 when (tab) {
                     SettingsTab.SCREEN -> {
                         PickRow("Picture", ScreenMode.entries, look.screen, { it.short }, sub = look.screen.label) { onLook(look.copy(screen = it)) }
-                        StepRow("Controls opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How see-through the buttons are") { onLook(look.copy(opacity = it)) }
                         if (canDetect) ToggleRow("Detection readout", detectInfo, onDetectInfo, sub = "For checking fighter detection works")
                     }
                     SettingsTab.CONTROLS -> {
@@ -562,6 +561,9 @@ fun EditBarContent(
     onReset: () -> Unit,
     onCancel: () -> Unit,
     onSave: () -> Unit,
+    /** All the controls' opacity (0.3: faint, 1: solid), shown live. */
+    opacity: Float = DEFAULT_OPACITY,
+    onOpacity: (Float) -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp), contentAlignment = Alignment.TopCenter) {
         // Small phones: a shorter name box and slider, so the bar fits in 640 dp.
@@ -611,6 +613,18 @@ fun EditBarContent(
                     modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).padding(horizontal = 18.dp, vertical = 8.dp),
                 )
             }
+        }
+        // Under the bar: how see-through every control is, changing as you slide.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(top = 58.dp)
+                .slantPanel(left = 14.dp, right = 14.dp, alpha = 0.88f)
+                .padding(horizontal = 22.dp),
+        ) {
+            Text("SEE-THROUGH", color = Palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            GoldSlider(1.3f - opacity, { onOpacity((1.3f - it).coerceIn(0.3f, 1f)) }, 0.3f..1f, true, Modifier.width(if (narrow) 120.dp else 170.dp).padding(horizontal = 10.dp).height(40.dp))
+            Text("${((1f - opacity) * 100).roundToInt().coerceAtLeast(0)}%", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp))
         }
     }
 }

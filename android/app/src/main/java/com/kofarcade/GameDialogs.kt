@@ -614,6 +614,8 @@ private fun EditBar(game: GameActivity) {
         scale = game.editScale,
         canResize = id != null && id != "top" && id != "team",
         onScale = { game.changeEditScale(it) },
+        opacity = game.editOpacity,
+        onOpacity = { game.changeEditOpacity(it) },
         onReset = { game.resetLayout() },
         onCancel = { game.finishEditing(save = false) },
         onSave = { game.finishEditing(save = true) },

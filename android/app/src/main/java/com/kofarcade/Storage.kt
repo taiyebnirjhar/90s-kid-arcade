@@ -171,6 +171,9 @@ fun RomCheck.message(): String = when (this) {
     RomCheck.Unknown -> "This zip isn't one of the app's games or the Neo Geo BIOS."
 }
 
+/** How see-through the on-screen controls are, until the player changes it (in the layout editor). */
+const val DEFAULT_OPACITY = 0.46f
+
 enum class StickMode(val label: String, val short: String) {
     FLOATING("Appears under your thumb, anywhere on the left", "Floating"),
     FIXED("Always in the same place", "Fixed"),
@@ -217,7 +220,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putFloat("size", v).apply()
 
     var opacity: Float
-        get() = sp.getFloat("opacity", 0.46f)
+        get() = sp.getFloat("opacity", DEFAULT_OPACITY)
         set(v) = sp.edit().putFloat("opacity", v).apply()
 
     var haptics: Boolean

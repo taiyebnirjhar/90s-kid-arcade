@@ -664,8 +664,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         text.color = if (selected == "stick") accent else Color.WHITE
         canvas.drawText("Stick", homeX, homeY + stickRadius() + 14 * d, text)
         text.color = Color.WHITE
-        // Under the editor's bar, where no control sits by default.
-        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, 84 * d, 12 * d)
+        // Under the editor's bar and its see-through slider (both in dp), where no control sits by default.
+        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, 124 * density, 12 * d)
         softShadow()
     }
 
