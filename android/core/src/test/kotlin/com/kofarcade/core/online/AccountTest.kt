@@ -276,6 +276,74 @@ class AccountTest {
     }
 
     @Test
+    fun theProfileReadsAtOnceWhileASyncWaitsOnTheNetwork() {
+        account().sync("Rafi")
+        val gate = java.util.concurrent.CountDownLatch(1)
+        val slow = Supabase(fake.url, KEY, phone, now = { clock }, http = { m, u, h, b ->
+            gate.await(5, java.util.concurrent.TimeUnit.SECONDS)
+            JdkHttp.send(m, u, h, b)
+        })
+        val a = Account(slow, phone)
+        a.edit("Rafi K", 3)
+        val syncing = Thread { runCatching { a.sync("Rafi") } }.apply { start() }
+        Thread.sleep(200)
+        // The screens read the phone's copy without waiting for the network.
+        val started = System.nanoTime()
+        assertEquals("Rafi K", a.profile()?.name)
+        assertTrue(a.dirty())
+        a.recordPlay("kof97")
+        assertTrue((System.nanoTime() - started) / 1_000_000 < 500, "waited on the sync")
+        gate.countDown()
+        syncing.join(10_000)
+        a.sync("Rafi")
+        assertFalse(a.dirty())
+    }
+
+    @Test
+    fun anEditMadeWhileASyncIsOnItsWayIsKept() {
+        account().sync("Rafi")
+        val gate = java.util.concurrent.CountDownLatch(1)
+        val slow = Supabase(fake.url, KEY, phone, now = { clock }, http = { m, u, h, b ->
+            if ("save_profile" in u) gate.await(5, java.util.concurrent.TimeUnit.SECONDS)
+            JdkHttp.send(m, u, h, b)
+        })
+        val a = Account(slow, phone)
+        a.edit("First", 1)
+        val syncing = Thread { a.sync("x") }.apply { start() }
+        Thread.sleep(200)
+        a.edit("Second", 2)
+        gate.countDown()
+        syncing.join(10_000)
+        assertEquals("Second", a.profile()?.name)
+        assertTrue(a.profile()!!.pending, "the second edit still goes up")
+        a.sync("x")
+        assertEquals("Second", fake.profiles["user-1"]?.first)
+    }
+
+    @Test
+    fun relayServersDontWaitOnceFetched() {
+        val calls = java.util.concurrent.atomic.AtomicInteger()
+        val gate = java.util.concurrent.CountDownLatch(1)
+        var t = 0L
+        val supa = Supabase(fake.url, KEY, phone, now = { clock }, http = { m, u, h, b ->
+            if ("turn-credentials" in u) {
+                if (calls.incrementAndGet() > 1) gate.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                HttpResponse(200, """{"iceServers":[{"urls":["turn:x"],"username":"u","credential":"c"}],"ttl":3600}""")
+            } else {
+                JdkHttp.send(m, u, h, b)
+            }
+        })
+        val relay = RelayServers(supa, "K7Q2MX", now = { t })
+        assertEquals(listOf("turn:x"), relay.get().first().urls)
+        // An hour on: they're asked for again in the background; the old ones are given at once.
+        t = 3_600_000
+        val started = System.nanoTime()
+        assertEquals(listOf("turn:x"), relay.get().first().urls)
+        assertTrue((System.nanoTime() - started) / 1_000_000 < 500, "waited on the server")
+        gate.countDown()
+    }
+
+    @Test
     fun guestSignInSwitchedOff() {
         val s = Supabase(fake.url, KEY, phone, http = { _, _, _, _ ->
             HttpResponse(422, """{"code":422,"error_code":"anonymous_provider_disabled","msg":"Anonymous sign-ins are disabled"}""")

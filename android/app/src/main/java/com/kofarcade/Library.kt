@@ -33,14 +33,15 @@ class Library(url: String, private val key: String) {
             .sortedBy { it.name.lowercase() }
     }
 
-    /** Downloads [name] to [to], reporting the bytes so far to [progress]. */
-    fun download(name: String, to: File, progress: (Long) -> Unit) {
+    /** Downloads [name] to [to], reporting the bytes so far to [progress]; stops (throws) once [cancelled]. */
+    fun download(name: String, to: File, cancelled: () -> Boolean = { false }, progress: (Long) -> Unit) {
         open(URLEncoder.encode(name, "UTF-8").replace("+", "%20")).use { conn ->
             conn.inputStream.use { input ->
                 to.outputStream().use { out ->
                     val buf = ByteArray(64 * 1024)
                     var total = 0L
                     while (true) {
+                        if (cancelled()) throw java.io.InterruptedIOException("Cancelled")
                         val n = input.read(buf)
                         if (n < 0) break
                         out.write(buf, 0, n)

@@ -134,9 +134,11 @@ private fun RoomLayer(game: GameActivity) {
 private fun Sheet(
     onDismiss: () -> Unit,
     width: Int = 360,
+    /** False where a stray tap outside would throw edits away. */
+    dismissOutside: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = dismissOutside)) {
         SheetFrame(width, content)
     }
 }
@@ -437,15 +439,20 @@ private class EditRow(name: String, cmd: String, val type: String, val note: Str
 @Composable
 private fun MoveEditor(game: GameActivity, character: Character) {
     val rows = remember(character.id) {
-        mutableStateListOf<EditRow>().apply { addAll(game.movesFor(character).map { EditRow(it.name, it.cmd, it.type, it.note) }) }
+        // Back from trying a move: the rows as they were being edited.
+        val start = game.moveDraft?.takeIf { it.first == character.id }?.second ?: game.movesFor(character)
+        game.dropMoveDraft()
+        mutableStateListOf<EditRow>().apply { addAll(start.map { EditRow(it.name, it.cmd, it.type, it.note) }) }
     }
-    Sheet(onDismiss = { game.close() }, width = 680) {
+    fun asMoves() = rows.map { Move(it.name.trim(), it.cmd, it.type, it.note) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Sheet(onDismiss = { game.close() }, width = 680, dismissOutside = false) {
         MoveEditorContent(
             fighter = character.name,
             rows = rows.map { MoveRowUi(it.name, it.cmd) },
             onName = { i, v -> rows[i].name = v.take(32) },
             onCmd = { i, v -> rows[i].cmd = v.uppercase().take(24) },
-            onTest = { i -> game.testMove(rows[i].cmd) },
+            onTest = { i -> game.testMove(character, rows[i].cmd, asMoves()) },
             onRemove = { i -> rows.removeAt(i) },
             onAdd = { rows += EditRow("Super", "236236+A", "dm") },
             onReset = {
@@ -454,12 +461,15 @@ private fun MoveEditor(game: GameActivity, character: Character) {
             },
             onCancel = { game.close() },
             onSave = {
-                val valid = rows
-                    .filter { it.name.isNotBlank() && runCatching { parseCommand(it.cmd) }.isSuccess }
+                // A move marked in red isn't dropped without a word: fix it or remove it first.
+                val bad = rows.indexOfFirst { it.name.isBlank() || runCatching { parseCommand(it.cmd) }.isFailure }
+                if (bad >= 0) {
+                    android.widget.Toast.makeText(context, "Move ${bad + 1} needs a name and a command that works (marked in red)", android.widget.Toast.LENGTH_LONG).show()
+                } else {
                     // The note goes along: it says "in air" (jump first) and which Super Art.
-                    .map { Move(it.name.trim(), it.cmd, it.type, it.note) }
-                game.saveMoves(character, valid)
-                game.close()
+                    game.saveMoves(character, asMoves())
+                    game.close()
+                }
             },
         )
     }

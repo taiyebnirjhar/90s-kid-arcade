@@ -333,20 +333,43 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     // A round control at its default spot, moved / resized by your layout and
     // kept on screen.
+    // How far each control was pulled back onto the screen (px): a drag past
+    // the edge is saved where the control is shown, not past it.
+    private val overshoot = HashMap<String, Pair<Float, Float>>()
+
+    // A round control at its default spot, moved / resized by your layout and
+    // kept on screen, clear of the camera cutout.
     private fun placed(id: String, cx: Float, cy: Float, r: Float): RectF {
         val t = tweak(id)
         val rr = r * t.scale
-        val x = (cx + t.dx * d).let { if (width > 2 * rr) it.coerceIn(rr, width - rr) else it }
-        val y = (cy + t.dy * d).let { if (height > 2 * rr) it.coerceIn(rr, height - rr) else it }
+        val (safeL, safeR) = safeInsets()
+        val rawX = cx + t.dx * d
+        val rawY = cy + t.dy * d
+        val x = if (width - safeL - safeR > 2 * rr) rawX.coerceIn(safeL + rr, width - safeR - rr) else rawX
+        val y = if (height > 2 * rr) rawY.coerceIn(rr, height - rr) else rawY
+        overshoot[id] = (x - rawX) to (y - rawY)
         return circle(x, y, rr)
     }
 
+    // A bar (COIN/START, the team bar) moved by your layout, kept on screen too:
+    // once off it, it couldn't be grabbed again, nor COIN pressed.
     private fun placed(id: String, rect: RectF): RectF {
         val t = tweak(id)
-        return RectF(rect).apply { offset(t.dx * d, t.dy * d) }
+        val (safeL, safeR) = safeInsets()
+        val r = RectF(rect).apply { offset(t.dx * d, t.dy * d) }
+        var ox = 0f
+        var oy = 0f
+        if (r.left < safeL) ox = safeL - r.left else if (r.right > width - safeR) ox = width - safeR - r.right
+        if (r.top < 0) oy = -r.top else if (r.bottom > height) oy = height - r.bottom
+        if (width > 0 && height > 0) r.offset(ox, oy)
+        // Several pills share one id: the largest pull back counts.
+        val prev = overshoot[id]
+        if (prev == null || kotlin.math.abs(ox) + kotlin.math.abs(oy) > kotlin.math.abs(prev.first) + kotlin.math.abs(prev.second)) overshoot[id] = ox to oy
+        return r
     }
 
     private fun layoutElements() {
+        overshoot.clear()
         val st = state
         val (safeL, safeR) = safeInsets()
         val w = width.toFloat()
@@ -1008,13 +1031,33 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun inStickZone(x: Float, y: Float): Boolean {
+        val near = hypot(x - homeX, y - homeY)
+        // Fixed: the stick stays where it is, so it takes touches on it and around it (generously), not across the screen.
+        if (state.stick == StickMode.FIXED) return near <= stickRadius() * FIXED_REACH
+        // On the stick wherever your layout put it, or anywhere on its side of the screen.
+        if (near <= stickRadius() * 1.5f) return true
         val side = if (state.leftHanded) x > width * 0.58f else x < width * 0.42f
         return side && y > height * 0.2f
     }
 
+    private val vibrator: android.os.Vibrator? by lazy {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+        }
+    }
+
+    // The app's own setting decides (Android's touch feedback, often off, would silence it).
     private fun haptic(strong: Boolean = false) {
         if (!state.haptics) return
-        performHapticFeedback(if (strong) HapticFeedbackConstants.VIRTUAL_KEY else HapticFeedbackConstants.KEYBOARD_TAP)
+        val v = vibrator
+        if (v != null && v.hasVibrator() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            v.vibrate(android.os.VibrationEffect.createPredefined(if (strong) android.os.VibrationEffect.EFFECT_CLICK else android.os.VibrationEffect.EFFECT_TICK))
+        } else {
+            performHapticFeedback(if (strong) HapticFeedbackConstants.VIRTUAL_KEY else HapticFeedbackConstants.KEYBOARD_TAP)
+        }
     }
 
     private var dragId: String? = null
@@ -1043,7 +1086,17 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 val t = dragStart.copy(dx = dragStart.dx + (e.x - dragX) / d, dy = dragStart.dy + (e.y - dragY) / d)
                 tweaks = tweaks + (id to t)
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dragId = null
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // Saved where it's shown: dragged past the edge, it isn't kept past it.
+                dragId?.let { id ->
+                    val (ox, oy) = overshoot[id] ?: (0f to 0f)
+                    if (ox != 0f || oy != 0f) {
+                        val t = tweak(id)
+                        tweaks = tweaks + (id to t.copy(dx = t.dx + ox / d, dy = t.dy + oy / d))
+                    }
+                }
+                dragId = null
+            }
         }
         invalidate()
     }
@@ -1173,6 +1226,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             return
         }
         val el = pointerEl.remove(id) ?: return
+        // Another finger still on the same button keeps it held (mashing with two fingers).
+        if (el.key != null && pointerEl.values.any { it.key == el.key }) return
         pressed -= el
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
         if (el.kind == Kind.SYS && el.sys?.hold == true) {
@@ -1201,11 +1256,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun stickRadius() = 64 * d * state.size * tweak("stick").scale
 
+    // How far from a fixed stick's centre a touch still takes it (in radii).
+    private val FIXED_REACH = 2.5f
+
     private fun startStick(id: Int, x: Float, y: Float) {
         stickPointer = id
-        // Fixed: a touch near the drawn stick uses its centre; anywhere else
-        // (and always when floating) the stick jumps under the thumb.
-        if (state.stick == StickMode.FIXED && hypot(x - homeX, y - homeY) < stickRadius() * 1.5f) {
+        // Fixed: always steered from its own centre, wherever the thumb lands on
+        // it; floating (and hidden): the stick comes to the thumb.
+        if (state.stick == StickMode.FIXED) {
             stickCx = homeX
             stickCy = homeY
         } else {
@@ -1220,9 +1278,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         var dy = y - stickCy
         val dist = hypot(dx, dy)
         // The centre follows a thumb that drifts too far, so you never end up
-        // pushing against the edge.
+        // pushing against the edge (not a fixed stick: it stays in its place).
         val follow = stickRadius() * 1.4f
-        if (dist > follow) {
+        if (dist > follow && state.stick != StickMode.FIXED) {
             stickCx += dx * (dist - follow) / dist
             stickCy += dy * (dist - follow) / dist
             dx = x - stickCx

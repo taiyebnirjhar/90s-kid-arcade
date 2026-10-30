@@ -28,8 +28,33 @@ class RelayServers(
     @Volatile var note: String? = null
         private set
 
-    @Synchronized
+    private val refresher = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "relay-servers").apply { isDaemon = true } }
+    @Volatile private var refreshing = false
+
+    /**
+     * The servers to use now. Only the first call asks the server and waits
+     * (made before the room's first connection); after that it never blocks
+     * (it's called on the connections' own thread): servers running out are
+     * asked for again in the background, the current ones used meanwhile.
+     */
     fun get(): List<IceServer> {
+        val have = synchronized(this) { servers to until }
+        val current = have.first ?: return fetch()
+        if (now() >= have.second && !refreshing) {
+            refreshing = true
+            refresher.execute {
+                try {
+                    fetch()
+                } finally {
+                    refreshing = false
+                }
+            }
+        }
+        return current
+    }
+
+    @Synchronized
+    private fun fetch(): List<IceServer> {
         servers?.takeIf { now() < until }?.let { return it }
         return try {
             val o = supa.function("turn-credentials", buildJsonObject { put("room", room) }).jsonObject

@@ -43,7 +43,9 @@ object Online {
             SupabaseRooms(supa),
             AndroidRtc.get(context),
             { code, me -> RealtimeSignaling(supa, code, me) },
-            { code -> RelayServers(supa, code)::get },
+            // Asked once now (making or joining the room is off the main thread), so the
+            // connections' own thread never waits on the server for them.
+            { code -> RelayServers(supa, code).also { it.get() }::get },
         )
     }
 

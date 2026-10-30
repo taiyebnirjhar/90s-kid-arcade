@@ -116,7 +116,8 @@ class SeatWatch(private val status: SeatStatus) {
             outSince[seat] = -1
             return false
         }
-        if (outSince[seat] < 0) outSince[seat] = nowMs
+        // (Game time starts again at each new game: a time before the last one starts over.)
+        if (outSince[seat] < 0 || nowMs < outSince[seat]) outSince[seat] = nowMs
         return nowMs - outSince[seat] >= status.outForMs
     }
 }

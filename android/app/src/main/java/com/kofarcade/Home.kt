@@ -46,6 +46,10 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -208,7 +212,8 @@ private fun ProfileChip(name: String?, icon: Int?, onClick: () -> Unit, iconOnly
             icon ?: 0,
             44.dp,
             Modifier.pressScale(source).clip(CircleShape)
-                .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick),
+                .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick)
+                .semantics { contentDescription = "Profile" + (name?.let { ": $it" } ?: ""); role = Role.Button },
         )
         return
     }

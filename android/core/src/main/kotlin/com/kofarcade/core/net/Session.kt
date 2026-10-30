@@ -295,7 +295,10 @@ class Room private constructor(
     private val gap = LongArray(MAX_IDS)
     @Volatile private var lastSent = 0L
     private val mySums = HashMap<Int, Long>()
-    private val theirSums = HashMap<Int, MutableList<Long>>()
+    // Each partner's sum for a frame (one each: every packet carries the latest again).
+    private val theirSums = HashMap<Int, MutableMap<Int, Long>>()
+    // Frames already found to differ: put back in step once, not on every packet after.
+    private val reportedDesync = HashSet<Int>()
     @Volatile private var latestSum: Pair<Int, Long>? = null
     private val advantage = IntArray(MAX_IDS)
     private val theirAdvantage = IntArray(MAX_IDS)
@@ -556,11 +559,18 @@ class Room private constructor(
 
     private fun check(frame: Int, sum: Long, from: Int?) {
         val differs = synchronized(mySums) {
-            if (from == null) mySums[frame] = sum else theirSums.getOrPut(frame) { ArrayList() } += sum
+            if (from == null) {
+                mySums[frame] = sum
+            } else {
+                val known = theirSums.getOrPut(frame) { HashMap() }
+                if (known[from] == sum) return
+                known[from] = sum
+            }
             mySums.keys.removeAll { it < frame - 1200 }
             theirSums.keys.removeAll { it < frame - 1200 }
+            reportedDesync.removeAll { it < frame - 1200 }
             val mine = mySums[frame]
-            mine != null && theirSums[frame].orEmpty().any { it != mine }
+            mine != null && theirSums[frame].orEmpty().values.any { it != mine } && reportedDesync.add(frame)
         }
         if (differs) {
             log("Games differ at frame $frame: putting everyone back in step")
@@ -628,6 +638,14 @@ class Room private constructor(
         } else if (owner in gone) {
             lastHeard[owner] = now
             ownerLine?.let { ownerGone(it, "lost the connection", dropped = true) }
+        } else {
+            // Another player (not the owner) unheard: the way between us broke while
+            // the owner still hears both. Asked once per quiet spell for a new way
+            // (over the internet: an ICE restart, through the relay if need be).
+            for (id in gone) {
+                lastHeard[id] = now
+                members[id]?.host?.takeIf { it.isNotEmpty() }?.let { host -> (transport as? WebRtcTransport)?.reconnect(host) }
+            }
         }
     }
 
@@ -798,6 +816,8 @@ class Room private constructor(
     override fun close() {
         if (closed) return
         closed = true
+        // Nothing reaches the game after this (the screen may be closing it).
+        listener = null
         beacon?.close()
         worker.shutdownNow()
         pinger.shutdownNow()
@@ -1008,7 +1028,10 @@ class Room private constructor(
         val state = fromState ?: if (fromStart) startState else null
         val sent = state ?: runCatching { ln.captureState() }.getOrElse { return }
         val packed = pack(sent)
-        val nextEpoch = epoch + 1
+        // The first game after taking the room over skips a number: the old owner
+        // may have handed some phones game epoch+1 already (from another state).
+        val nextEpoch = epoch + 1 + (if (tookOver) 1 else 0)
+        tookOver = false
         // Watchers who now play lose their feed (finished first, so nothing of
         // it comes between the seating and its state); players who now watch get one.
         val retired = synchronized(lines) {
@@ -1731,6 +1754,7 @@ class Room private constructor(
             synchronized(mySums) {
                 mySums.clear()
                 theirSums.clear()
+                reportedDesync.clear()
             }
             advantage.fill(0)
             theirAdvantage.fill(0)
@@ -1829,6 +1853,9 @@ class Room private constructor(
      * without [old] (or holding its seat, if it [dropped]). Reaching nobody
      * after a drop, it's this phone that's cut off: it has lost the room.
      */
+    // Set on taking the room over, until its first seating (see seat()).
+    @Volatile private var tookOver = false
+
     private fun becomeOwner(old: Int, others: List<Int>, news: String, dropped: Boolean) {
         val reached = java.util.concurrent.atomic.AtomicInteger()
         if (dropped && others.isEmpty()) {
@@ -1836,6 +1863,7 @@ class Room private constructor(
             return
         }
         owner = localId
+        tookOver = true
         // All at once: one unreachable phone mustn't make the others give up waiting.
         val calls = others.mapNotNull { id ->
             val m = members[id] ?: return@mapNotNull null

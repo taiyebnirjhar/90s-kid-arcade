@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -94,7 +99,8 @@ fun ArcadeScreen(
     bottomBar: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(Palette.bg).systemBarsPadding()) {
+    // imePadding: the screen moves up with the keyboard (edge to edge, nothing else does).
+    Column(Modifier.fillMaxSize().background(Palette.bg).systemBarsPadding().imePadding()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
@@ -102,7 +108,8 @@ fun ArcadeScreen(
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(48.dp).clip(CircleShape).background(Palette.panel)
-                    .border(1.dp, Palette.line, CircleShape).clickable(onClick = onBack),
+                    .border(1.dp, Palette.line, CircleShape).clickable(onClick = onBack)
+                    .semantics { contentDescription = "Back"; role = Role.Button },
             ) { BackIcon(Modifier.size(14.dp)) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -472,9 +479,12 @@ fun ArcadeField(
     placeholder: String = "",
     password: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
+    /** The keyboard's Done key does this (Join, Unlock, Save…); null: it just closes the keyboard. */
+    onDone: (() -> Unit)? = null,
 ) {
     // A password can be shown, to check what's typed.
     var shown by remember { mutableStateOf(false) }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     Column(modifier.fillMaxWidth()) {
         Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
         Spacer(Modifier.height(6.dp))
@@ -493,14 +503,19 @@ fun ArcadeField(
                     textStyle = TextStyle(color = Palette.text, fontSize = 16.sp),
                     cursorBrush = SolidColor(Palette.gold),
                     visualTransformation = if (password && !shown) PasswordVisualTransformation() else VisualTransformation.None,
-                    keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (password) KeyboardType.Password else keyboardType,
+                        imeAction = if (onDone != null) androidx.compose.ui.text.input.ImeAction.Go else androidx.compose.ui.text.input.ImeAction.Done,
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onAny = { onDone?.invoke() ?: focus.clearFocus() }),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
             if (password) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(start = 6.dp).size(32.dp).clip(CircleShape).clickable { shown = !shown },
+                    modifier = Modifier.padding(start = 6.dp).size(40.dp).clip(CircleShape).clickable { shown = !shown }
+                        .semantics { contentDescription = if (shown) "Hide what's typed" else "Show what's typed"; role = Role.Button },
                 ) {
                     EyeIcon(Modifier.size(20.dp), crossed = !shown)
                 }

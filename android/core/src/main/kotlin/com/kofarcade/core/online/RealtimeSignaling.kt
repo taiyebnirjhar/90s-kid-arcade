@@ -144,15 +144,15 @@ class RealtimeSignaling(
 
     private fun beat() {
         if (closed) return
+        synchronized(lock) { push("heartbeat", JsonObject(emptyMap()), "phoenix") }
+        // The token runs for an hour: the channel gets each new one. Asked for
+        // outside the lock (it may go to the server), so sending never waits on it.
+        if (!ready) return
+        val fresh = runCatching { supa.accessToken() }.getOrNull() ?: return
         synchronized(lock) {
-            push("heartbeat", JsonObject(emptyMap()), "phoenix")
-            // The token runs for an hour: the channel gets each new one.
-            if (joined) {
-                val fresh = runCatching { supa.accessToken() }.getOrNull()
-                if (fresh != null && fresh != token) {
-                    token = fresh
-                    push("access_token", buildJsonObject { put("access_token", fresh) })
-                }
+            if (joined && fresh != token) {
+                token = fresh
+                push("access_token", buildJsonObject { put("access_token", fresh) })
             }
         }
     }

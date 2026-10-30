@@ -49,34 +49,36 @@ data class Profile(
  * sent (a count never goes down).
  */
 class Account(private val supa: Supabase, private val store: KeyValue, private val random: Random = Random.Default) {
-    @Synchronized
-    fun profile(): Profile? = store.get(PROFILE)?.let { runCatching { Json.decodeFromString<Profile>(it) }.getOrNull() }
+    // The phone's copy, read and written briefly under [state]; a sync's network calls
+    // hold only [syncing], so the screens never wait on the network.
+    private val state = Any()
+    private val syncing = Any()
+
+    fun profile(): Profile? = synchronized(state) { readProfile() }
+
+    private fun readProfile(): Profile? = store.get(PROFILE)?.let { runCatching { Json.decodeFromString<Profile>(it) }.getOrNull() }
 
     val signedIn: Boolean get() = supa.signedIn
 
     /** Games played per game id, on this phone. */
-    @Synchronized
-    fun plays(): Map<String, Int> = readCounts(PLAYS)
+    fun plays(): Map<String, Int> = synchronized(state) { readCounts(PLAYS) }
 
     /** A game started: counted now, sent with the next sync. */
-    @Synchronized
-    fun recordPlay(game: String) {
-        val counts = plays().toMutableMap()
+    fun recordPlay(game: String) = synchronized(state) {
+        val counts = readCounts(PLAYS).toMutableMap()
         counts[game] = (counts[game] ?: 0) + 1
         writeCounts(PLAYS, counts)
     }
 
     /** Whether something on the phone hasn't gone up yet. */
-    @Synchronized
-    fun dirty(): Boolean = profile()?.pending == true || plays() != readCounts(SENT)
+    fun dirty(): Boolean = synchronized(state) { readProfile()?.pending == true || readCounts(PLAYS) != readCounts(SENT) }
 
     /** A new name or icon: kept on the phone now, saved by the next [sync]. */
-    @Synchronized
-    fun edit(name: String, icon: Int) {
+    fun edit(name: String, icon: Int) = synchronized(state) {
         val clean = cleanName(name)
         require(clean.isNotEmpty()) { "A name, please" }
         require(icon in 0 until PROFILE_ICONS) { "No such icon: $icon" }
-        val old = profile()
+        val old = readProfile()
         save(Profile(clean, icon, old?.friendCode, pending = true, savedFor = old?.savedFor))
     }
 
@@ -85,29 +87,38 @@ class Account(private val supa: Supabase, private val store: KeyValue, private v
      * profile is made with [defaultName] and a random icon, unless this
      * guest already has one on the server. Throws [OnlineError].
      */
-    @Synchronized
-    fun sync(defaultName: String): Profile {
+    fun sync(defaultName: String): Profile = synchronized(syncing) {
         val user = supa.session().user
         var p = profile()
         if (p == null) {
             val remote = supa.select("profiles", mapOf("id" to "eq.$user"), "name,icon,friend_code") as JsonArray
-            p = remote.firstOrNull()?.jsonObject?.let { fromServer(it, user) }
+            val made = remote.firstOrNull()?.jsonObject?.let { fromServer(it, user) }
                 ?: Profile(cleanName(defaultName).ifEmpty { "Player" }, random.nextInt(PROFILE_ICONS))
-            save(p)
+            // An edit made meanwhile wins.
+            p = synchronized(state) { readProfile() ?: made.also(::save) }
         }
         if (p.pending || p.friendCode == null || p.savedFor != user) {
-            val saved = supa.rpc("save_profile", buildJsonObject {
-                put("name", p.name)
-                put("icon", p.icon)
-            }).jsonObject
-            p = fromServer(saved, user)
-            save(p)
+            val sent = p
+            val saved = fromServer(
+                supa.rpc("save_profile", buildJsonObject {
+                    put("name", sent.name)
+                    put("icon", sent.icon)
+                }).jsonObject,
+                user,
+            )
+            p = synchronized(state) {
+                // Edited again while this one was on its way: that edit stays to send next.
+                val now = readProfile()
+                (if (now != null && now != sent) now.copy(friendCode = saved.friendCode, savedFor = user) else saved).also(::save)
+            }
         }
-        val counts = plays()
-        if (counts.isNotEmpty() && (counts != readCounts(SENT) || p.savedFor != readSentFor())) {
+        val (counts, sentBefore, sentFor) = synchronized(state) { Triple(readCounts(PLAYS), readCounts(SENT), readSentFor()) }
+        if (counts.isNotEmpty() && (counts != sentBefore || p.savedFor != sentFor)) {
             supa.rpc("record_plays", buildJsonObject { put("counts", JsonObject(counts.mapValues { (_, n) -> JsonPrimitive(n) })) })
-            writeCounts(SENT, counts)
-            store.put(SENT_FOR, user)
+            synchronized(state) {
+                writeCounts(SENT, counts)
+                store.put(SENT_FOR, user)
+            }
         }
         return p
     }

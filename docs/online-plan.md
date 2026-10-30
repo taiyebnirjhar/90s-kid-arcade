@@ -669,6 +669,23 @@ one Wi-Fi with no internet.
 battery numbers, and the heavy games' rollback cost (1.6.4). Step 1 is done
 when runs 1 and 2 pass ("Done when", above).
 
+**App-wide review (2026-10-30), after Step 1 was built:** four reviews
+(the room engine, the game screen, settings, the rest of the app) and the
+fixes they led to. Still open, and why:
+
+- **Two players who can't reach each other while both reach the host**
+  (only possible with the relay paused and both behind strict NATs): the
+  phones now ask for a new way (an ICE restart) instead of only logging it;
+  relaying their inputs through the host is the full fix, for later if the
+  reports show it.
+- **Button size and moved buttons:** offsets saved at one size aren't
+  scaled when the size changes (a layout version bump would reset
+  everyone's layouts); for later.
+- **Air moves read the game's memory on the main thread** (up to a frame's
+  wait for the emulator's lock); measured on the phones first.
+- **Wanted, not built yet:** physical controllers, a video filter, rapid-fire
+  speed, per-game layouts, backing up settings and move lists.
+
 ### Order and dependencies
 
 ```

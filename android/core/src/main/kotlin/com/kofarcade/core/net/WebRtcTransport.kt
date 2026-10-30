@@ -103,6 +103,11 @@ class WebRtcTransport(
     /** Asks for a new way to every phone: after this phone's network changed (Wi-Fi to 4G). */
     fun networkChanged() = peers.values.forEach { it.restartIce() }
 
+    /** Asks for a new way to the phone [host] (gone quiet while others still hear it). */
+    fun reconnect(host: String) {
+        peers[host]?.restartIce()
+    }
+
     /** Leaves: every connection ends, and the others are told. */
     fun close() {
         if (closed) return
@@ -376,7 +381,7 @@ class WebRtcTransport(
         }
 
         /** A new way to the same phone, keeping the connection and its links. */
-        fun restartIce() = act {
+        fun restartIce(): Unit = act {
             val target = pc ?: return@act
             if (!offerer) {
                 signalSafely(Signal(Signal.RESTART, self, id, gen = gen))
@@ -394,7 +399,17 @@ class WebRtcTransport(
                     if (pc !== target || gen != g) return@act
                     signalSafely(Signal(Signal.OFFER, self, id, gen = g, instance = instance, sdpType = sdp.type, sdp = sdp.sdp))
                     // Not answered in time: the next restart may try again.
-                    runCatching { timers.schedule({ act { if (gen == g) restarting = false } }, RESTART_AFTER_MS * 2, TimeUnit.MILLISECONDS) }
+                    runCatching {
+                        timers.schedule({
+                            act {
+                                if (gen != g || !restarting) return@act
+                                restarting = false
+                                // Not answered (the answer lost while signaling was down): again,
+                                // rather than waiting for the connection to be declared failed.
+                                if (disconnectedSince != 0L) restartIce()
+                            }
+                        }, RESTART_AFTER_MS * 2, TimeUnit.MILLISECONDS)
+                    }
                 }
             }
         }
@@ -538,10 +553,11 @@ class WebRtcTransport(
         }
 
         /** Sends a frame on the reliable channel, waiting while too much is queued. */
-        fun sendFrame(frame: ByteArray): Boolean {
+        fun sendFrame(frame: ByteArray, stillWanted: () -> Boolean = { true }): Boolean {
             val c = pc ?: return false
             var waited = 0
-            while (c.buffered(RtcPeer.RELIABLE) > MAX_QUEUED && waited < QUEUE_WAIT_MS && !closed) {
+            // A link closed meanwhile (the room gave up on that phone) stops waiting at once.
+            while (c.buffered(RtcPeer.RELIABLE) > MAX_QUEUED && waited < QUEUE_WAIT_MS && !closed && stillWanted()) {
                 Thread.sleep(2)
                 waited += 2
             }
@@ -641,7 +657,8 @@ class WebRtcTransport(
                         val n = minOf(PIECE_BYTES, whole.size - at)
                         val last = at + n >= whole.size
                         val frame = ByteBuffer.allocate(5 + n).put(if (last) LAST else PIECE).putInt(id).put(whole, at, n).array()
-                        if (!peer.sendFrame(frame)) throw SocketException("Connection lost")
+                        if (!peer.sendFrame(frame) { !this.closed && lostReason == null }) throw SocketException("Connection lost")
+                        if (this.closed) throw SocketException("Socket closed")
                         at += n
                     } while (!last)
                 }
