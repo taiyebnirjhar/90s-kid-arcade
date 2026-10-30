@@ -434,6 +434,15 @@ val GAMES: List<Game> = listOf(
     // A+B is the evasion (also the Break); C+D the T.O.P. attack, only while
     // life is in the T.O.P. area (else a heavy punch); 2+A+C a feint.
     system = listOf(Move("Evade", "AB"), Move("T.O.P.", "CD"), Move("Feint", "2+AC")),
+) + Game(
+    id = "lastblad", series = "The Last Blade", title = "The Last Blade", subtitle = "Bakumatsu Roman",
+    sets = listOf("lastblad", "lastblada", "lastbladh", "lastbldi", "lastbldp", "lastblsp", "lastsold"),
+    art = "The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340)",
+    layout = Layout.FIGHTER, roster = "lastblad", team = 1, block = true,
+    labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
+    // D deflects a high attack, 2+D a low one. Power or Speed is picked
+    // before each fight (left or right); the move notes say which needs which.
+    system = listOf(Move("Repel", "D"), Move("Low repel", "2+D")),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

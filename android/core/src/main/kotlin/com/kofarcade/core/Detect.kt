@@ -246,6 +246,36 @@ private val GAROU = DetectSpec(
     ids = GAROU_IDS,
 )
 
+// The Last Blade (Neo Geo): the fighter blocks are object slots that move
+// from fight to fight; the word at 0x10AC2E (P2: 0x10AC32) points at P1's
+// (0x100000 + it). In a block: the character at +0x91, X at +0x18, the
+// height at +0x20 (0 on the floor), facing right while +0xE3 is set. The
+// pick bytes are 0x10EAAD and 0x10EAAF. 0x10E32F is 2 from "Ready" to the
+// KO; the attract demo sets it too, so a BIOS player byte must be in.
+// Awakened Kaede (B+C+D) is ID 14 on screen while her pick stays Kaede.
+// Checked in lastblad (tools/lastblad_roster.py): every fighter by name on
+// screen, facing on both sides, rounds and KOs.
+private val LAST_BLADE_IDS = listOf(
+    "kaede", "moriya", "yuki", "okina", "akari", "juzoh", "washizuka", "shikyoh",
+    "hyo", "lee", "zantetsu", "shigen", "musashi", "kagami", "kaedeawakened",
+)
+
+private val LAST_BLADE = DetectSpec(
+    windows = listOf(0x100000 to 0x8000, 0x10AC2C to 0x10, 0x10E32E to 2, 0x10EAAC to 0x10, 0x10FDB6 to 2),
+    player = 0x10AC2E,
+    playerStride = 4,
+    pointBase = { ram, p -> 0x100000 or ram.word(p) },
+    character = 0x91,
+    x = 0x18,
+    grounded = 0x20,
+    facing = { ram, base -> ram.byte(base + 0xE3) == 0 },
+    team = listOf(0x10EAAD),
+    teamStride = 2,
+    inRound = { it.byte(0x10E32F) == 2 && (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1) },
+    ids = LAST_BLADE_IDS,
+    alternates = mapOf("kaede" to "kaedeawakened"),
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
@@ -256,6 +286,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "sfiii3" -> SF3
     "mvsc" -> MVSC
     "garou" -> GAROU
+    "lastblad" -> LAST_BLADE
     else -> null
 }
 
@@ -293,9 +324,13 @@ fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
     val activeRaw = ram.byte(base + spec.character)
     // The on-screen ID has no alternate flag of its own, so it is matched
     // against the team: a recognised fighter that isn't in it is a misread.
-    val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 }
+    // An alternate with an ID of its own on screen (Awakened Kaede) is in
+    // the slot of the fighter it's a version of.
+    val ownId = spec.ids.getOrNull(activeRaw)?.takeIf { it in spec.alternates.values }
+    val altSlot = ownId?.let { a -> team.indexOfFirst { it != null && spec.alternates[it] == a } }?.takeIf { it >= 0 }
+    val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 } ?: altSlot
     // Where the fighter on screen says it's the alternate version, so is that team slot.
-    val alt = spec.activeAlternate?.invoke(ram, base) == true
+    val alt = altSlot != null || spec.activeAlternate?.invoke(ram, base) == true
     val shown = if (alt && activeSlot != null) {
         team.mapIndexed { slot, id -> if (slot == activeSlot && id != null) spec.alternates[id] ?: id else id }
     } else {

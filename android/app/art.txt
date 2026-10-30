@@ -61,6 +61,13 @@ Named_Snaps/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt board).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
+Named_Snaps/The Last Soldier (Korean release of The Last Blade).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
@@ -128,6 +135,13 @@ Named_Titles/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Titles/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt board).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
+Named_Titles/The Last Soldier (Korean release of The Last Blade).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png

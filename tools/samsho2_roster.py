@@ -50,6 +50,10 @@ def sec(name, cmd, note=""):
     return (name, cmd, "sdm", "secret move" + ("; " + note if note else ""))
 
 
+def nui(cmd):
+    return ("Nuigurumi", cmd, "special", "secret: turns into a stuffed doll for a moment")
+
+
 MASH = "A,A,A,A,A,A"
 
 # (id, name, moves): the ring holds six moves, so each list starts with what matters most.
@@ -61,13 +65,15 @@ CHARACTERS = [
         sp("Ougi Resshin Zan", "623+C"),
         sp("Sake Kougeki", "214+A", "reflects projectiles"),
         sp("Fake Senpuu Retsu Zan", "236+C"),
-        sec("Tenha Fuujin Zan", "341236421+B"),
+        sec("Tenha Fuujin Zan", "341236421+BC"),
+        nui("6321464+B"),
     ]),
     ("genjuro", "Genjuro Kibagami", [
         wd("Gokou Zan", "632146+A"),
         sp("Sanren Satsu", "236+A", "236+A twice more: Tsuno, Rin"),
         sp("Touha Kouyoku Jin", "623+A"),
         sp("Ouka Zan", "214+A"),
+        nui("6321464+B"),
     ]),
     ("kyoshiro", "Kyoshiro Senryo", [
         wd("Ketsuniku no Mai", "641236+C", "4 or 6 to move"),
@@ -76,6 +82,7 @@ CHARACTERS = [
         sp("Fuuretsu Sen", "214+A"),
         sp("Choubi Jishi", "214+C"),
         sp("Chikemuri Kuruwa", "2+AB", "in air"),
+        nui("6412364+D"),
     ]),
     ("hanzo", "Hanzo Hattori", [
         wd("Tenma Rimetsu", "632146+D"),
@@ -85,6 +92,7 @@ CHARACTERS = [
         sp("Ninpou Kage Bunshin", "641236+A"),
         sp("Ninpou Utsusemi Tenbu", "63214+BCD"),
         sec("Kage Mai", "6464642+BCD"),
+        nui("6464642+A"),
     ]),
     ("sieger", "Neinhalt Sieger", [
         wd("Operation Tiger", "632146+CD"),
@@ -93,12 +101,14 @@ CHARACTERS = [
         sp("Blitz Jaeger", "63214+C"),
         sp("Tigerkopf", "236+C", "then 236+B, then 63214+A"),
         sp("Firestorm", "3+BC"),
+        nui("6321464+A"),
     ]),
     ("charlotte", "Charlotte", [
         wd("Splash Gradation", "632146+B"),
         sp("Splash Fount", MASH, "mash a slash"),
         sp("Power Gradation", "123+A"),
         sp("Tri-Slash", "623+A"),
+        nui("6321463214+D"),
     ]),
     ("galford", "Galford", [
         wd("Mega Strike Dog", "632146+D"),
@@ -110,6 +120,7 @@ CHARACTERS = [
         sp("Shadow Copy", "641236+A"),
         sp("Replica Attack", "63214+BCD"),
         sec("Invisibility", "6464642+BCD"),
+        nui("6321464+C"),
     ]),
     ("wanfu", "Wan-Fu", [
         wd("Shin Kikou Dai Bakuten", "641236+B"),
@@ -117,6 +128,7 @@ CHARACTERS = [
         sp("Kikou Senpuu Geki", "623+A"),
         sp("Kikou Dai Bokusatsu", "236+A"),
         sp("Benpatsu", "214+CD"),
+        nui("6412364+D"),
     ]),
     ("ukyo", "Ukyo Tachibana", [
         wd("Tsubame Rokuren", "641236+AB"),
@@ -124,6 +136,7 @@ CHARACTERS = [
         sp("Hiken Sasame Yuki", "214+A"),
         sp("Hiken Oboro Gatana", "236+C"),
         sp("Sasame Yuki: Damashi", "214+C"),
+        nui("63214623+B"),
     ]),
     ("jubei", "Jubei Yagyu", [
         wd("Zetsu Suigetsu Tou", "632146+C"),
@@ -131,6 +144,7 @@ CHARACTERS = [
         sp("Kattotsu Suigetsu Tou", "236+A"),
         sp("Nikkaku Ratou", "623+A"),
         sp("Shingan Tou: Souha", "2146+A", "counters a jump, high or mid attack"),
+        nui("6321464+D"),
     ]),
     ("chamcham", "Cham Cham", [
         wd("Mou Moto Nai Ndakarana", "641236+A"),
@@ -140,6 +154,7 @@ CHARACTERS = [
         sp("Mura Paku Paku", "63214+C"),
         sp("Paku Paku Dios", "63214+D"),
         sp("PakuPaku Gaburu", "63214+CD"),
+        nui("6321463214+C"),
     ]),
     ("nakoruru", "Nakoruru", [
         wd("Irusuka Yatoro Lise", "641236+A"),
@@ -149,6 +164,7 @@ CHARACTERS = [
         sp("Kamui Rimse", "214+A"),
         sp("Taka ni Tsukamaru", "214+C", "hangs from Mamahaha"),
         sec("Apefuchi Kamui Rimse", "3214623+BC"),
+        nui("6321463214+D"),
     ]),
     ("earthquake", "Earthquake", [
         wd("Earth Got 'Em", "641236+CD", "4 or 6 to move"),
@@ -157,6 +173,7 @@ CHARACTERS = [
         sp("Fat Copy", "641236+A"),
         sp("Fat Replica Attack", "63214+BCD"),
         sp("Fat Bound", "2+C", "in air"),
+        nui("6464642+B"),
     ]),
     ("genan", "Gen-An Shiranui", [
         wd("Madou Diving Claw", "632146+AB"),
@@ -164,6 +181,7 @@ CHARACTERS = [
         sp("Nikuten Tsuki", "623+A"),
         sp("Tsume Tsunami", "63214+A"),
         sp("Utsusemi Dappi", "321+BD"),
+        nui("6321463214+C"),
     ]),
     ("nicotine", "Nicotine Caffeine", [
         wd("Niou Furei Satsu", "641236+D"),
@@ -172,11 +190,15 @@ CHARACTERS = [
         sp("Shitsue Rasen Ashi", "1236+C", "in air"),
         sp("Rashin Jufu", "421+AB"),
         sp("Bakusa Jougeki", "63214+A"),
+        nui("412146+D"),
     ]),
 ]
 
-# Moves tried and dropped (kept out of the JSON), with why: filled from --test.
-DROPPED = {}
+# Moves tried and dropped (kept out of the JSON), with why (from --test).
+DROPPED = {
+    ("genan", "Utsusemi Dappi"): "321+BD (and 321+BC, 32/1/2/3/21/6321+BD, step 1 or 2, far or "
+                                 "close) starts nothing new in FBNeo",
+}
 
 
 def roster():
@@ -329,6 +351,20 @@ def patch(mt, e):
     # with the other button must not count as the long move.
     swap = str.maketrans("ABCD", "BADC")
     mt.variant = lambda cmd: cmd.translate(swap)
+
+    # Air moves as the app plays them from the ground (Pad.play jumpFirst):
+    # up for 4 frames, 2 neutral, then the motion. Nicotine's Shitsue Rasen
+    # Ashi only comes out that early in the jump.
+    def try_move(e, st, game, move, air):
+        e.load(st)
+        game.power(e)
+        before = game.before(e)
+        pre = [(8, "")] * 4 + [(5, "")] * 2 if air else []
+        acts = mt.play(e, pre + mt.compile_cmd(move["cmd"]), None)
+        used = game.used(e, acts, before) if move["type"] == "dm" else 0
+        return acts, used
+
+    mt.try_move = try_move
     return g
 
 
