@@ -36,7 +36,10 @@ data class RoomInfo(
     val members: Int,
     /** Listed with its code: anyone may join. */
     val open: Boolean = false,
-    /** Made open: every connection goes through the relay (strangers never learn an address). */
+    /**
+     * Made open: no phone shares its internet address, so strangers connect
+     * through the relay (phones on one Wi-Fi still connect directly).
+     */
     val relayOnly: Boolean = false,
 )
 
@@ -160,7 +163,7 @@ class OnlineRoom internal constructor(
         private set
 
     /** Made open: it can be locked and opened again; a room made locked stays locked. */
-    val canOpen: Boolean get() = transport.relayOnly
+    val canOpen: Boolean get() = transport.hideAddresses
 
     private val keepAlive = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "room-keepalive").apply { isDaemon = true } }
     @Volatile private var closed = false
@@ -222,7 +225,7 @@ class OnlineRooms(
             runCatching { server.leave(code) }
             throw e
         }
-        val transport = WebRtcTransport(signaling(code, me), rtc, ice, code, relayOnly = open)
+        val transport = WebRtcTransport(signaling(code, me), rtc, ice, code, hideAddresses = open)
         try {
             val room = Room.host(name, set, title, rom, bios, maxPlayers, port = PORT, beaconPort = -1, build = build, device = device, transport = transport)
             return OnlineRoom(room, code, transport, server, open)
@@ -250,7 +253,7 @@ class OnlineRooms(
         val transport = try {
             val ice = iceServers(info.code)
             if (info.relayOnly && !hasRelay(ice())) throw CantJoin(NO_RELAY_TO_JOIN)
-            WebRtcTransport(signaling(info.code, me), rtc, ice, info.code, relayOnly = info.relayOnly)
+            WebRtcTransport(signaling(info.code, me), rtc, ice, info.code, hideAddresses = info.relayOnly)
         } catch (e: Exception) {
             runCatching { server.leave(info.code) }
             throw e

@@ -35,8 +35,13 @@ class WebRtcTransport(
     private val iceServers: () -> List<IceServer>,
     /** The room's code: what friends type to join (see [key]). */
     private val code: String = "",
-    /** Every connection only through the relay (an open room: no phone's address goes to strangers). */
-    val relayOnly: Boolean = false,
+    /**
+     * An open room: this phone tells the others only the relay's address and
+     * its address on its own Wi-Fi (no use outside it), never its internet
+     * address. Strangers elsewhere connect through the relay; phones on the
+     * same Wi-Fi still connect directly (see [PrivateCandidates]).
+     */
+    val hideAddresses: Boolean = false,
 ) : Transport {
     val self: String get() = signaling.self
 
@@ -59,6 +64,9 @@ class WebRtcTransport(
     init {
         signaling.listen(::onSignal)
     }
+
+    /** An offer or answer as sent: in an open room, without this phone's internet address. */
+    private fun outgoing(sdp: String): String = if (hideAddresses) PrivateCandidates.sdp(sdp) else sdp
 
     @Synchronized
     private fun freePort(): Int {
@@ -259,7 +267,7 @@ class WebRtcTransport(
             answeredBy = null
             offeredBy = null
             val events = Events()
-            val made = rtc.peer(iceServers(), events, relayOnly)
+            val made = rtc.peer(iceServers(), events)
             events.pc = made
             pc = made
             return made
@@ -294,7 +302,7 @@ class WebRtcTransport(
                 endNow("No answer")
                 return
             }
-            signalSafely(Signal(Signal.OFFER, self, id, gen = g, instance = instance, sdpType = sdp.type, sdp = sdp.sdp))
+            signalSafely(Signal(Signal.OFFER, self, id, gen = g, instance = instance, sdpType = sdp.type, sdp = outgoing(sdp.sdp)))
             runCatching { timers.schedule({ act { sendOffer(made, g, sdp, tries + 1) } }, OFFER_AGAIN_MS, TimeUnit.MILLISECONDS) }
         }
 
@@ -321,7 +329,7 @@ class WebRtcTransport(
                 s.gen == gen && current != null -> {
                     // The same offer again: its answer was lost.
                     if (offerSdp == lastOffer) {
-                        lastAnswer?.let { signalSafely(Signal(Signal.ANSWER, self, id, gen = gen, instance = instance, sdpType = it.type, sdp = it.sdp)) }
+                        lastAnswer?.let { signalSafely(Signal(Signal.ANSWER, self, id, gen = gen, instance = instance, sdpType = it.type, sdp = outgoing(it.sdp))) }
                         return@act
                     }
                     current // an ICE restart of this connection
@@ -342,7 +350,7 @@ class WebRtcTransport(
                     remoteSet = true
                     early.forEach(target::addCandidate)
                     early.clear()
-                    signalSafely(Signal(Signal.ANSWER, self, id, gen = s.gen, instance = instance, sdpType = sdp.type, sdp = sdp.sdp))
+                    signalSafely(Signal(Signal.ANSWER, self, id, gen = s.gen, instance = instance, sdpType = sdp.type, sdp = outgoing(sdp.sdp)))
                 }
             }
         }
@@ -399,7 +407,7 @@ class WebRtcTransport(
                         return@act
                     }
                     if (pc !== target || gen != g) return@act
-                    signalSafely(Signal(Signal.OFFER, self, id, gen = g, instance = instance, sdpType = sdp.type, sdp = sdp.sdp))
+                    signalSafely(Signal(Signal.OFFER, self, id, gen = g, instance = instance, sdpType = sdp.type, sdp = outgoing(sdp.sdp)))
                     // Not answered in time: the next restart may try again.
                     runCatching {
                         timers.schedule({
@@ -447,7 +455,9 @@ class WebRtcTransport(
 
             override fun onCandidate(candidate: Candidate) {
                 val g = gen
-                if (current()) signalSafely(Signal(Signal.CANDIDATE, self, id, gen = g, sdp = candidate.sdp, mid = candidate.mid, index = candidate.index))
+                // An open room: the internet address (and any candidate carrying it) stays here.
+                val sdp = if (hideAddresses) PrivateCandidates.candidate(candidate.sdp) ?: return else candidate.sdp
+                if (current()) signalSafely(Signal(Signal.CANDIDATE, self, id, gen = g, sdp = sdp, mid = candidate.mid, index = candidate.index))
             }
 
             override fun onState(state: PeerState) {

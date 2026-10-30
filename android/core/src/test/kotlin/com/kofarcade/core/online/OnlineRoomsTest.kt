@@ -2,8 +2,6 @@ package com.kofarcade.core.online
 
 import com.kofarcade.core.net.FakeNet
 import com.kofarcade.core.net.IceServer
-import com.kofarcade.core.net.RtcFactory
-import com.kofarcade.core.net.RtcPeer
 import com.kofarcade.core.net.Path
 import com.kofarcade.core.net.Refused
 import com.kofarcade.core.net.Room
@@ -85,8 +83,8 @@ class OnlineRoomsTest {
     @AfterTest
     fun closeAll() = opened.forEach { runCatching { it.close() } }
 
-    // Which phones' connections were made relay-only.
-    private val relayOnlyPeers = ConcurrentHashMap<String, Boolean>()
+    // Everything the phones told each other through signaling (to check what an open room gives away).
+    private val signalled = java.util.concurrent.ConcurrentLinkedQueue<String>()
 
     /** One phone: its own player id and view of the server; [relay]: the relay's there (TURN in its ICE servers). */
     private fun phone(id: String, relay: Boolean = true): OnlineRooms {
@@ -99,16 +97,17 @@ class OnlineRoomsTest {
             override fun list() = synchronized(server) { server.who = { id }; server.list() }
             override fun setOpen(code: String, open: Boolean) = synchronized(server) { server.who = { id }; server.setOpen(code, open) }
         }
-        val inner = net.factory(id)
-        val rtc = object : RtcFactory {
-            override fun peer(ice: List<IceServer>, events: RtcPeer.Events) = peer(ice, events, false)
-            override fun peer(ice: List<IceServer>, events: RtcPeer.Events, relayOnly: Boolean): RtcPeer {
-                relayOnlyPeers.merge(id, relayOnly, Boolean::and)
-                return inner.peer(ice, events)
+        val ice = if (relay) listOf(IceServer(listOf("turn:relay.test:3478"), "u", "p")) else emptyList()
+        val signaling = { _: String, me: String ->
+            val inner = net.hub.join(me)
+            object : com.kofarcade.core.net.Signaling by inner {
+                override fun send(signal: com.kofarcade.core.net.Signal) {
+                    signal.sdp?.let { signalled += it }
+                    inner.send(signal)
+                }
             }
         }
-        val ice = if (relay) listOf(IceServer(listOf("turn:relay.test:3478"), "u", "p")) else emptyList()
-        return OnlineRooms(mine, rtc, { _, me -> net.hub.join(me) }, { { ice } })
+        return OnlineRooms(mine, net.factory(id), signaling, { { ice } })
     }
 
     private class Quiet : RoomListener {
@@ -199,16 +198,18 @@ class OnlineRoomsTest {
     }
 
     @Test
-    fun anOpenRoomIsListedWithItsCodeAndEveryoneInItGoesThroughTheRelay() {
+    fun anOpenRoomIsListedWithItsCodeAndSharesNoInternetAddress() {
         val host = phone("aaa").host("Host", "kof97", "KOF '97", rom = 11, bios = 22, maxPlayers = 2, open = true).started()
-        assertTrue(host.open && host.canOpen && host.transport.relayOnly)
+        assertTrue(host.open && host.canOpen && host.transport.hideAddresses)
         val listed = phone("bbb").list().single()
         assertEquals(host.code, listed.code, "an open room's code is on the list")
         assertTrue(listed.open)
         val guest = phone("bbb").join(phone("bbb").find(listed.code!!), "Rafi", "kof97", 11, 22).started()
         waitFor("watching") { host.room.watcherCount == 1 }
-        assertTrue(guest.transport.relayOnly && guest.open)
-        assertEquals(mapOf("aaa" to true, "bbb" to true), relayOnlyPeers.toMap(), "both sides of the connection relay-only")
+        assertTrue(guest.transport.hideAddresses && guest.open)
+        // Only local and relay addresses went across: no phone's internet address (203.0.113.x).
+        assertTrue(signalled.any { "typ host" in it } && signalled.any { "typ relay" in it })
+        assertTrue(signalled.none { "203.0.113." in it || "typ srflx" in it }, signalled.filter { "203.0.113." in it }.toString())
         // The guest's in it now: not suggested to the guest any more.
         assertTrue(phone("bbb").list().isEmpty())
     }
@@ -222,8 +223,9 @@ class OnlineRoomsTest {
         assertFalse(host.canOpen, "a room made locked stays locked")
         val guest = phone("bbb").join(phone("bbb").find(host.code), "Rafi", "kof97", 11, 22).started()
         waitFor("watching") { host.room.watcherCount == 1 }
-        assertFalse(guest.transport.relayOnly)
-        assertEquals(mapOf("aaa" to false, "bbb" to false), relayOnlyPeers.toMap())
+        assertFalse(guest.transport.hideAddresses)
+        // A locked room (friends): every way is shared, the direct one over the internet too.
+        assertTrue(signalled.any { "typ srflx" in it })
     }
 
     @Test
