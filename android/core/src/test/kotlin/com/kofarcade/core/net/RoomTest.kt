@@ -578,6 +578,38 @@ open class RoomTest {
     }
 
     @Test
+    fun aPhoneThatDropsAgainWhileRejoiningTriesAgainInsteadOfEnding() {
+        val h = host(device = "host")
+        quick(h)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host seated") { a.epoch == 1 }
+        val g = join(h, "Rafi", device = "rafi")
+        quick(g)
+        val b = FakeGame(g).apply { play() }
+        waitFor("watching") { b.epoch >= 1 }
+        g.requestSeat()
+        waitFor("Rafi seated") { g.localPlayer == 1 }
+        h.offline = true
+        waitFor("Rafi lost the room") { b.lostReason != null }
+        h.offline = false
+        b.running = false
+
+        // Back in, but the host's Wi-Fi goes again before Rafi's first game
+        // there: lost again (to rejoin once more), not the end of Rafi's game.
+        val g2 = rejoined(g)
+        h.offline = true
+        val b2 = FakeGame(g2).apply { play() }
+        waitFor("lost again") { b2.lostReason != null || b2.closedReason != null }
+        assertEquals(null, b2.closedReason)
+        h.offline = false
+        b2.running = false
+
+        val g3 = rejoined(g2)
+        val b3 = FakeGame(g3).apply { play() }
+        waitFor("Rafi back as player 2") { g3.localPlayer == 1 && h.held.isEmpty() && b3.epoch == a.epoch }
+    }
+
+    @Test
     fun whenEveryoneDropsAtOnceTheyComeBackToTheHost() {
         val h = host("dino", seats = 3, device = "host")
         quick(h)
