@@ -86,6 +86,10 @@ data class RoomUi(
     val online: Boolean = false,
     /** An internet room's round trip to the others (ms), once measured. */
     val pingMs: Int? = null,
+    /** An internet room: open (listed for anyone) or locked (the code only); null: not known here. */
+    val open: Boolean? = null,
+    /** It was made open, so it can be opened again once locked (a room made locked stays locked). */
+    val canOpen: Boolean = false,
 ) {
     val players: List<RoomPerson> get() = people.filter { it.seat >= 0 }.sortedBy { it.seat }
     // Those in line first, in order, then the others.
@@ -299,20 +303,21 @@ fun RoomSheetContent(
     onLeave: () -> Unit,
     onClose: () -> Unit,
     onFree: (Int) -> Unit = {},
+    onOpen: (Boolean) -> Unit = {},
 ) {
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
         if (maxWidth > 560.dp) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Column(Modifier.weight(1f)) {
-                    RoomHeader(ui, first, onCopy, onShare)
+                    RoomHeader(ui, first, onCopy, onShare, onOpen)
                     RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
                 }
                 Column(Modifier.weight(1f)) { RoomPeople(ui, onFree) }
             }
         } else {
             Column {
-                RoomHeader(ui, first, onCopy, onShare)
+                RoomHeader(ui, first, onCopy, onShare, onOpen)
                 RoomPeople(ui, onFree)
                 RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
             }
@@ -321,7 +326,7 @@ fun RoomSheetContent(
 }
 
 @Composable
-private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: () -> Unit) {
+private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: () -> Unit, onOpen: (Boolean) -> Unit) {
     Kicker(if (first) "Room open" else "Room")
     Text(
         if (first) "Invite your friends" else "Who's playing",
@@ -360,6 +365,32 @@ private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: 
                 GhostButton("Copy", onCopy, Modifier.weight(1f))
                 GoldButton("Share", onShare, Modifier.weight(1f))
             }
+        }
+        ui.open?.let { open -> RoomOpenRow(open, canChange = ui.canFree && (open || ui.canOpen), onOpen) }
+    }
+}
+
+/**
+ * Whether the room is open (listed with its code: anyone joins with a tap)
+ * or locked (listed, but only with the code), and the host's switch.
+ */
+@Composable
+private fun RoomOpenRow(open: Boolean, canChange: Boolean, onOpen: (Boolean) -> Unit) {
+    Spacer(Modifier.height(10.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        LockIcon(Modifier.size(18.dp), open = open, color = if (open) Palette.green else Palette.gold)
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(if (open) "Open" else "Locked", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(
+                if (open) "Listed on Online: anyone with the game joins with a tap." else "Listed on Online, but only this code gets in.",
+                color = Palette.muted,
+                fontSize = 12.sp,
+            )
+        }
+        if (canChange) {
+            Spacer(Modifier.width(8.dp))
+            GhostButton(if (open) "Lock" else "Open", { onOpen(!open) }, compact = true)
         }
     }
 }
@@ -587,6 +618,56 @@ fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
             }
         },
         action = { if (room.have) GoldButton(if (full) "Watch" else "Join", onClick, enabled = enabled, compact = true) },
+    )
+}
+
+/** A room on the server's list: [open] ones join with a tap, locked ones with the code. */
+data class OnlineChoice(
+    val title: String,
+    val hostName: String,
+    val have: Boolean,
+    /** Phones in it, playing and watching. */
+    val members: Int,
+    val maxPlayers: Int,
+    val open: Boolean,
+    val game: Game? = null,
+    val set: String? = null,
+)
+
+@Composable
+fun OnlineRoomCard(room: OnlineChoice, enabled: Boolean, onClick: () -> Unit) {
+    WideGameCard(
+        room.game,
+        room.set,
+        room.title,
+        Modifier.height(150.dp),
+        enabled = enabled,
+        grey = !room.have,
+        onClick = onClick,
+        tag = {
+            when {
+                !room.have -> PictureTag("Need the game", Palette.red)
+                room.open -> PictureTag("Open", Palette.green)
+                else -> PictureTag("Locked", Palette.gold)
+            }
+        },
+        info = {
+            Text(room.hostName, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!room.open) {
+                    LockIcon(Modifier.size(11.dp), color = Color.White.copy(alpha = 0.75f))
+                    Spacer(Modifier.width(4.dp))
+                }
+                Text(
+                    (if (room.members == 1) "1 in the room" else "${room.members} in the room") + " · up to ${room.maxPlayers} play",
+                    color = Color.White.copy(alpha = 0.75f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        },
+        action = { if (room.have) GoldButton(if (room.open) "Join" else "Code", onClick, enabled = enabled, compact = true) },
     )
 }
 

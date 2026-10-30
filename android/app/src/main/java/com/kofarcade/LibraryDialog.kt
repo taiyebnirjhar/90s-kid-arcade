@@ -366,7 +366,7 @@ private fun <T> CardGrid(items: List<T>, card: @Composable (T, Modifier) -> Unit
 
 /** A drawn padlock; [open] lifts the shackle. */
 @Composable
-private fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.gold) {
+fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.gold) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height

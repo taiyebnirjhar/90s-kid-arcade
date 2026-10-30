@@ -48,7 +48,9 @@ import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.online.OnlineError
 import com.kofarcade.core.online.OnlineRooms
+import com.kofarcade.core.online.explainOnline
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.net.NetLog
@@ -634,7 +636,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
         }
         val key = if (r.overInternet) OnlineRooms.pretty(r.key) else r.key
-        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs)
+        val online = Netplay.online
+        roomUi = RoomUi(
+            key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs,
+            open = online?.open, canOpen = online?.canOpen == true,
+        )
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -690,6 +696,28 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val roomKey: String? get() = room?.key?.takeIf { it.isNotEmpty() }
 
     /** Copies the room's key, to send to friends. */
+    // Opening or locking the room: one at a time.
+    @Volatile private var settingOpen = false
+
+    /** Opens the room to anyone (listed with its code) or locks it (the code only), on the server. */
+    fun setRoomOpen(open: Boolean) {
+        val online = Netplay.online ?: return
+        if (settingOpen) return
+        settingOpen = true
+        lifecycleScope.launch {
+            val done = withContext(Dispatchers.IO) { runCatching { online.setOpen(open) } }
+            settingOpen = false
+            if (destroyed) return@launch
+            done.onSuccess {
+                updateRoomUi()
+                announce(if (open) "Room open: anyone can join from the list" else "Room locked: only with the code")
+            }.onFailure {
+                val why = if (it is OnlineError.Offline) "no internet right now" else explainOnline(it)
+                announce("Couldn't ${if (open) "open" else "lock"} the room: $why")
+            }
+        }
+    }
+
     fun copyRoomKey() {
         val key = roomKey?.let { if (room?.overInternet == true) OnlineRooms.pretty(it) else it } ?: return
         val clipboard = getSystemService(android.content.ClipboardManager::class.java) ?: return

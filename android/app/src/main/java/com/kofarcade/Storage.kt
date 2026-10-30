@@ -203,6 +203,11 @@ class Prefs(context: Context) {
     // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
+    /** Online rooms are made open (listed for anyone to join) unless the player last picked locked. */
+    var openRooms: Boolean
+        get() = sp.getBoolean("openRooms", true)
+        set(v) = sp.edit().putBoolean("openRooms", v).apply()
+
     var stick: StickMode
         get() = runCatching { StickMode.valueOf(sp.getString("stick", null)!!) }.getOrDefault(StickMode.FLOATING)
         set(v) = sp.edit().putString("stick", v.name).apply()

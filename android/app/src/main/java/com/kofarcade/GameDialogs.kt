@@ -105,6 +105,7 @@ fun GameDialogs(game: GameActivity) {
                     onLeave = { game.finish() },
                     onClose = { game.close() },
                     onFree = { game.freeHeldSeat(it) },
+                    onOpen = { game.setRoomOpen(it) },
                 )
             }
         }
