@@ -258,7 +258,7 @@ fun PictureTag(text: String, color: Color = Palette.gold, modifier: Modifier = M
     ) {
         Box(Modifier.size(7.dp).clip(CircleShape).background(color))
         Spacer(Modifier.width(6.dp))
-        Text(text.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -339,7 +339,7 @@ fun ArcadeDialog(
     dangerSecondary: Boolean = false,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        DialogCard(title, message, primary, secondary, tone, dangerSecondary)
+        TextScaleCap { DialogCard(title, message, primary, secondary, tone, dangerSecondary) }
     }
 }
 
@@ -652,5 +652,26 @@ private fun ToneIcon(tone: Tone, modifier: Modifier) {
                 drawCircle(tone.color, w * 0.09f, androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.86f))
             }
         }
+    }
+}
+
+/**
+ * [text] on one line, made smaller (down to 12 sp) until it fits the width:
+ * for codes and keys, which mustn't break over two lines on a narrow phone
+ * or with big text.
+ */
+@Composable
+fun FitText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier) {
+        val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+        val max = constraints.maxWidth
+        val fitted = remember(text, style, max, measurer) {
+            var s = style
+            while (s.fontSize.value > 12f && measurer.measure(text, s, softWrap = false, maxLines = 1).size.width > max) {
+                s = s.copy(fontSize = s.fontSize * 0.9f, letterSpacing = s.letterSpacing * 0.9f)
+            }
+            s
+        }
+        Text(text, style = fitted, maxLines = 1, softWrap = false)
     }
 }

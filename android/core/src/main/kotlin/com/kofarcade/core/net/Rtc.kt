@@ -68,4 +68,11 @@ interface RtcPeer {
 /** Makes peer connections: one WebRTC library. */
 fun interface RtcFactory {
     fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer
+
+    /**
+     * [relayOnly]: connected only through the relay (TURN), so neither phone
+     * learns the other's address (an open room's strangers). A library's
+     * adapter must override this; the simulated ones have no addresses.
+     */
+    fun peer(ice: List<IceServer>, events: RtcPeer.Events, relayOnly: Boolean): RtcPeer = peer(ice, events)
 }

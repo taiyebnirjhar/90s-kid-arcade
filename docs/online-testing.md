@@ -33,6 +33,9 @@ players take a seat (COIN, START), a few rounds.
 | 6 | Wi-Fi | 4G | Mid-game, the room's maker leaves (Leave): phone 2 runs the room and plays on | [ ] |
 | 7 | Wi-Fi | 4G | The share link: phone 1 shares the room, phone 2 taps the link: the app opens and joins | [ ] |
 | 8 | 3 phones | | Two play, the third watches and presses COIN: "1st in line"; a player leaves: the third gets the seat | [ ] |
+| 9 | Wi-Fi | 4G | Phone 1 makes an **Open** room: within 10 s it's under **Rooms online** on phone 2, tagged Open; one tap joins. The report says relay | [ ] |
+| 10 | Wi-Fi | 4G | Phone 1 makes a **Locked** room: listed with a lock on phone 2; tapping asks for the code; the right code joins, a wrong one says no room | [ ] |
+| 11 | Wi-Fi | 4G | In an open room, phone 1 taps **Lock** in the room sheet: phone 2's list shows it locked; **Open** again lists it open | [ ] |
 
 ## Numbers to write down
 

@@ -35,9 +35,11 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
         factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
     }
 
-    override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events)
+    override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events, relayOnly = false)
 
-    private inner class Peer(ice: List<IceServer>, private val events: RtcPeer.Events) : RtcPeer, PeerConnection.Observer {
+    override fun peer(ice: List<IceServer>, events: RtcPeer.Events, relayOnly: Boolean): RtcPeer = Peer(ice, events, relayOnly)
+
+    private inner class Peer(ice: List<IceServer>, private val events: RtcPeer.Events, relayOnly: Boolean) : RtcPeer, PeerConnection.Observer {
         private val pc: PeerConnection
         private val channels: Array<DataChannel>
 
@@ -54,6 +56,8 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
                 // Keeps looking for ways while connected: a new network is found quicker.
                 continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
                 bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
+                // Only the relay's addresses are offered: the other phone never learns ours.
+                if (relayOnly) iceTransportsType = PeerConnection.IceTransportsType.RELAY
             }
             pc = requireNotNull(factory.createPeerConnection(config, this)) { "WebRTC couldn't make a connection" }
             channels = arrayOf(

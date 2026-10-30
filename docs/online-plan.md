@@ -727,6 +727,21 @@ fixes they led to. Still open, and why:
 - **Game lobby:** players online for each game, nearest first.
 - **Live now:** games being played; watch, or queue for a seat.
 - **Challenges, open rooms, and Quick match.**
+  - **Open and locked rooms (built early, at the owner's ask, 2026-10-30):**
+    the Online screen lists live internet rooms with space ("Rooms
+    online"), open ones first. An open room comes with its code, so a tap
+    joins; a locked one is listed without it, and tapping asks for the code.
+    The maker picks Open or Locked when making the room (remembered); the
+    host can lock an open room and open it again from the room sheet.
+  - **Open rooms are relay-only**, for every connection in them (the settled
+    decision: strangers never learn a player's address). That's fixed when
+    the room is made, so a room made locked (its phones connected directly)
+    can't be opened later. With the relay off (D8's stop), no open room is
+    made or joined, and the app says to use a locked room instead.
+  - Server: `rooms.open` and `rooms.relay_only`, `list_rooms()` (live:
+    touched in the last 3 minutes; not full; not yours; 30 at most) and
+    `set_room_open()` (any phone in the room). The list is asked for every
+    8 seconds while the Online screen is up.
 - **Seat rotation**, set by the host:
   - **Winner stays:** arcade style. For fighters the app reads the winner
     from the game's memory.

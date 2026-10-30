@@ -105,6 +105,7 @@ fun GameDialogs(game: GameActivity) {
                     onLeave = { game.finish() },
                     onClose = { game.close() },
                     onFree = { game.freeHeldSeat(it) },
+                    onOpen = { game.setRoomOpen(it) },
                 )
             }
         }
@@ -145,7 +146,7 @@ private fun Sheet(
 
 /** The [Sheet]'s panel, centred (so it can be previewed). */
 @Composable
-fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) {
+fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) = TextScaleCap {
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Small phones: a smaller slant and margins, so more fits across.
         val narrow = maxWidth < 760.dp

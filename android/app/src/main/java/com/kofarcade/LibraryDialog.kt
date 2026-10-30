@@ -366,7 +366,7 @@ private fun <T> CardGrid(items: List<T>, card: @Composable (T, Modifier) -> Unit
 
 /** A drawn padlock; [open] lifts the shackle. */
 @Composable
-private fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.gold) {
+fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.gold) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
@@ -415,7 +415,8 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             val tag = when (val s = row.state) {
                 RowState.Idle -> "Not on phone" to Palette.muted
                 RowState.OnPhone -> "On phone" to Palette.green
-                is RowState.Downloading -> "Downloading ${(s.fraction * 100).toInt()}%" to Palette.gold
+                // Short: a phone's card is narrow (the bar on the picture says the rest).
+                is RowState.Downloading -> "Getting ${(s.fraction * 100).toInt()}%" to Palette.gold
                 is RowState.Done -> if (s.ok) "Ready" to Palette.green else "Problem" to Palette.red
             }
             PictureTag(tag.first, tag.second, Modifier.align(Alignment.TopStart).padding(8.dp))

@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +58,7 @@ import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.parseRoomKey
 import com.kofarcade.core.net.probe
 import com.kofarcade.core.online.CantJoin
+import com.kofarcade.core.online.ListedRoom
 import com.kofarcade.core.online.OnlineError
 import com.kofarcade.core.online.OnlineRooms
 import com.kofarcade.core.online.explainOnline
@@ -150,6 +154,8 @@ fun TwoPlayerDialog(
 
     val scope = rememberCoroutineScope()
     var opening by remember { mutableStateOf(false) }
+    // Online rooms: open (listed, anyone joins) or locked (only with the code), as last picked.
+    var openRoom by remember { mutableStateOf(Prefs(context).openRooms) }
 
     // Opens a room for the game and starts playing; the game screen shows its key
     // (or, [online], its code: the room is made on the server, friends anywhere join).
@@ -166,7 +172,10 @@ fun TwoPlayerDialog(
                     if (online) {
                         // Signed in, with a profile (its name is the room's).
                         Online.account(context).sync(Online.defaultName())
-                        val r = Online.rooms(context).host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, emulatorBuild(context), Prefs(context).deviceId)
+                        val r = Online.rooms(context).host(
+                            Online.playerName(context), set, game.fullTitle, rom, bios, game.players, emulatorBuild(context), Prefs(context).deviceId,
+                            open = openRoom,
+                        )
                         r.room to r
                     } else {
                         Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId) to null
@@ -204,7 +213,19 @@ fun TwoPlayerDialog(
             is TwoPlayer.PickGame -> {
                 val hasBios = remember { roms.has(BIOS) }
                 val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
-                PickGameScreen(ready, onPick = { (g, set) -> host(g, set, shown.online) }, onLibrary = onLibrary, onBack = back, online = shown.online, opening = opening)
+                PickGameScreen(
+                    ready,
+                    onPick = { (g, set) -> host(g, set, shown.online) },
+                    onLibrary = onLibrary,
+                    onBack = back,
+                    online = shown.online,
+                    opening = opening,
+                    open = openRoom,
+                    onOpen = {
+                        openRoom = it
+                        Prefs(context).openRooms = it
+                    },
+                )
             }
         }
     }
@@ -235,6 +256,38 @@ private fun Hub(
     val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     DisposableEffect(Unit) {
         onDispose { left.set(true) }
+    }
+    // Rooms online (the server's list), asked again every few seconds while this screen's up.
+    val listed = remember { mutableStateListOf<ListedRoom>() }
+    var listNote by remember { mutableStateOf<String?>(null) }
+    var askedLocked by remember { mutableStateOf<ListedRoom?>(null) }
+    androidx.compose.runtime.LaunchedEffect(internet) {
+        if (!internet) {
+            listed.clear()
+            listNote = null
+            return@LaunchedEffect
+        }
+        val rooms = Online.rooms(context)
+        var signedIn = false
+        while (isActive) {
+            val got = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (!signedIn) Online.account(context).sync(Online.defaultName())
+                    signedIn = true
+                    rooms.list()
+                }
+            }
+            got.onSuccess {
+                listNote = null
+                if (it != listed.toList()) {
+                    listed.clear()
+                    listed += it
+                }
+            }.onFailure {
+                listNote = (it as? OnlineError)?.let(::explainRoomTrouble) ?: "Couldn't load the rooms online."
+            }
+            kotlinx.coroutines.delay(if (got.isSuccess) LIST_EVERY_MS else LIST_RETRY_MS)
+        }
     }
 
     fun say(text: String, actionLabel: String? = null, bad: Boolean = true, onAction: (() -> Unit)? = null) {
@@ -435,7 +488,41 @@ private fun Hub(
         }
     }
 
+    // A room on the list: an open one joins at once; a locked one asks for its code.
+    fun joinListed(r: ListedRoom) {
+        val game = gameForSet(r.set)
+        if (game == null || !roms.has("${r.set}.zip") || (game.neoGeo && !roms.has(BIOS))) {
+            say("You need ${game?.fullTitle ?: r.set} on this phone first.", "Get it from the library", onAction = onLibrary)
+            return
+        }
+        val code = r.code
+        if (code != null) joinByCode(code, null) else askedLocked = r
+    }
+
+    askedLocked?.let { r ->
+        LockedRoomDialog(
+            hostName = r.ownerName ?: "The host",
+            title = gameForSet(r.set)?.fullTitle ?: r.set,
+            onJoin = { code ->
+                askedLocked = null
+                key = formatKeyInput(code)
+                joinByCode(code.uppercase().filter { it.isLetterOrDigit() }, null)
+            },
+            onDismiss = { askedLocked = null },
+        )
+    }
+
     MultiplayerHub(
+        online = listed.map {
+            val game = gameForSet(it.set)
+            OnlineChoice(
+                game?.fullTitle ?: it.set, it.ownerName ?: "Player",
+                game != null && roms.has("${it.set}.zip") && (!game.neoGeo || roms.has(BIOS)),
+                it.members, it.maxPlayers, it.open, game, it.set,
+            )
+        },
+        onJoinOnline = { i -> listed.getOrNull(i)?.let(::joinListed) },
+        onlineNote = listNote,
         rooms = hosts.map {
             HostChoice(
                 it.beacon.title, it.beacon.name, roms.has("${it.beacon.set}.zip"), it.beacon.players, it.beacon.maxPlayers,
@@ -473,6 +560,11 @@ fun MultiplayerHub(
     /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
     internet: Boolean = true,
     onHostOnline: () -> Unit = {},
+    /** Rooms online (the server's list): open ones join with a tap, locked ones with the code. */
+    online: List<OnlineChoice> = emptyList(),
+    onJoinOnline: (Int) -> Unit = {},
+    /** Why the list couldn't be had (no profile service, say), or null. */
+    onlineNote: String? = null,
 ) {
     ArcadeScreen(
         title = "Online",
@@ -501,8 +593,19 @@ fun MultiplayerHub(
                 icon = { RadarIcon(Modifier.size(28.dp)) },
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
+            CardGrid(rooms.size) { i -> NearbyRoomCard(rooms[i], enabled = !busy && rooms[i].have) { onJoinRoom(i) } }
+        }
+        // Rooms online: anyone's, open ones first.
+        if (internet) {
+            SectionLabel("Rooms online")
+            when {
+                online.isNotEmpty() -> CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
+                onlineNote != null -> Text(onlineNote, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+                else -> EmptyState(
+                    "No rooms online right now",
+                    "Create one: an open room shows here for anyone to join; a locked one too, but only with its code.",
+                    icon = { RadarIcon(Modifier.size(28.dp)) },
+                )
             }
         }
         // Join with a code: an online room's (friends anywhere) or a nearby room's key.
@@ -610,8 +713,19 @@ fun PickGameScreen(
     online: Boolean = false,
     /** The room is being made (online: a few seconds): said, so taps don't look dead. */
     opening: Boolean = false,
+    /** Online: the room's made open (listed, anyone joins) or locked (only with its code). */
+    open: Boolean = true,
+    onOpen: (Boolean) -> Unit = {},
 ) {
     ArcadeScreen(title = if (online) "Create a room" else "Create nearby room", kicker = "Pick the game", onBack = onBack) {
+        if (online) {
+            SectionLabel("Who can join")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WhoCanJoin("Open", "Anyone: it's listed, one tap to join", open, Modifier.weight(1f), enabled = !opening) { onOpen(true) }
+                WhoCanJoin("Locked", "Listed, but only with its code", !open, Modifier.weight(1f), locked = true, enabled = !opening) { onOpen(false) }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
         if (opening) {
             StatusPanel(MpStatus(if (online) "Creating the room…" else "Opening the room…", bad = false)) {}
             Spacer(Modifier.height(12.dp))
@@ -654,4 +768,70 @@ private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> 
         info = { Text(game.subtitle ?: game.series, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1) },
         action = { GoldButton("Host", onHost, play = true, compact = true) },
     )
+}
+
+/** One of the two ways a room can be: picked (gold) or not. */
+@Composable
+private fun WhoCanJoin(title: String, text: String, picked: Boolean, modifier: Modifier, locked: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier
+            .clip(shape)
+            .background(if (picked) Palette.gold.copy(alpha = 0.14f) else Palette.panel)
+            .border(2.dp, if (picked) Palette.gold else Palette.line, shape)
+            .selectable(selected = picked, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            LockIcon(Modifier.size(16.dp), open = !locked, color = if (picked) Palette.gold else Palette.muted)
+            Spacer(Modifier.width(6.dp))
+            Text(title, color = if (picked) Palette.gold else Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(text, color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp)
+    }
+}
+
+/** A locked room from the list: its code, from whoever made it. */
+@Composable
+private fun LockedRoomDialog(hostName: String, title: String, onJoin: (String) -> Unit, onDismiss: () -> Unit) {
+    var code by remember { mutableStateOf("") }
+    val ready = code.count { it.isLetterOrDigit() } == 6
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        SheetFrame(360) {
+            Kicker("Locked room")
+            Text("$hostName's $title", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+            Spacer(Modifier.height(6.dp))
+            Text("Type the code $hostName gives you: they see it in their room.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+            Spacer(Modifier.height(12.dp))
+            ArcadeField(code, { code = formatKeyInput(it) }, "Room code", placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii, onDone = { if (ready) onJoin(code) })
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GhostButton("Cancel", onDismiss, Modifier.weight(1f))
+                GoldButton("Join", { onJoin(code) }, Modifier.weight(1f), enabled = ready)
+            }
+        }
+    }
+}
+
+/** How often the Online screen asks for the rooms online (and again after a failure). */
+private const val LIST_EVERY_MS = 8_000L
+private const val LIST_RETRY_MS = 20_000L
+
+/** [count] cards, one a row on a phone, two or three side by side on a tablet or a phone held sideways. */
+@Composable
+private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth > 1100.dp) 3 else if (maxWidth > 700.dp) 2 else 1
+        val gap = 12.dp
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            (0 until count).chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    row.forEach { i -> Box(Modifier.weight(1f)) { card(i) } }
+                    // A last row with fewer cards keeps them the same width.
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
 }
