@@ -673,13 +673,15 @@ class UiSnapshots {
         shot("hud_small") { Hud() }
     }
 
+    private val editLook = Look(ScreenMode.SLIGHT, StickMode.FIXED, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4)
+
     @Test
     fun hudEditSmall() {
         smallLandscape()
         shot("hud_edit_small") {
             Box(Modifier.fillMaxSize()) {
                 Hud(editing = true)
-                EditBarContent("Move 3", 1f, true, {}, {}, {}, {})
+                EditBarContent("Move 3", 1f, true, {}, {}, {}, {}, look = editLook)
             }
         }
     }
@@ -694,7 +696,7 @@ class UiSnapshots {
                     touch(v, android.view.MotionEvent.ACTION_DOWN, bx, by)
                     touch(v, android.view.MotionEvent.ACTION_UP, bx, by)
                 }
-                EditBarContent("B button", 1.1f, true, {}, {}, {}, {})
+                EditBarContent("B button", 1.1f, true, {}, {}, {}, {}, look = editLook)
             }
         }
     }

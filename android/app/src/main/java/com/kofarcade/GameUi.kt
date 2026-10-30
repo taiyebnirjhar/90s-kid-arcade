@@ -7,6 +7,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -552,6 +556,7 @@ private fun ToggleRow(label: String, value: Boolean, onChange: (Boolean) -> Unit
  * The layout editor's bar along the top: an "Edit controls" chip, the picked
  * control and its size, and Reset all / Cancel / Save.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditBarContent(
     picked: String?,
@@ -561,9 +566,9 @@ fun EditBarContent(
     onReset: () -> Unit,
     onCancel: () -> Unit,
     onSave: () -> Unit,
-    /** All the controls' opacity (0.3: faint, 1: solid), shown live. */
-    opacity: Float = DEFAULT_OPACITY,
-    onOpacity: (Float) -> Unit = {},
+    /** The stick, which side the buttons are on, their size and see-through: changed live, kept with Save. */
+    look: Look? = null,
+    onLook: (Look) -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp), contentAlignment = Alignment.TopCenter) {
         // Small phones: a shorter name box and slider, so the bar fits in 640 dp.
@@ -614,18 +619,74 @@ fun EditBarContent(
                 )
             }
         }
-        // Under the bar: how see-through every control is, changing as you slide.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(top = 58.dp)
-                .slantPanel(left = 14.dp, right = 14.dp, alpha = 0.88f)
-                .padding(horizontal = 22.dp),
-        ) {
-            Text("SEE-THROUGH", color = Palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            GoldSlider(1.3f - opacity, { onOpacity((1.3f - it).coerceIn(0.3f, 1f)) }, 0.3f..1f, true, Modifier.width(if (narrow) 120.dp else 170.dp).padding(horizontal = 10.dp).height(40.dp))
-            Text("${((1f - opacity) * 100).roundToInt().coerceAtLeast(0)}%", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp))
+        // Under the bar: all the controls at once (the stick, their side,
+        // size and see-through), changing as you go; then how to edit one.
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 58.dp)) {
+            if (look != null) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .widthIn(max = if (narrow) 560.dp else 900.dp)
+                        .slantPanel(left = 14.dp, right = 14.dp, alpha = 0.88f)
+                        .padding(horizontal = 22.dp),
+                ) {
+                    BarSetting("STICK") {
+                        BarChoice(look.stick.short) {
+                            val all = StickMode.entries
+                            onLook(look.copy(stick = all[(all.indexOf(look.stick) + 1) % all.size]))
+                        }
+                    }
+                    BarSetting("BUTTONS") {
+                        BarChoice(if (look.leftHanded) "On the left" else "On the right") { onLook(look.copy(leftHanded = !look.leftHanded)) }
+                    }
+                    BarSetting("ALL SIZE") {
+                        GoldSlider(look.size, { onLook(look.copy(size = (it * 20).roundToInt() / 20f)) }, 0.7f..1.4f, true, Modifier.width(if (narrow) 90.dp else 120.dp).padding(horizontal = 8.dp).height(40.dp))
+                        Text("${(look.size * 100).roundToInt()}%", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(38.dp))
+                    }
+                    BarSetting("SEE-THROUGH") {
+                        GoldSlider(1.3f - look.opacity, { onLook(look.copy(opacity = (1.3f - it).coerceIn(0.3f, 1f))) }, 0.3f..1f, true, Modifier.width(if (narrow) 90.dp else 120.dp).padding(horizontal = 8.dp).height(40.dp))
+                        Text("${((1f - look.opacity) * 100).roundToInt().coerceAtLeast(0)}%", color = Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp))
+                    }
+                }
+            }
+            // Small phones: no room for the hint as well (the panel takes two rows there).
+            if (!narrow) Text(
+                "Drag any control to move it · tap one to resize it",
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp),
+                style = androidx.compose.ui.text.TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 6f)),
+            )
         }
+    }
+}
+
+/** One of the editor's settings for every control: a small label, then its control. */
+@Composable
+private fun BarSetting(label: String, content: @Composable () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(40.dp)) {
+        Text(label, color = Palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        Spacer(Modifier.width(8.dp))
+        content()
+    }
+}
+
+/** A choice that changes with each tap (the next one in turn), like the settings' arrows. */
+@Composable
+private fun BarChoice(text: String, onNext: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .border(1.dp, Palette.gold.copy(alpha = 0.7f), RoundedCornerShape(50))
+            .clickable(onClick = onNext)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    ) {
+        Text(text.uppercase(), color = Palette.gold, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, letterSpacing = 0.5.sp)
+        Spacer(Modifier.width(6.dp))
+        Text("▸", color = Palette.gold, fontSize = 11.sp)
     }
 }
 

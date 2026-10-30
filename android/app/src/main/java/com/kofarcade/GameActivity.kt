@@ -235,9 +235,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var editSelected by mutableStateOf<String?>(null)
         private set
     var editScale by mutableFloatStateOf(1f)
-    /** The controls' opacity, set in the layout editor (all of them at once). */
-    var editOpacity by mutableFloatStateOf(DEFAULT_OPACITY)
         private set
+    /** In the layout editor: the stick, which side the buttons are on, their size and see-through, as being edited. */
+    var editLook by mutableStateOf(Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, DEFAULT_OPACITY, LabelMode.SUPERS, true, false, 2, 4))
+        private set
+    // What the editor started from (Cancel goes back to it), and the positions
+    // edited for each side (switching sides keeps the other side's edits).
+    private var editStartLook: Look? = null
+    private val editTweaks = HashMap<String, Map<String, HudView.Tweak>>()
     private var editBackup: Map<String, HudView.Tweak> = emptyMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -1526,14 +1531,26 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun startEditing() {
         dialog = null
         editBackup = hud.tweaks
-        editOpacity = look.opacity
+        editStartLook = look
+        editLook = look
+        editTweaks.clear()
         editing = true
         hud.editing = true
     }
 
-    fun changeEditOpacity(v: Float) {
-        editOpacity = v
-        hud.opacity = v
+    /** The stick, side, size or see-through changed in the editor: shown at once, saved with Save. */
+    fun changeEditLook(l: Look) {
+        if (l.leftHanded != look.leftHanded) {
+            // The other side has its own positions: this side's edits are kept for Save.
+            editTweaks[layoutKey()] = hud.tweaks
+            look = l
+            hud.tweaks = editTweaks[layoutKey()] ?: prefs.tweaks(layoutKey())
+        } else {
+            look = l
+        }
+        editLook = l
+        hud.opacity = l.opacity
+        updateHud()
     }
 
     fun changeEditScale(v: Float) {
@@ -1545,18 +1562,25 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun resetLayout() {
         hud.tweaks = emptyMap()
         editScale = 1f
-        changeEditOpacity(DEFAULT_OPACITY)
+        changeEditLook(editLook.copy(size = 1f, opacity = DEFAULT_OPACITY))
     }
 
     fun finishEditing(save: Boolean) {
         if (save) {
-            prefs.setTweaks(layoutKey(), hud.tweaks)
-            prefs.opacity = editOpacity
-            look = look.copy(opacity = editOpacity)
+            editTweaks[layoutKey()] = hud.tweaks
+            editTweaks.forEach { (key, tweaks) -> prefs.setTweaks(key, tweaks) }
+            prefs.stick = look.stick
+            prefs.size = look.size
+            prefs.leftHanded = look.leftHanded
+            prefs.opacity = look.opacity
         } else {
+            editStartLook?.let { look = it }
             hud.tweaks = editBackup
             hud.opacity = look.opacity
+            updateHud()
         }
+        editTweaks.clear()
+        editStartLook = null
         editing = false
         editSelected = null
         hud.editing = false
