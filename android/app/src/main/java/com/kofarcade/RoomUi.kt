@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,14 +42,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kofarcade.core.Art
@@ -307,7 +312,8 @@ fun RoomSheetContent(
 ) {
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
-        if (maxWidth > 560.dp) {
+        // Side by side only where each half has room for its text (wider with bigger text).
+        if (maxWidth > 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Column(Modifier.weight(1f)) {
                     RoomHeader(ui, first, onCopy, onShare, onOpen)
@@ -347,7 +353,8 @@ private fun RoomHeader(ui: RoomUi, first: Boolean, onCopy: () -> Unit, onShare: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Kicker(if (ui.online) "Room code" else "Room key", Palette.muted)
-                    Text(ui.key, color = Palette.gold, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+                    // Never broken over two lines: smaller instead, where it's narrow.
+                    FitText(ui.key, TextStyle(color = Palette.gold, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp))
                     Text(
                         if (ui.online) "Friends anywhere: Online → type this code, or scan it." else "Friends: Online → type this key. Same Wi-Fi or hotspot.",
                         color = Palette.muted,
@@ -483,7 +490,7 @@ private fun SeatRow(seat: Int, who: RoomPerson?, canFree: Boolean, onFree: (Int)
             }
             if (canFree) {
                 Spacer(Modifier.width(8.dp))
-                GhostButton("Free seat", { onFree(seat) })
+                GhostButton("Free seat", { onFree(seat) }, compact = true)
             }
         } else {
             Text(who.name, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -552,6 +559,8 @@ fun WideGameCard(
     tag: (@Composable () -> Unit)? = null,
     info: @Composable () -> Unit = {},
     action: @Composable () -> Unit = {},
+    /** At least this tall; more if the text needs it. */
+    minHeight: Dp = 150.dp,
 ) {
     val shape = RoundedCornerShape(20.dp)
     val source = remember { MutableInteractionSource() }
@@ -571,17 +580,24 @@ fun WideGameCard(
             }
         }
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.3f to Color.Transparent, 0.65f to Color.Black.copy(alpha = 0.55f), 1f to Color.Black.copy(alpha = 0.9f))))
-        if (tag != null) Box(Modifier.align(Alignment.TopStart).padding(12.dp)) { tag() }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 12.dp),
+        // The tag on top, the title and button at the bottom: in a column, so
+        // bigger text makes the card taller instead of running them together.
+        Column(
+            Modifier.fillMaxWidth().fillMaxHeight().heightIn(min = minHeight),
+            verticalArrangement = if (tag != null) Arrangement.SpaceBetween else Arrangement.Bottom,
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                info()
+            if (tag != null) Box(Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 8.dp)) { tag() }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 12.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    info()
+                }
+                Spacer(Modifier.width(12.dp))
+                action()
             }
-            Spacer(Modifier.width(12.dp))
-            action()
         }
     }
 }
@@ -594,7 +610,7 @@ fun NearbyRoomCard(room: HostChoice, enabled: Boolean, onClick: () -> Unit) {
         room.game,
         room.set,
         room.title,
-        Modifier.height(150.dp),
+        Modifier,
         enabled = enabled,
         grey = !room.have,
         onClick = onClick,
@@ -640,7 +656,7 @@ fun OnlineRoomCard(room: OnlineChoice, enabled: Boolean, onClick: () -> Unit) {
         room.game,
         room.set,
         room.title,
-        Modifier.height(150.dp),
+        Modifier,
         enabled = enabled,
         grey = !room.have,
         onClick = onClick,

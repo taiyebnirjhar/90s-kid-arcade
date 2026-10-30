@@ -593,17 +593,13 @@ fun MultiplayerHub(
                 icon = { RadarIcon(Modifier.size(28.dp)) },
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                rooms.forEachIndexed { i, r -> NearbyRoomCard(r, enabled = !busy && r.have) { onJoinRoom(i) } }
-            }
+            CardGrid(rooms.size) { i -> NearbyRoomCard(rooms[i], enabled = !busy && rooms[i].have) { onJoinRoom(i) } }
         }
         // Rooms online: anyone's, open ones first.
         if (internet) {
             SectionLabel("Rooms online")
             when {
-                online.isNotEmpty() -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    online.forEachIndexed { i, r -> OnlineRoomCard(r, enabled = !busy && r.have) { onJoinOnline(i) } }
-                }
+                online.isNotEmpty() -> CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
                 onlineNote != null -> Text(onlineNote, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
                 else -> EmptyState(
                     "No rooms online right now",
@@ -821,3 +817,21 @@ private fun LockedRoomDialog(hostName: String, title: String, onJoin: (String) -
 /** How often the Online screen asks for the rooms online (and again after a failure). */
 private const val LIST_EVERY_MS = 8_000L
 private const val LIST_RETRY_MS = 20_000L
+
+/** [count] cards, one a row on a phone, two or three side by side on a tablet or a phone held sideways. */
+@Composable
+private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth > 1100.dp) 3 else if (maxWidth > 700.dp) 2 else 1
+        val gap = 12.dp
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            (0 until count).chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    row.forEach { i -> Box(Modifier.weight(1f)) { card(i) } }
+                    // A last row with fewer cards keeps them the same width.
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
+}
