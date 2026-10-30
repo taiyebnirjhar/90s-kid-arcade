@@ -421,6 +421,19 @@ val GAMES: List<Game> = listOf(
     // it ran out (game over), back to 0. Checked in versus: the loser went
     // 6, 8, 12, 0 while the winner stayed at 6.
     seats = SeatStatus(listOf(0x32B1, 0x36B1), setOf(0, 10, 12)),
+) + Game(
+    // SNK, 1999 (Neo Geo): one fighter each. A and C punch, B and D kick
+    // (light, heavy). Moves, detection and the system moves checked in FBNeo
+    // (tools/garou_roster.py): all 137 moves of the 14 fighters, Grant and
+    // Kain included (the main set's MVS codes pick them).
+    id = "garou", series = "Fatal Fury", title = "Garou", subtitle = "Mark of the Wolves",
+    sets = listOf("garou", "garouh", "garouha", "garoup", "garoubl", "garoubs", "garoujq"),
+    art = "Garou - Mark of the Wolves (NGM-2530)",
+    layout = Layout.FIGHTER, roster = "garou", team = 1, block = true,
+    labels = mapOf('A' to "LP", 'B' to "LK", 'C' to "HP", 'D' to "HK"),
+    // A+B is the evasion (also the Break); C+D the T.O.P. attack, only while
+    // life is in the T.O.P. area (else a heavy punch); 2+A+C a feint.
+    system = listOf(Move("Evade", "AB"), Move("T.O.P.", "CD"), Move("Feint", "2+AC")),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

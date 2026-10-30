@@ -33,8 +33,14 @@ from FBNeo's cheat file lastblad.ini):
   0x10EAAD P1's pick (ORDER), P2's 0x10EAAF
   0x10EAB6 P1's mode: 1 Power, 0xFF Speed; P2's 0x10EAB7
   0x10E32F the match's phase: 2 while a round is fought (from "Ready" until
-           the KO), 1 the round's intro and end, 3 select screens
+           the KO), 1 the round's intro and end, 3 select screens; also 2
+           in the attract demo, where the BIOS's player bytes 0x10FDB6/7 are 0
   0x10E32B round timer (BCD)
+
+Secret fighters: Musashi (ID 12) on an arcade (MVS) board with the select
+screen code C C C C C C B B B C C C C, then LEFT from Kaede; Kagami (ID 13)
+only on a home (AES) system. The tests pick both through 0x10EAAD, as the
+cheat file does. Lee's air Ryu Shou Sen (214+C in a jump) never came out.
 """
 import json
 import os
@@ -42,8 +48,8 @@ import re
 import sys
 
 ORDER = ["kaede", "moriya", "yuki", "okina", "akari", "juzoh", "washizuka", "shikyoh",
-         "hyo", "lee", "zantetsu", "shigen", "musashi", "kagami", "kaede"]
-# 14 is Kaede awakened (B+C+D); the app shows Kaede's list.
+         "hyo", "lee", "zantetsu", "shigen", "musashi", "kagami", "kaedeawakened"]
+# 14 is Kaede awakened (B+C+D in a fight; her pick at 0x10EAAD stays 0).
 
 PTR = 0x10AC2E
 PHASE = 0x10E32F
@@ -88,6 +94,19 @@ CHARACTERS = [
         sp("Ittou Renjin Zan", "214+A", "A or B; up to 3 times"),
         sp("Ittou Tabakaze", "214+C"),
         sp("Ittou Arashi Uchi", "41236+C", "close"),
+    ]),
+    # Kaede after Kakusei (B+C+D): the fighter's ID turns to 0x0E for the round.
+    ("kaedeawakened", 0x0E, "Kaede (Awakened)", "Awakened", [
+        dm("Kasshin: Seiryuu", "236236+AB"),
+        dm("Kasshin: Fukuryuu", "21416+AB"),
+        sdm("Kasshin: Souryuu", "236236+B"),
+        sdm("Kasshin: Kouryuu", "21416+B"),
+        SHUUEN,
+        sp("Shinmei Hayate", "236+A", "A or B"),
+        sp("Shinmei Kuga", "623+A", "A or B; B: Kokuuga"),
+        sp("Shinmei Renjin Zan", "214+A", "A or B; up to 3 times"),
+        sp("Shinmei Tabakaze", "214+C"),
+        sp("Shinmei Arashi Uchi", "41236+C", "close"),
     ]),
     ("moriya", 0x01, "Moriya Minakata", "Fighters", [
         dm("Kassatsu Izayoi Gekka", "641236+AB"),
@@ -174,7 +193,7 @@ CHARACTERS = [
         dm("Ougi Enryu Tenshin", "21416+AB"),
         sdm("Hiougi Soten Muei Kyaku", "21416+B"),
         SHUUEN,
-        sp("Ryu Tsui Sen", "214+C", "up to 3 times; also in air"),
+        sp("Ryu Tsui Sen", "214+C", "up to 3 times"),
         sp("En Sen Shou", "623+B"),
         sp("Enryu Haibi", "63214+A", "A or B"),
         sp("Kasumi", "AB", "then A, B or C"),
@@ -293,6 +312,9 @@ def to_fight(e, sel, cid, speed, opponent=None):
     """P1 picks [cid] (0-13) in Power or Speed, P2 a standing opponent; on to the round."""
     e.load(sel)
     opp = opponent if opponent is not None else (3 if cid != 3 else 0)
+    awaken = cid == 0x0E
+    if awaken:
+        cid = 0
     p1 = cid if cid < 12 else 0
     for port, start, want in ((0, 0, p1), (1, 1, opp)):
         r0, c0 = _pos(start); r1, c1 = _pos(want)
@@ -312,6 +334,11 @@ def to_fight(e, sel, cid, speed, opponent=None):
         if e.byte(PHASE) == FIGHT:
             break
     e.run(150)
+    if awaken:
+        mt.poke(e, block(e, 0) + GAUGE, MAX)
+        e.run(4, "B", "C", "D")
+        e.run(200)
+        cid = 0x0E
     b = block(e, 0)
     assert e.byte(b + 0x91) == cid, (cid, e.byte(b + 0x91))
     assert e.byte(MODE) == (0xFF if speed else 1)

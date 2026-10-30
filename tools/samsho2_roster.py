@@ -293,8 +293,9 @@ def patch(mt, e):
 
         def used(self, e, acts, before):
             # A Weapon Destruction move empties the MAX gauge while it plays out.
+            # Some play out for seconds first (Nakoruru's): wait up to 10 s.
             o = obj(e, 0)
-            for _ in range(90):
+            for _ in range(600):
                 if e.byte(o + POW) < before // 2:
                     return 1
                 e.run(1)
@@ -323,6 +324,11 @@ def patch(mt, e):
         return seen
 
     mt.baseline = baseline
+    # The other strength of a move is the other slash or kick (A<->B, C<->D):
+    # each has its own animation, and a long motion that ends in a listed one
+    # with the other button must not count as the long move.
+    swap = str.maketrans("ABCD", "BADC")
+    mt.variant = lambda cmd: cmd.translate(swap)
     return g
 
 

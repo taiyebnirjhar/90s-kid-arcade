@@ -339,8 +339,9 @@ def patch_movetest(mt):
 
 # Below this the fighter's own animations: standing, walking, jumps, normals, throws.
 FIRST_MOVE = 0x53
-# A full jump (a short tap of up is Garou's low hop, too short for most air moves).
-JUMP = [(8, "")] * 12
+# Up held 6 frames: a full jump, early enough on the way up for Jenet's
+# Harrier Bee (a 4-frame tap is Garou's low hop, too short for the air supers).
+JUMP = [(8, "")] * 6
 
 
 def extra_baseline(mt, e, states, game):
@@ -354,8 +355,6 @@ def extra_baseline(mt, e, states, game):
         for b in game.buttons:
             e.load(st); game.power(e)
             seen.update(mt.play(e, JUMP + [(5, b)] * 4, None, 50))
-            e.load(st); game.power(e)
-            seen.update(mt.play(e, JUMP + [(2, b)] * 4, None, 50))
     return seen
 
 
@@ -449,21 +448,31 @@ def roster_dicts():
 
 
 def replay():
-    """Load a state mid-fight, play the same inputs twice, compare all RAM."""
+    """Loads a state mid-fight, plays the same random inputs on both sides
+    twice (1200 frames) and compares RAM every 100 frames and the last picture."""
+    import random
     mt, Emu = emu_tools()
     e, sel = select_screen(Emu)
     st = to_fight(e, sel, "rock")
-    seq = mt.compile_cmd("236+A") + [(6, "")] * 30 + mt.compile_cmd("236236+C") + [(5, "")] * 200
-    rams = []
+    rnd = random.Random(1)
+    pick = ["", "A", "B", "C", "D", "AB", "CD"]
+    seq = [(rnd.randint(1, 9), rnd.choice(pick), rnd.randint(1, 9), rnd.choice(pick)) for _ in range(1200)]
+    runs = []
     for _ in range(2):
         e.load(st)
-        for d, b in seq:
-            e.run(1, *(mt.DIRS[d] + tuple(b)))
-            e.run(0)
-        rams.append((e.ram(), e.save()))
-    same = rams[0][0] == rams[1][0]
-    print("RAM after %d frames: %s; savestates %s" % (len(seq), "identical" if same else "DIFFERENT",
-                                                    "identical" if rams[0][1] == rams[1][1] else "differ"))
+        rams = []
+        for i, (d1, b1, d2, b2) in enumerate(seq):
+            e.held[0] = set(mt.DIRS[d1] + tuple(b1))
+            e.held[1] = set(mt.DIRS[d2] + tuple(b2))
+            e.lib.retro_run()
+            if i % 100 == 99:
+                rams.append(e.ram())
+        e.held = [set() for _ in range(4)]
+        runs.append((rams, e.frame.tobytes(), e.save()))
+    same = runs[0][0] == runs[1][0] and runs[0][1] == runs[1][1]
+    diff = sum(x != y for x, y in zip(runs[0][2], runs[1][2]))
+    print("RAM (12 checkpoints) and picture: %s; savestate blobs differ in %d bytes"
+          % ("identical" if same else "DIFFERENT", diff))
     return 0 if same else 1
 
 

@@ -1,5 +1,12 @@
 Named_Snaps/Cadillacs and Dinosaurs (World 930201).png
 Named_Snaps/Double Dragon (Neo-Geo).png
+Named_Snaps/Garou - Mark of the Wolves (Enable hidden characters, Hack).png
+Named_Snaps/Garou - Mark of the Wolves (Enhanced, Hack).png
+Named_Snaps/Garou - Mark of the Wolves (NGH-2530).png
+Named_Snaps/Garou - Mark of the Wolves (NGM-2530 ~ NGH-2530).png
+Named_Snaps/Garou - Mark of the Wolves (NGM-2530).png
+Named_Snaps/Garou - Mark of the Wolves (bootleg).png
+Named_Snaps/Garou - Mark of the Wolves (prototype).png
 Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
 Named_Snaps/J. J. Squawkers (older).png
 Named_Snaps/J. J. Squawkers.png
@@ -60,6 +67,13 @@ Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAC).png
 Named_Titles/Cadillacs and Dinosaurs (World 930201).png
 Named_Titles/Double Dragon (Neo-Geo).png
+Named_Titles/Garou - Mark of the Wolves (Enable hidden characters, Hack).png
+Named_Titles/Garou - Mark of the Wolves (Enhanced, Hack).png
+Named_Titles/Garou - Mark of the Wolves (NGH-2530).png
+Named_Titles/Garou - Mark of the Wolves (NGM-2530 ~ NGH-2530).png
+Named_Titles/Garou - Mark of the Wolves (NGM-2530).png
+Named_Titles/Garou - Mark of the Wolves (bootleg).png
+Named_Titles/Garou - Mark of the Wolves (prototype).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
 Named_Titles/J. J. Squawkers (older).png
 Named_Titles/J. J. Squawkers.png

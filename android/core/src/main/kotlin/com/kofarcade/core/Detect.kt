@@ -219,6 +219,33 @@ private val MVSC = DetectSpec(
     pointBase = { ram, base -> if (ram.byte(base) == 1) base else base + 0x800 },
 )
 
+// Garou: Mark of the Wolves (Neo Geo): P1's fighter block at 0x100400, P2's
+// 0x100 later, with the character in the byte at +0x11, X at +0x20, the
+// height at +0x28 (0 on the floor) and facing left in bit 7 of +0x58. The
+// byte at 0x10748A is 0x44 while a round is fought (0 on the select screen,
+// 0x38 for the round's intro, 0x77 at a KO). From peon2's garou.lua and the
+// hitbox viewers; checked in garou (tools/garou_roster.py): every fighter on
+// both sides, facing flipping when they cross, Grant and Kain included.
+private val GAROU_IDS = listOf(
+    "terry", "rock", "donghwan", "jaehoon", "hotaru", "gato", "jenet",
+    "butt", "hokutomaru", "freeman", "tizoc", "kevin", "grant", "kain",
+)
+
+private val GAROU = DetectSpec(
+    windows = listOf(0x100400 to 0x200, 0x107400 to 0x100),
+    player = 0x100400,
+    playerStride = 0x100,
+    character = 0x11,
+    x = 0x20,
+    grounded = 0x28,
+    facing = { ram, base -> ram.byte(base + 0x58) and 0x80 != 0 },
+    // One fighter each: the "team" is the fighter in the player's block.
+    team = listOf(0x100411),
+    teamStride = 0x100,
+    inRound = { it.byte(0x10748A) == 0x44 },
+    ids = GAROU_IDS,
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
@@ -228,6 +255,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "doubledr" -> DOUBLE_DRAGON
     "sfiii3" -> SF3
     "mvsc" -> MVSC
+    "garou" -> GAROU
     else -> null
 }
 
