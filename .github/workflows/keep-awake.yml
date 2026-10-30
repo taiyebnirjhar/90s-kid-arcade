@@ -1,0 +1,34 @@
+# Supabase pauses a free project after a week with no activity, and online
+# play stops until someone clicks Restore in its dashboard. This calls the
+# database every 3 days (keep_awake(), server/supabase/migrations) with the
+# app's public URL and key (the same ones in the app), so it never sleeps.
+# A failed call fails the run, so GitHub emails the owner.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    # 06:17 UTC on days 1, 4, 7, … of each month: never more than 4 days apart.
+    - cron: "17 6 */3 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: https://ysbskjtvccdbhnfuccso.supabase.co
+      SUPABASE_KEY: sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE
+    steps:
+      - name: Call the database
+        run: |
+          for try in 1 2 3; do
+            code=$(curl -sS -o body.txt -w '%{http_code}' -X POST "$SUPABASE_URL/rest/v1/rpc/keep_awake" \
+              -H "apikey: $SUPABASE_KEY" -H "Content-Type: application/json" -d '{}' || true)
+            if [ "$code" = "200" ]; then echo "Awake: $(cat body.txt)"; exit 0; fi
+            echo "Try $try: HTTP $code $(cat body.txt 2>/dev/null)"
+            sleep 20
+          done
+          echo "::error::Supabase didn't answer. If it's paused, restore it in the dashboard (Project → Restore)."
+          exit 1
