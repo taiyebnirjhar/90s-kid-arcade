@@ -150,7 +150,7 @@ Attack.
 
 Pause → **Settings**, in four tabs: **Screen** (picture width, detection
 readout), **Controls** (stick style: floating, fixed or
-hidden; button size; buttons on the left; vibration; rapid fire),
+hidden; button size; opacity; buttons on the left; vibration; rapid fire),
 **Moves** (move names under the buttons, move timing) and **Sound** (on or
 off, volume up and down in steps). The phone's volume buttons set the
 game's volume too.

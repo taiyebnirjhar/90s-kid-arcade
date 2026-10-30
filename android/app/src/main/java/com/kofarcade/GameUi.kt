@@ -418,6 +418,7 @@ fun ControlsPanel(
                     SettingsTab.CONTROLS -> {
                         PickRow("Stick", StickMode.entries, look.stick, { it.short }, sub = look.stick.label) { onLook(look.copy(stick = it)) }
                         StepRow("Button size", look.size, 0.7f..1.4f, 0.05f) { onLook(look.copy(size = it)) }
+                        StepRow("Opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
                         ToggleRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
                         ToggleRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
                         if (canRapid) ToggleRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot or Fire to keep firing")
