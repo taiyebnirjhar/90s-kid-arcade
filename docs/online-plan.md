@@ -553,6 +553,12 @@ one Wi-Fi with no internet.
   is unchanged: it kept the delay at 1 at 70 ms because it starts there and
   raises only on a lead of 1.5 frames on average; starting at the ping's
   delay fixes that.
+- **Double speed at delay 4 (found on phones, fixed after #49):** the
+  emulator ran an extra frame whenever our sampled input was more than 4
+  frames ahead of its game, and sampling keeps it delay + 1 ahead. Wi-Fi
+  never reaches delay 4, so only internet games were hit, and there every
+  frame ran twice. The gap is now `NET_CATCH_UP_GAP` (8) in libretrodroid.h,
+  and `LockstepTest` checks it stays above `MAX_ONLINE_DELAY` + 1.
 - **Simulated (1.6.3), two phones, 2 minutes, 3 runs each, 1% loss, a
   hiccup of up to 0.2 s every ~8 s; rollbacks a minute per phone:**
 

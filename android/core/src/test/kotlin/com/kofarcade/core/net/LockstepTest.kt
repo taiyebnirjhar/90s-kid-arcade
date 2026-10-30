@@ -110,6 +110,25 @@ class LockstepTest {
     }
 
     @Test
+    fun theEmulatorDoesNotRunAheadOfTheLargestDelay() {
+        // The emulator runs an extra frame when our sampled input is more than
+        // NET_CATCH_UP_GAP ahead of its game. Sampling keeps it delay + 1
+        // ahead, so at a delay that reached the gap every frame ran twice:
+        // online (delay 4) went at double speed.
+        val header = java.io.File("../libretrodroid/src/main/cpp/libretrodroid.h").readText()
+        val gap = Regex("""NET_CATCH_UP_GAP = (\d+);""").find(header)!!.groupValues[1].toInt()
+        for (delay in 1..MAX_ONLINE_DELAY) {
+            val a = Lockstep(delay, 0)
+            for (emulated in 0 until 100) {
+                a.sampleUpTo(emulated) { 0 }
+                val ahead = a.outgoing(1, max = Int.MAX_VALUE).let { it.first + it.second.size } - emulated
+                assertEquals(delay + 1, ahead)
+                assertTrue(ahead <= gap, "delay $delay: $ahead ahead runs every frame twice (gap $gap)")
+            }
+        }
+    }
+
+    @Test
     fun remoteInputsComeOutInOrderOnlyWithoutGaps() {
         val a = Lockstep(1, 0)
         a.receive(1, 2, intArrayOf(7), ack = 0)

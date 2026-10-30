@@ -1016,9 +1016,10 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
         }
         return;
     }
-    // Catch up a frame when this phone is behind its own input.
+    // Catch up a frame when this phone is behind its own input (beyond what
+    // the input delay puts it ahead: see NET_CATCH_UP_GAP).
     int32_t localKnown = netKnown[netLocalPlayer];
-    if (localKnown - netFrame > 4) wanted++;
+    if (localKnown - netFrame > NET_CATCH_UP_GAP) wanted++;
     for (unsigned i = 0; i < wanted; i++) {
         if (netFrame >= localKnown) return;                     // our input isn't sampled yet
         // Too far ahead of the slowest partner (none: alone in the room).

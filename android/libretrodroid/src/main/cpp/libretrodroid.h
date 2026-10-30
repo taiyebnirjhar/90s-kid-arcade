@@ -253,6 +253,12 @@ private:
     static constexpr int NET_WATCH_FAR = 30;       // a watcher this far behind skips ahead unseen…
     static constexpr int NET_WATCH_NEAR = 4;       // …to this close, then plays on as usual
     static constexpr int NET_WATCH_CATCH_UP_MS = 10;
+    // A player runs an extra frame when its own sampled input is more than
+    // this far ahead of the game. The app samples up to the input delay + 1
+    // ahead every frame, so this must stay above the largest delay + 1
+    // (MAX_ONLINE_DELAY in core's Lockstep.kt, checked by LockstepTest): at
+    // or below it, every frame ran twice and the game went at double speed.
+    static constexpr int NET_CATCH_UP_GAP = 8;
     static constexpr int NET_MAX_PLAYERS = 4;
     static constexpr double NET_FRAME_RATE = 60.0;    // frames by the clock in a room
     static constexpr int NET_STRETCH_FRAMES = 20;     // a wait, spread over this many frames
