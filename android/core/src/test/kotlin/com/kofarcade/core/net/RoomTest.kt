@@ -200,7 +200,7 @@ open class RoomTest {
         // The watcher gets every input of the host from there.
         waitFor("the watcher's game follows") { b.framesOf(0) >= 60 && b.emulated >= b.startAt + 50 }
         assertTrue(b.matches(0, a, 60))
-        assertTrue(a.news.any { "Guest is watching" in it }, a.news.toString())
+        waitFor("told") { a.news.any { "Guest is watching" in it } }
 
         // COIN on the watcher's phone: it's player 2.
         g.requestSeat()
@@ -210,7 +210,7 @@ open class RoomTest {
         waitFor("120 frames each way") { a.framesOf(1) >= 120 && b.framesOf(0) >= 120 }
         assertTrue(a.matches(1, b, 120), "host got the guest's inputs")
         assertTrue(b.matches(0, a, 120), "guest got the host's inputs")
-        assertTrue(a.news.any { "Guest is player 2" in it }, a.news.toString())
+        waitFor("told") { a.news.any { "Guest is player 2" in it } }
         assertEquals(null, a.error ?: b.error)
         assertEquals(h.key, g.key)
 
@@ -271,7 +271,7 @@ open class RoomTest {
         waitFor("two in line") { two.linePlace == 2 }
         three.requestSeat()
         waitFor("three in line") { three.linePlace == 3 }
-        assertTrue(g2.news.any { "2nd in line" in it }, g2.news.toString())
+        waitFor("told") { g2.news.any { "2nd in line" in it } }
 
         // Two leaves the line: Three moves up, still watching.
         two.requestWatch()
@@ -427,7 +427,7 @@ open class RoomTest {
         g.requestWatch()
         waitFor("watching again") { a.epoch == 3 && b.epoch == 3 && g.watching }
         assertEquals(setOf(0), h.seats.keys)
-        assertTrue(a.news.any { "Guest is watching now" in it }, a.news.toString())
+        waitFor("told") { a.news.any { "Guest is watching now" in it } }
         // The host can too.
         h.requestWatch()
         waitFor("host watching") { a.epoch == 4 && h.watching && h.seats.isEmpty() }
@@ -530,8 +530,9 @@ open class RoomTest {
         // The host's Wi-Fi goes: Rafi takes the room over, Mim follows, and the host's seat is held.
         h.offline = true
         waitFor("Rafi has the room, holding the host's seat") { g.isOwner && w.owner == g.localId && g.held.keys == setOf(0) }
+        // The note follows the seating that holds the seat, a moment after.
+        waitFor("Rafi told the host's seat is held") { b.news.any { "seat is held" in it } }
         assertEquals(null, b.lostReason ?: c.lostReason)
-        assertTrue(b.news.any { "seat is held" in it }, b.news.toString())
 
         // Its Wi-Fi back, the old host finds the room has moved on, and rejoins into its seat.
         h.offline = false
@@ -667,7 +668,7 @@ open class RoomTest {
         val before = a.emulated
         waitFor("host plays on") { a.emulated > before + 20 }
         assertEquals(null, a.closedReason)
-        assertTrue(a.news.any { "Guest left" in it }, a.news.toString())
+        waitFor("told") { a.news.any { "Guest left" in it } }
 
         // The seat is free for someone else.
         val g2 = join(h, "Second")
@@ -706,7 +707,7 @@ open class RoomTest {
         assertTrue(byteArrayOf(7, g1.localId.toByte()).contentEquals(c.loaded))
         waitFor("frames between the two left") { b.framesOf(2) >= 60 && c.framesOf(1) >= 60 }
         assertTrue(b.matches(2, c, 60) && c.matches(1, b, 60))
-        assertTrue(b.news.any { "You're the host now" in it }, b.news.toString())
+        waitFor("told") { b.news.any { "You're the host now" in it } }
         assertEquals(null, b.closedReason ?: c.closedReason)
         assertEquals(null, b.error ?: c.error)
 
