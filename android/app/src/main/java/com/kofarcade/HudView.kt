@@ -42,6 +42,9 @@ import kotlin.math.min
 private const val FULL_HEIGHT_DP = 411f
 private const val FULL_WIDTH_DP = 560f
 private const val MIN_FIT = 0.6f
+// Tablets and unfolded phones: the controls grow with the screen (a phone's
+// size in dp would leave them small, far from the thumbs), up to this much.
+private const val MAX_FIT = 1.35f
 
 class HudView(context: Context, private val listener: Listener) : View(context) {
     companion object {
@@ -319,7 +322,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun fit(w: Int, h: Int): Float {
         if (w <= 0 || h <= 0) return 1f
-        return minOf(1f, h / density / FULL_HEIGHT_DP, w / density / FULL_WIDTH_DP).coerceAtLeast(MIN_FIT)
+        return minOf(MAX_FIT, h / density / FULL_HEIGHT_DP, w / density / FULL_WIDTH_DP).coerceAtLeast(MIN_FIT)
     }
 
     // ----- Layout -----
@@ -661,8 +664,6 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         text.color = if (selected == "stick") accent else Color.WHITE
         canvas.drawText("Stick", homeX, homeY + stickRadius() + 14 * d, text)
         text.color = Color.WHITE
-        // Under the editor's bar, where no control sits by default.
-        centeredText(canvas, "Drag any control to move it · tap one to resize it", width / 2f, 84 * d, 12 * d)
         softShadow()
     }
 

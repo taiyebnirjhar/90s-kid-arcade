@@ -492,8 +492,11 @@ class UiSnapshots {
         }
     }
 
-    private fun controlsShot(name: String, tab: SettingsTab, small: Boolean = false) {
-        if (small) smallLandscape() else landscape()
+    private fun controlsShot(name: String, tab: SettingsTab, small: Boolean = false) =
+        controlsShotWith(name, tab) { if (small) smallLandscape() else landscape() }
+
+    private fun controlsShotWith(name: String, tab: SettingsTab, device: () -> Unit) {
+        device()
         shot(name) {
             GameBehind {
                 ControlsPanel(
@@ -591,7 +594,7 @@ class UiSnapshots {
 
     /** The HUD over the game; [touches] runs once it's laid out, to press things. */
     @Composable
-    private fun Hud(editing: Boolean = false, faces: Boolean = false, touches: (HudView, Float) -> Unit = { _, _ -> }) {
+    private fun Hud(editing: Boolean = false, faces: Boolean = false, stick: StickMode = StickMode.FLOATING, touches: (HudView, Float) -> Unit = { _, _ -> }) {
         GameBehind {
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx ->
@@ -600,7 +603,7 @@ class UiSnapshots {
                             val face = syntheticFace()
                             faceOf = { if (it == "Iori Yagami") face else null }
                         }
-                        state = hudState()
+                        state = hudState().copy(stick = stick)
                         opacity = 0.46f
                         this.editing = editing
                         var done = false
@@ -647,10 +650,42 @@ class UiSnapshots {
         }
     }
 
+    // A fixed stick, thumb dragged far up and right of it: the stick stays in
+    // its place (the knob leans to its edge), it doesn't follow the thumb.
+    @Test
+    fun hudFixedStick() {
+        landscape()
+        shot("hud_fixed_stick") {
+            Hud(stick = StickMode.FIXED) { v, d ->
+                fun home(name: String) = HudView::class.java.getDeclaredField(name).apply { isAccessible = true }.getFloat(v)
+                val hx = home("homeX")
+                val hy = home("homeY")
+                touch(v, android.view.MotionEvent.ACTION_DOWN, hx + 30 * d, hy + 10 * d)
+                touch(v, android.view.MotionEvent.ACTION_MOVE, hx + 220 * d, hy - 160 * d)
+                touch(v, android.view.MotionEvent.ACTION_MOVE, hx + 420 * d, hy - 230 * d)
+            }
+        }
+    }
+
     @Test
     fun hudSmall() {
         smallLandscape()
         shot("hud_small") { Hud() }
+    }
+
+    private val editLook = Look(ScreenMode.SLIGHT, StickMode.FIXED, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4)
+
+    // The gear's panel: every control's stick, side, size and opacity, from the side away from the buttons.
+    @Test
+    fun hudEditAll() {
+        smallLandscape()
+        shot("hud_edit_all") {
+            Box(Modifier.fillMaxSize()) {
+                Hud(editing = true)
+                EditBarContent("Move 3", 1f, true, {}, {}, {}, {}, onAll = {})
+                EditAllSheet(editLook, {}, fromLeft = true, onClose = {})
+            }
+        }
     }
 
     @Test
@@ -659,7 +694,7 @@ class UiSnapshots {
         shot("hud_edit_small") {
             Box(Modifier.fillMaxSize()) {
                 Hud(editing = true)
-                EditBarContent("Move 3", 1f, true, {}, {}, {}, {})
+                EditBarContent("Move 3", 1f, true, {}, {}, {}, {}, onAll = {})
             }
         }
     }
@@ -674,10 +709,109 @@ class UiSnapshots {
                     touch(v, android.view.MotionEvent.ACTION_DOWN, bx, by)
                     touch(v, android.view.MotionEvent.ACTION_UP, bx, by)
                 }
-                EditBarContent("B button", 1.1f, true, {}, {}, {}, {})
+                EditBarContent("B button", 1.1f, true, {}, {}, {}, {}, onAll = {})
             }
         }
     }
+
+    // ----- Every phone and tablet: big text, the smallest phones, tablets -----
+
+    /** A 360 dp phone with Android's text size turned up ([scale]: 1.5, or 2 on Android 14's largest). */
+    private fun bigText(scale: Float = 1.5f, landscape: Boolean = false) = paparazzi.unsafeUpdateConfig(
+        deviceConfig = if (landscape) {
+            DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 1280, screenHeight = 720, density = com.android.resources.Density.XHIGH, fontScale = scale)
+        } else {
+            DeviceConfig.NEXUS_5.copy(fontScale = scale)
+        },
+    )
+
+    /** The smallest phones still sold: 320 x 568 dp. */
+    private fun tiny() = paparazzi.unsafeUpdateConfig(
+        deviceConfig = DeviceConfig.NEXUS_5.copy(screenWidth = 640, screenHeight = 1136, density = com.android.resources.Density.XHIGH),
+    )
+
+    /** A tablet (or an unfolded phone), landscape: 1280 x 800 dp. */
+    private fun tablet(portrait: Boolean = false) = paparazzi.unsafeUpdateConfig(
+        deviceConfig = DeviceConfig.PIXEL_C.copy(
+            orientation = if (portrait) ScreenOrientation.PORTRAIT else ScreenOrientation.LANDSCAPE,
+            screenWidth = if (portrait) 1600 else 2560, screenHeight = if (portrait) 2560 else 1600, density = com.android.resources.Density.XHIGH,
+        ),
+    )
+
+    private val onlineRooms = listOf(
+        OnlineChoice("KOF '97", "Rafi", true, 2, 2, open = true, game = gameById("kof97"), set = "kof97"),
+        OnlineChoice("Cadillacs and Dinosaurs", "Mim", true, 1, 3, open = false, game = gameById("dino"), set = "dino"),
+        OnlineChoice("KOF 2005", "Tanu", false, 1, 2, open = true, game = gameById("kof2005"), set = "kf2k5uni"),
+    )
+
+    @Composable
+    private fun OnlineHub() = MultiplayerHub(
+        listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino"))),
+        "", {}, null, false, {}, {}, {}, {}, {}, online = onlineRooms,
+    )
+
+    @Test
+    fun onlineRooms() = shot("twoplayer_online_rooms") { OnlineHub() }
+
+    @Test
+    fun pickGameOnline() = shot("twoplayer_pick_online") { PickGameScreen(picks, {}, {}, {}, online = true) }
+
+    @Test
+    fun roomSheetOpen() {
+        landscape()
+        shot("room_sheet_open") {
+            OverGame {
+                SheetFrame(width = 880) {
+                    RoomSheetContent(
+                        RoomUi("K7Q-2MX", 2, listOf(RoomPerson("You", 0, you = true, host = true)), watching = false, canFree = true, online = true, open = true, canOpen = true),
+                        first = true, {}, {}, {}, {}, {}, {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test fun bigTextHome() { bigText(); shot("big_text_home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) } }
+    @Test fun bigTextHomeFirstRun() { bigText(); shot("big_text_home_first_run") { HomeScreen(firstRunUi, {}, {}, {}, {}, {}, {}) } }
+    @Test fun biggestTextHome() { bigText(2f); shot("biggest_text_home") { HomeScreen(homeUi.copy(profileName = "Rafi", profileIcon = 2), {}, {}, {}, {}, {}, {}) } }
+    @Test fun bigTextLibrary() { bigText(); shot("big_text_library") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) } }
+    @Test fun bigTextLibraryKey() { bigText(); shot("big_text_library_key") { LibraryScreen(LibraryUi(askKey = true, error = "Wrong key. Check it and try again."), "secret", {}, Library.DEFAULT_URL, {}, false, {}, {}, {}, {}, {}, {}, {}) } }
+    @Test fun bigTextOnline() { bigText(); shot("big_text_online") { OnlineHub() } }
+    @Test fun biggestTextOnline() { bigText(2f); shot("biggest_text_online") { OnlineHub() } }
+    @Test fun bigTextPickOnline() { bigText(); shot("big_text_pick_online") { PickGameScreen(picks, {}, {}, {}, online = true) } }
+    @Test fun bigTextProfile() { bigText(); shot("big_text_profile") { ProfileScreen(ProfileUi(rafi, SyncState.Synced, rafiPlays), {}, {}, { _, _ -> }, {}) } }
+    @Test fun bigTextDialog() {
+        bigText(2f)
+        shot("biggest_text_dialog") {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                DialogCard("Remove KOF '97?", "Deletes the ROM from this app. You can add it again any time.", "Keep it" to {}, "Remove" to {}, Tone.BAD, dangerSecondary = true)
+            }
+        }
+    }
+    @Test fun bigTextPause() { bigText(1.5f, landscape = true); shot("big_text_pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } } }
+    @Test fun bigTextRoomSheet() {
+        bigText(1.5f, landscape = true)
+        shot("big_text_room_sheet") { OverGame { SheetFrame(width = 880) { RoomSheetContent(roomUi.copy(online = true, open = false), first = false, {}, {}, {}, {}, {}, {}) } } }
+    }
+    @Test fun bigTextControls() = controlsShotWith("big_text_controls", SettingsTab.CONTROLS) { bigText(1.5f, landscape = true) }
+    @Test fun bigTextHud() { bigText(1.5f, landscape = true); shot("big_text_hud") { Hud() } }
+
+    @Test fun tinyHome() { tiny(); shot("tiny_home") { HomeScreen(homeUi.copy(profileName = "Rafi", profileIcon = 2), {}, {}, {}, {}, {}, {}) } }
+    @Test fun tinyLibrary() { tiny(); shot("tiny_library") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) } }
+    @Test fun tinyOnline() { tiny(); shot("tiny_online") { OnlineHub() } }
+    @Test fun tinyPickOnline() { tiny(); shot("tiny_pick_online") { PickGameScreen(picks, {}, {}, {}, online = true) } }
+    @Test fun tinyProfile() { tiny(); shot("tiny_profile") { ProfileScreen(ProfileUi(rafi, SyncState.Synced, rafiPlays), {}, {}, { _, _ -> }, {}) } }
+
+    @Test fun tabletHome() { tablet(); shot("tablet_home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) } }
+    @Test fun tabletHomePortrait() { tablet(portrait = true); shot("tablet_home_portrait") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) } }
+    @Test fun tabletLibrary() { tablet(); shot("tablet_library") { LibraryScreen(libraryUi, "", {}, "", {}, false, {}, {}, {}, {}, {}, {}, {}) } }
+    @Test fun tabletOnline() { tablet(); shot("tablet_online") { OnlineHub() } }
+    @Test fun tabletPickOnline() { tablet(); shot("tablet_pick_online") { PickGameScreen(picks, {}, {}, {}, online = true) } }
+    @Test fun tabletProfile() { tablet(); shot("tablet_profile") { ProfileScreen(ProfileUi(rafi, SyncState.Synced, rafiPlays), {}, {}, { _, _ -> }, {}) } }
+    @Test fun tabletPause() { tablet(); shot("tablet_pause") { GameBehind { PauseContent("KOF '97", "Iori Yagami", false, {}, {}, {}, {}, {}, {}, {}, {}) } } }
+    @Test fun tabletRoomSheet() { tablet(); shot("tablet_room_sheet") { OverGame { SheetFrame(width = 880) { RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {}) } } } }
+    @Test fun tabletControls() = controlsShotWith("tablet_controls", SettingsTab.CONTROLS) { tablet() }
+    @Test fun tabletHud() { tablet(); shot("tablet_hud") { Hud() } }
 }
 
 /**

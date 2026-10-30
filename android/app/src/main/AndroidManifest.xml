@@ -18,6 +18,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="90s Kid Arcade"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.Kof">
 
         <activity

@@ -3,6 +3,9 @@ package com.kofarcade
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.Color
 
 object Palette {
@@ -17,8 +20,27 @@ object Palette {
     val blue = Color(0xFF3E8ED0)
 }
 
+/**
+ * Android's text size, up to [MAX_TEXT_SCALE]: larger settings (up to 2x on
+ * Android 14) make text bigger only that far, so arcade labels, codes and
+ * buttons keep their shape on every phone. Each dialog's window gets it again
+ * (a dialog starts from the window's own density).
+ */
 @Composable
-fun KofTheme(content: @Composable () -> Unit) {
+fun TextScaleCap(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    if (density.fontScale <= MAX_TEXT_SCALE) {
+        content()
+    } else {
+        CompositionLocalProvider(LocalDensity provides Density(density.density, MAX_TEXT_SCALE), content = content)
+    }
+}
+
+/** The largest text size the app follows: Android's "Large" setting, about. */
+const val MAX_TEXT_SCALE = 1.3f
+
+@Composable
+fun KofTheme(content: @Composable () -> Unit) = TextScaleCap {
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Palette.gold,

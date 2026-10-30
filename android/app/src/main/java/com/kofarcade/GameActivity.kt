@@ -48,7 +48,9 @@ import com.kofarcade.core.PadMap
 import com.kofarcade.core.Ram
 import com.kofarcade.core.Roster
 import com.kofarcade.core.Timing
+import com.kofarcade.core.online.OnlineError
 import com.kofarcade.core.online.OnlineRooms
+import com.kofarcade.core.online.explainOnline
 import com.kofarcade.core.net.Room
 import com.kofarcade.core.net.RoomListener
 import com.kofarcade.core.net.NetLog
@@ -234,6 +236,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private set
     var editScale by mutableFloatStateOf(1f)
         private set
+    /** In the layout editor: the stick, which side the buttons are on, their size and see-through, as being edited. */
+    var editLook by mutableStateOf(Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, DEFAULT_OPACITY, LabelMode.SUPERS, true, false, 2, 4))
+        private set
+    // What the editor started from (Cancel goes back to it), and the positions
+    // edited for each side (switching sides keeps the other side's edits).
+    private var editStartLook: Look? = null
+    private val editTweaks = HashMap<String, Map<String, HudView.Tweak>>()
     private var editBackup: Map<String, HudView.Tweak> = emptyMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -634,7 +643,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
         }
         val key = if (r.overInternet) OnlineRooms.pretty(r.key) else r.key
-        roomUi = RoomUi(key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs)
+        val online = Netplay.online
+        roomUi = RoomUi(
+            key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs,
+            open = online?.open, canOpen = online?.canOpen == true,
+        )
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
@@ -690,6 +703,28 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val roomKey: String? get() = room?.key?.takeIf { it.isNotEmpty() }
 
     /** Copies the room's key, to send to friends. */
+    // Opening or locking the room: one at a time.
+    @Volatile private var settingOpen = false
+
+    /** Opens the room to anyone (listed with its code) or locks it (the code only), on the server. */
+    fun setRoomOpen(open: Boolean) {
+        val online = Netplay.online ?: return
+        if (settingOpen) return
+        settingOpen = true
+        lifecycleScope.launch {
+            val done = withContext(Dispatchers.IO) { runCatching { online.setOpen(open) } }
+            settingOpen = false
+            if (destroyed) return@launch
+            done.onSuccess {
+                updateRoomUi()
+                announce(if (open) "Room open: anyone can join from the list" else "Room locked: only with the code")
+            }.onFailure {
+                val why = if (it is OnlineError.Offline) "no internet right now" else explainOnline(it)
+                announce("Couldn't ${if (open) "open" else "lock"} the room: $why")
+            }
+        }
+    }
+
     fun copyRoomKey() {
         val key = roomKey?.let { if (room?.overInternet == true) OnlineRooms.pretty(it) else it } ?: return
         val clipboard = getSystemService(android.content.ClipboardManager::class.java) ?: return
@@ -1443,7 +1478,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         "${game.layout.name}${if (game.pad == PadMap.CAPCOM_6) "6" else ""}.${if (look.leftHanded) "L" else "R"}"
 
     /** What's on screen now: the saved settings, or a preview from Controls. */
-    private var look: Look = Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4)
+    private var look: Look = Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, DEFAULT_OPACITY, LabelMode.SUPERS, true, false, 2, 4)
 
     /** Applies the saved settings. */
     fun applyPrefs() = applyLook(prefs.look())
@@ -1496,8 +1531,26 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun startEditing() {
         dialog = null
         editBackup = hud.tweaks
+        editStartLook = look
+        editLook = look
+        editTweaks.clear()
         editing = true
         hud.editing = true
+    }
+
+    /** The stick, side, size or see-through changed in the editor: shown at once, saved with Save. */
+    fun changeEditLook(l: Look) {
+        if (l.leftHanded != look.leftHanded) {
+            // The other side has its own positions: this side's edits are kept for Save.
+            editTweaks[layoutKey()] = hud.tweaks
+            look = l
+            hud.tweaks = editTweaks[layoutKey()] ?: prefs.tweaks(layoutKey())
+        } else {
+            look = l
+        }
+        editLook = l
+        hud.opacity = l.opacity
+        updateHud()
     }
 
     fun changeEditScale(v: Float) {
@@ -1509,10 +1562,25 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun resetLayout() {
         hud.tweaks = emptyMap()
         editScale = 1f
+        changeEditLook(editLook.copy(size = 1f, opacity = DEFAULT_OPACITY))
     }
 
     fun finishEditing(save: Boolean) {
-        if (save) prefs.setTweaks(layoutKey(), hud.tweaks) else hud.tweaks = editBackup
+        if (save) {
+            editTweaks[layoutKey()] = hud.tweaks
+            editTweaks.forEach { (key, tweaks) -> prefs.setTweaks(key, tweaks) }
+            prefs.stick = look.stick
+            prefs.size = look.size
+            prefs.leftHanded = look.leftHanded
+            prefs.opacity = look.opacity
+        } else {
+            editStartLook?.let { look = it }
+            hud.tweaks = editBackup
+            hud.opacity = look.opacity
+            updateHud()
+        }
+        editTweaks.clear()
+        editStartLook = null
         editing = false
         editSelected = null
         hud.editing = false

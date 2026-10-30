@@ -7,6 +7,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -411,7 +413,6 @@ fun ControlsPanel(
                 when (tab) {
                     SettingsTab.SCREEN -> {
                         PickRow("Picture", ScreenMode.entries, look.screen, { it.short }, sub = look.screen.label) { onLook(look.copy(screen = it)) }
-                        StepRow("Controls opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How see-through the buttons are") { onLook(look.copy(opacity = it)) }
                         if (canDetect) ToggleRow("Detection readout", detectInfo, onDetectInfo, sub = "For checking fighter detection works")
                     }
                     SettingsTab.CONTROLS -> {
@@ -562,6 +563,8 @@ fun EditBarContent(
     onReset: () -> Unit,
     onCancel: () -> Unit,
     onSave: () -> Unit,
+    /** The gear: opens the settings for every control (stick, side, size, opacity). */
+    onAll: (() -> Unit)? = null,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp), contentAlignment = Alignment.TopCenter) {
         // Small phones: a shorter name box and slider, so the bar fits in 640 dp.
@@ -574,9 +577,14 @@ fun EditBarContent(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).padding(start = 12.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+                modifier = Modifier
+                    .clip(Slant(8.dp, 8.dp))
+                    .background(Palette.gold)
+                    // The gear opens the settings for every control (a 48 dp target round the chip).
+                    .then(if (onAll != null) Modifier.clickable(onClick = onAll) else Modifier)
+                    .padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
             ) {
-                GearIcon(Modifier.size(14.dp), OnGold, hole = Palette.gold)
+                GearIcon(Modifier.size(if (onAll != null) 18.dp else 14.dp), OnGold, hole = Palette.gold)
                 if (!narrow) {
                     Spacer(Modifier.width(6.dp))
                     Text("EDIT CONTROLS", color = OnGold, fontSize = 11.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, letterSpacing = 1.sp)
@@ -611,6 +619,54 @@ fun EditBarContent(
                     modifier = Modifier.clip(Slant(8.dp, 8.dp)).background(Palette.gold).padding(horizontal = 18.dp, vertical = 8.dp),
                 )
             }
+        }
+        // Under the bar: how to edit (the gear has the rest).
+        Text(
+            if (onAll != null) "Drag a control to move it · tap one to resize it · ⚙ for the stick, side, size and opacity" else "Drag any control to move it · tap one to resize it",
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(top = 60.dp, start = 24.dp, end = 24.dp),
+            style = androidx.compose.ui.text.TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 6f)),
+        )
+    }
+}
+
+/**
+ * The layout editor's settings for every control at once, sliding in from
+ * the side away from the buttons ([fromLeft]), so they show each change:
+ * the stick, which side the buttons are on, their size and opacity.
+ */
+@Composable
+fun EditAllSheet(look: Look, onLook: (Look) -> Unit, fromLeft: Boolean, onClose: () -> Unit) {
+    val shown = slideIn()
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            // A tap beside the panel closes it.
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClose),
+        contentAlignment = if (fromLeft) Alignment.CenterStart else Alignment.CenterEnd,
+    ) {
+        Column(
+            Modifier
+                .fillMaxHeight()
+                .width(if (maxWidth < 760.dp) 400.dp else 460.dp)
+                .graphicsLayer { translationX = (1 - shown.value) * size.width * (if (fromLeft) -1 else 1) }
+                .slantPanel(left = if (fromLeft) 0.dp else 50.dp, right = if (fromLeft) 50.dp else 0.dp)
+                .clickable(remember { MutableInteractionSource() }, indication = null) {}
+                .padding(start = if (fromLeft) 24.dp else 62.dp, end = if (fromLeft) 62.dp else 24.dp, top = 16.dp, bottom = 12.dp),
+        ) {
+            Text("All controls", color = Palette.text, fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+            Text("Changes show as you make them", color = Palette.muted, fontSize = 11.sp)
+            Spacer(Modifier.height(6.dp))
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                PickRow("Stick", StickMode.entries, look.stick, { it.short }, sub = look.stick.label) { onLook(look.copy(stick = it)) }
+                ToggleRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
+                StepRow("Button size", look.size, 0.7f..1.4f, 0.05f) { onLook(look.copy(size = it)) }
+                StepRow("Opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
+            }
+            GoldButton("Done", onClose, Modifier.fillMaxWidth().padding(top = 10.dp))
         }
     }
 }

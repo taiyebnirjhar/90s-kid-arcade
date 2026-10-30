@@ -105,6 +105,7 @@ fun GameDialogs(game: GameActivity) {
                     onLeave = { game.finish() },
                     onClose = { game.close() },
                     onFree = { game.freeHeldSeat(it) },
+                    onOpen = { game.setRoomOpen(it) },
                 )
             }
         }
@@ -145,7 +146,7 @@ private fun Sheet(
 
 /** The [Sheet]'s panel, centred (so it can be previewed). */
 @Composable
-fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) {
+fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) = TextScaleCap {
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Small phones: a smaller slant and margins, so more fits across.
         val narrow = maxWidth < 760.dp
@@ -608,13 +609,21 @@ private fun controlName(id: String): String = when {
 @Composable
 private fun EditBar(game: GameActivity) {
     val id = game.editSelected
+    // The gear's settings for every control, open on the side away from the buttons (picked when opened).
+    var allFromLeft by remember { mutableStateOf<Boolean?>(null) }
     EditBarContent(
         picked = id?.let(::controlName),
         scale = game.editScale,
         canResize = id != null && id != "top" && id != "team",
         onScale = { game.changeEditScale(it) },
+        onAll = { allFromLeft = !game.editLook.leftHanded },
         onReset = { game.resetLayout() },
         onCancel = { game.finishEditing(save = false) },
         onSave = { game.finishEditing(save = true) },
     )
+    allFromLeft?.let { fromLeft ->
+        // Back closes the panel first, then (as before) the editor.
+        androidx.activity.compose.BackHandler { allFromLeft = null }
+        EditAllSheet(game.editLook, { game.changeEditLook(it) }, fromLeft, onClose = { allFromLeft = null })
+    }
 }

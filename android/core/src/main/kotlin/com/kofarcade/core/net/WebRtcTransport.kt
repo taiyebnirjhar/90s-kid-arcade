@@ -35,6 +35,8 @@ class WebRtcTransport(
     private val iceServers: () -> List<IceServer>,
     /** The room's code: what friends type to join (see [key]). */
     private val code: String = "",
+    /** Every connection only through the relay (an open room: no phone's address goes to strangers). */
+    val relayOnly: Boolean = false,
 ) : Transport {
     val self: String get() = signaling.self
 
@@ -257,7 +259,7 @@ class WebRtcTransport(
             answeredBy = null
             offeredBy = null
             val events = Events()
-            val made = rtc.peer(iceServers(), events)
+            val made = rtc.peer(iceServers(), events, relayOnly)
             events.pc = made
             pc = made
             return made

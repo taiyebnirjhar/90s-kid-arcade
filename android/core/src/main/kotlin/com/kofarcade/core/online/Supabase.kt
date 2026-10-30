@@ -39,8 +39,9 @@ fun explainOnline(e: Throwable): String = when (e) {
     is OnlineError.Paused -> "Online is paused for now: the free server's limit was reached. Nearby play still works. Try again later."
     is OnlineError.Refused -> when (e.code) {
         "anonymous_provider_disabled" -> "Guest sign-in is switched off on the server."
-        // The database's own words: "The room is full: 8 phones at most", "You have 3 rooms open already".
-        "53400", "P0002" -> e.message.orEmpty()
+        // The database's own words: "The room is full: 8 phones at most", "You have 3 rooms open already",
+        // "This room was made locked: make an open room for anyone to join".
+        "53400", "P0002", "22023" -> e.message.orEmpty()
         else -> "The server said no (${e.status}): ${e.message}"
     }
     else -> "Something went wrong: ${e.message}"
