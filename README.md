@@ -69,7 +69,9 @@ screens) ship inside the app: they show offline, from the first launch.
 
 In a game, the pause button opens the pause menu: Resume, save and load
 state, *Edit <name>'s moves*, **Sound** on/off, **Settings**, **Button layout** (drag any
-control where your thumbs want it, tap one to resize it), **Start over** and Quit.
+control where your thumbs want it, tap one to resize it; the gear slides in the
+stick style, buttons on the left, button size and opacity for every control),
+**Start over** and Quit.
 
 Playing alone, a game goes on where you left it: it's kept as you leave
 (and every minute), and **Continue** picks it up. **Start over** in the
@@ -146,8 +148,8 @@ does that.
 **J.J. Squawkers:** Attack and Jump, for one or two, with rapid fire on
 Attack.
 
-Pause → **Settings**, in four tabs: **Screen** (picture width, controls
-opacity, detection readout), **Controls** (stick style: floating, fixed or
+Pause → **Settings**, in four tabs: **Screen** (picture width, detection
+readout), **Controls** (stick style: floating, fixed or
 hidden; button size; buttons on the left; vibration; rapid fire),
 **Moves** (move names under the buttons, move timing) and **Sound** (on or
 off, volume up and down in steps). The phone's volume buttons set the
@@ -192,8 +194,11 @@ phones in a room, the rest watching. Every phone needs the same game zip
 (and the BIOS for Neo Geo games; the library has them). Everything is on
 Home → **Online**.
 
-- **With internet: Create a room.** Pick the game (its picture, as on the
-  home screen) and it starts. The room sheet shows its code (like
+- **With internet: Create a room.** Pick **Open** (listed under **Rooms
+  online** for anyone with the game, one tap to join; its connections go
+  through the relay, so nobody learns a player's address) or **Locked**
+  (listed, but only its code gets in), then the game, and it starts. The
+  host can lock an open room, and open it again, from the room sheet. The room sheet shows its code (like
   `K7Q-2MX`) with a QR code, **Copy** and **Share**. Friends on any network
   type the code under **Join with a code**, scan the QR code, or tap the
   shared link (it opens the app straight into the room). It needs a free
@@ -206,7 +211,8 @@ Home → **Online**.
   lag. The room's key (like `K7Q-2M`) holds the host phone's address, so
   typing it connects straight there; rooms nearby also show up by
   themselves, first in the list.
-- **Join**: type a code or key under **Join with a code** (it formats itself
+- **Join**: tap a room under **Rooms online** (a locked one asks for its
+  code), type a code or key under **Join with a code** (it formats itself
   as you type) or tap a room nearby (each shows its game, host and seats).
   Nobody has to let you in: you watch the game as it stands (up to 8 phones
   in a room), and watching never slows the players down. A problem says
