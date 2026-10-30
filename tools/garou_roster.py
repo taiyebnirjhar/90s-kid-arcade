@@ -84,7 +84,7 @@ CHARACTERS = [
         sp("Crack Counter (low)", "236+D", "catches a low attack"),
         sp("Rage Run: Dunk", "214+B"),
         sp("Rage Run: Shift", "214+D"),
-        sp("Shinkuu Nage", C360 + "+C", "close; break: A+B"),
+        sp("Shinkuu Nage", "AB~" + C360 + "+C", "close; from the evasion attack (A+B), so Rock doesn't jump; break: A+B"),
     ]),
     ("donghwan", "Kim Dong Hwan", "", [
         sup("Super Dong Hwan Kyaku", "236236+A", "in air"),
@@ -130,7 +130,7 @@ CHARACTERS = [
         sp("Shinga", "236+A", "A or C"),
         sp("Shinga > Totsuga", "236+A,66+A"),
         sp("Raiga", "623+B", "B or D; break: A+B"),
-        sp("Fuuga", "214+B", "B or D; then A, B, C or D"),
+        sp("Fuuga", "214+B", "B or D"),
         sp("Houzan Sai Hekiga", "[2]8+C", "catches a high or mid attack"),
     ]),
     ("jenet", "B. Jenet", "", [
@@ -179,11 +179,11 @@ CHARACTERS = [
         sp("Morbid Angel", "41236+B", "B or D; break: A+B"),
     ]),
     ("tizoc", "Tizoc", "", [
-        sup("Big Fall Griffon", C720 + "+A", "close"),
-        pot("Big Fall Griffon", C720 + "+C", "close"),
+        sup("Big Fall Griffon", "2+AC~" + C720 + "+A", "close; from the down feint (2+A+C), so Tizoc doesn't jump"),
+        pot("Big Fall Griffon", "2+AC~" + C720 + "+C", "close; from the down feint (2+A+C), so Tizoc doesn't jump"),
         sup("Daedalus Attack", "236236+B"),
         pot("Daedalus Attack", "236236+D"),
-        sp("Justice Hurricane", C360 + "+A", "close; A or C"),
+        sp("Justice Hurricane", "63214~8+A", "close; A or C; up comes with the button, or Tizoc jumps"),
         sp("Hercules Throw", "41236+B", "close"),
         sp("Olympus Over", "214+B", "B or D; break with D: A+B"),
         sp("Active Tupon", "623+A", "A or C"),
@@ -337,7 +337,10 @@ def patch_movetest(mt):
     return game
 
 
-SPECIAL_ANIMS = range(0x53, 0x134)
+# Below this the fighter's own animations: standing, walking, jumps, normals, throws.
+FIRST_MOVE = 0x53
+# A full jump (a short tap of up is Garou's low hop, too short for most air moves).
+JUMP = [(8, "")] * 12
 
 
 def extra_baseline(mt, e, states, game):
@@ -348,39 +351,77 @@ def extra_baseline(mt, e, states, game):
             for b in ("AC", "AB", "CD", "BD", "ABCD"):
                 e.load(st); game.power(e)
                 seen.update(mt.play(e, [(d, "")] * 3 + [(d, b)] * 4, None, 50))
+        for b in game.buttons:
+            e.load(st); game.power(e)
+            seen.update(mt.play(e, JUMP + [(5, b)] * 4, None, 50))
+            e.load(st); game.power(e)
+            seen.update(mt.play(e, JUMP + [(2, b)] * 4, None, 50))
     return seen
 
 
+def attempt(mt, e, st, game, cmd, air):
+    """Plays cmd (after a full jump for air): the animations it went through, power used."""
+    e.load(st)
+    game.power(e)
+    before = game.before(e)
+    acts = mt.play(e, (JUMP if air else []) + mt.compile_cmd(cmd), None, 90)
+    return acts, game.used(e, acts, before)
+
+
+def size(cmd):
+    return len(re.findall(r"\[\d\]|\d", cmd))
+
+
+def first_step(cmd):
+    """A sequence's inputs up to the first with a button ("236+A,66+A" -> "236+A")."""
+    parts = re.split(r"[,~]", cmd)
+    out = []
+    for p in parts:
+        out.append(p)
+        if re.search(r"[A-D]", p):
+            break
+    return "~".join(out) if "~" in cmd.split(out[-1])[0] else ",".join(out)
+
+
 def test_char(mt, e, game, base, ch):
-    """Like movetest.test_char; a super must also start an animation of its own."""
+    """Like movetest.test_char. A move works when it starts an animation no
+    normal, jump, dash, feint or evasion makes, and no simpler listed move of
+    its kind starts first; a super must also use power. A sequence must go on
+    to an animation its first input alone doesn't reach."""
     far, close = mt.setup_states(e, base)
-    seen = mt.baseline(e, [far, close], game) | extra_baseline(mt, e, [far, close], game)
-    res = []
-    owner = {}
+    seen = {a for a in mt.baseline(e, [far, close], game) | extra_baseline(mt, e, [far, close], game)}
+    seen |= set(range(FIRST_MOVE))
     tried = []
+    owner = {}
     for m in ch["moves"]:
         n = (m.get("note") or "").lower()
+        only_air = re.search(r"(?<!also )in air", n)
         plan = [(l, st, air) for l, st, air in (("far", far, False), ("close", close, False), ("air", far, True))
-                if (air and re.search(r"\bair\b", n)) or (not air and "in air" not in n)]
+                if (air and "in air" in n) or (not air and not only_air)]
         tries = []
         for label, st, air in plan:
-            acts, used = mt.try_move(e, st, game, m, air)
+            acts, used = attempt(mt, e, st, game, m["cmd"], air)
             f = mt.first_new(acts, seen)
-            tries.append((label, f, used, mt.LAST_DARK[0]))
+            later = set()
+            if re.search(r"[,~]", m["cmd"]) and m["type"] == "special":
+                pre, _ = attempt(mt, e, st, game, first_step(m["cmd"]), air)
+                later = set(acts) - seen - set(pre)
+            tries.append((label, f, used, later))
         tried.append(tries)
-        if m["type"] == "special":
-            for _, f, _, _ in tries:
-                size = len(re.findall(r"\[\d\]|\d", m["cmd"]))
-                if f is not None and (f not in owner or size < owner[f][0]):
-                    owner[f] = (size, m["cmd"])
+        kind = m["type"] == "special"
+        for _, f, _, _ in tries:
+            key = (kind, f)
+            if f is not None and (key not in owner or size(m["cmd"]) < owner[key]):
+                owner[key] = size(m["cmd"])
+    res = []
     for m, tries in zip(ch["moves"], tried):
-        size = len(re.findall(r"\[\d\]|\d", m["cmd"]))
-        if m["type"] == "special":
-            ok = any(f is not None and owner[f][0] >= size for _, f, _, _ in tries)
+        kind = m["type"] == "special"
+        own = lambda f: f is not None and owner[(kind, f)] >= size(m["cmd"])
+        if kind:
+            ok = any(own(f) or later for _, f, _, later in tries)
         else:
-            # Power spent and an animation no special or normal makes.
-            ok = any(u and f is not None and f not in owner for _, f, u, _ in tries)
-        res.append((m, ok, tries))
+            ok = any(u and own(f) and (True, f) not in owner for _, f, u, _ in tries)
+        res.append((m, ok, [(l, f, u) for l, f, u, _ in tries]))
     return res
 
 
@@ -396,7 +437,7 @@ def run_tests(names):
         ok = sum(1 for _, k, _ in res if k)
         print("%-11s %d/%d" % (ch["id"], ok, len(res)), flush=True)
         for m, k, tries in res:
-            t = " ".join("%s:%s/%d/%.2f" % (l, hex(f) if f is not None else "-", u, d) for l, f, u, d in tries)
+            t = " ".join("%s:%s/%d" % (l, hex(f) if f is not None else "-", u) for l, f, u in tries)
             print("   %s %-32s %-34s %s" % ("ok " if k else "BAD", m["name"], m["cmd"], t), flush=True)
             bad += not k
     return bad
