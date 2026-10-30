@@ -223,7 +223,8 @@ private val MVSC = DetectSpec(
 // 0x100 later, with the character in the byte at +0x11, X at +0x20, the
 // height at +0x28 (0 on the floor) and facing left in bit 7 of +0x58. The
 // byte at 0x10748A is 0x44 while a round is fought (0 on the select screen,
-// 0x38 for the round's intro, 0x77 at a KO). From peon2's garou.lua and the
+// 0x38 for the round's intro, 0x77 at a KO); the attract demo sets it too,
+// so a BIOS player byte must be in. From peon2's garou.lua and the
 // hitbox viewers; checked in garou (tools/garou_roster.py): every fighter on
 // both sides, facing flipping when they cross, Grant and Kain included.
 private val GAROU_IDS = listOf(
@@ -232,7 +233,7 @@ private val GAROU_IDS = listOf(
 )
 
 private val GAROU = DetectSpec(
-    windows = listOf(0x100400 to 0x200, 0x107400 to 0x100),
+    windows = listOf(0x100400 to 0x200, 0x107400 to 0x100, 0x10FDB6 to 2),
     player = 0x100400,
     playerStride = 0x100,
     character = 0x11,
@@ -242,7 +243,7 @@ private val GAROU = DetectSpec(
     // One fighter each: the "team" is the fighter in the player's block.
     team = listOf(0x100411),
     teamStride = 0x100,
-    inRound = { it.byte(0x10748A) == 0x44 },
+    inRound = { it.byte(0x10748A) == 0x44 && (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1) },
     ids = GAROU_IDS,
 )
 
