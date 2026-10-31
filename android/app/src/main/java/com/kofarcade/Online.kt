@@ -123,12 +123,14 @@ object Online {
  * app takes), or, without the app, the website's page for it (get the app,
  * then join). Also the room's QR code.
  */
-fun joinLink(code: String): String = "https://taiyebnirjhar.github.io/90s-kid-arcade/join.html?code=" + code.uppercase().filter { it.isLetterOrDigit() }
+fun joinLink(code: String): String = "https://arcade.taiyebnirjhor.com/join.html?code=" + code.uppercase().filter { it.isLetterOrDigit() }
 
 /** The code in a [joinLink] (or the website's "open in the app" link, kidarcade://join?code=…), or null if it isn't one. */
 fun codeFromLink(uri: android.net.Uri?): String? {
     if (uri == null) return null
-    val ours = (uri.scheme == "https" && uri.host == "taiyebnirjhar.github.io" && uri.path?.endsWith("/join.html") == true) ||
+    // The site's own domain, or its old address (links shared before the move).
+    val ours = (uri.scheme == "https" && uri.host == "arcade.taiyebnirjhor.com" && uri.path == "/join.html") ||
+        (uri.scheme == "https" && uri.host == "taiyebnirjhar.github.io" && uri.path?.endsWith("/join.html") == true) ||
         (uri.scheme == "kidarcade" && uri.host == "join")
     if (!ours) return null
     return runCatching { uri.getQueryParameter("code") }.getOrNull()?.uppercase()?.filter { it.isLetterOrDigit() }?.takeIf { it.length == 6 }
