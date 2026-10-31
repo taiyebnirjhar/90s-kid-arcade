@@ -143,6 +143,7 @@ fun GameDialogs(game: GameActivity) {
                     onFree = { game.freeHeldSeat(it) },
                     onOpen = { game.setRoomOpen(it) },
                     onVoiceMute = { id, mute -> game.muteForRoom(id, mute) },
+                    onMuteHere = { id, mute -> game.muteHere(id, mute) },
                     onWatchersListen = { game.watchersListen(it) },
                     onInvite = { game.inviteFriend(it) },
                 )
@@ -165,6 +166,7 @@ private fun RoomLayer(game: GameActivity) {
     if (game.dialog != null || game.editing) return
     Box(Modifier.fillMaxWidth().padding(top = 12.dp, end = 14.dp)) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd)) {
+            if (game.canVoice) SpeakerButton(game.voicesOn, onToggle = { game.toggleVoices() })
             if (game.canVoice) MicButton(game.micOn, game.talking, !game.micOpenMode, onToggle = { game.toggleMic() }, onTalk = { game.pushToTalk(it) })
             ChatButton(game.chatUnread, onClick = { game.openChat() })
             RoomPill(ui, onClick = { game.openRoom() })

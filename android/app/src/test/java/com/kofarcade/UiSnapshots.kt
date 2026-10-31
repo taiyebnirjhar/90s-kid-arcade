@@ -873,6 +873,7 @@ class UiSnapshots {
             Box(Modifier.fillMaxSize()) {
                 Hud()
                 Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp)) {
+                    SpeakerButton(on = true, onToggle = {})
                     MicButton(on = true, talking = false, pushToTalk = false, onToggle = {}, onTalk = {})
                     ChatButton(2, {})
                     RoomPill(roomUi.copy(online = true, pingMs = 48), {})
@@ -903,6 +904,32 @@ class UiSnapshots {
                         first = false, {}, {}, {}, {}, {}, {},
                     )
                 }
+            }
+        }
+    }
+
+    // A player (not the host): mutes a trash talker on their own phone, a seat or a watcher; the speaker's off for all.
+    @Test
+    fun roomSheetMuteHere() {
+        landscape()
+        shot("room_sheet_mute_here") {
+            Box(Modifier.fillMaxSize()) {
+                OverGame {
+                    SheetFrame(width = 880) {
+                        RoomSheetContent(
+                            RoomUi(
+                                "K7Q-2MX", 2,
+                                listOf(
+                                    RoomPerson("Rafi", 0, host = true, id = 0, mutedHere = true), RoomPerson("You", 1, you = true, id = 1),
+                                    RoomPerson("Tanu", -1, id = 2, mutedHere = true), RoomPerson("Pixel 8", -1, id = 3),
+                                ),
+                                watching = false, online = true, pingMs = 40,
+                            ),
+                            first = false, {}, {}, {}, {}, {}, {},
+                        )
+                    }
+                }
+                SpeakerButton(on = false, onToggle = {}, modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp))
             }
         }
     }

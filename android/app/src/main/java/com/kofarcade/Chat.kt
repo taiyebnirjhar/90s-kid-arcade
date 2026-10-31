@@ -380,6 +380,53 @@ fun MicIcon(modifier: Modifier = Modifier, on: Boolean, color: Color = Palette.t
     }
 }
 
+/** A speaker, with sound waves when [on], crossed out in red when off. */
+@Composable
+fun SpeakerIcon(modifier: Modifier = Modifier, on: Boolean, color: Color = Palette.text) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val body = Path().apply {
+            moveTo(w * 0.08f, h * 0.36f)
+            lineTo(w * 0.28f, h * 0.36f)
+            lineTo(w * 0.52f, h * 0.14f)
+            lineTo(w * 0.52f, h * 0.86f)
+            lineTo(w * 0.28f, h * 0.64f)
+            lineTo(w * 0.08f, h * 0.64f)
+            close()
+        }
+        drawPath(body, color)
+        if (on) {
+            val stroke = Stroke(width = w * 0.09f)
+            drawArc(color, -45f, 90f, false, Offset(w * 0.42f, h * 0.3f), Size(w * 0.3f, h * 0.4f), style = stroke)
+            drawArc(color, -50f, 100f, false, Offset(w * 0.36f, h * 0.12f), Size(w * 0.56f, h * 0.76f), style = stroke)
+        } else {
+            drawLine(Palette.red, Offset(w * 0.62f, h * 0.34f), Offset(w * 0.92f, h * 0.66f), w * 0.11f)
+            drawLine(Palette.red, Offset(w * 0.92f, h * 0.34f), Offset(w * 0.62f, h * 0.66f), w * 0.11f)
+        }
+    }
+}
+
+/**
+ * The speaker button by the mic: everyone's voices on or off on this phone,
+ * in one tap (a trash talker: tap, silence). Same as Settings: Voices.
+ */
+@Composable
+fun SpeakerButton(on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.55f))
+            .border(1.dp, if (on) Color.White.copy(alpha = 0.12f) else Palette.red.copy(alpha = 0.8f), CircleShape)
+            .clickable(onClick = onToggle)
+            .semantics { contentDescription = if (on) "Voices on: tap to mute everyone" else "Voices muted: tap to hear them"; role = Role.Button },
+    ) {
+        SpeakerIcon(Modifier.size(15.dp), on = on)
+    }
+}
+
 /**
  * The mic button by the chat button: off (crossed) when you join; a tap
  * turns it on. In push-to-talk, once on, hold it to talk.
