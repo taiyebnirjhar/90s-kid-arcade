@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kofarcade",
+      "sha256_cert_fingerprints": ["D2:A3:1D:C3:3E:D6:EE:A1:85:1C:C2:5F:FB:47:9C:1D:87:A8:95:7C:CC:64:86:33:A3:75:1B:2D:32:21:B4:C4"]
+    }
+  }
+]

@@ -112,7 +112,7 @@ class UiSnapshots {
 
     @Test
     fun twoPlayerMenu() = shot("twoplayer_menu") {
-        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {})
+        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {}, onScan = {})
     }
 
     private val picks get() = listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }
@@ -780,7 +780,7 @@ class UiSnapshots {
     @Composable
     private fun OnlineHub() = MultiplayerHub(
         listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino"))),
-        "", {}, null, false, {}, {}, {}, {}, {}, online = onlineRooms,
+        "", {}, null, false, {}, {}, {}, {}, {}, onScan = {}, online = onlineRooms,
     )
 
     @Test

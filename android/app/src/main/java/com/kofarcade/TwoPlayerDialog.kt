@@ -532,18 +532,38 @@ private fun Hub(
         }
     }
 
-    // From a room link: its code, joined at once (not over a game still on, or a join under way).
+    // A room's code from its link or QR code: joined at once (not over a game still on, or a join under way).
+    fun joinFromLink(code: String) {
+        key = formatKeyInput(code)
+        when {
+            Netplay.room != null -> say("You're still in a room. Leave that game first, then tap Join.")
+            busy -> {}
+            !internet -> say("No internet: joining by code needs it. Nearby rooms work without (same Wi-Fi or hotspot).")
+            else -> joinByCode(code, null)
+        }
+    }
+
     androidx.compose.runtime.LaunchedEffect(joinCode) {
         if (joinCode != null) {
-            key = formatKeyInput(joinCode)
             onCodeTaken()
-            when {
-                Netplay.room != null -> say("You're still in a room. Leave that game first, then tap Join.")
-                busy -> {}
-                !internet -> say("No internet: joining by code needs it. Nearby rooms work without (same Wi-Fi or hotspot).")
-                else -> joinByCode(joinCode, null)
-            }
+            joinFromLink(joinCode)
         }
+    }
+
+    // A friend's room QR code, scanned here: Google's scanner (Play services) opens, reads it, and the room's joined.
+    fun scanQr() {
+        val activity = context as? android.app.Activity ?: return
+        val options = com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions.Builder()
+            .setBarcodeFormats(com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE)
+            .build()
+        com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(activity, options).startScan()
+            .addOnSuccessListener { barcode ->
+                val code = scannedRoomCode(barcode.rawValue)
+                if (code != null) joinFromLink(code) else say("That QR code isn't a room. Scan the code in your friend's room.")
+            }
+            .addOnFailureListener {
+                say("The scanner didn't open on this phone. Type the room code instead: your friend sees it under the QR code.")
+            }
     }
 
     // A room on the list: an open one joins at once; a locked one asks for its code.
@@ -656,6 +676,7 @@ private fun Hub(
         onStatusAction = { action?.invoke() },
         onHost = onHost,
         onJoinKey = ::joinAny,
+        onScan = if (internet) ::scanQr else null,
         onJoinRoom = { i -> hosts.getOrNull(i)?.let(::connect) },
         onBack = onBack,
         internet = internet,
@@ -731,6 +752,8 @@ fun MultiplayerHub(
     onJoinKey: () -> Unit,
     onJoinRoom: (Int) -> Unit,
     onBack: () -> Unit,
+    /** Scans a friend's room QR code, or null (no internet: no online rooms to scan). */
+    onScan: (() -> Unit)? = null,
     /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
     internet: Boolean = true,
     onHostOnline: () -> Unit = {},
@@ -779,7 +802,7 @@ fun MultiplayerHub(
                 enabled = !busy,
                 onClick = if (internet) onHostOnline else onHost,
             ) { Text("+", color = Palette.gold, fontSize = 30.sp, fontWeight = FontWeight.Black) }
-            JoinCodeCard(key, onKey, busy, onJoinKey, internet)
+            JoinCodeCard(key, onKey, busy, onJoinKey, internet, onScan)
         }
 
         if (friends != null) {
@@ -865,9 +888,9 @@ private fun BigChoice(
     }
 }
 
-/** Got a code from a friend: type it, Join. */
+/** Got a code from a friend: type it, Join; or scan their room's QR code. */
 @Composable
-private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, onJoin: () -> Unit, internet: Boolean) {
+private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, onJoin: () -> Unit, internet: Boolean, onScan: (() -> Unit)?) {
     Panel {
         Text("Got a code from a friend?", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
         Spacer(Modifier.height(10.dp))
@@ -878,6 +901,10 @@ private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, on
             )
             Spacer(Modifier.width(12.dp))
             GoldButton("Join", onJoin, enabled = !busy && key.isNotBlank())
+        }
+        if (onScan != null) {
+            Spacer(Modifier.height(10.dp))
+            GhostButton("Scan their QR code", onScan, Modifier.fillMaxWidth(), enabled = !busy)
         }
     }
 }

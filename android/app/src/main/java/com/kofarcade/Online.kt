@@ -135,3 +135,10 @@ fun codeFromLink(uri: android.net.Uri?): String? {
     if (!ours) return null
     return runCatching { uri.getQueryParameter("code") }.getOrNull()?.uppercase()?.filter { it.isLetterOrDigit() }?.takeIf { it.length == 6 }
 }
+
+/** A scanned QR code's room code: the room's link, or just its code (K7Q-2MX); null if it's something else. */
+fun scannedRoomCode(raw: String?): String? {
+    val text = raw?.trim() ?: return null
+    if (text.contains("://")) return codeFromLink(runCatching { android.net.Uri.parse(text) }.getOrNull())
+    return text.uppercase().filter { it.isLetterOrDigit() }.takeIf { it.length == 6 && text.length <= 8 }
+}
