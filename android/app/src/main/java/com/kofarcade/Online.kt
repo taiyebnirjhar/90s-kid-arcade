@@ -49,6 +49,15 @@ object Online {
         )
     }
 
+    /** Friends: requests, the list, presence and invites. */
+    fun friends(context: Context): com.kofarcade.core.online.FriendServer {
+        account(context)
+        return com.kofarcade.core.online.SupabaseFriends(supabase!!)
+    }
+
+    /** Whether this phone has been online before (signed in, with a profile): nothing online is asked for otherwise. */
+    fun signedIn(context: Context): Boolean = account(context).profile()?.pending == false
+
     /** Reporting a player (chat, voice, name, play). */
     fun reports(context: Context): com.kofarcade.core.online.Reports {
         account(context)

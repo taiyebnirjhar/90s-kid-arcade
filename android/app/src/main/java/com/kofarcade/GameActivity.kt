@@ -133,6 +133,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Who's speaking: checked this often, louder than this.
         private const val SPEAKING_MS = 300L
         private const val SPEAKING_LEVEL = 0.02
+        // Friends are told what this phone plays this often (they see it for 2 minutes).
+        private const val PRESENCE_MS = 60_000L
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
@@ -268,6 +270,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         set = s
         prefs = Prefs(this)
         mutedPlayers = prefs.mutedPlayers
+        tellFriends()
         prefs.lastGame = game.id
         // Games played, for the profile (counted on the phone; synced from home).
         if (savedInstanceState == null) {
@@ -786,6 +789,88 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         r.setVoiceRules(r.voiceRules.copy(watchersListen = on))
     }
 
+    // ----- Friends (internet rooms) -----
+
+    // Friends online, to invite from the room sheet; and who's been invited.
+    private var inviteFriends = emptyList<com.kofarcade.core.online.Friend>()
+    private val invited = HashSet<String>()
+
+    private fun roomFriends(r: Room): List<RoomFriend> {
+        val inRoom = r.members.values.map { it.host }.toSet()
+        return inviteFriends.filter { it.status == com.kofarcade.core.online.Friend.Status.FRIEND && it.online && it.id !in inRoom }
+            .map { RoomFriend(it.id, it.name, it.icon, friendStatus(it), invited = it.id in invited) }
+    }
+
+    // The room sheet of an internet room: friends online to invite, asked for again each time it opens.
+    private fun loadFriendsToInvite() {
+        if (room?.internet == null || !Online.signedIn(this)) return
+        lifecycleScope.launch {
+            val got = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).list() }.getOrNull() } ?: return@launch
+            inviteFriends = got
+            updateRoomUi()
+        }
+    }
+
+    /** Invites [f] to this internet room. */
+    fun inviteFriend(f: RoomFriend) {
+        val code = room?.key?.takeIf { room?.internet != null } ?: return
+        invited += f.id
+        updateRoomUi()
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).invite(f.id, code) }.exceptionOrNull() }
+            if (error != null) {
+                invited -= f.id
+                updateRoomUi()
+                announce(com.kofarcade.core.online.explainOnline(error))
+            } else {
+                announce("Invited ${f.name}: they see it on their Online screen")
+            }
+        }
+    }
+
+    // A chat line's player in an internet room: their player id.
+    private fun playerOf(line: ChatShown): String? = room?.members?.get(line.from)?.host?.takeIf { room?.internet != null && it.isNotEmpty() }
+
+    /** Asks the player who said [line] to be friends. */
+    fun addFriendFrom(line: ChatShown) {
+        val player = playerOf(line) ?: return
+        lifecycleScope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).requestById(player) } }
+            announce(
+                r.fold(
+                    { if (it == com.kofarcade.core.online.Asked.FRIENDS) "You and ${line.name} are friends" else "Asked ${line.name} to be friends" },
+                    { (it as? com.kofarcade.core.online.OnlineError)?.let(::explainFriendTrouble) ?: "Couldn't ask: ${it.message}" },
+                ),
+            )
+        }
+    }
+
+    /** Blocks the player who said [line]: muted here at once, and they can't find or invite you. */
+    fun blockFrom(line: ChatShown) {
+        val player = playerOf(line) ?: return
+        mutePlayer(line, true)
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).block(player) }.exceptionOrNull() }
+            announce(if (error == null) "${line.name} is blocked" else com.kofarcade.core.online.explainOnline(error))
+        }
+    }
+
+    // While playing (and signed in): friends see the game, and the internet room to join.
+    private fun tellFriends() {
+        if (!Online.signedIn(this)) return
+        // Only while on screen: in the background, friends see it go offline.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    val r = room
+                    val code = r?.key?.takeIf { r.internet != null }
+                    withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).presence(set, code) } }
+                    delay(PRESENCE_MS)
+                }
+            }
+        }
+    }
+
     /** An internet room: the player who said [line], reported to the app's maker with their last lines. */
     fun reportPlayer(line: ChatShown) {
         val r = room ?: return
@@ -839,12 +924,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs,
             open = online?.open, canOpen = online?.canOpen == true,
             voiceHost = r.isOwner && r.internet != null, watchersListen = r.voiceRules.watchersListen,
+            friends = roomFriends(r),
         )
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
     fun openRoom() {
         updateRoomUi()
+        loadFriendsToInvite()
         show(GameDialog.Room())
     }
 

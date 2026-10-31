@@ -84,6 +84,8 @@ fun GameDialogs(game: GameActivity) {
                 onMute = { line, mute -> game.mutePlayer(line, mute) },
                 onReport = { game.reportPlayer(it) },
                 onClose = { game.closeChat() },
+                onAddFriend = if (game.roomUi?.online == true) ({ game.addFriendFrom(it) }) else null,
+                onBlock = if (game.roomUi?.online == true) ({ game.blockFrom(it) }) else null,
             )
         }
     }
@@ -121,6 +123,7 @@ fun GameDialogs(game: GameActivity) {
                     onOpen = { game.setRoomOpen(it) },
                     onVoiceMute = { id, mute -> game.muteForRoom(id, mute) },
                     onWatchersListen = { game.watchersListen(it) },
+                    onInvite = { game.inviteFriend(it) },
                 )
             }
         }

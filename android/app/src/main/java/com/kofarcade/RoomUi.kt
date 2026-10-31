@@ -67,6 +67,9 @@ import kotlinx.coroutines.delay
  * A phone in a room, as the screens show it. [seat] -1: watching. [away]:
  * it dropped out and its seat is kept for it until [holdEnds] (wall clock, ms).
  */
+/** A friend to invite to the room. */
+data class RoomFriend(val id: String, val name: String, val icon: Int, val status: String, val invited: Boolean = false)
+
 data class RoomPerson(
     val name: String,
     val seat: Int,
@@ -103,6 +106,8 @@ data class RoomUi(
     val voiceHost: Boolean = false,
     /** Watchers only listen (the host's choice). */
     val watchersListen: Boolean = false,
+    /** An internet room: your friends online and not in it, to invite. */
+    val friends: List<RoomFriend> = emptyList(),
 ) {
     val players: List<RoomPerson> get() = people.filter { it.seat >= 0 }.sortedBy { it.seat }
     // Those in line first, in order, then the others.
@@ -320,6 +325,7 @@ fun RoomSheetContent(
     /** The host mutes (true) or unmutes a member's voice for the room. */
     onVoiceMute: (Int, Boolean) -> Unit = { _, _ -> },
     onWatchersListen: (Boolean) -> Unit = {},
+    onInvite: (RoomFriend) -> Unit = {},
 ) {
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
@@ -330,12 +336,16 @@ fun RoomSheetContent(
                     RoomHeader(ui, first, onCopy, onShare, onOpen)
                     RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
                 }
-                Column(Modifier.weight(1f)) { RoomPeople(ui, onFree, onVoiceMute, onWatchersListen) }
+                Column(Modifier.weight(1f)) {
+                    RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
+                    RoomInvites(ui, onInvite)
+                }
             }
         } else {
             Column {
                 RoomHeader(ui, first, onCopy, onShare, onOpen)
                 RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
+                RoomInvites(ui, onInvite)
                 RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
             }
         }
@@ -443,6 +453,27 @@ private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit, onVoiceMute: (Int, Boo
             }
             Spacer(Modifier.width(8.dp))
             GhostButton(if (ui.watchersListen) "Let them talk" else "Listen only", { onWatchersListen(!ui.watchersListen) }, compact = true)
+        }
+    }
+}
+
+// An internet room: friends online to invite (the invite shows on their Online screen).
+@Composable
+private fun RoomInvites(ui: RoomUi, onInvite: (RoomFriend) -> Unit) {
+    if (ui.friends.isEmpty()) return
+    SectionLabel("Invite friends")
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (f in ui.friends.take(6)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ProfileIcon(f.icon, 30.dp)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(f.name, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(f.status, color = Palette.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Spacer(Modifier.width(8.dp))
+                if (f.invited) Tag("Invited", Palette.green) else GhostButton("Invite", { onInvite(f) }, compact = true)
+            }
         }
     }
 }

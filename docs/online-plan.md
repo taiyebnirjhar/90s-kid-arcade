@@ -759,6 +759,23 @@ played; the host can mute one for the room or let watchers only listen
 button. Nearby rooms have no voice: the players are in the same place.
 Voice through the relay counts toward D8's stop like the game.
 
+**2.1 and 2.2 built (2026-10-31):** friends live in four tables nobody
+reads directly (`20261101000100_friends.sql`): friendships (a request
+until accepted; asking someone who asked you makes you friends),
+blocks, presence (what a player's doing, seen by friends only) and
+invites (10 minutes). The app says what it's doing every minute while the
+Online screen or a game is on screen (online for 2 minutes after);
+nothing online is asked for on a phone that never went online. The
+Online screen shows invites at the top (Join, or turn down), then
+Friends: requests (Accept, Decline), friends online first with what
+they play and Join where they're in a room (locked or open: friends get
+the code), Remove and Block, and adding one by their 8-letter code (your
+own to share). In a room: invite friends online from the room sheet;
+from chat, ask a player to be friends or block them (also muted). A
+blocked player can't find you by code, ask you or invite you, either way.
+Without notifications (2.3), an invite is seen when the friend opens the
+Online screen.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.

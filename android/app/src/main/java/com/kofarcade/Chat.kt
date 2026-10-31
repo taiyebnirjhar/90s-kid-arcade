@@ -207,6 +207,9 @@ fun ChatPanel(
     onMute: (ChatShown, Boolean) -> Unit,
     onReport: (ChatShown) -> Unit,
     onClose: () -> Unit,
+    /** Internet rooms: ask them to be friends, or block them. */
+    onAddFriend: ((ChatShown) -> Unit)? = null,
+    onBlock: ((ChatShown) -> Unit)? = null,
 ) = TextScaleCap {
     var typed by remember { mutableStateOf("") }
     var picked by remember { mutableStateOf<Long?>(null) }
@@ -251,9 +254,14 @@ fun ChatPanel(
                         val isMuted = l.device.isNotEmpty() && l.device in muted
                         ChatRow(l, open = picked == l.key, isMuted = isMuted, onTap = { picked = if (picked == l.key || l.mine) null else l.key })
                         if (picked == l.key && !l.mine) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp, bottom = 6.dp)) {
-                                GhostButton(if (isMuted) "Unmute ${l.name}" else "Mute ${l.name}", { onMute(l, !isMuted); picked = null }, compact = true)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(start = 8.dp, bottom = 6.dp).horizontalScroll(rememberScrollState()),
+                            ) {
+                                GhostButton(if (isMuted) "Unmute" else "Mute", { onMute(l, !isMuted); picked = null }, compact = true)
+                                if (onAddFriend != null) GhostButton("Add friend", { onAddFriend(l); picked = null }, compact = true)
                                 if (canReport) GhostButton("Report", { onReport(l); picked = null }, compact = true, danger = true)
+                                if (onBlock != null) GhostButton("Block", { onBlock(l); picked = null }, compact = true, danger = true)
                             }
                         }
                     }

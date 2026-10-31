@@ -875,6 +875,27 @@ class UiSnapshots {
         }
     }
 
+    @Test
+    fun onlineFriends() {
+        val ui = FriendsUi(
+                    myCode = "K7Q2MX8P",
+                    friends = listOf(
+                        com.kofarcade.core.online.Friend("1", "Tanu", 4, com.kofarcade.core.online.Friend.Status.INCOMING),
+                        com.kofarcade.core.online.Friend("2", "Rafi", 2, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, playing = "kof97", room = "K7Q2MX", roomSpace = true),
+                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true),
+                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND),
+                        com.kofarcade.core.online.Friend("5", "Nabil", 12, com.kofarcade.core.online.Friend.Status.OUTGOING),
+                    ),
+                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0)),
+                )
+        shot("online_friends") {
+            Column(Modifier.padding(16.dp)) {
+                InviteCards(ui.invites, false, {}, {})
+                FriendsSection(ui, false, "", {}, {}, {}, { _, _ -> }, {}, {}, {})
+            }
+        }
+    }
+
     @Test fun smallChatPanel() {
         smallLandscape()
         shot("small_chat_panel") {
