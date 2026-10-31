@@ -1,0 +1,857 @@
+{
+ "game": "lastblad",
+ "power": {
+  "name": "Power / Speed",
+  "note": "Picked before each fight. Power: stronger hits; super desperation moves (motion + B) with a MAX gauge and flashing life. Speed: chain combos; Shuuen no Mai (2,2+A+B) with a MAX gauge and flashing life. Desperation moves (motion + A+B) in both, with a MAX gauge or flashing life."
+ },
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "https://github.com/finalburnneo/FBNeo-cheats (lastblad.ini)",
+  "Checked in FBNeo with tools/movetest.py (tools/lastblad_roster.py --test)"
+ ],
+ "characters": [
+  {
+   "id": "kaede",
+   "name": "Kaede",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Kasshin: Fukuryuu",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Kasshin: Kouryuu",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Kakusei (awaken)",
+     "cmd": "BCD",
+     "type": "special",
+     "note": "MAX gauge or flashing life; awakened for the round"
+    },
+    {
+     "name": "Ittou Hayate",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Ittou Kuga",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B; B: Kabutowari"
+    },
+    {
+     "name": "Ittou Renjin Zan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B; up to 3 times"
+    },
+    {
+     "name": "Ittou Tabakaze",
+     "cmd": "214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ittou Arashi Uchi",
+     "cmd": "41236+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "kaedeawakened",
+   "name": "Kaede (Awakened)",
+   "team": "Awakened",
+   "moves": [
+    {
+     "name": "Kasshin: Seiryuu",
+     "cmd": "236236+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Kasshin: Fukuryuu",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Kasshin: Souryuu",
+     "cmd": "236236+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Kasshin: Kouryuu",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Shinmei Hayate",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Shinmei Kuga",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B; B: Kokuuga"
+    },
+    {
+     "name": "Shinmei Renjin Zan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B; up to 3 times"
+    },
+    {
+     "name": "Shinmei Tabakaze",
+     "cmd": "214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shinmei Arashi Uchi",
+     "cmd": "41236+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "moriya",
+   "name": "Moriya Minakata",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Kassatsu Izayoi Gekka",
+     "cmd": "641236+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Kassatsu Midare Setsu Gekka",
+     "cmd": "641236+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Ittou Tsukikage",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B; up to 3 times"
+    },
+    {
+     "name": "Ittou Shingetsu",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ittou Shingetsu Ura",
+     "cmd": "623+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ittou Oboro: Jodan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "counter stance: high; B middle, C low"
+    },
+    {
+     "name": "Taitou Hogetsu",
+     "cmd": "412+A",
+     "type": "special",
+     "note": "A, B or C; then A, B or C"
+    }
+   ]
+  },
+  {
+   "id": "yuki",
+   "name": "Yuki",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Yukishi Maki",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Shin Yukishi Maki",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Hyou Jin",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Sou Ka",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Shun Setsu Zan",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Hyou Kyou",
+     "cmd": "41236+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Suizan",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "okina",
+   "name": "Genbu no Okina",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Genbu no Hoko",
+     "cmd": "641236+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Genbu no Ikari",
+     "cmd": "641236+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Ki Paku",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A, B or C"
+    },
+    {
+     "name": "Chouka Tairyou",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A, B or C"
+    },
+    {
+     "name": "Kame Mai Chi",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Kame Mai Ten",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mukuyu",
+     "cmd": "22+C",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "akari",
+   "name": "Akari Ichijou",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Shikigami Rikugou",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Shikigami Hyakki Yakou",
+     "cmd": "632146+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Shikigami Tenku",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Tenmon Hoshi no Meguri",
+     "cmd": "28+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Gaiki Dorota Bou",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A, B or C"
+    },
+    {
+     "name": "Gaiki Kiyo Hime",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Kawari Hito Gata",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Henka Hito Gata",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "juzoh",
+   "name": "Juzoh Kanzaki",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Katsu Moku Dai Gekidou",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Katsu Moku Cho Gekidou",
+     "cmd": "6321463214+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life; close"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Kongou Ju Tsui",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Geki Shin",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Fugaku",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "washizuka",
+   "name": "Keiichiro Washizuka",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Shin Rouga",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Saishu Rouga",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Rouga",
+     "cmd": "[4]6+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Shun Satsu",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B; press again for Ren"
+    },
+    {
+     "name": "Shikku Satsu",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Koku Satsu",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": "A or B"
+    }
+   ]
+  },
+  {
+   "id": "shikyoh",
+   "name": "Shikyoh",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Mei Kyo Shisui Kyoki",
+     "cmd": "236236+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Mei Kyo Shisui Kyoki Ruin",
+     "cmd": "236236+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Hage Washi",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Kaiten Kimo Eguri",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Zan Niku Kamaitachi",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Ji Name Suberi",
+     "cmd": "646+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Zan Niku Obasami",
+     "cmd": "214+B",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "Mujihi Sashi",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "hyo",
+   "name": "Hyo Amano",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Banjo Kono Itte: Tokin",
+     "cmd": "6321463214+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Banjo Kono Itte: Kaku",
+     "cmd": "6321463214+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Banjo Kono Itte: Hisha",
+     "cmd": "6321463214+A",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Suzume Sashi",
+     "cmd": "616+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Keima no Taka",
+     "cmd": "623+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hisshi",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Takabisha",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "counter"
+    },
+    {
+     "name": "Ibisha Anaguma",
+     "cmd": "A,A,A,A,A",
+     "type": "special",
+     "note": "mash"
+    },
+    {
+     "name": "Shougi Doushi",
+     "cmd": "33+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "lee",
+   "name": "Lee Rekka",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Ougi Enryu Tenshin",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Hiougi Soten Muei Kyaku",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Ryu Tsui Sen",
+     "cmd": "214+C",
+     "type": "special",
+     "note": "up to 3 times"
+    },
+    {
+     "name": "En Sen Shou",
+     "cmd": "623+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Enryu Haibi",
+     "cmd": "63214+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Kasumi",
+     "cmd": "AB",
+     "type": "special",
+     "note": "then A, B or C"
+    }
+   ]
+  },
+  {
+   "id": "zantetsu",
+   "name": "Zantetsu",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Toro Soujin",
+     "cmd": "21416+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Yami Gari",
+     "cmd": "6321463214+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life; close"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Ryuei Jin",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B; twice"
+    },
+    {
+     "name": "Kikou Hou",
+     "cmd": "214+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hagane Tachi Kai",
+     "cmd": "641236+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Oboro Giri",
+     "cmd": "623+C",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Minamo Gakure",
+     "cmd": "421+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mukuro Nui",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "in air; A or B"
+    },
+    {
+     "name": "Tenma Otoshi",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "shigen",
+   "name": "Shigen Naoe",
+   "team": "Fighters",
+   "moves": [
+    {
+     "name": "Inga Ohou",
+     "cmd": "6321463214+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life; close"
+    },
+    {
+     "name": "Hisshi no Sou",
+     "cmd": "6321463214+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life; close"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Byakko So",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Retsu Hoko",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "press A again"
+    },
+    {
+     "name": "Zetsu Hoko",
+     "cmd": "623+B",
+     "type": "special",
+     "note": "press B again"
+    },
+    {
+     "name": "Hisui Sai",
+     "cmd": "41236+C",
+     "type": "special",
+     "note": "close"
+    },
+    {
+     "name": "Kongo Sai",
+     "cmd": "632146+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "musashi",
+   "name": "Akatsuki Musashi",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Gorin Tsurane",
+     "cmd": "632146+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Niten Muso Ken",
+     "cmd": "6321463214+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Kanketsu Sen",
+     "cmd": "236+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Obiyakashi",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Juji Gamae",
+     "cmd": "623+B",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Makura Niren",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "kagami",
+   "name": "Shinnosuke Kagami",
+   "team": "Secret",
+   "moves": [
+    {
+     "name": "Guren Suzaku",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": "MAX gauge or flashing life; in air"
+    },
+    {
+     "name": "Funsho Koju",
+     "cmd": "21416+B",
+     "type": "sdm",
+     "note": "Power only; MAX gauge and flashing life"
+    },
+    {
+     "name": "Shuuen no Mai",
+     "cmd": "22+AB",
+     "type": "sdm",
+     "note": "Speed only; MAX gauge and flashing life; then a chain of normals"
+    },
+    {
+     "name": "Kakusei (awaken)",
+     "cmd": "BCD",
+     "type": "special",
+     "note": "MAX gauge or flashing life"
+    },
+    {
+     "name": "Shiranui",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "Sho Hoko",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "A or B"
+    },
+    {
+     "name": "En Hoko",
+     "cmd": "63214+C",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  }
+ ]
+}

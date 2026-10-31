@@ -2,10 +2,11 @@
 
 An Android app for a handful of famous arcade games (Neo Geo, Capcom's
 Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, Konami's
-Mystic Warriors and Sunset Riders, Toaplan's Snow Bros., Athena's J.J.
+Mystic Warriors, Sunset Riders and Wild West C.O.W.-Boys of Moo Mesa, Toaplan's Snow Bros., Athena's J.J.
 Squawkers and Subsino's Penguin Brothers), with
 touch controls built for each one: one-tap specials and supers for every
-fighter in KOF, Double Dragon, Street Fighter III and Marvel vs Capcom, big
+fighter in KOF, Garou, The Last Blade 1 and 2, Samurai Shodown II, Double
+Dragon, Street Fighter III and Marvel vs Capcom, big
 Shoot / Jump / Bomb buttons with rapid fire for Metal Slug and Nightmare in
 the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 
@@ -22,12 +23,17 @@ the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 | Nightmare in the Dark | `nitd` |
 | Penguin Brothers (Subsino, 2000) | `penbros` (or `ablast`, Hong Tian Lei) |
 | Double Dragon (Neo Geo, 1995) | `doubledr` |
+| Garou - Mark of the Wolves | `garou` (or `garouh`, `garouha`, `garoup`...) |
+| The Last Blade | `lastblad` (or `lastblada`, `lastbladh`, `lastsold`...) |
+| The Last Blade 2 | `lastbld2` |
+| Samurai Shodown II | `samsho2` (or `samsho2k`, `samsho2ka`...) |
 | Marvel vs Capcom (Capcom CPS-2) | `mvsc` (or `mvscu`, `mvscur1`, `mvscj`, `mvsca`...): the zip must include its `.key` file |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 | Mystic Warriors (Konami, 1993) | `mystwarr` (or `mystwarru`, `mystwarrj`, `mystwarra`, `mystwarraa`) |
 | Sunset Riders (Konami, 1991), the 4-player version | `ssriders` (or `ssridersuda`, `ssridersjad`... any "4 Players" one) |
 | Snow Bros. - Nick & Tom (Toaplan, 1990) | `snowbros` (or `snowbrosa`... `snowbrosj`) |
 | J.J. Squawkers (Athena, 1993) | `jjsquawk` (or `jjsquawko`) |
+| Wild West C.O.W.-Boys of Moo Mesa (Konami, 1992) | `moomesa` (or `moomesaaab`, `moomesauab`, `moomesauac`) |
 
 The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the others
 don't. No ROMs or BIOS are included: use dumps
@@ -107,6 +113,19 @@ are one attack at four strengths. When the life bar shows **CHARGE**, the
 supers (Charge Moves) on the ring come out; Billy and Jimmy's A+B+C+D
 turns them into their Double Dragon form for the round.
 
+**Garou - Mark of the Wolves:** one fighter, picked up automatically. LP LK
+HP HK; **Evade** (A+B), **T.O.P.** (C+D, while your life is in the T.O.P.
+area) and **Feint** (2+A+C). Grant and Kain are picked with the arcade's
+codes on the select screen.
+
+**The Last Blade 1 and 2:** Weak and Strong slash, Kick and **Repel** (D
+deflects a high attack, 2+D a low one). Power or Speed (and EX in 2) is
+picked before each fight; each move's note says which style it needs.
+
+**Samurai Shodown II:** light and medium slash and kick; A+B is the strong
+slash, C+D the strong kick, plus hops, rolls and lying down. The Weapon
+Destruction moves come out with the POW gauge full.
+
 **Street Fighter III 3rd Strike:** six buttons, LP MP HP over LK MK HK, plus
 Throw and Overhead. The app reads which Super Art you picked and shows only
 that one on the ring, with the fighter's specials.
@@ -142,6 +161,9 @@ throwing). The app sets the cabinet up for four players, a coin slot each.
 **Sunset Riders:** Shoot and Jump, for up to four (hold Shoot to keep
 shooting). This cabinet has no START button: you join with Shoot, so START
 does that.
+
+**Wild West C.O.W.-Boys of Moo Mesa:** Shoot and Jump, for up to four (hold
+Shoot to keep shooting), a coin slot each.
 
 **Snow Bros.:** Snow and Jump, for one or two, with rapid fire on Snow.
 
@@ -189,7 +211,7 @@ how the game runs (frames a second, late frames made up, sound gaps), with
 ## Online and nearby play
 
 One phone per player, as many as the game takes: 2 for most games, 3 for
-Cadillacs and Dinosaurs, 4 for Mystic Warriors and Sunset Riders; up to 8
+Cadillacs and Dinosaurs, 4 for Mystic Warriors, Sunset Riders and Moo Mesa; up to 8
 phones in a room, the rest watching. Every phone needs the same game zip
 (and the BIOS for Neo Geo games; the library has them). Everything is on
 Home → **Online**.
@@ -399,10 +421,16 @@ profile's name.
   were checked the same way: every Double Dragon special and Charge Move,
   every 3rd Strike special and all three Super Arts of each fighter, and
   every Marvel vs Capcom Hyper Combo and special of all 21 characters.
+- **Garou, The Last Blade 1 and 2 and Samurai Shodown II** come from
+  `command.dat` and the FBNeo cheat files, checked the same way: every
+  listed move of every fighter (137, 123, 166 and 99), supers in each
+  style or with the gauge they need. Moves the app's buttons can't play
+  (hold and release, after a Just Defend) are left out.
 
 `tools/fix_rosters.py` holds every KOF change with the reason;
 `tools/doubledr_roster.py`, `tools/sfiii3_roster.py` and
-`tools/mvsc_roster.py` write the other lists, and `tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
+`tools/mvsc_roster.py`, `tools/garou_roster.py`, `tools/lastblad_roster.py`,
+`tools/lastbld2_roster.py` and `tools/samsho2_roster.py` write the other lists, and `tools/movetest.py` is the tester (it needs `tools/emu.py`'s setup).
 
 ## Your ROM library (optional)
 

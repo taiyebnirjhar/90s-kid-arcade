@@ -219,6 +219,128 @@ private val MVSC = DetectSpec(
     pointBase = { ram, base -> if (ram.byte(base) == 1) base else base + 0x800 },
 )
 
+// Garou: Mark of the Wolves (Neo Geo): P1's fighter block at 0x100400, P2's
+// 0x100 later, with the character in the byte at +0x11, X at +0x20, the
+// height at +0x28 (0 on the floor) and facing left in bit 7 of +0x58. The
+// byte at 0x10748A is 0x44 while a round is fought (0 on the select screen,
+// 0x38 for the round's intro, 0x77 at a KO); the attract demo sets it too,
+// so a BIOS player byte must be in. From peon2's garou.lua and the
+// hitbox viewers; checked in garou (tools/garou_roster.py): every fighter on
+// both sides, facing flipping when they cross, Grant and Kain included.
+private val GAROU_IDS = listOf(
+    "terry", "rock", "donghwan", "jaehoon", "hotaru", "gato", "jenet",
+    "butt", "hokutomaru", "freeman", "tizoc", "kevin", "grant", "kain",
+)
+
+private val GAROU = DetectSpec(
+    windows = listOf(0x100400 to 0x200, 0x107400 to 0x100, 0x10FDB6 to 2),
+    player = 0x100400,
+    playerStride = 0x100,
+    character = 0x11,
+    x = 0x20,
+    grounded = 0x28,
+    facing = { ram, base -> ram.byte(base + 0x58) and 0x80 != 0 },
+    // One fighter each: the "team" is the fighter in the player's block.
+    team = listOf(0x100411),
+    teamStride = 0x100,
+    inRound = { it.byte(0x10748A) == 0x44 && (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1) },
+    ids = GAROU_IDS,
+)
+
+// The Last Blade (Neo Geo): the fighter blocks are object slots that move
+// from fight to fight; the word at 0x10AC2E (P2: 0x10AC32) points at P1's
+// (0x100000 + it). In a block: the character at +0x91, X at +0x18, the
+// height at +0x20 (0 on the floor), facing right while +0xE3 is set. The
+// pick bytes are 0x10EAAD and 0x10EAAF. 0x10E32F is 2 from "Ready" to the
+// KO; the attract demo sets it too, so a BIOS player byte must be in.
+// Awakened Kaede (B+C+D) is ID 14 on screen while her pick stays Kaede.
+// Checked in lastblad (tools/lastblad_roster.py): every fighter by name on
+// screen, facing on both sides, rounds and KOs.
+private val LAST_BLADE_IDS = listOf(
+    "kaede", "moriya", "yuki", "okina", "akari", "juzoh", "washizuka", "shikyoh",
+    "hyo", "lee", "zantetsu", "shigen", "musashi", "kagami", "kaedeawakened",
+)
+
+private val LAST_BLADE = DetectSpec(
+    windows = listOf(0x100000 to 0x8000, 0x10AC2C to 0x10, 0x10E32E to 2, 0x10EAAC to 0x10, 0x10FDB6 to 2),
+    player = 0x10AC2E,
+    playerStride = 4,
+    pointBase = { ram, p -> 0x100000 or ram.word(p) },
+    character = 0x91,
+    x = 0x18,
+    grounded = 0x20,
+    facing = { ram, base -> ram.byte(base + 0xE3) == 0 },
+    team = listOf(0x10EAAD),
+    teamStride = 2,
+    inRound = { it.byte(0x10E32F) == 2 && (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1) },
+    ids = LAST_BLADE_IDS,
+    alternates = mapOf("kaede" to "kaedeawakened"),
+)
+
+// The Last Blade 2 (Neo Geo): the fighter blocks move with the stage; long
+// pointers at 0x10E344 (P2: 0x10E348) say where. In a block: the character
+// at +0x61, X at +0x80, the height at +0x88 (0 on the floor), facing right
+// while bit 0 of +0x41 is set. Fixed copies of the fighter on screen at
+// 0x10E3ED and 0x10E411 (the select screen's picks differ for Kotetsu and
+// Hagure, who play as others). A round is fought while 0x10E36C is 1 and
+// 0x10E443 and 0x10E46A are 0, with a BIOS player byte in (not the attract
+// demo). Checked in lastbld2 (tools/lastbld2_roster.py ram): every fighter
+// by name on both sides, facing, rounds, KOs and time over.
+private val LAST_BLADE_2_IDS = listOf(
+    "kaede", "moriya", "yuki", "okina", "akari", "juzoh", "washizuka", "mukuro", "amano",
+    "lee", "zantetsu", "shigen", "kagami", "kojiroh", "hibiki", "setsuna", "kouryu", "kaedenormal",
+)
+
+private val LAST_BLADE_2 = DetectSpec(
+    windows = listOf(0x100000 to 0x8000, 0x10E340 to 0x140, 0x10FDB6 to 2),
+    player = 0x10E344,
+    playerStride = 4,
+    pointBase = { ram, p -> 0x100000 or ram.word(p + 2) },
+    character = 0x61,
+    x = 0x80,
+    grounded = 0x88,
+    facing = { ram, base -> ram.byte(base + 0x41) and 1 == 0 },
+    team = listOf(0x10E3ED),
+    teamStride = 0x24,
+    inRound = {
+        it.byte(0x10E36C) == 1 && it.byte(0x10E443) == 0 && it.byte(0x10E46A) == 0 &&
+            (it.byte(0x10FDB6) == 1 || it.byte(0x10FDB7) == 1)
+    },
+    ids = LAST_BLADE_2_IDS,
+)
+
+// Samurai Shodown II (Neo Geo): the fighters are objects in a pool
+// (0x102000-0x1066E0) found through long pointers at 0x100A46 and 0x100A4A.
+// In an object: the character at +0x65, X at +0x4E, the Y speed at +0x56
+// (0 on the floor; also at the very start and end of a jump), facing left
+// while +0x7F is 1. The pick bytes are 0x100D0B and 0x100D1B. A round is
+// fought while the fight phase (0x100AE5) is 3, the clock (0x100AC6) runs,
+// there's been no KO (0x100AD5) and the countdown to BEGIN (0x100AD3, from
+// 0xFE) is over: false in the attract demo too. Checked in samsho2
+// (tools/samsho2_roster.py): every fighter on both sides, rounds, KOs.
+private val SAMSHO2_IDS = listOf(
+    "haohmaru", "nakoruru", "hanzo", "galford", "wanfu", "ukyo", "kyoshiro", "genan", "earthquake", "jubei",
+    null, "charlotte", "genjuro", "chamcham", "sieger", "nicotine",
+    null, null, // Mizuki (the boss) and Kuroko (home version)
+)
+
+private val SAMSHO2 = DetectSpec(
+    windows = listOf(0x100A40 to 0x10, 0x100AC0 to 0x30, 0x100D00 to 0x20, 0x102000 to 0x4700),
+    player = 0x100A46,
+    playerStride = 4,
+    pointBase = { ram, p -> (ram.word(p) shl 16) or ram.word(p + 2) },
+    character = 0x65,
+    x = 0x4E,
+    grounded = 0x56,
+    facing = { ram, base -> ram.byte(base + 0x7F) == 1 },
+    team = listOf(0x100D0B),
+    teamStride = 0x10,
+    inRound = {
+        it.byte(0x100AE5) == 3 && it.byte(0x100AC6) != 0 && it.byte(0x100AD5) == 0 && it.byte(0x100AD3) and 0x80 == 0
+    },
+    ids = SAMSHO2_IDS,
+)
+
 /** Detection for a roster, or null if its game has no RAM map. */
 fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "kof97" -> KOF97
@@ -228,6 +350,10 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "doubledr" -> DOUBLE_DRAGON
     "sfiii3" -> SF3
     "mvsc" -> MVSC
+    "garou" -> GAROU
+    "lastblad" -> LAST_BLADE
+    "lastbld2" -> LAST_BLADE_2
+    "samsho2" -> SAMSHO2
     else -> null
 }
 
@@ -265,9 +391,13 @@ fun detect(spec: DetectSpec, ram: Ram, player: Int = 0): Detection {
     val activeRaw = ram.byte(base + spec.character)
     // The on-screen ID has no alternate flag of its own, so it is matched
     // against the team: a recognised fighter that isn't in it is a misread.
-    val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 }
+    // An alternate with an ID of its own on screen (Awakened Kaede) is in
+    // the slot of the fighter it's a version of.
+    val ownId = spec.ids.getOrNull(activeRaw)?.takeIf { it in spec.alternates.values }
+    val altSlot = ownId?.let { a -> team.indexOfFirst { it != null && spec.alternates[it] == a } }?.takeIf { it >= 0 }
+    val activeSlot = teamRaw.indexOf(activeRaw).takeIf { it >= 0 } ?: altSlot
     // Where the fighter on screen says it's the alternate version, so is that team slot.
-    val alt = spec.activeAlternate?.invoke(ram, base) == true
+    val alt = altSlot != null || spec.activeAlternate?.invoke(ram, base) == true
     val shown = if (alt && activeSlot != null) {
         team.mapIndexed { slot, id -> if (slot == activeSlot && id != null) spec.alternates[id] ?: id else id }
     } else {

@@ -366,6 +366,22 @@ val GAMES: List<Game> = listOf(
     // too; raw 0x0 is 2 only while a real game is on (1 in attract).
     seats = SeatStatus(listOf(0x211, 0x251, 0x291, 0x2D1), setOf(0), game = 0x0, inGame = setOf(2)),
 ) + Game(
+    // Konami, 1992: four cowboys at once. No BIOS. FBNeo runs it as the
+    // 3-player cabinet with shared coins unless told otherwise: four players,
+    // a coin slot each. Checked in FBNeo: A shoots (holding it keeps
+    // shooting), B jumps; 60 frames a second.
+    id = "moomesa", series = "Moo Mesa", title = "C.O.W.-Boys of Moo Mesa", subtitle = "Wild West",
+    sets = listOf("moomesa", "moomesaaab", "moomesauab", "moomesauac"),
+    layout = Layout.SHOOTER, art = "Wild West C.O.W.-Boys of Moo Mesa (ver EAB)",
+    labels = mapOf('A' to "Shoot", 'B' to "Jump"),
+    neoGeo = false,
+    players = 4,
+    dips = mapOf("Number_of_Players" to "4", "Coin_Mechanism" to "Independent"),
+    // Each player's state, 0x80 apart (raw 0x905 on): 255 from START through
+    // the "continue?" countdown, 0 once GAME OVER shows. The attract demo
+    // leaves them alone.
+    seats = SeatStatus(listOf(0x905, 0x985, 0xA05, 0xA85), setOf(0)),
+) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
     // buttons. Moves checked in FBNeo (tools/movetest.py).
@@ -405,6 +421,50 @@ val GAMES: List<Game> = listOf(
     // it ran out (game over), back to 0. Checked in versus: the loser went
     // 6, 8, 12, 0 while the winner stayed at 6.
     seats = SeatStatus(listOf(0x32B1, 0x36B1), setOf(0, 10, 12)),
+) + Game(
+    // SNK, 1999 (Neo Geo): one fighter each. A and C punch, B and D kick
+    // (light, heavy). Moves, detection and the system moves checked in FBNeo
+    // (tools/garou_roster.py): all 137 moves of the 14 fighters, Grant and
+    // Kain included (the main set's MVS codes pick them).
+    id = "garou", series = "Fatal Fury", title = "Garou", subtitle = "Mark of the Wolves",
+    sets = listOf("garou", "garouh", "garouha", "garoup", "garoubl", "garoubs", "garoujq"),
+    art = "Garou - Mark of the Wolves (NGM-2530)",
+    layout = Layout.FIGHTER, roster = "garou", team = 1, block = true,
+    labels = mapOf('A' to "LP", 'B' to "LK", 'C' to "HP", 'D' to "HK"),
+    // A+B is the evasion (also the Break); C+D the T.O.P. attack, only while
+    // life is in the T.O.P. area (else a heavy punch); 2+A+C a feint.
+    system = listOf(Move("Evade", "AB"), Move("T.O.P.", "CD"), Move("Feint", "2+AC")),
+) + Game(
+    id = "lastblad", series = "The Last Blade", title = "The Last Blade", subtitle = "Bakumatsu Roman",
+    sets = listOf("lastblad", "lastblada", "lastbladh", "lastbldi", "lastbldp", "lastblsp", "lastsold"),
+    art = "The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340)",
+    layout = Layout.FIGHTER, roster = "lastblad", team = 1, block = true,
+    labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
+    // D deflects a high attack, 2+D a low one. Power or Speed is picked
+    // before each fight (left or right); the move notes say which needs which.
+    system = listOf(Move("Repel", "D"), Move("Low repel", "2+D")),
+) + Game(
+    id = "lastbld2", series = "The Last Blade", title = "The Last Blade 2", subtitle = "Bakumatsu Roman",
+    sets = listOf("lastbld2", "lastbd2b", "lastbd2e", "lastbd2i", "lastbd2p", "lastbd2t"),
+    art = "The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430)",
+    layout = Layout.FIGHTER, roster = "lastbld2", team = 1, block = true,
+    labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
+    // C+D throws up close; B+C is an unblockable in Power, an overhead in
+    // Speed and EX. Power, Speed or EX is picked after both fighters.
+    system = listOf(Move("Throw", "CD"), Move("Unblockable", "BC"), Move("Repel", "D"), Move("Low repel", "2+D")),
+) + Game(
+    id = "samsho2", series = "Samurai Shodown", title = "Samurai Shodown II", subtitle = "Shin Samurai Spirits",
+    sets = listOf("samsho2", "samsho2k", "samsho2ka", "samsho2pe", "samsho2t", "samsh2sp", "samsh2jq", "ssho2emb"),
+    art = "Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063)",
+    layout = Layout.FIGHTER, roster = "samsho2", team = 1, block = true,
+    labels = mapOf('A' to "LS", 'B' to "MS", 'C' to "LK", 'D' to "MK"),
+    // A+B is the strong slash, C+D the strong kick (the game's own How to
+    // Play). Taunts need a long hold, so they aren't buttons here.
+    system = listOf(
+        Move("Strong slash", "AB"), Move("Strong kick", "CD"),
+        Move("Hop away", "BC"), Move("Hop forward", "6+BC"),
+        Move("Roll forward", "33"), Move("Roll back", "11"), Move("Lie down", "22"),
+    ),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }

@@ -68,6 +68,7 @@ Known so far:
 | Mystic Warriors | `0x20D`, `0x24D`, `0x28D`, `0x2CD` | 0 out, 2 choosing a ninja, 4 playing and counting down. Free: 0 |
 | Sunset Riders (4 players) | `0x211`, `0x251`, `0x291`, `0x2D1`; game byte `0x0` | 129 playing, 1 countdown, 0 out. Free: 0, or no game on (`0x0` not 2) |
 | J.J. Squawkers | `0x561D`, `0x561C` | 127 out (126 a moment in attract), 0 or 1 playing, 255 countdown. Free: 126, 127 |
+| Wild West C.O.W.-Boys of Moo Mesa | `0x905`, `0x985`, `0xA05`, `0xA85` | 255 from START through the countdown, 0 at game over. Free: 0 |
 | Snow Bros. | `0x40`, `0x4A`; game byte `0x2D` | Not 0 while in, 0 out. Free: 0 (or no game on: `0x2D` not 128) for 17 s (`outForMs`) |
 
 **Neo Geo games get this automatically** (`seats` defaults to the BIOS bytes

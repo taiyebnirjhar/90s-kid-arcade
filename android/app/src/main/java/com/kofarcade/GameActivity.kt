@@ -496,8 +496,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun onGround(): Boolean {
         val spec = ramMap ?: return true
         // The fighter's block as detection last saw it (tag teams move it):
-        // one small read, as this runs on the touch.
-        val addr = (groundBase ?: (spec.player + spec.playerStride * localPlayer)) + spec.grounded
+        // one small read, as this runs on the touch. Where the blocks are
+        // only found through a pointer, none until detection has run.
+        val base = groundBase ?: if (spec.pointBase == null) spec.player + spec.playerStride * localPlayer else return true
+        val addr = base + spec.grounded
         val ram = readRam(spec, listOf((addr and 3.inv()) to 4)) ?: return true
         return ram.word(addr) == 0
     }

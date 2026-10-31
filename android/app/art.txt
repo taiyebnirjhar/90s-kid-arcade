@@ -1,5 +1,12 @@
 Named_Snaps/Cadillacs and Dinosaurs (World 930201).png
 Named_Snaps/Double Dragon (Neo-Geo).png
+Named_Snaps/Garou - Mark of the Wolves (Enable hidden characters, Hack).png
+Named_Snaps/Garou - Mark of the Wolves (Enhanced, Hack).png
+Named_Snaps/Garou - Mark of the Wolves (NGH-2530).png
+Named_Snaps/Garou - Mark of the Wolves (NGM-2530 ~ NGH-2530).png
+Named_Snaps/Garou - Mark of the Wolves (NGM-2530).png
+Named_Snaps/Garou - Mark of the Wolves (bootleg).png
+Named_Snaps/Garou - Mark of the Wolves (prototype).png
 Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
 Named_Snaps/J. J. Squawkers (older).png
 Named_Snaps/J. J. Squawkers.png
@@ -26,6 +33,14 @@ Named_Snaps/Mystic Warriors (ver JAA).png
 Named_Snaps/Mystic Warriors (ver UAA).png
 Named_Snaps/Nightmare in the Dark.png
 Named_Snaps/Penguin Brothers (Japan).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Infinite Power, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Move Modeasy Special Attacks V4, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Optimized, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Perfect V. 3.0, Hack).png
+Named_Snaps/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Special 2017, Hack).png
+Named_Snaps/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 1).png
+Named_Snaps/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 2).png
 Named_Snaps/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Snaps/Snow Bros. - Nick _ Tom (Dooyong license).png
 Named_Snaps/Snow Bros. - Nick _ Tom (Japan).png
@@ -54,8 +69,32 @@ Named_Snaps/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Snaps/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Snaps/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enable Hidden Characters V4).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enhanced, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Plus, Hack).png
+Named_Snaps/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Team, Hack).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt board).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
+Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
+Named_Snaps/The Last Soldier (Korean release of The Last Blade).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
+Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAC).png
 Named_Titles/Cadillacs and Dinosaurs (World 930201).png
 Named_Titles/Double Dragon (Neo-Geo).png
+Named_Titles/Garou - Mark of the Wolves (Enable hidden characters, Hack).png
+Named_Titles/Garou - Mark of the Wolves (Enhanced, Hack).png
+Named_Titles/Garou - Mark of the Wolves (NGH-2530).png
+Named_Titles/Garou - Mark of the Wolves (NGM-2530 ~ NGH-2530).png
+Named_Titles/Garou - Mark of the Wolves (NGM-2530).png
+Named_Titles/Garou - Mark of the Wolves (bootleg).png
+Named_Titles/Garou - Mark of the Wolves (prototype).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
 Named_Titles/J. J. Squawkers (older).png
 Named_Titles/J. J. Squawkers.png
@@ -82,6 +121,14 @@ Named_Titles/Mystic Warriors (ver JAA).png
 Named_Titles/Mystic Warriors (ver UAA).png
 Named_Titles/Nightmare in the Dark.png
 Named_Titles/Penguin Brothers (Japan).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Infinite Power, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Move Modeasy Special Attacks V4, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Optimized, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Perfect V. 3.0, Hack).png
+Named_Titles/Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (Special 2017, Hack).png
+Named_Titles/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 1).png
+Named_Titles/Saulabi Spirits _ Jin Saulabi Tu Hon (Korean release of Samurai Shodown II, set 2).png
 Named_Titles/Sengoku 3 _ Sengoku Densho 2001 (set 1).png
 Named_Titles/Snow Bros. - Nick _ Tom (Dooyong license).png
 Named_Titles/Snow Bros. - Nick _ Tom (Japan).png
@@ -110,3 +157,20 @@ Named_Titles/The King of Fighters 2002 (NGM-2650 ~ NGH-2650).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 1).png
 Named_Titles/The King of Fighters 2002 Magic Plus (bootleg, set 2).png
 Named_Titles/The King of Fighters 2002 Magic Plus II (bootleg).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enable Hidden Characters V4).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Enhanced, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Plus, Hack).png
+Named_Titles/The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (Team, Hack).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Infinite Energy, Hack).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGH-2340).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt board).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
+Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
+Named_Titles/The Last Soldier (Korean release of The Last Blade).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
+Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAC).png

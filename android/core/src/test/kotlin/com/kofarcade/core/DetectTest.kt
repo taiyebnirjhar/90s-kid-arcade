@@ -176,6 +176,78 @@ class DetectTest {
     }
 
     @Test
+    fun lastBladeFollowsThePointersAndTellsAwakenedKaede() {
+        val spec = detectSpec("lastblad")!!
+        val windows = spec.windows.map { (start, length) -> start to ByteArray(length) }
+        fun set(addr: Int, v: Int) {
+            val (start, buf) = windows.first { (start, buf) -> addr - start in buf.indices }
+            buf[(addr - start) xor 1] = v.toByte()
+        }
+        fun word(addr: Int, v: Int) { set(addr, v shr 8); set(addr + 1, v and 0xFF) }
+        word(0x10AC2E, 0x3200) // P1's block at 0x103200
+        word(0x10AC32, 0x1A00) // P2's at 0x101A00
+        set(0x10EAAD, 0) // P1 picked Kaede
+        set(0x10EAAF, 9) // P2 Lee
+        set(0x103291, 0)
+        set(0x101A91, 9)
+        word(0x103218, 0x80)
+        word(0x101A18, 0x120)
+        set(0x1032E3, 1) // facing right
+        set(0x10E32F, 2) // fighting
+        set(0x10FDB6, 1) // P1 in
+        val ram = Ram(windows)
+        var d = detect(spec, ram)
+        assertEquals(listOf("kaede"), d.team)
+        assertEquals("kaede", d.active)
+        assertTrue(d.inRound)
+        assertFalse(d.facingLeft)
+        assertEquals(0x80, d.x)
+        assertEquals(0x120, d.otherX)
+        assertEquals("lee", detect(spec, ram, 1).active)
+        assertTrue(detect(spec, ram, 1).facingLeft)
+        set(0x103291, 14) // she awakens: her pick stays Kaede
+        d = detect(spec, ram)
+        assertEquals("kaedeawakened", d.active)
+        assertEquals(0, d.activeSlot)
+        set(0x10FDB6, 0) // the attract demo
+        assertFalse(detect(spec, ram).inRound)
+    }
+
+    @Test
+    fun samuraiShodownTwoFollowsTheLongPointers() {
+        val spec = detectSpec("samsho2")!!
+        val windows = spec.windows.map { (start, length) -> start to ByteArray(length) }
+        fun set(addr: Int, v: Int) {
+            val (start, buf) = windows.first { (start, buf) -> addr - start in buf.indices }
+            buf[(addr - start) xor 1] = v.toByte()
+        }
+        fun word(addr: Int, v: Int) { set(addr, v shr 8); set(addr + 1, v and 0xFF) }
+        word(0x100A46, 0x0010); word(0x100A48, 0x4220) // P1's object at 0x104220
+        word(0x100A4A, 0x0010); word(0x100A4C, 0x2EA0) // P2's at 0x102EA0
+        set(0x100D0B, 1) // Nakoruru
+        set(0x100D1B, 8) // Earthquake
+        set(0x104285, 1)
+        set(0x102F05, 8)
+        word(0x10426E, 0x60)
+        word(0x102EEE, 0x100)
+        set(0x102F1F, 1) // P2 faces left
+        set(0x100AE5, 3)
+        set(0x100AC6, 0x99)
+        set(0x100AD3, 0x40)
+        val ram = Ram(windows)
+        val d = detect(spec, ram)
+        assertEquals(listOf("nakoruru"), d.team)
+        assertEquals("nakoruru", d.active)
+        assertTrue(d.inRound)
+        assertFalse(d.facingLeft)
+        assertEquals(0x60, d.x)
+        assertEquals("earthquake", detect(spec, ram, 1).active)
+        assertTrue(detect(spec, ram, 1).facingLeft)
+        set(0x100AD3, 0xC0) // counting down to BEGIN
+        assertFalse(detect(spec, ram).inRound)
+    }
+
+    @Test
     fun onlyFightersWithAMapHaveDetection() {
         assertNull(detectSpec(null))
         assertNull(detectSpec("mslug"))
