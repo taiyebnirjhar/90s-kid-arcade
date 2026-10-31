@@ -74,6 +74,19 @@ import com.kofarcade.core.toArrows
 fun GameDialogs(game: GameActivity) {
     if (game.editing) EditBar(game)
     RoomLayer(game)
+    if (game.chatOpen) {
+        Overlay(onDismiss = { game.closeChat() }, scrim = false) {
+            ChatPanel(
+                game.chatLines,
+                game.mutedPlayers,
+                canReport = game.roomUi?.online == true,
+                onSay = { text, quick -> game.sayInRoom(text, quick) },
+                onMute = { line, mute -> game.mutePlayer(line, mute) },
+                onReport = { game.reportPlayer(it) },
+                onClose = { game.closeChat() },
+            )
+        }
+    }
     when (val d = game.dialog) {
         null -> Unit
         GameDialog.Pause -> PauseMenu(game)
@@ -125,7 +138,12 @@ private fun RoomLayer(game: GameActivity) {
     }
     if (game.dialog != null || game.editing) return
     Box(Modifier.fillMaxWidth().padding(top = 12.dp, end = 14.dp)) {
-        RoomPill(ui, onClick = { game.openRoom() }, Modifier.align(Alignment.TopEnd))
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd)) {
+            ChatButton(game.chatUnread, onClick = { game.openChat() })
+            RoomPill(ui, onClick = { game.openRoom() })
+        }
+        // Under the pause button, where no control is.
+        ChatBubbles(game.chatBubbles, Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 48.dp))
         AnnouncementBanner(news, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
     }
 }
@@ -583,6 +601,8 @@ private fun ControlsSettings(game: GameActivity) {
                 p.rapidFire = look.rapidFire
                 p.soundOn = look.sound
                 p.volume = look.volume
+                p.chatBubbles = look.chatBubbles
+                p.chatFilter = look.chatFilter
                 p.detectInfo = info
                 game.applyPrefs()
                 game.close()

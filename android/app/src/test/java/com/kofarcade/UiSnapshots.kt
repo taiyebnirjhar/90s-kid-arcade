@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -812,6 +813,50 @@ class UiSnapshots {
     @Test fun tabletRoomSheet() { tablet(); shot("tablet_room_sheet") { OverGame { SheetFrame(width = 880) { RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {}) } } } }
     @Test fun tabletControls() = controlsShotWith("tablet_controls", SettingsTab.CONTROLS) { tablet() }
     @Test fun tabletHud() { tablet(); shot("tablet_hud") { Hud() } }
+
+    // ----- Room chat -----
+
+    private val chatSample = listOf(
+        ChatShown(1, 1, "Rafi", "d1", "GG", true, false, 1_000),
+        ChatShown(2, 0, "You", "me", "Rematch?", true, true, 2_000),
+        ChatShown(3, 2, "Tanu", "d2", "that last combo was clean, how do you do the 2nd super", false, false, 3_000),
+        ChatShown(4, 1, "Rafi", "d1", "623+P then cancel into the DM", false, false, 4_000),
+        ChatShown(5, 3, "Mim", "d3", "Wait a sec", true, false, 5_000),
+    )
+
+    @Test
+    fun chatPanel() {
+        landscape()
+        shot("chat_panel") {
+            GameBehind {
+                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = {}, onClose = {})
+            }
+        }
+    }
+
+    @Test
+    fun chatBubbles() {
+        landscape()
+        shot("chat_bubbles") {
+            Box(Modifier.fillMaxSize()) {
+                Hud()
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp)) {
+                    ChatButton(2, {})
+                    RoomPill(roomUi.copy(online = true, pingMs = 48), {})
+                }
+                ChatBubbles(chatSample.take(4), Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 60.dp), now = { 4_500 })
+            }
+        }
+    }
+
+    @Test fun smallChatPanel() {
+        smallLandscape()
+        shot("small_chat_panel") {
+            GameBehind {
+                ChatPanel(chatSample, muted = emptySet(), canReport = false, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = {}, onClose = {})
+            }
+        }
+    }
 }
 
 /**

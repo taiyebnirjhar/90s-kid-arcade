@@ -110,9 +110,14 @@ data class Look(
     val rapidFire: Boolean = true,
     val sound: Boolean = true,
     val volume: Float = 1f,
+    val chatBubbles: Boolean = true,
+    val chatFilter: Boolean = true,
 )
 
-fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume)
+fun Prefs.look() = Look(
+    screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume,
+    chatBubbles, chatFilter,
+)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
@@ -256,6 +261,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         game = g
         set = s
         prefs = Prefs(this)
+        mutedPlayers = prefs.mutedPlayers
         prefs.lastGame = game.id
         // Games played, for the profile (counted on the phone; synced from home).
         if (savedInstanceState == null) {
@@ -613,6 +619,72 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var announcement by mutableStateOf<Announcement?>(null)
         private set
 
+    // ----- Room chat -----
+
+    /** The room's chat as shown here: filtered if the filter is on. */
+    val chatLines = androidx.compose.runtime.mutableStateListOf<ChatShown>()
+
+    /** The chat panel is open (the game goes on behind it). */
+    var chatOpen by mutableStateOf(false)
+        private set
+
+    /** Lines said since the chat panel was last open. */
+    var chatUnread by mutableStateOf(0)
+        private set
+
+    /** Players this phone doesn't hear, by their phone's id. */
+    var mutedPlayers by mutableStateOf(emptySet<String>())
+        private set
+
+    private var chatCount = 0L
+
+    private fun heardChat(r: Room, line: com.kofarcade.core.net.ChatLine) {
+        val mine = line.from == r.localId
+        val text = if (look.chatFilter) com.kofarcade.core.net.ChatFilter.clean(line.text) else line.text
+        chatLines += ChatShown(chatCount++, line.from, line.name, line.device, text, line.quick, mine, System.currentTimeMillis())
+        while (chatLines.size > Room.CHAT_KEEP) chatLines.removeAt(0)
+        if (!mine && !chatOpen && line.device !in mutedPlayers) chatUnread++
+    }
+
+    /** Lines to show over the game as bubbles: none from muted players, none while the panel's open. */
+    val chatBubbles: List<ChatShown>
+        get() = if (!look.chatBubbles || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+
+    fun openChat() {
+        chatOpen = true
+        chatUnread = 0
+    }
+
+    fun closeChat() {
+        chatOpen = false
+        chatUnread = 0
+    }
+
+    /** Says [text] to the room ([quick]: a quick-chat line). */
+    fun sayInRoom(text: String, quick: Boolean) = sendNet { it.say(text, quick) }
+
+    /** Mutes (or unmutes) the player who said [line], on this phone, for every room from now on. */
+    fun mutePlayer(line: ChatShown, mute: Boolean) {
+        if (line.device.isEmpty()) return
+        mutedPlayers = if (mute) mutedPlayers + line.device else mutedPlayers - line.device
+        prefs.mutedPlayers = mutedPlayers
+        announce(if (mute) "${line.name} is muted. Tap their line again to unmute." else "${line.name} is unmuted")
+    }
+
+    /** An internet room: the player who said [line], reported to the app's maker with their last lines. */
+    fun reportPlayer(line: ChatShown) {
+        val r = room ?: return
+        val player = r.members[line.from]?.host?.takeIf { roomUi?.online == true && it.isNotEmpty() } ?: return
+        val said = chatLines.filter { it.from == line.from }.takeLast(10).joinToString("\n") { "${it.name}: ${it.text}" }
+        val code = roomUi?.key
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) {
+                runCatching { Online.reports(this@GameActivity).report(player, com.kofarcade.core.online.ReportReason.CHAT, code, said) }.exceptionOrNull()
+            }
+            announce(if (error == null) "Reported ${line.name}. Thanks: every report is read." else com.kofarcade.core.online.explainOnline(error))
+        }
+    }
+
     fun announce(text: String, big: Boolean = false) {
         announcement = Announcement(text, big)
     }
@@ -804,6 +876,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
 
                 override fun onRoster() = runOnUiThread { updateRoomUi() }
+
+                override fun onChat(line: com.kofarcade.core.net.ChatLine) = runOnUiThread { if (!destroyed) heardChat(room, line) }
 
                 // The game's own word: this seat's player never started, or
                 // their game is over. Null where the game can't say.

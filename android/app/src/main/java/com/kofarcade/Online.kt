@@ -49,6 +49,12 @@ object Online {
         )
     }
 
+    /** Reporting a player (chat, voice, name, play). */
+    fun reports(context: Context): com.kofarcade.core.online.Reports {
+        account(context)
+        return com.kofarcade.core.online.Reports(supabase!!)
+    }
+
     /** A first profile's name, until the player picks one. */
     fun defaultName(): String = "Player ${Random.nextInt(1000, 10000)}"
 

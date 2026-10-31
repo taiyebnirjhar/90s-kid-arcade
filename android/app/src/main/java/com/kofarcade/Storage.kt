@@ -259,6 +259,21 @@ class Prefs(context: Context) {
         get() = sp.getFloat("volume", 1f)
         set(v) = sp.edit().putFloat("volume", v).apply()
 
+    /** Room chat: the last lines over the game as bubbles. */
+    var chatBubbles: Boolean
+        get() = sp.getBoolean("chatBubbles", true)
+        set(v) = sp.edit().putBoolean("chatBubbles", v).apply()
+
+    /** Room chat: swear words starred out (ChatFilter). */
+    var chatFilter: Boolean
+        get() = sp.getBoolean("chatFilter", true)
+        set(v) = sp.edit().putBoolean("chatFilter", v).apply()
+
+    /** Players whose chat (and voice) this phone doesn't show, by their phone's id (Member.device). */
+    var mutedPlayers: Set<String>
+        get() = sp.getStringSet("mutedPlayers", null)?.toSet() ?: emptySet()
+        set(v) = sp.edit().putStringSet("mutedPlayers", v).apply()
+
     /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
     var libraryUrl: String
         get() = sp.getString("libraryUrl", null)?.takeIf { it.isNotBlank() } ?: Library.DEFAULT_URL

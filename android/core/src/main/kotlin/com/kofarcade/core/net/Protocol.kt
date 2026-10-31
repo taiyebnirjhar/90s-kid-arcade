@@ -140,6 +140,22 @@ data class Beacon(
     val live: Int = 0,
 )
 
+/**
+ * A line of room chat. A phone sends its [text] (and [quick] for a
+ * quick-chat phrase) to the owner, which fills in who said it ([from]: the
+ * member id, its [name] and [device]) and passes it on to everyone.
+ */
+@Serializable
+data class ChatLine(
+    val text: String,
+    val quick: Boolean = false,
+    val from: Int = -1,
+    val name: String = "",
+    val device: String = "",
+    /** When the owner passed it on (System.currentTimeMillis on the owner). */
+    val at: Long = 0,
+)
+
 /** The room moved to another owner (two had it, after a split): rejoin it there. */
 @Serializable
 data class Moved(val host: String, val port: Int)
@@ -181,6 +197,8 @@ internal object Msg {
     const val TAKEN: Byte = 22
     /** A player to the owner: everyone carries on from this saved game (the state, packed). */
     const val LOAD: Byte = 23
+    /** A line of chat ([ChatLine]): a phone to the owner, the owner to everyone. */
+    const val CHAT: Byte = 24
 }
 
 /**

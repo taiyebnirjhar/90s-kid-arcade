@@ -352,7 +352,7 @@ private fun MenuItem(text: String, lit: Boolean, danger: Boolean, onPress: (Bool
 // ----- Controls settings -----
 
 /** The settings panel's tabs. */
-enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves"), SOUND("Sound") }
+enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves"), SOUND("Sound"), CHAT("Chat") }
 
 /**
  * The Controls settings, from plain data (so they can be previewed): a
@@ -428,6 +428,10 @@ fun ControlsPanel(
                         StepRow("Volume", look.volume, 0.1f..1f, 0.1f, sub = if (look.sound) "The phone's volume buttons work too" else "Sound is off") {
                             onLook(look.copy(volume = it, sound = true))
                         }
+                    }
+                    SettingsTab.CHAT -> {
+                        ToggleRow("Chat over the game", look.chatBubbles, { onLook(look.copy(chatBubbles = it)) }, sub = "In rooms: the last lines, for a few seconds")
+                        ToggleRow("Word filter", look.chatFilter, { onLook(look.copy(chatFilter = it)) }, sub = "Swear words show as ****")
                     }
                     SettingsTab.MOVES -> {
                         PickRow("Move names", LabelMode.entries, look.labelMode, { it.label }, sub = "Names under the move buttons") { onLook(look.copy(labelMode = it)) }

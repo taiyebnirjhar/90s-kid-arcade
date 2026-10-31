@@ -734,6 +734,17 @@ this order, chat and voice first since they were named:
 
 Each phase keeps nearby play and its tests working, as Step 1's did.
 
+**4.1 built (2026-10-31):** a chat line goes to the room's host, which
+fills in who said it (name, phone) and passes it on to every phone,
+watchers included: the same path in nearby and internet rooms, and old
+apps ignore it. The host lets a phone say 5 lines in 10 seconds; more are
+dropped and the sender is told. Each phone filters what it shows (Settings,
+Chat: word filter, chat over the game) and keeps who it muted. Lines show
+for 5 seconds at the top left, under the pause button, where no control
+is (the right side has the moves). Reports go to `report_player`
+(`20261101000000_reports.sql`): 20 a day each, the same one again within a
+day ignored, read by the owner in Supabase's dashboard.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.

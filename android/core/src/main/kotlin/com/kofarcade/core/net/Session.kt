@@ -125,6 +125,9 @@ interface RoomListener {
 
     /** Something to tell the player: "Rafi joined", "You're the host now". */
     fun onNews(message: String) {}
+
+    /** A line of room chat (this phone's own too, once the owner passed it on). */
+    fun onChat(line: ChatLine) {}
 }
 
 /** A link to another phone of the room ([id]: its member id, -1 before it has one). */
@@ -772,6 +775,63 @@ class Room private constructor(
         return runCatching { line.send(Msg.LOAD, pack(state)) }.isSuccess
     }
 
+    /** The room's chat so far, oldest first: the last [CHAT_KEEP] lines this phone heard. */
+    val chat: List<ChatLine> get() = synchronized(chatLines) { chatLines.toList() }
+
+    private val chatLines = ArrayDeque<ChatLine>()
+
+    // Owner: when each member last spoke, for the limit on how often.
+    private val chatTimes = HashMap<Int, ArrayDeque<Long>>()
+
+    /**
+     * Says [text] to the room ([quick]: a quick-chat phrase). The owner
+     * passes it on to everyone, this phone included ([RoomListener.onChat]).
+     * False if it can't be sent (nothing to say, or no owner to send it to).
+     */
+    fun say(text: String, quick: Boolean = false): Boolean {
+        val clean = cleanChat(text) ?: return false
+        val line = ChatLine(clean, quick)
+        if (isOwner) {
+            worker.execute { chatFrom(localId, line) }
+            return true
+        }
+        val to = ownerLine ?: return false
+        return runCatching { to.send(Msg.CHAT, encode(line)) }.isSuccess
+    }
+
+    // Owner: a line from member [id], passed on to everyone (on the worker).
+    private fun chatFrom(id: Int, said: ChatLine) {
+        if (closed || !isOwner) return
+        val m = members[id] ?: return
+        val text = cleanChat(said.text) ?: return
+        // At most CHAT_BURST lines in CHAT_WINDOW_MS each: a flood goes no further.
+        val now = System.currentTimeMillis()
+        val times = synchronized(chatTimes) {
+            chatTimes.getOrPut(id) { ArrayDeque() }.also { t ->
+                while (t.isNotEmpty() && now - t.first() > CHAT_WINDOW_MS) t.removeFirst()
+            }
+        }
+        if (times.size >= CHAT_BURST) {
+            if (times.size == CHAT_BURST) tell(id, "Slow down: a few lines at a time")
+            times.addLast(now)
+            return
+        }
+        times.addLast(now)
+        val line = ChatLine(text, said.quick, id, m.name, m.device, now)
+        val payload = encode(line)
+        for (other in ownerLines()) if (other.id >= 0 && other.id in members) sendTo(other, Msg.CHAT, payload)
+        heard(line)
+    }
+
+    // A line of chat this phone heard: kept, and told to the game.
+    private fun heard(line: ChatLine) {
+        synchronized(chatLines) {
+            chatLines.addLast(line)
+            while (chatLines.size > CHAT_KEEP) chatLines.removeFirst()
+        }
+        listener?.onChat(line)
+    }
+
     /** Owner: frees a seat held for a player who dropped out, now. */
     fun freeHeldSeat(seat: Int) {
         if (isOwner) worker.execute { release(held[seat]?.id ?: return@execute, "Player ${seat + 1}'s seat is free", now = true) }
@@ -907,6 +967,10 @@ class Room private constructor(
                     Msg.SIT -> worker.execute { sit(from) }
                     Msg.STAND -> worker.execute { stand(from) }
                     Msg.REWATCH -> worker.execute { if (members[from]?.seat == -1) watch(from) }
+                    Msg.CHAT -> {
+                        val said = runCatching { decode<ChatLine>(payload) }.getOrNull()
+                        if (said != null) worker.execute { chatFrom(from, said) }
+                    }
                     Msg.LOAD -> {
                         val state = runCatching { unpack(payload) }.getOrNull()
                         worker.execute { if (state != null) loadSaved(from, state) else tell(from, "That saved game didn't arrive whole. Try again.") }
@@ -1676,6 +1740,7 @@ class Room private constructor(
                         members[from]?.let { listener?.onPartnerPaused(it.seat, t == Msg.PAUSE) }
                     }
                     Msg.NEWS -> news(String(payload))
+                    Msg.CHAT -> runCatching { decode<ChatLine>(payload) }.getOrNull()?.let(::heard)
                     Msg.BYE -> {
                         ownerGone(line)
                         return
@@ -2085,7 +2150,21 @@ class Room private constructor(
         private const val FRESH_NS = 50_000_000L
         private const val LINE_QUIET_NS = 10_000_000_000L
         private const val ARRIVING_QUIET_NS = 60_000_000_000L
-        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME)
+        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME, Msg.CHAT)
+
+        /** Lines of chat a phone keeps. */
+        const val CHAT_KEEP = 50
+
+        /** The longest line of chat. */
+        const val CHAT_MAX = 120
+
+        // A member says at most CHAT_BURST lines in CHAT_WINDOW_MS.
+        private const val CHAT_BURST = 5
+        private const val CHAT_WINDOW_MS = 10_000L
+
+        /** [text] as chat carries it: one line, spaces squeezed, at most [CHAT_MAX] characters; null if there's nothing left. */
+        fun cleanChat(text: String): String? =
+            text.replace(Regex("[\\p{Cntrl}\\s]+"), " ").trim().take(CHAT_MAX).trim().ifEmpty { null }
         private const val TAKEOVER_MS = 12_000L
         private const val REJOIN_CONNECT_MS = 2_000
         private const val REJOIN_ANSWER_MS = 5_000
