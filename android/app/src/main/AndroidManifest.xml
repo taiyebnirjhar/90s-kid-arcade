@@ -37,6 +37,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="arcade.taiyebnirjhor.com" android:path="/join.html" />
+                <!-- Links shared before the site moved to its own domain. -->
                 <data android:scheme="https" android:host="taiyebnirjhar.github.io" android:pathPattern="/90s-kid-arcade/join.html" />
             </intent-filter>
             <!-- The website's "Open in the app" button. -->

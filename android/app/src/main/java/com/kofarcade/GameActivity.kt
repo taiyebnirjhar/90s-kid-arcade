@@ -942,11 +942,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             val code = OnlineRooms.pretty(key)
             "Play with me on 90s Kid Arcade! Room code: $code\n" +
                 "Open Online in the app and type the code, or tap: ${joinLink(key)}\n" +
-                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+                "Get the app: https://arcade.taiyebnirjhor.com/"
         } else {
             "Play with me on 90s Kid Arcade! Room key: $key\n" +
                 "Open Online in the app and type the key (same Wi-Fi or hotspot).\n" +
-                "Get the app: https://taiyebnirjhar.github.io/90s-kid-arcade/"
+                "Get the app: https://arcade.taiyebnirjhor.com/"
         }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         runCatching { startActivity(Intent.createChooser(send, "Share the room key")) }

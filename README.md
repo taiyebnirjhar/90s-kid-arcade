@@ -49,7 +49,7 @@ chip files on import.
 
 ## Install
 
-The website, [taiyebnirjhar.github.io/90s-kid-arcade](https://taiyebnirjhar.github.io/90s-kid-arcade/)
+The website, [arcade.taiyebnirjhor.com](https://arcade.taiyebnirjhor.com/)
 (`site/`, published by `.github/workflows/pages.yml`), has the download button and how to install.
 
 Each push to `main` builds the app and publishes it as the
