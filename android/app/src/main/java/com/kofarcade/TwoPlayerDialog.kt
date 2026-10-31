@@ -1087,7 +1087,7 @@ fun PickGameScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                     ready.chunked(columns).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth)) { onPick(pick) } }
+                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth), if (challenge != null) "Challenge" else "Host") { onPick(pick) } }
                         }
                     }
                 }
@@ -1099,7 +1099,7 @@ fun PickGameScreen(
 
 /** A game to host: its picture filling a wide card, how many can play, and a gold Host button. */
 @Composable
-private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> Unit) {
+private fun HostCard(game: Game, set: String, modifier: Modifier, label: String = "Host", onHost: () -> Unit) {
     WideGameCard(
         game,
         set,
@@ -1108,7 +1108,7 @@ private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> 
         onClick = onHost,
         tag = { PictureTag("${game.players} players", Palette.green) },
         info = { Text(game.subtitle ?: game.series, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1) },
-        action = { GoldButton("Host", onHost, play = true, compact = true) },
+        action = { GoldButton(label, onHost, play = true, compact = true) },
     )
 }
 
