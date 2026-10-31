@@ -713,6 +713,27 @@ fixes they led to. Still open, and why:
 | Supabase's free project pauses after a week idle | Fine while building; Pro once people play |
 | Rollback replays too slow on old phones | Measured in 1.6; the window capped by phone speed |
 
+## Steps 2-4: work breakdown
+
+**Asked (2026-10-31):** the owner asked to build the rest of online play
+overnight ("complete online setup, like voice, chat"), as one PR. Built in
+this order, chat and voice first since they were named:
+
+| Phase | Work | Needs from the owner |
+|---|---|---|
+| 4.1 | **Room chat**: quick chat ("GG", "Rematch?"...) and text, in nearby and internet rooms; a word filter (on by default), muting a player, reporting one (internet) | Nothing |
+| 4.2 | **Voice** in internet rooms: the mic off when you join, push-to-talk or open mic, voice volume and mute all, mute one player, the host mutes one for the room or makes watchers listen-only, who's speaking | Nothing (the relay's stop, D8, covers voice too) |
+| 2.1 | **Friends, server**: friend codes, requests (accept, decline), remove, block; what each friend is doing (online, playing which game, in which room); invites | Nothing: deployed with the PR |
+| 2.2 | **Friends, app**: the list on the Online screen, add by code or from a room, requests, invite to your room, join or watch a friend's game, block | Nothing |
+| 2.3 | **Notifications** with the app closed (Firebase Cloud Messaging) | A Firebase project (free); later |
+| 3.1 | **Seat rotation**, set by the host: winner stays, everyone rotates, next in line | Nothing |
+| 3.2 | **Quick match**: any open room of that game with space, else a new open one | Nothing |
+| 3.3 | **Reports** and limits on how often | Nothing |
+| 3.4 | Game lobby and "Live now" | Later |
+| 3.5 | Bots | Later: the largest piece |
+
+Each phase keeps nearby play and its tests working, as Step 1's did.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.
