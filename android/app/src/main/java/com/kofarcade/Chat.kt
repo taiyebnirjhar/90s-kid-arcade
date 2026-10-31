@@ -205,7 +205,7 @@ fun ChatPanel(
     canReport: Boolean,
     onSay: (String, Boolean) -> Unit,
     onMute: (ChatShown, Boolean) -> Unit,
-    onReport: (ChatShown) -> Unit,
+    onReport: (ChatShown, com.kofarcade.core.online.ReportReason) -> Unit,
     onClose: () -> Unit,
     /** Internet rooms: ask them to be friends, or block them. */
     onAddFriend: ((ChatShown) -> Unit)? = null,
@@ -260,7 +260,25 @@ fun ChatPanel(
                             ) {
                                 GhostButton(if (isMuted) "Unmute" else "Mute", { onMute(l, !isMuted); picked = null }, compact = true)
                                 if (onAddFriend != null) GhostButton("Add friend", { onAddFriend(l); picked = null }, compact = true)
-                                if (canReport) GhostButton("Report", { onReport(l); picked = null }, compact = true, danger = true)
+                                if (canReport) {
+                                    // Why: picked from the server's reasons.
+                                    androidx.compose.foundation.layout.Box {
+                                        var why by remember { mutableStateOf(false) }
+                                        GhostButton("Report", { why = true }, compact = true, danger = true)
+                                        androidx.compose.material3.DropdownMenu(expanded = why, onDismissRequest = { why = false }) {
+                                            for (r in com.kofarcade.core.online.ReportReason.entries) {
+                                                androidx.compose.material3.DropdownMenuItem(
+                                                    text = { Text(r.label) },
+                                                    onClick = {
+                                                        why = false
+                                                        picked = null
+                                                        onReport(l, r)
+                                                    },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 if (onBlock != null) GhostButton("Block", { onBlock(l); picked = null }, compact = true, danger = true)
                             }
                         }

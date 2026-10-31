@@ -206,6 +206,12 @@ fun TwoPlayerDialog(
                 roms,
                 onHost = { screen = TwoPlayer.PickGame() },
                 onHostOnline = { screen = TwoPlayer.PickGame(online = true) },
+                // Quick match with no open room to join: an open room of your own, listed for anyone.
+                onHostOpen = {
+                    openRoom = true
+                    Prefs(context).openRooms = true
+                    screen = TwoPlayer.PickGame(online = true)
+                },
                 onLibrary = onLibrary,
                 onBack = back,
                 onJoined = onStart,
@@ -239,6 +245,7 @@ private fun Hub(
     roms: RomStore,
     onHost: () -> Unit,
     onHostOnline: () -> Unit,
+    onHostOpen: () -> Unit,
     onLibrary: () -> Unit,
     onBack: () -> Unit,
     onJoined: (Game, String) -> Unit,
@@ -517,6 +524,22 @@ private fun Hub(
         if (code != null) joinByCode(code, null) else askedLocked = r
     }
 
+    // Quick match: the open room with a free seat (else room to watch) of a
+    // game this phone has, the list's order (live ones first); none, a new open room.
+    fun quickMatch() {
+        fun have(r: ListedRoom): Boolean {
+            val g = gameForSet(r.set) ?: return false
+            return roms.has("${r.set}.zip") && (!g.neoGeo || roms.has(BIOS))
+        }
+        val open = listed.filter { it.open && it.code != null && have(it) }
+        val pick = open.firstOrNull { it.members < it.maxPlayers } ?: open.firstOrNull { it.members < com.kofarcade.core.net.MAX_MEMBERS }
+        if (pick != null) {
+            joinListed(pick)
+        } else {
+            onHostOpen()
+        }
+    }
+
     // A friend action on the server (it returns what to tell the player, if anything), then the list again.
     fun friendCall(call: (com.kofarcade.core.online.FriendServer) -> String?) {
         if (busy) return
@@ -604,6 +627,7 @@ private fun Hub(
         onBack = onBack,
         internet = internet,
         onHostOnline = onHostOnline,
+        onQuickMatch = ::quickMatch,
         friends = if (internet) friends else null,
         friendCode = friendCode,
         onFriendCode = { friendCode = formatFriendCode(it) },
@@ -674,6 +698,8 @@ fun MultiplayerHub(
     onJoinOnline: (Int) -> Unit = {},
     /** Why the list couldn't be had (no profile service, say), or null. */
     onlineNote: String? = null,
+    /** Quick match: into an open room of a game you have, else a new open one. */
+    onQuickMatch: () -> Unit = {},
     /** Friends (with internet), or null. */
     friends: FriendsUi? = null,
     friendCode: String = "",
@@ -720,6 +746,17 @@ fun MultiplayerHub(
         // Rooms online: anyone's, open ones first.
         if (internet) {
             SectionLabel("Rooms online")
+            Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Quick match", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                        Text("Into an open room of a game you have; none, and yours opens for anyone.", color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    GoldButton("Play", onQuickMatch, enabled = !busy, compact = true, play = true)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             when {
                 online.isNotEmpty() -> CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
                 onlineNote != null -> Text(onlineNote, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)

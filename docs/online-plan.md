@@ -773,8 +773,24 @@ the code), Remove and Block, and adding one by their 8-letter code (your
 own to share). In a room: invite friends online from the room sheet;
 from chat, ask a player to be friends or block them (also muted). A
 blocked player can't find you by code, ask you or invite you, either way.
-Without notifications (2.3), an invite is seen when the friend opens the
-Online screen.
+Without notifications (2.3), an invite shows on the friend's Home screen
+(looked for every 20 seconds while it's up) and at the top of Online.
+
+**Step 3, built in part (2026-10-31):**
+
+- **3.1 Seat rotation:** "winner stays" and "next in line" are what the
+  room already does, from each game's own countdown: the challenger who
+  lost lets their continue run out, their seat goes to the first in line,
+  and the winner stays. "Everyone rotates" needs each game's match end
+  read from its memory (a game-by-game job, like `Game.seats`): later.
+- **3.2 Quick match:** on the Online screen, from the server's list: the
+  first open room of a game this phone has with a free seat (else room to
+  watch); none, and the player opens one, open, for anyone. Matching by
+  ping comes with the lobby (3.4).
+- **3.3 Reports:** from chat, with a reason (what they wrote, voice, name,
+  how they play, something else); 20 a day each (above). Challenges, and
+  limits on them, come with the lobby.
+- **3.4 Lobby and Live now, 3.5 bots:** later.
 
 ## Step 2: Friends
 

@@ -82,7 +82,7 @@ fun GameDialogs(game: GameActivity) {
                 canReport = game.roomUi?.online == true,
                 onSay = { text, quick -> game.sayInRoom(text, quick) },
                 onMute = { line, mute -> game.mutePlayer(line, mute) },
-                onReport = { game.reportPlayer(it) },
+                onReport = { line, reason -> game.reportPlayer(line, reason) },
                 onClose = { game.closeChat() },
                 onAddFriend = if (game.roomUi?.online == true) ({ game.addFriendFrom(it) }) else null,
                 onBlock = if (game.roomUi?.online == true) ({ game.blockFrom(it) }) else null,

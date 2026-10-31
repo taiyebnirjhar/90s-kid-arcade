@@ -872,14 +872,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** An internet room: the player who said [line], reported to the app's maker with their last lines. */
-    fun reportPlayer(line: ChatShown) {
+    fun reportPlayer(line: ChatShown, reason: com.kofarcade.core.online.ReportReason) {
         val r = room ?: return
         val player = r.members[line.from]?.host?.takeIf { roomUi?.online == true && it.isNotEmpty() } ?: return
         val said = chatLines.filter { it.from == line.from }.takeLast(10).joinToString("\n") { "${it.name}: ${it.text}" }
         val code = roomUi?.key
         lifecycleScope.launch {
             val error = withContext(Dispatchers.IO) {
-                runCatching { Online.reports(this@GameActivity).report(player, com.kofarcade.core.online.ReportReason.CHAT, code, said) }.exceptionOrNull()
+                runCatching { Online.reports(this@GameActivity).report(player, reason, code, said) }.exceptionOrNull()
             }
             announce(if (error == null) "Reported ${line.name}. Thanks: every report is read." else com.kofarcade.core.online.explainOnline(error))
         }

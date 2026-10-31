@@ -829,7 +829,7 @@ class UiSnapshots {
         landscape()
         shot("chat_panel") {
             GameBehind {
-                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = {}, onClose = {})
+                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
             }
         }
     }
@@ -900,7 +900,7 @@ class UiSnapshots {
         smallLandscape()
         shot("small_chat_panel") {
             GameBehind {
-                ChatPanel(chatSample, muted = emptySet(), canReport = false, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = {}, onClose = {})
+                ChatPanel(chatSample, muted = emptySet(), canReport = false, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
             }
         }
     }
