@@ -1,5 +1,6 @@
 package com.kofarcade
 
+import androidx.compose.foundation.clickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -724,112 +725,133 @@ fun MultiplayerHub(
     onBlockFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
 ) {
     ArcadeScreen(
-        title = "Online",
-        kicker = if (internet) "Play together, anywhere" else "Nearby play",
+        title = "Play together",
+        kicker = if (internet) "With friends or anyone" else "No internet: same Wi-Fi",
         onBack = onBack,
-        // Making a room is the page's main action: pinned at the bottom, in thumb reach.
-        bottomBar = {
-            GoldButton(if (internet) "Create a room" else "Create nearby room", if (internet) onHostOnline else onHost, Modifier.fillMaxWidth(), play = true)
-        },
     ) {
         status?.let {
             StatusPanel(it, onStatusAction)
             Spacer(Modifier.height(8.dp))
         }
         friends?.let { InviteCards(it.invites, busy, onJoinInvite, onDismissInvite) }
-        // No internet: not an error, a feature.
-        if (!internet) {
-            NearbyPlayCard()
-            Spacer(Modifier.height(8.dp))
-        }
-        // Rooms nearby: first, they're the fastest.
-        SectionLabel(if (internet) "Nearby · fastest" else "Rooms nearby")
-        if (rooms.isEmpty()) {
-            EmptyState(
-                "Looking for rooms…",
-                "On this Wi-Fi or hotspot. A friend's room nearby shows up here.",
-                icon = { RadarIcon(Modifier.size(28.dp)) },
-            )
-        } else {
-            CardGrid(rooms.size) { i -> NearbyRoomCard(rooms[i], enabled = !busy && rooms[i].have) { onJoinRoom(i) } }
-        }
-        // Rooms online: anyone's, open ones first.
-        if (internet) {
-            SectionLabel("Rooms online")
-            Panel {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Quick match", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                        Text("Into an open room of a game you have; none, and yours opens for anyone.", color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp)
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    GoldButton("Play", onQuickMatch, enabled = !busy, compact = true, play = true)
-                }
+
+        // The three ways in, big and plain: anyone, a friend's code, your own room.
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (internet) {
+                BigChoice(
+                    "Quick match", "Play anyone who's online now",
+                    accent = true, enabled = !busy, onClick = onQuickMatch,
+                ) { PlayIcon(Modifier.size(22.dp)) }
             }
-            Spacer(Modifier.height(8.dp))
-            when {
-                online.isNotEmpty() -> CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
-                onlineNote != null -> Text(onlineNote, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
-                else -> EmptyState(
-                    "No rooms online right now",
-                    "Create one: an open room shows here for anyone to join; a locked one too, but only with its code.",
-                    icon = { RadarIcon(Modifier.size(28.dp)) },
-                )
-            }
+            BigChoice(
+                "Make a room",
+                if (internet) "Pick a game, get a code, send it to a friend" else "On this Wi-Fi or hotspot: friends here join",
+                enabled = !busy,
+                onClick = if (internet) onHostOnline else onHost,
+            ) { Text("+", color = Palette.gold, fontSize = 30.sp, fontWeight = FontWeight.Black) }
+            JoinCodeCard(key, onKey, busy, onJoinKey, internet)
         }
+
         if (friends != null) {
             FriendsSection(friends, busy, friendCode, onFriendCode, onAddFriend, onShareCode, onAnswerFriend, onJoinFriend, onRemoveFriend, onBlockFriend)
         }
-        // Join with a code: an online room's (friends anywhere) or a nearby room's key.
-        SectionLabel("Join with a code")
-        Panel {
-            Row(verticalAlignment = Alignment.Bottom) {
-                ArcadeField(key, onKey, "Room code", Modifier.weight(1f), placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii, onDone = { if (!busy && key.isNotBlank()) onJoinKey() })
-                Spacer(Modifier.width(12.dp))
-                GoldButton("Join", onJoinKey, enabled = !busy && key.isNotBlank())
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                if (internet) "The code your friend sees in their room. Works from anywhere." else "The key your friend sees in their room (same Wi-Fi or hotspot).",
-                color = Palette.muted,
-                fontSize = 12.sp,
-            )
+
+        // Rooms to join: nearby first (no lag, no data), then online.
+        SectionLabel("Rooms you can join")
+        val none = rooms.isEmpty() && online.isEmpty()
+        if (rooms.isNotEmpty()) {
+            CardGrid(rooms.size) { i -> NearbyRoomCard(rooms[i], enabled = !busy && rooms[i].have) { onJoinRoom(i) } }
+            Spacer(Modifier.height(10.dp))
         }
-        // With internet, a nearby room is still there: no data used.
+        if (online.isNotEmpty()) {
+            CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
+        }
+        if (none) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                RadarIcon(Modifier.size(22.dp))
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    onlineNote ?: if (internet) "No rooms right now. Make one, or try Quick match." else "Looking for rooms on this Wi-Fi…",
+                    color = Palette.muted,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                )
+            }
+        } else if (onlineNote != null) {
+            Spacer(Modifier.height(6.dp))
+            Text(onlineNote, color = Palette.muted, fontSize = 12.sp)
+        }
+
+        // Same Wi-Fi: one small line, for no data and no lag.
         if (internet) {
-            SectionLabel("Saving data?")
-            Panel {
-                Text("Create a nearby room: friends on the same Wi-Fi or hotspot only. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
-                Spacer(Modifier.height(12.dp))
-                GhostButton("Create nearby room", onHost, Modifier.fillMaxWidth(), enabled = !busy)
+            Spacer(Modifier.height(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Friends next to you?", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("Make a room on the same Wi-Fi: no lag, no data.", color = Palette.muted, fontSize = 12.sp)
+                }
+                Spacer(Modifier.width(10.dp))
+                GhostButton("Same Wi-Fi", onHost, compact = true, enabled = !busy)
             }
         }
-        // How it works.
-        SectionLabel("How it works")
-        StepsStrip()
-        Spacer(Modifier.height(16.dp))
-        Text(
-            "Each phone needs the game (and the Neo Geo BIOS); most games take 2 players, Cadillacs and Dinosaurs 3, " +
-                "Mystic Warriors and Sunset Riders 4. Others watch, and take a seat when one opens.",
-            color = Palette.muted,
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
-        )
         Spacer(Modifier.height(24.dp))
     }
 }
 
-/** No internet: nearby play, as a feature (gold), not an error. */
+/** One of the screen's big ways in: an icon, a name a child reads, and one line on what happens. */
 @Composable
-private fun NearbyPlayCard() {
-    Panel(highlight = true) {
-        Kicker("Nearby play")
-        Spacer(Modifier.height(4.dp))
-        Text("No internet needed", color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-        Spacer(Modifier.height(4.dp))
-        Text("Play with friends on the same Wi-Fi or hotspot. Zero lag, no data used.", color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
+private fun BigChoice(
+    title: String,
+    line: String,
+    accent: Boolean = false,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+) {
+    val shape = RoundedCornerShape(20.dp)
+    val source = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .pressScale(source)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (accent) Palette.gold else Palette.panel)
+            .border(1.dp, if (accent) Palette.gold else Palette.line, shape)
+            .clickable(interactionSource = source, indication = androidx.compose.foundation.LocalIndication.current, enabled = enabled, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp))
+                .background(if (accent) OnGold.copy(alpha = 0.12f) else Palette.gold.copy(alpha = 0.12f)),
+        ) { icon() }
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = if (accent) OnGold else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+            Text(line, color = if (accent) OnGold.copy(alpha = 0.75f) else Palette.muted, fontSize = 13.sp, lineHeight = 17.sp)
+        }
+        Text("›", color = if (accent) OnGold else Palette.muted, fontSize = 28.sp, fontWeight = FontWeight.Black)
     }
 }
+
+/** Got a code from a friend: type it, Join. */
+@Composable
+private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, onJoin: () -> Unit, internet: Boolean) {
+    Panel {
+        Text("Got a code from a friend?", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            ArcadeField(
+                key, onKey, if (internet) "Their room code" else "Their room key", Modifier.weight(1f),
+                placeholder = "K7Q-2MX", keyboardType = KeyboardType.Ascii, onDone = { if (!busy && key.isNotBlank()) onJoin() },
+            )
+            Spacer(Modifier.width(12.dp))
+            GoldButton("Join", onJoin, enabled = !busy && key.isNotBlank())
+        }
+    }
+}
+
 
 /** An online room's trouble in plain words: no internet is about rooms here, not the profile. */
 private fun explainRoomTrouble(e: OnlineError): String = when (e) {
