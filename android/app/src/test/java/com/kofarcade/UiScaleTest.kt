@@ -1,11 +1,14 @@
 package com.kofarcade
 
-import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /** The whole UI grows and shrinks with the screen, so it looks the same on every phone and tablet. */
 class UiScaleTest {
+    // The design's units across the short side, and along the long one, for a screen.
+    private fun design(w: Int, h: Int): Pair<Float, Float> = uiScale(w, h).let { minOf(w, h) / it to maxOf(w, h) / it }
+
     @Test
     fun theDesignPhoneIsOneToOne() {
         assertEquals(1f, uiScale(411, 914), 0.001f)
@@ -13,11 +16,29 @@ class UiScaleTest {
     }
 
     @Test
-    fun smallerPhonesShrinkAndTabletsGrow() {
-        assertTrue(uiScale(360, 780) < 0.9f)
-        assertTrue(uiScale(800, 1280) > 1.3f)
-        assertEquals(0.8f, uiScale(240, 320), 0.001f) // never too small to press
-        assertEquals(1.5f, uiScale(2000, 3000), 0.001f) // never giant
+    fun everyPhoneHasTheDesignPhonesWidth() {
+        // Small, common and big phones, upright: text and buttons the same share of the width.
+        for ((w, h) in listOf(360 to 780, 384 to 854, 393 to 873, 412 to 915, 430 to 932)) {
+            assertEquals("$w x $h", 411f, design(w, h).first, 0.5f)
+        }
+    }
+
+    @Test
+    fun tabletsAreThePhoneGrownWithRoomToSpare() {
+        // A 10" tablet either way round: the short side within 18% of a phone's (a 4:3 one is squarer), the long side never under 640.
+        for ((w, h) in listOf(800 to 1280, 1280 to 800, 744 to 1133, 1024 to 1366)) {
+            val (short, long) = design(w, h)
+            assertTrue("$w x $h: $short", short in 410f..485f)
+            assertTrue("$w x $h: $long", long >= 639.9f)
+        }
+        // So a tablet sideways is the md breakpoint, a phone sideways lg.
+        assertTrue(design(1280, 800).second.let { it >= Breakpoints.md.value && it < Breakpoints.lg.value })
+        assertTrue(design(914, 411).second >= Breakpoints.lg.value)
+    }
+
+    @Test
+    fun neverTooSmallToPress() {
+        assertEquals(0.8f, uiScale(240, 320), 0.001f)
     }
 
     @Test

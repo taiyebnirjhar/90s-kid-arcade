@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 
 object Palette {
@@ -22,14 +23,15 @@ object Palette {
 
 /**
  * The app's screens are designed on one phone (411 x 914 dp, the 20:9 phones
- * most players have), and every other screen gets that same design, scaled:
- * a smaller phone a little smaller, a tablet bigger, so proportions,
- * spacing and how compact it feels are the same everywhere (and every size
- * test in the code sees the design phone's sizes). Text follows Android's
- * text size up to [MAX_TEXT_SCALE], so arcade labels, codes and buttons keep
- * their shape. Each dialog's window gets it again (a dialog starts from the
- * window's own density); it's worked out from the screen's own density, so
- * it never compounds.
+ * most players have), and every other screen gets that same design, scaled
+ * by its short side: text, buttons, gaps and pictures keep the same size
+ * against the screen on a small phone, a big one and a tablet, held either
+ * way. A tablet's extra length (it's squarer than a phone) is room the
+ * [Breakpoints] use, never a reason to shrink everything.
+ * Text follows Android's text size up to [MAX_TEXT_SCALE], so arcade
+ * labels, codes and buttons keep their shape. Each dialog's window gets it
+ * again (a dialog starts from the window's own density); it's worked out
+ * from the screen's own density, so it never compounds.
  */
 @Composable
 fun TextScaleCap(content: @Composable () -> Unit) {
@@ -40,19 +42,42 @@ fun TextScaleCap(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalDensity provides Density(base * scale, font), content = content)
 }
 
-/** How much the design phone's screens are scaled for a [widthDp] x [heightDp] screen (either way round). */
+/**
+ * How much the design phone's screens are scaled for a [widthDp] x [heightDp]
+ * screen (either way round): by the short side, as long as the long side
+ * still has [MIN_LONG_DP] of the design's room (a squarer tablet keeps the
+ * room a phone's sheets and menus need).
+ */
 fun uiScale(widthDp: Int, heightDp: Int): Float {
     if (widthDp <= 0 || heightDp <= 0) return 1f
     val short = minOf(widthDp, heightDp)
     val long = maxOf(widthDp, heightDp)
-    return minOf(short / DESIGN_SHORT_DP, long / DESIGN_LONG_DP).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+    return minOf(short / DESIGN_SHORT_DP, long / MIN_LONG_DP).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
 }
 
 private const val DESIGN_SHORT_DP = 411f
-private const val DESIGN_LONG_DP = 914f
-// Never so small a button is hard to hit, nor so big a tablet looks like a toy.
+private const val MIN_LONG_DP = 640f
+// Never so small a button is hard to hit; a big tablet still looks like the phone, grown.
 private const val MIN_UI_SCALE = 0.8f
-private const val MAX_UI_SCALE = 1.5f
+private const val MAX_UI_SCALE = 2.2f
+
+/**
+ * Screen breakpoints, like Tailwind's (sm, md, lg, xl), in the design phone's
+ * units: after [uiScale], each kind of screen lands in the same one on every
+ * device, so a layout chosen for it looks the same everywhere.
+ *
+ * - below [sm]: the narrowest screens (a sheet or a panel, more than a phone)
+ * - [sm] 360: a phone held upright (the design phone is 411), a tablet upright (437)
+ * - [md] 560: a tablet held sideways (640-660 wide), a small phone sideways
+ * - [lg] 760: a phone held sideways (914 wide)
+ * - [xl] 1100: wider than any phone (a big screen below the scale's floor)
+ */
+object Breakpoints {
+    val sm = 360.dp
+    val md = 560.dp
+    val lg = 760.dp
+    val xl = 1100.dp
+}
 
 /** The largest text size the app follows: Android's "Large" setting, about. */
 const val MAX_TEXT_SCALE = 1.3f

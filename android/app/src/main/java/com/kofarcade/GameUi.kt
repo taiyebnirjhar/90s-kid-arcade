@@ -158,7 +158,7 @@ fun PauseContent(
             .background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.6f), 0.55f to Color.Black.copy(alpha = 0.25f), 1f to Color.Transparent)),
     ) {
         // Small phones (640 dp wide) get a narrower panel and tag, so the two never meet.
-        val narrow = maxWidth < 760.dp
+        val narrow = maxWidth < Breakpoints.lg
         Box(
             contentAlignment = Alignment.CenterStart,
             modifier = Modifier
@@ -396,7 +396,7 @@ fun ControlsPanel(
         Column(
             Modifier
                 .fillMaxHeight()
-                .width(if (maxWidth < 760.dp) 440.dp else 490.dp)
+                .width(if (maxWidth < Breakpoints.lg) 440.dp else 490.dp)
                 .graphicsLayer { translationX = (1 - shown.value) * size.width }
                 .slantPanel(left = 50.dp, right = 0.dp)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}
@@ -600,7 +600,7 @@ fun EditBarContent(
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp), contentAlignment = Alignment.TopCenter) {
         // Small phones: a shorter name box and slider, so the bar fits in 640 dp.
-        val narrow = maxWidth < 760.dp
+        val narrow = maxWidth < Breakpoints.lg
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -683,7 +683,7 @@ fun EditAllSheet(look: Look, onLook: (Look) -> Unit, fromLeft: Boolean, onClose:
         Column(
             Modifier
                 .fillMaxHeight()
-                .width(if (maxWidth < 760.dp) 400.dp else 460.dp)
+                .width(if (maxWidth < Breakpoints.lg) 400.dp else 460.dp)
                 .graphicsLayer { translationX = (1 - shown.value) * size.width * (if (fromLeft) -1 else 1) }
                 .slantPanel(left = if (fromLeft) 0.dp else 50.dp, right = if (fromLeft) 50.dp else 0.dp)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}

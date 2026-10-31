@@ -224,7 +224,7 @@ fun ChatPanel(
         Column(
             Modifier
                 .fillMaxHeight()
-                .width(if (maxWidth < 760.dp) 360.dp else 400.dp)
+                .width(if (maxWidth < Breakpoints.lg) 360.dp else 400.dp)
                 .slantPanel(left = 40.dp, right = 0.dp, alpha = 0.94f)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}
                 .imePadding()

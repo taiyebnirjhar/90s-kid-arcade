@@ -991,7 +991,7 @@ fun PickGameScreen(
         } else {
             // Wide picture cards: one a row in portrait, two or three side by side in landscape.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth > 820.dp) 3 else if (maxWidth > 560.dp) 2 else 1
+                val columns = if (maxWidth > Breakpoints.lg) 3 else if (maxWidth > Breakpoints.md) 2 else 1
                 val gap = 12.dp
                 val cardWidth = (maxWidth - gap * (columns - 1)) / columns
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
@@ -1077,7 +1077,7 @@ private const val LIST_RETRY_MS = 20_000L
 @Composable
 private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth > 1100.dp) 3 else if (maxWidth > 700.dp) 2 else 1
+        val columns = if (maxWidth > Breakpoints.xl) 3 else if (maxWidth > Breakpoints.md) 2 else 1
         val gap = 12.dp
         Column(verticalArrangement = Arrangement.spacedBy(gap)) {
             (0 until count).chunked(columns).forEach { row ->

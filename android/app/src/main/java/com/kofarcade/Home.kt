@@ -111,6 +111,7 @@ fun HomeScreen(
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
         val screenWidth = maxWidth
+        val chipsBeside = landscape && maxWidth >= Breakpoints.lg
         // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
         val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
@@ -121,10 +122,11 @@ fun HomeScreen(
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            // Landscape has room for the chips beside the logo; portrait puts them under the banner.
-            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { landscape }, onProfile)
+            // A phone held sideways (lg) has room for the chips beside the logo; narrower screens
+            // (upright, or a squarer tablet sideways) put them under the banner.
+            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { chipsBeside }, onProfile)
             Column(Modifier.windowInsetsPadding(sides)) {
-                if (!landscape) {
+                if (!chipsBeside) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -287,8 +289,8 @@ private fun Hero(
                 Spacer(Modifier.width(8.dp))
             }
             // Your profile, top right, as on a console.
-            // Portrait has room for the icon alone beside the logo.
-            ProfileChip(ui.profileName.takeIf { landscape }, ui.profileIcon, onProfile, iconOnly = !landscape)
+            // With the chips under the banner, the icon alone beside the logo.
+            ProfileChip(ui.profileName.takeIf { chips != null }, ui.profileIcon, onProfile, iconOnly = chips == null)
         }
         Column(
             Modifier

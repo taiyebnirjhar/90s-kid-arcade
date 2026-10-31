@@ -332,7 +332,7 @@ fun RoomSheetContent(
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
         // Side by side only where each half has room for its text (wider with bigger text).
-        if (maxWidth > 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
+        if (maxWidth > Breakpoints.md * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Column(Modifier.weight(1f)) {
                     RoomHeader(ui, first, onCopy, onShare, onOpen)
@@ -487,7 +487,7 @@ private fun RoomInvites(ui: RoomUi, onInvite: (RoomFriend) -> Unit) {
 @Composable
 fun RoomSheetActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
     BoxWithConstraints {
-        if (maxWidth > 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) && !(ui.watching && ui.linePlace > 0)) {
+        if (maxWidth > Breakpoints.md * LocalDensity.current.fontScale.coerceAtLeast(1f) && !(ui.watching && ui.linePlace > 0)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                 if (ui.watching) {
                     GoldButton("Take a seat", onSeat, Modifier.weight(1.4f), play = true)
@@ -522,13 +522,18 @@ private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch:
         } else {
             GoldButton(if (first) "Start playing" else "Back to the game", onClose, Modifier.fillMaxWidth(), play = true)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (ui.watching) {
-                GhostButton(if (short) "Back" else "Back to watching", onClose, Modifier.weight(1f))
-            } else {
-                GhostButton(if (short) "Watch" else "Watch instead", onWatch, Modifier.weight(1f))
+        // Two buttons in a narrow column (the narrowest phones, a sheet's side column): the short words,
+        // so neither breaks over two lines.
+        BoxWithConstraints {
+            val shortWords = short || maxWidth < 330.dp
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (ui.watching) {
+                    GhostButton(if (shortWords) "Back" else "Back to watching", onClose, Modifier.weight(1f))
+                } else {
+                    GhostButton(if (shortWords) "Watch" else "Watch instead", onWatch, Modifier.weight(1f))
+                }
+                GhostButton("Leave", onLeave, Modifier.weight(1f), danger = true)
             }
-            GhostButton("Leave", onLeave, Modifier.weight(1f), danger = true)
         }
     }
 }

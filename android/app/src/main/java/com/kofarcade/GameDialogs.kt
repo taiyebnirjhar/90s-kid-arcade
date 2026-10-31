@@ -200,7 +200,7 @@ private fun Sheet(
 fun SheetFrame(width: Int = 360, footer: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) = TextScaleCap {
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Small phones: a smaller slant and margins, so more fits across.
-        val narrow = maxWidth < 760.dp
+        val narrow = maxWidth < Breakpoints.lg
         val slant = if (narrow) 14.dp else 22.dp
         Box(Modifier.widthIn(max = width.dp).padding(horizontal = if (narrow) 6.dp else 16.dp, vertical = 8.dp).slantPanel(left = slant, right = slant, alpha = 0.96f)) {
             Column {
