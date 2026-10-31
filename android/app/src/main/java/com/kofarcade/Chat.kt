@@ -113,7 +113,7 @@ fun ChatButton(unread: Int, onClick: () -> Unit, modifier: Modifier = Modifier) 
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(30.dp)
+                .size(32.dp)
                 .clip(CircleShape)
                 .background(Color.Black.copy(alpha = 0.55f))
                 .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
@@ -443,7 +443,7 @@ fun SpeakerButton(on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifi
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(30.dp)
+            .size(32.dp)
             .clip(CircleShape)
             .background(Color.Black.copy(alpha = 0.55f))
             .border(1.dp, if (on) Color.White.copy(alpha = 0.12f) else Palette.red.copy(alpha = 0.8f), CircleShape)
@@ -464,7 +464,7 @@ fun MicButton(on: Boolean, talking: Boolean, pushToTalk: Boolean, onToggle: () -
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(30.dp)
+            .size(32.dp)
             .clip(CircleShape)
             .background(if (live) Palette.green.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.55f))
             .border(1.dp, if (on) Palette.green else Color.White.copy(alpha = 0.12f), CircleShape)

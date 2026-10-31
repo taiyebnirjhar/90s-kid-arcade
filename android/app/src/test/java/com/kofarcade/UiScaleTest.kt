@@ -40,7 +40,7 @@ class UiScaleTest {
 
     @Test
     fun neverTooSmallToPress() {
-        assertEquals(0.8f, uiScale(240, 320), 0.001f)
+        assertEquals(0.7f, uiScale(240, 320), 0.001f)
     }
 
     @Test

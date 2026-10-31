@@ -194,19 +194,19 @@ fun GoldButton(
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
             .pressScale(source)
-            .height(if (compact) 40.dp else 48.dp)
+            .height(if (compact) 38.dp else 44.dp)
             .clip(RoundedCornerShape(50))
             // Disabled: a quiet grey pill, not a dimmed (muddy) gold one.
             .background(if (enabled) Palette.gold else Palette.line)
             .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
-            .padding(horizontal = if (compact) 16.dp else 22.dp),
+            .padding(horizontal = if (compact) 14.dp else 20.dp),
     ) {
         val ink = if (enabled) OnGold else Palette.muted
         if (play) {
             PlayIcon(Modifier.size(if (compact) 10.dp else 12.dp), ink)
             Spacer(Modifier.width(if (compact) 8.dp else 10.dp))
         }
-        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 14.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 11.sp else 13.sp, letterSpacing = 1.sp)
     }
 }
 
@@ -219,14 +219,14 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         contentAlignment = Alignment.Center,
         modifier = modifier
             .pressScale(source)
-            .height(if (compact) 40.dp else 48.dp)
+            .height(if (compact) 38.dp else 44.dp)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(50))
             .border(1.dp, if (danger) Palette.red.copy(alpha = 0.6f) else Palette.line, RoundedCornerShape(50))
             .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
-            .padding(horizontal = if (compact) 16.dp else 20.dp),
+            .padding(horizontal = if (compact) 14.dp else 18.dp),
     ) {
-        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 13.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = if (compact) 11.sp else 12.sp, letterSpacing = 1.sp)
     }
 }
 

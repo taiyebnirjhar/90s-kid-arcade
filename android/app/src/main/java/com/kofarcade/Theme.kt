@@ -22,7 +22,7 @@ object Palette {
 }
 
 /**
- * The app's screens are designed on one phone (450 design units across, a
+ * The app's screens are designed on one phone (470 design units across, a
  * 411 x 914 dp 20:9 phone, the kind most players have), and every other screen gets that same design, scaled
  * by its short side: text, buttons, gaps and pictures keep the same size
  * against the screen on a small phone, a big one and a tablet, held either
@@ -57,16 +57,16 @@ fun uiScale(widthDp: Int, heightDp: Int): Float {
 
 /**
  * The design's short side, in its units: a 411 dp phone (the most common) shows
- * 450 of them, so everything's a little under Android's own sizes: compact,
+ * 470 of them, so everything's a little under Android's own sizes: compact,
  * like the arcade's own menus, with the same look on every screen.
  */
-const val DESIGN_SHORT_DP = 450f
+const val DESIGN_SHORT_DP = 470f
 
 /** Text a touch smaller again than the rest (so the gaps around it read bigger). */
-private const val TEXT_SIZE = 0.95f
+private const val TEXT_SIZE = 0.93f
 private const val MIN_LONG_DP = 640f
 // Never so small a button is hard to hit; a big tablet still looks like the phone, grown.
-private const val MIN_UI_SCALE = 0.8f
+private const val MIN_UI_SCALE = 0.7f
 private const val MAX_UI_SCALE = 2.2f
 
 /**
@@ -75,7 +75,7 @@ private const val MAX_UI_SCALE = 2.2f
  * device, so a layout chosen for it looks the same everywhere.
  *
  * - below [sm]: the narrowest screens (a sheet or a panel, more than a phone)
- * - [sm] 360: a phone held upright (450 on every phone), a tablet upright (450-525)
+ * - [sm] 360: a phone held upright (470 on every phone), a tablet upright (470-550)
  * - [md] 560: a tablet held sideways (640-720 wide)
  * - [lg] 760: a phone held sideways (about 1000 wide)
  * - [xl] 1100: wider than any phone (a big screen below the scale's floor)

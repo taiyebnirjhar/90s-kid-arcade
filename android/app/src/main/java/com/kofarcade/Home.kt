@@ -184,7 +184,7 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .pressScale(source)
-            .height(44.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(50))
             .background(if (gold) Palette.gold.copy(alpha = 0.1f) else if (warn) Palette.red.copy(alpha = 0.15f) else Palette.panel)
             .border(1.dp, if (gold) Palette.gold.copy(alpha = 0.8f) else if (warn) Palette.red.copy(alpha = 0.5f) else Palette.line, RoundedCornerShape(50))
@@ -223,7 +223,7 @@ private fun ProfileChip(name: String?, icon: Int?, onClick: () -> Unit, iconOnly
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .pressScale(source)
-            .height(44.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(50))
             .background(Palette.bg.copy(alpha = 0.6f))
             .border(1.dp, Palette.line, RoundedCornerShape(50))
