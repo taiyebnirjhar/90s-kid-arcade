@@ -1,0 +1,59 @@
+<!doctype html>
+<!--
+  The link preview card (og:image), 1200 x 630. The website's workflow
+  renders it to img/share.png when the site is published: the game pictures
+  come from libretro's thumbnails then, so none is kept in the repo.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>90s Kid Arcade · share card</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,900&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #0B0B12; --panel: #171724; --line: #2C2C40; --text: #F1F0F7; --muted: #9A98B0; --gold: #E8B21A; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); }
+  body { position: relative; font-family: Roboto, Arial, sans-serif; color: var(--text); }
+  .glow { position: absolute; inset: 0; background: radial-gradient(60% 80% at 25% 50%, rgba(232,178,26,.16), transparent 70%); }
+  .ghost { position: absolute; left: -40px; top: 40px; font: italic 900 210px/0.9 'Barlow Condensed', sans-serif; color: transparent;
+    -webkit-text-stroke: 2px rgba(255,255,255,.05); white-space: nowrap; text-transform: uppercase; }
+  .left { position: absolute; left: 64px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; }
+  .logo { font: italic 900 46px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .5px; }
+  .logo b { color: var(--gold); }
+  .gameon { margin-top: 14px; font: italic 900 150px/0.86 'Barlow Condensed', sans-serif; text-transform: uppercase;
+    background: linear-gradient(#FFD45A, var(--gold) 55%, #B8860B); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tag { margin-top: 22px; font-size: 27px; line-height: 1.3; font-weight: 500; color: var(--text); }
+  .tag em { font-style: normal; color: var(--gold); font-weight: 700; }
+  .chips { margin-top: 26px; display: flex; gap: 10px; }
+  .chip { padding: 9px 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); font: 700 16px Roboto, sans-serif;
+    letter-spacing: 1.5px; text-transform: uppercase; }
+  .chip.gold { border-color: var(--gold); color: var(--gold); background: rgba(232,178,26,.1); }
+  .grid { position: absolute; right: -30px; top: -40px; width: 600px; height: 720px; transform: rotate(-8deg);
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-content: center; }
+  .card { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 4 / 3; box-shadow: 0 18px 40px rgba(0,0,0,.6); }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card:nth-child(odd) { transform: translateY(40px); }
+  .fade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 42%, rgba(11,11,18,.35) 60%, rgba(11,11,18,0) 75%); }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="grid">
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20X%20-%20Super%20Vehicle-001%20%28NGM-2500%20~%20NGH-2500%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20%28NGM-2650%20~%20NGH-2650%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Marvel%20Vs.%20Capcom_%20Clash%20of%20Super%20Heroes%20%28Europe%20980123%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt=""></div>
+  </div>
+  <div class="fade"></div>
+  <div class="ghost">Insert coin</div>
+  <div class="left">
+    <div class="logo">90s Kid <b>Arcade</b></div>
+    <div class="gameon">Game on</div>
+    <div class="tag">Arcade classics on Android.<br><em>Play friends online</em> or nearby.</div>
+    <div class="chips"><span class="chip gold">Online</span><span class="chip">Chat &amp; voice</span><span class="chip">27 games</span></div>
+  </div>
+</body>
+</html>

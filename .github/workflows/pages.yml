@@ -38,6 +38,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release download latest --pattern 90s-Kid-Arcade.apk --dir site --clobber
+      - name: The link preview card, with the games' pictures (none kept in the repo)
+        # Rendered from share-card.html by the runner's Chrome: libretro's thumbnails are
+        # fetched now. If it can't be made, the app's old screenshot stands in.
+        run: |
+          google-chrome --headless=new --no-sandbox --hide-scrollbars --disable-gpu \
+            --window-size=1200,630 --virtual-time-budget=20000 \
+            --screenshot="$PWD/site/img/share.png" "file://$PWD/site/share-card.html" \
+            && test -s site/img/share.png \
+            || cp site/img/home.png site/img/share.png
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
