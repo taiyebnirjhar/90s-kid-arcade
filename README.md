@@ -119,12 +119,14 @@ area) and **Feint** (2+A+C). Grant and Kain are picked with the arcade's
 codes on the select screen.
 
 **The Last Blade 1 and 2:** Weak and Strong slash, Kick and **Repel** (D
-deflects a high attack, 2+D a low one). Power or Speed (and EX in 2) is
+deflects a high attack, **Low repel** 2+D a low one; in 2, **Throw** C+D and
+**Unblockable** B+C too). Power or Speed (and EX in 2) is
 picked before each fight; each move's note says which style it needs.
 
 **Samurai Shodown II:** light and medium slash and kick; A+B is the strong
-slash, C+D the strong kick, plus hops, rolls and lying down. The Weapon
-Destruction moves come out with the POW gauge full.
+slash, C+D the strong kick and B+C a hop. Rolls (tap 3 or 1 twice) and lying
+down (2 twice) are on the stick. The Weapon Destruction moves come out with
+the POW gauge full.
 
 **Street Fighter III 3rd Strike:** six buttons, LP MP HP over LK MK HK, plus
 Throw and Overhead. The app reads which Super Art you picked and shows only

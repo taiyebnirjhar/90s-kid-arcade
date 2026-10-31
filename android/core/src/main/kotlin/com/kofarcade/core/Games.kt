@@ -440,9 +440,10 @@ val GAMES: List<Game> = listOf(
     art = "The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340)",
     layout = Layout.FIGHTER, roster = "lastblad", team = 1, block = true,
     labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
-    // D deflects a high attack, 2+D a low one. Power or Speed is picked
-    // before each fight (left or right); the move notes say which needs which.
-    system = listOf(Move("Repel", "D"), Move("Low repel", "2+D")),
+    // D (its own button) deflects a high attack, 2+D a low one. Power or
+    // Speed is picked before each fight (left or right); the move notes say
+    // which needs which.
+    system = listOf(Move("Low repel", "2+D")),
 ) + Game(
     id = "lastbld2", series = "The Last Blade", title = "The Last Blade 2", subtitle = "Bakumatsu Roman",
     sets = listOf("lastbld2", "lastbd2b", "lastbd2e", "lastbd2i", "lastbd2p", "lastbd2t"),
@@ -450,8 +451,9 @@ val GAMES: List<Game> = listOf(
     layout = Layout.FIGHTER, roster = "lastbld2", team = 1, block = true,
     labels = mapOf('A' to "Weak", 'B' to "Strong", 'C' to "Kick", 'D' to "Repel"),
     // C+D throws up close; B+C is an unblockable in Power, an overhead in
-    // Speed and EX. Power, Speed or EX is picked after both fighters.
-    system = listOf(Move("Throw", "CD"), Move("Unblockable", "BC"), Move("Repel", "D"), Move("Low repel", "2+D")),
+    // Speed and EX; 2+D repels a low attack (D, a high one). Power, Speed or
+    // EX is picked after both fighters.
+    system = listOf(Move("Throw", "CD"), Move("Unblockable", "BC"), Move("Low repel", "2+D")),
 ) + Game(
     id = "samsho2", series = "Samurai Shodown", title = "Samurai Shodown II", subtitle = "Shin Samurai Spirits",
     sets = listOf("samsho2", "samsho2k", "samsho2ka", "samsho2pe", "samsho2t", "samsh2sp", "samsh2jq", "ssho2emb"),
@@ -459,12 +461,9 @@ val GAMES: List<Game> = listOf(
     layout = Layout.FIGHTER, roster = "samsho2", team = 1, block = true,
     labels = mapOf('A' to "LS", 'B' to "MS", 'C' to "LK", 'D' to "MK"),
     // A+B is the strong slash, C+D the strong kick (the game's own How to
-    // Play). Taunts need a long hold, so they aren't buttons here.
-    system = listOf(
-        Move("Strong slash", "AB"), Move("Strong kick", "CD"),
-        Move("Hop away", "BC"), Move("Hop forward", "6+BC"),
-        Move("Roll forward", "33"), Move("Roll back", "11"), Move("Lie down", "22"),
-    ),
+    // Play), B+C hops away (6+B+C forward). Rolls (33, 11) and lying down
+    // (22) are taps of the stick; taunts need a long hold.
+    system = listOf(Move("Strong slash", "AB"), Move("Strong kick", "CD"), Move("Hop", "BC")),
 )
 
 fun gameById(id: String): Game? = GAMES.find { it.id == id }
