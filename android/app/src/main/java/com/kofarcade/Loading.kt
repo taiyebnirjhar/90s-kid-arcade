@@ -12,6 +12,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +25,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +76,13 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
             .clickable(remember { MutableInteractionSource() }, indication = null) {},
     ) {
         val big = (maxWidth.value / 4.2f).coerceIn(64f, 150f).sp
+        // Behind it all, as on the website: arcade calls scrolling by, row against row.
+        val rowSize = (maxWidth.value / 6f).coerceIn(48f, 110f).sp
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            MarqueeRow("PLAY MORE · INSERT COIN · ", rowSize, still, 14_000, Color.White.copy(alpha = 0.06f))
+            MarqueeRow("GAME ON · PRESS START · ", rowSize, still, 17_000, Palette.gold.copy(alpha = 0.12f), backwards = true)
+            MarqueeRow("HERE COMES A NEW CHALLENGER · ", rowSize, still, 20_000, Color.White.copy(alpha = 0.06f))
+        }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp).widthIn(max = 560.dp)) {
             Row {
                 Text("90S KID ", color = Palette.text, fontFamily = ArcadeFont, fontSize = 22.sp)
@@ -111,4 +123,23 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
             }
         }
     }
+}
+
+// One row of outlined words, scrolling for ever (the text twice, so there's no seam).
+@Composable
+private fun MarqueeRow(text: String, size: androidx.compose.ui.unit.TextUnit, still: Boolean, ms: Int, color: Color, backwards: Boolean = false) {
+    var oneWidth by remember { mutableFloatStateOf(0f) }
+    val anim = rememberInfiniteTransition(label = "marquee")
+    val t by anim.animateFloat(0f, 1f, infiniteRepeatable(tween(ms, easing = LinearEasing), RepeatMode.Restart), label = "row")
+    val p = if (still) 0.3f else t
+    Text(
+        text.repeat(4),
+        style = TextStyle(fontFamily = ArcadeFont, fontSize = size, color = color, drawStyle = Stroke(width = 2f)),
+        maxLines = 1,
+        softWrap = false,
+        onTextLayout = { oneWidth = it.size.width / 2f },
+        modifier = Modifier
+            .wrapContentWidth(Alignment.Start, unbounded = true)
+            .graphicsLayer { translationX = -oneWidth * (if (backwards) 1f - p else p) },
+    )
 }
