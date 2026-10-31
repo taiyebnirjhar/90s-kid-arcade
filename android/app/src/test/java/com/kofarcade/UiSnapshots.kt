@@ -861,7 +861,7 @@ class UiSnapshots {
         landscape()
         shot("chat_panel") {
             GameBehind {
-                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
+                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {}, bubbles = false)
             }
         }
     }

@@ -98,6 +98,8 @@ fun GameDialogs(game: GameActivity) {
                 onClose = { game.closeChat() },
                 onAddFriend = if (game.roomUi?.online == true) ({ game.addFriendFrom(it) }) else null,
                 onBlock = if (game.roomUi?.online == true) ({ game.blockFrom(it) }) else null,
+                bubbles = game.bubblesOn,
+                onBubbles = { game.setBubbles(it) },
             )
         }
     }

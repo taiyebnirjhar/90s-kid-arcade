@@ -673,7 +673,19 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     /** Lines to show over the game as bubbles: none from muted players, none while the panel's open. */
     val chatBubbles: List<ChatShown>
-        get() = if (!look.chatBubbles || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+        get() = if (!bubblesOn || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+
+    /** Messages show over the game as bubbles (the chat panel's switch, Settings: Chat bubbles). */
+    var bubblesOn by mutableStateOf(true)
+        private set
+
+    /** The chat panel's switch: messages over the game on or hidden (saved). */
+    fun setBubbles(on: Boolean) {
+        prefs.chatBubbles = on
+        look = look.copy(chatBubbles = on)
+        bubblesOn = on
+        announce(if (on) "Messages show on the game" else "Messages hidden: the chat button counts new ones")
+    }
 
     fun openChat() {
         chatOpen = true
@@ -1832,6 +1844,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun applyLook(l: Look) {
         look = l
         voicesOn = l.voices
+        bubblesOn = l.chatBubbles
         hud.tweaks = prefs.tweaks(layoutKey())
         applyScreen()
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)

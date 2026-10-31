@@ -218,6 +218,9 @@ fun ChatPanel(
     /** Internet rooms: ask them to be friends, or block them. */
     onAddFriend: ((ChatShown) -> Unit)? = null,
     onBlock: ((ChatShown) -> Unit)? = null,
+    /** Messages shown over the game (bubbles), and its switch; null: no switch. */
+    bubbles: Boolean? = null,
+    onBubbles: (Boolean) -> Unit = {},
 ) = TextScaleCap {
     var typed by remember { mutableStateOf("") }
     var picked by remember { mutableStateOf<Long?>(null) }
@@ -240,6 +243,22 @@ fun ChatPanel(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Chat", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, modifier = Modifier.weight(1f))
+                if (bubbles != null) {
+                    // Messages over the game: on, or hidden (the chat button still counts new ones).
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.height(32.dp).clip(RoundedCornerShape(50))
+                            .border(1.dp, if (bubbles) Palette.line else Palette.red.copy(alpha = 0.7f), RoundedCornerShape(50))
+                            .clickable { onBubbles(!bubbles) }
+                            .semantics { contentDescription = if (bubbles) "Messages show on the game: tap to hide them" else "Messages hidden on the game: tap to show them"; role = Role.Button }
+                            .padding(horizontal = 12.dp),
+                    ) {
+                        EyeIcon(Modifier.size(14.dp), crossed = !bubbles, color = if (bubbles) Palette.text else Palette.red)
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (bubbles) "ON SCREEN" else "HIDDEN", color = if (bubbles) Palette.text else Palette.red, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                    }
+                    Spacer(Modifier.width(4.dp))
+                }
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClose)
