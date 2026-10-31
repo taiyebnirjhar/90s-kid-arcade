@@ -1,5 +1,6 @@
 package com.kofarcade
 
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.clickable
 import android.content.Context
@@ -188,6 +189,8 @@ fun TwoPlayerDialog(
             else -> "Opening your room on this Wi-Fi…"
         }
         hostWork = scope.launch {
+            var made: (() -> Unit)? = null
+            var invited = true
             try {
                 // Never dropped half-made: if the screen's gone by the time
                 // the room is open, it's closed again.
@@ -202,10 +205,13 @@ fun TwoPlayerDialog(
                             // A challenge's room is for the two of you: locked, the friend invited at once.
                             open = openRoom && challenge == null,
                         )
-                        if (challenge != null) runCatching { Online.friends(context).invite(challenge.id, r.code, challenge = true) }
+                        made = { r.close() }
+                        if (challenge != null) invited = runCatching { Online.friends(context).invite(challenge.id, r.code, challenge = true) }.isSuccess
                         r.room to r
                     } else {
-                        Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId) to null
+                        val rm = Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                        made = { rm.close() }
+                        rm to null
                     }
                 }
                 // Gone back from the game picker meanwhile: the room's closed again, not started.
@@ -215,8 +221,20 @@ fun TwoPlayerDialog(
                 }
                 Netplay.room = room
                 Netplay.online = internet
-                if (challenge != null) android.widget.Toast.makeText(context, "Challenge sent to ${challenge.name}: they join from their invite", android.widget.Toast.LENGTH_LONG).show()
+                if (challenge != null) {
+                    android.widget.Toast.makeText(
+                        context,
+                        if (invited) "Challenge sent to ${challenge.name}: they join from their invite"
+                        else "Couldn't send ${challenge.name} the challenge: share the room code from the room instead",
+                        android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
                 onStart(game, set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Exception) {
                 val why = (e as? OnlineError)?.let(::explainRoomTrouble) ?: e.message ?: e.javaClass.simpleName
                 if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: $why", android.widget.Toast.LENGTH_LONG).show()
@@ -407,6 +425,7 @@ private fun Hub(
         busy = true
         step("Joining ${found.beacon.name}'s room")
         work = scope.launch {
+            var made: (() -> Unit)? = null
             try {
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
@@ -424,7 +443,10 @@ private fun Hub(
                         } catch (e: Redirected) {
                             joinAt(InetAddress.getByName(e.at.host), e.at.port)
                         }
-                        joined.also { room -> if (left.get()) room.close() }
+                        joined.also { room ->
+                            made = { room.close() }
+                            if (left.get()) room.close()
+                        }
                     } finally {
                         // The game screen ties the game to the Wi-Fi itself from here.
                         link.stop()
@@ -437,6 +459,11 @@ private fun Hub(
                 Netplay.room = room
                 status = null
                 onJoined(game, set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
@@ -489,6 +516,7 @@ private fun Hub(
         busy = true
         step("Finding room ${OnlineRooms.pretty(clean)}")
         work = scope.launch {
+            var made: (() -> Unit)? = null
             try {
                 val rooms = Online.rooms(context)
                 val info = withContext(Dispatchers.IO) {
@@ -511,7 +539,10 @@ private fun Hub(
                         throw Refused("Your copy of $title differs from the host's. Download it from the library on every phone, so all play the same version.")
                     }
                     rooms.join(info, Online.playerName(context), info.set, rom, bios, emulatorBuild(context), Prefs(context).deviceId)
-                        .also { if (left.get()) it.close() }
+                        .also {
+                            made = { it.close() }
+                            if (left.get()) it.close()
+                        }
                 }
                 if (left.get() || !isActive) {
                     // Off the main thread: leaving waits for the goodbye and tells the server.
@@ -522,6 +553,11 @@ private fun Hub(
                 Netplay.online = online
                 status = null
                 onJoined(game, info.set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
@@ -1181,9 +1217,13 @@ private fun FriendChatPage(
     var note by remember { mutableStateOf<String?>(null) }
     var sending by remember { mutableStateOf(false) }
     var poke by remember { mutableStateOf(0) }
+    val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
     androidx.compose.runtime.LaunchedEffect(start.id) {
         val server = Online.friends(context)
         var statusAt = 0L
+        // Only while it's on screen: asking marks their messages read ("Seen"), and costs calls.
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+        statusAt = 0L
         while (isActive) {
             val after = messages.lastOrNull()?.id ?: 0L
             withContext(Dispatchers.IO) { runCatching { server.chat(start.id, after) } }
@@ -1206,8 +1246,9 @@ private fun FriendChatPage(
                     }
                 }
             }
-            val wait = kotlinx.coroutines.withTimeoutOrNull(FRIEND_CHAT_EVERY_MS) { snapshotFlowFirstChange { poke } }
-            if (wait == null) Unit
+            // Asked again in a few seconds, or at once after a send.
+            kotlinx.coroutines.withTimeoutOrNull(FRIEND_CHAT_EVERY_MS) { snapshotFlowFirstChange { poke } }
+        }
         }
     }
     fun send(text: String) {

@@ -113,6 +113,21 @@ do $$ begin
     raise exception 'FAIL: messaged after a block';
   exception when insufficient_privilege then null;
   end;
+  if exists (select 1 from public.friend_chat('00000000-0000-0000-0000-00000000001a')) then raise exception 'FAIL: chat shown after a block'; end if;
+end $$;
+-- The daily limit counts sends, not what's kept: trimming old messages gives no more.
+reset role;
+insert into public.message_quota (id, day, sent) values ('00000000-0000-0000-0000-00000000001c', current_date, 300);
+insert into public.friendships (a, b, status, asked_by) values
+  ('00000000-0000-0000-0000-00000000001b', '00000000-0000-0000-0000-00000000001c', 'friends', '00000000-0000-0000-0000-00000000001b');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000001c', true);
+do $$ begin
+  begin
+    perform public.send_friend_message('00000000-0000-0000-0000-00000000001b', 'one more');
+    raise exception 'FAIL: no daily limit';
+  exception when sqlstate '54000' then null;
+  end;
 end $$;
 rollback;
 \o

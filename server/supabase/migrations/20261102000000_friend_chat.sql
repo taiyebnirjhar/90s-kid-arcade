@@ -24,7 +24,17 @@ create index friend_messages_pair on public.friend_messages (least(sender, recei
 create index friend_messages_unread on public.friend_messages (receiver) where read_at is null;
 create index friend_messages_by_sender on public.friend_messages (sender, created_at);
 alter table public.friend_messages enable row level security;
--- (No policies: the functions below are the only way in.)
+
+-- Messages sent today, per player: the daily limit (kept apart, so trimming a
+-- pair's old messages never gives a sender more).
+create table public.message_quota (
+  id uuid not null references auth.users (id) on delete cascade,
+  day date not null default current_date,
+  sent int not null default 0,
+  primary key (id, day)
+);
+alter table public.message_quota enable row level security;
+-- (No policies on either: the functions below are the only way in.)
 
 -- Says [body] to [player], a friend. Returns the message's id.
 create function public.send_friend_message(player uuid, body text) returns bigint
@@ -41,9 +51,11 @@ begin
   if said = '' then raise exception 'Say something first' using errcode = '22023'; end if;
   said := left(said, 300);
   if (select count(*) from public.friend_messages m where m.sender = me and m.created_at > now() - interval '1 minute') >= 20
-    or (select count(*) from public.friend_messages m where m.sender = me and m.created_at > now() - interval '1 day') >= 300 then
+    or coalesce((select q.sent from public.message_quota q where q.id = me and q.day = current_date), 0) >= 300 then
     raise exception 'Too many messages: wait a little' using errcode = '54000';
   end if;
+  insert into public.message_quota as q (id, day, sent) values (me, current_date, 1)
+  on conflict (id, day) do update set sent = q.sent + 1;
   insert into public.friend_messages (sender, receiver, body) values (me, player, said) returning id into new_id;
   -- At most 200 kept per pair: the oldest go.
   delete from public.friend_messages m
@@ -58,13 +70,15 @@ end
 $$;
 
 -- The chat with [player]: messages after [after_id] (0: the last 100), oldest
--- first; theirs to you are marked read.
+-- first; theirs to you are marked read. Friends only: nothing once unfriended
+-- or blocked.
 create function public.friend_chat(player uuid, after_id bigint default 0)
 returns table (id bigint, mine boolean, body text, created_at timestamptz, seen boolean)
 language plpgsql volatile security definer set search_path = '' as $$
 declare me uuid := (select auth.uid());
 begin
   if me is null then raise exception 'Sign in first' using errcode = '28000'; end if;
+  if not public.are_friends(me, player) or public.blocked_between(me, player) then return; end if;
   update public.friend_messages m set read_at = now()
   where m.receiver = me and m.sender = player and m.read_at is null and m.id > after_id;
   return query
@@ -109,6 +123,7 @@ language sql volatile security definer set search_path = '' as $$
   delete from public.invites i where i.created_at < now() - interval '1 hour';
   delete from public.presence p where p.active_at < now() - interval '30 days';
   delete from public.friend_messages m where m.created_at < now() - interval '30 days';
+  delete from public.message_quota q where q.day < current_date - 1;
 $$;
 
 -- ----- Friends, with their chat and last seen -----
@@ -216,14 +231,15 @@ begin
     with msg as (
       select m.id, m.sender, p.name, p.icon, m.body from public.friend_messages m
       left join public.profiles p on p.id = m.sender
-      where m.receiver = me and m.read_at is null and not public.blocked_between(m.sender, me)
+      where m.receiver = me and m.read_at is null and public.are_friends(m.sender, me) and not public.blocked_between(m.sender, me)
       order by m.id desc limit 1
     ), inv as (
       select * from public.my_invites() limit 1
     )
     select
       (select count(*)::int from public.friendships f where (f.a = me or f.b = me) and f.status = 'pending' and f.asked_by <> me),
-      (select count(*)::int from public.friend_messages m where m.receiver = me and m.read_at is null and not public.blocked_between(m.sender, me)),
+      (select count(*)::int from public.friend_messages m
+        where m.receiver = me and m.read_at is null and public.are_friends(m.sender, me) and not public.blocked_between(m.sender, me)),
       (select count(*)::int from public.my_invites()),
       msg.id, msg.sender, msg.name, msg.icon, msg.body,
       inv.id, inv.sender, inv.name, inv.icon, inv.room, inv.game_set, inv.challenge

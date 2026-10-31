@@ -277,7 +277,10 @@ private fun Overlay(
                         Modifier
                     },
                 ),
-        ) { content() }
+        ) {
+            // A dialog's window starts from Android's own density: the app's scale again.
+            TextScaleCap(content)
+        }
     }
 }
 
