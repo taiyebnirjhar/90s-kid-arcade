@@ -21,20 +21,38 @@ object Palette {
 }
 
 /**
- * Android's text size, up to [MAX_TEXT_SCALE]: larger settings (up to 2x on
- * Android 14) make text bigger only that far, so arcade labels, codes and
- * buttons keep their shape on every phone. Each dialog's window gets it again
- * (a dialog starts from the window's own density).
+ * The app's screens are designed on one phone (411 x 914 dp, the 20:9 phones
+ * most players have), and every other screen gets that same design, scaled:
+ * a smaller phone a little smaller, a tablet bigger, so proportions,
+ * spacing and how compact it feels are the same everywhere (and every size
+ * test in the code sees the design phone's sizes). Text follows Android's
+ * text size up to [MAX_TEXT_SCALE], so arcade labels, codes and buttons keep
+ * their shape. Each dialog's window gets it again (a dialog starts from the
+ * window's own density); it's worked out from the screen's own density, so
+ * it never compounds.
  */
 @Composable
 fun TextScaleCap(content: @Composable () -> Unit) {
-    val density = LocalDensity.current
-    if (density.fontScale <= MAX_TEXT_SCALE) {
-        content()
-    } else {
-        CompositionLocalProvider(LocalDensity provides Density(density.density, MAX_TEXT_SCALE), content = content)
-    }
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    val base = androidx.compose.ui.platform.LocalContext.current.resources.displayMetrics.density
+    val font = minOf(LocalDensity.current.fontScale, MAX_TEXT_SCALE)
+    val scale = uiScale(config.screenWidthDp, config.screenHeightDp)
+    CompositionLocalProvider(LocalDensity provides Density(base * scale, font), content = content)
 }
+
+/** How much the design phone's screens are scaled for a [widthDp] x [heightDp] screen (either way round). */
+fun uiScale(widthDp: Int, heightDp: Int): Float {
+    if (widthDp <= 0 || heightDp <= 0) return 1f
+    val short = minOf(widthDp, heightDp)
+    val long = maxOf(widthDp, heightDp)
+    return minOf(short / DESIGN_SHORT_DP, long / DESIGN_LONG_DP).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+}
+
+private const val DESIGN_SHORT_DP = 411f
+private const val DESIGN_LONG_DP = 914f
+// Never so small a button is hard to hit, nor so big a tablet looks like a toy.
+private const val MIN_UI_SCALE = 0.8f
+private const val MAX_UI_SCALE = 1.5f
 
 /** The largest text size the app follows: Android's "Large" setting, about. */
 const val MAX_TEXT_SCALE = 1.3f
