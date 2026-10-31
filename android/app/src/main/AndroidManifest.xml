@@ -23,6 +23,8 @@
         android:label="90s Kid Arcade"
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.Kof">
+        <!-- The QR scanner (Play services) is fetched when the app is installed, not on first scan. -->
+        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
 
         <activity
             android:name=".MainActivity"
@@ -32,13 +34,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- An internet room's link (shared, or its QR code): straight to joining it. -->
-            <intent-filter>
+            <!-- An internet room's link (shared, or its QR code): straight to joining it.
+                 autoVerify: Android checks the site's /.well-known/assetlinks.json, then opens
+                 these links (a phone camera's QR code too) in the app, not the browser. -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="arcade.taiyebnirjhor.com" android:path="/join.html" />
-                <!-- Links shared before the site moved to its own domain. -->
+            </intent-filter>
+            <!-- Links shared before the site moved to its own domain (not verified: on its own,
+                 so it can't stop the domain's links from verifying on older Android). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="taiyebnirjhar.github.io" android:pathPattern="/90s-kid-arcade/join.html" />
             </intent-filter>
             <!-- The website's "Open in the app" button. -->

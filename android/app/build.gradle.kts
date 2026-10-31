@@ -79,6 +79,9 @@ dependencies {
     implementation("io.getstream:stream-webrtc-android:1.3.10")
     // Internet rooms' QR codes (the encoder only: about 0.5 MB).
     implementation("com.google.zxing:core:3.5.3")
+    // Scanning a friend's room QR code in the app: Google's scanner, run by Play services
+    // (no camera permission for this app, nothing of the picture kept; free).
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // Core's online signaling uses it (Supabase Realtime's WebSocket).
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 

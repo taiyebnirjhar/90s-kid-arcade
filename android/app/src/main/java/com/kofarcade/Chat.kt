@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -112,7 +113,7 @@ fun ChatButton(unread: Int, onClick: () -> Unit, modifier: Modifier = Modifier) 
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(30.dp)
+                .size(32.dp)
                 .clip(CircleShape)
                 .background(Color.Black.copy(alpha = 0.55f))
                 .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
@@ -122,14 +123,21 @@ fun ChatButton(unread: Int, onClick: () -> Unit, modifier: Modifier = Modifier) 
             ChatIcon(Modifier.size(15.dp))
         }
         if (unread > 0) {
-            Text(
-                if (unread > 9) "9+" else "$unread",
-                color = Color.White,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.align(Alignment.TopEnd).padding(start = 18.dp).clip(CircleShape).background(Palette.red)
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
-            )
+            // A round red badge on the button's corner.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.align(Alignment.TopEnd).offset(x = 5.dp, y = (-3).dp).size(15.dp).clip(CircleShape).background(Palette.red),
+            ) {
+                Text(
+                    if (unread > 9) "9+" else "$unread",
+                    color = Color.White,
+                    fontSize = 8.sp,
+                    lineHeight = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    style = androidx.compose.ui.text.TextStyle(platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false)),
+                )
+            }
         }
     }
 }
@@ -210,6 +218,9 @@ fun ChatPanel(
     /** Internet rooms: ask them to be friends, or block them. */
     onAddFriend: ((ChatShown) -> Unit)? = null,
     onBlock: ((ChatShown) -> Unit)? = null,
+    /** Messages shown over the game (bubbles), and its switch; null: no switch. */
+    bubbles: Boolean? = null,
+    onBubbles: (Boolean) -> Unit = {},
 ) = TextScaleCap {
     var typed by remember { mutableStateOf("") }
     var picked by remember { mutableStateOf<Long?>(null) }
@@ -224,7 +235,7 @@ fun ChatPanel(
         Column(
             Modifier
                 .fillMaxHeight()
-                .width(if (maxWidth < 760.dp) 360.dp else 400.dp)
+                .width(if (maxWidth < Breakpoints.lg) 360.dp else 400.dp)
                 .slantPanel(left = 40.dp, right = 0.dp, alpha = 0.94f)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {}
                 .imePadding()
@@ -232,6 +243,22 @@ fun ChatPanel(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Chat", color = Palette.text, fontSize = 22.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, modifier = Modifier.weight(1f))
+                if (bubbles != null) {
+                    // Messages over the game: on, or hidden (the chat button still counts new ones).
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.height(32.dp).clip(RoundedCornerShape(50))
+                            .border(1.dp, if (bubbles) Palette.line else Palette.red.copy(alpha = 0.7f), RoundedCornerShape(50))
+                            .clickable { onBubbles(!bubbles) }
+                            .semantics { contentDescription = if (bubbles) "Messages show on the game: tap to hide them" else "Messages hidden on the game: tap to show them"; role = Role.Button }
+                            .padding(horizontal = 12.dp),
+                    ) {
+                        EyeIcon(Modifier.size(14.dp), crossed = !bubbles, color = if (bubbles) Palette.text else Palette.red)
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (bubbles) "ON SCREEN" else "HIDDEN", color = if (bubbles) Palette.text else Palette.red, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                    }
+                    Spacer(Modifier.width(4.dp))
+                }
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClose)
@@ -380,6 +407,53 @@ fun MicIcon(modifier: Modifier = Modifier, on: Boolean, color: Color = Palette.t
     }
 }
 
+/** A speaker, with sound waves when [on], crossed out in red when off. */
+@Composable
+fun SpeakerIcon(modifier: Modifier = Modifier, on: Boolean, color: Color = Palette.text) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val body = Path().apply {
+            moveTo(w * 0.08f, h * 0.36f)
+            lineTo(w * 0.28f, h * 0.36f)
+            lineTo(w * 0.52f, h * 0.14f)
+            lineTo(w * 0.52f, h * 0.86f)
+            lineTo(w * 0.28f, h * 0.64f)
+            lineTo(w * 0.08f, h * 0.64f)
+            close()
+        }
+        drawPath(body, color)
+        if (on) {
+            val stroke = Stroke(width = w * 0.09f)
+            drawArc(color, -45f, 90f, false, Offset(w * 0.42f, h * 0.3f), Size(w * 0.3f, h * 0.4f), style = stroke)
+            drawArc(color, -50f, 100f, false, Offset(w * 0.36f, h * 0.12f), Size(w * 0.56f, h * 0.76f), style = stroke)
+        } else {
+            drawLine(Palette.red, Offset(w * 0.62f, h * 0.34f), Offset(w * 0.92f, h * 0.66f), w * 0.11f)
+            drawLine(Palette.red, Offset(w * 0.92f, h * 0.34f), Offset(w * 0.62f, h * 0.66f), w * 0.11f)
+        }
+    }
+}
+
+/**
+ * The speaker button by the mic: everyone's voices on or off on this phone,
+ * in one tap (a trash talker: tap, silence). Same as Settings: Voices.
+ */
+@Composable
+fun SpeakerButton(on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.55f))
+            .border(1.dp, if (on) Color.White.copy(alpha = 0.12f) else Palette.red.copy(alpha = 0.8f), CircleShape)
+            .clickable(onClick = onToggle)
+            .semantics { contentDescription = if (on) "Voices on: tap to mute everyone" else "Voices muted: tap to hear them"; role = Role.Button },
+    ) {
+        SpeakerIcon(Modifier.size(15.dp), on = on)
+    }
+}
+
 /**
  * The mic button by the chat button: off (crossed) when you join; a tap
  * turns it on. In push-to-talk, once on, hold it to talk.
@@ -390,7 +464,7 @@ fun MicButton(on: Boolean, talking: Boolean, pushToTalk: Boolean, onToggle: () -
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(30.dp)
+            .size(32.dp)
             .clip(CircleShape)
             .background(if (live) Palette.green.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.55f))
             .border(1.dp, if (on) Palette.green else Color.White.copy(alpha = 0.12f), CircleShape)

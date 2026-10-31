@@ -107,7 +107,7 @@ fun ArcadeScreen(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(Palette.panel)
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(Palette.panel)
                     .border(1.dp, Palette.line, CircleShape).clickable(onClick = onBack)
                     .semantics { contentDescription = "Back"; role = Role.Button },
             ) { BackIcon(Modifier.size(14.dp)) }
@@ -122,7 +122,7 @@ fun ArcadeScreen(
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                     // Room under the last row to scroll it clear of the bar.
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
                 content = content,
             )
             if (bottomBar != null) {
@@ -131,7 +131,7 @@ fun ArcadeScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                         .background(Brush.verticalGradient(0f to Palette.bg.copy(alpha = 0f), 0.35f to Palette.bg))
-                        .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp),
+                        .padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 12.dp),
                 ) { Box(Modifier.widthIn(max = 560.dp)) { bottomBar() } }
             }
         }
@@ -153,7 +153,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.6.sp,
-        modifier = modifier.padding(top = 24.dp, bottom = 12.dp),
+        modifier = modifier.padding(top = 28.dp, bottom = 14.dp),
     )
 }
 
@@ -173,7 +173,7 @@ fun Panel(
             .background(if (highlight) Palette.gold.copy(alpha = 0.08f) else Palette.panel)
             .border(1.dp, if (highlight) Palette.gold.copy(alpha = 0.7f) else Palette.line, shape)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(16.dp),
+            .padding(18.dp),
         content = content,
     )
 }
@@ -194,19 +194,19 @@ fun GoldButton(
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
             .pressScale(source)
-            .height(if (compact) 40.dp else 48.dp)
+            .height(if (compact) 38.dp else 44.dp)
             .clip(RoundedCornerShape(50))
             // Disabled: a quiet grey pill, not a dimmed (muddy) gold one.
             .background(if (enabled) Palette.gold else Palette.line)
             .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
-            .padding(horizontal = if (compact) 16.dp else 22.dp),
+            .padding(horizontal = if (compact) 14.dp else 20.dp),
     ) {
         val ink = if (enabled) OnGold else Palette.muted
         if (play) {
             PlayIcon(Modifier.size(if (compact) 10.dp else 12.dp), ink)
             Spacer(Modifier.width(if (compact) 8.dp else 10.dp))
         }
-        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 14.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = ink, fontWeight = FontWeight.Black, fontSize = if (compact) 11.sp else 13.sp, letterSpacing = 1.sp)
     }
 }
 
@@ -219,14 +219,14 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         contentAlignment = Alignment.Center,
         modifier = modifier
             .pressScale(source)
-            .height(if (compact) 40.dp else 48.dp)
+            .height(if (compact) 38.dp else 44.dp)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(50))
             .border(1.dp, if (danger) Palette.red.copy(alpha = 0.6f) else Palette.line, RoundedCornerShape(50))
             .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, onClick = onClick)
-            .padding(horizontal = if (compact) 16.dp else 20.dp),
+            .padding(horizontal = if (compact) 14.dp else 18.dp),
     ) {
-        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = if (compact) 12.sp else 13.sp, letterSpacing = 1.sp)
+        Text(text.uppercase(), color = color, fontWeight = FontWeight.Black, fontSize = if (compact) 11.sp else 12.sp, letterSpacing = 1.sp)
     }
 }
 
@@ -474,7 +474,7 @@ private fun RoundKey(text: String, enabled: Boolean, onClick: () -> Unit) {
 fun ArcadeField(
     value: String,
     onChange: (String) -> Unit,
-    label: String,
+    label: String?,
     modifier: Modifier = Modifier,
     placeholder: String = "",
     password: Boolean = false,
@@ -486,8 +486,10 @@ fun ArcadeField(
     var shown by remember { mutableStateOf(false) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
     Column(modifier.fillMaxWidth()) {
-        Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-        Spacer(Modifier.height(6.dp))
+        if (label != null) {
+            Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Spacer(Modifier.height(6.dp))
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.bg)

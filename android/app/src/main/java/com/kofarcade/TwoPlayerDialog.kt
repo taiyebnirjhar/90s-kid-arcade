@@ -1,5 +1,7 @@
 package com.kofarcade
 
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.clickable
 import android.content.Context
 import android.content.Intent
@@ -86,7 +88,9 @@ const val APP_DOWNLOAD = "https://github.com/taiyebnirjhar/90s-kid-arcade/releas
 private sealed interface TwoPlayer {
     data object Hub : TwoPlayer
     /** Picking the game to host: on this Wi-Fi, or [online] over the internet. */
-    data class PickGame(val online: Boolean = false) : TwoPlayer
+    data class PickGame(val online: Boolean = false, val challenge: com.kofarcade.core.online.Friend? = null) : TwoPlayer
+    /** The chat with a friend. */
+    data class Chat(val friend: com.kofarcade.core.online.Friend) : TwoPlayer
 }
 
 /** What a found host looks like in the list. */
@@ -139,9 +143,20 @@ fun TwoPlayerDialog(
     /** An internet room's code from a link: joined at once. */
     joinCode: String? = null,
     onCodeTaken: () -> Unit = {},
+    /** A friend's chat to open at once (the news banner's Reply). */
+    chatWith: com.kofarcade.core.online.Friend? = null,
+    onChatTaken: () -> Unit = {},
 ) {
     var screen by remember { mutableStateOf<TwoPlayer>(TwoPlayer.Hub) }
     val context = LocalContext.current
+    // A friend's room joined from their chat: the hub joins it.
+    var friendRoom by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(chatWith) {
+        if (chatWith != null) {
+            screen = TwoPlayer.Chat(chatWith)
+            onChatTaken()
+        }
+    }
 
     // Android drops broadcast packets (how rooms are found) unless asked.
     DisposableEffect(Unit) {
@@ -159,13 +174,23 @@ fun TwoPlayerDialog(
     var opening by remember { mutableStateOf(false) }
     // Online rooms: open (listed, anyone joins) or locked (only with the code), as last picked.
     var openRoom by remember { mutableStateOf(Prefs(context).openRooms) }
+    // Making a room: the GAME ON screen, and the job, to cancel.
+    var making by remember { mutableStateOf("") }
+    var hostWork by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     // Opens a room for the game and starts playing; the game screen shows its key
     // (or, [online], its code: the room is made on the server, friends anywhere join).
-    fun host(game: Game, set: String, online: Boolean) {
+    fun host(game: Game, set: String, online: Boolean, challenge: com.kofarcade.core.online.Friend? = null) {
         if (opening) return
         opening = true
-        scope.launch {
+        making = when {
+            challenge != null -> "Making a room for you and ${challenge.name}…"
+            online -> "Making your room…"
+            else -> "Opening your room on this Wi-Fi…"
+        }
+        hostWork = scope.launch {
+            var made: (() -> Unit)? = null
+            var invited = true
             try {
                 // Never dropped half-made: if the screen's gone by the time
                 // the room is open, it's closed again.
@@ -177,11 +202,16 @@ fun TwoPlayerDialog(
                         Online.account(context).sync(Online.defaultName())
                         val r = Online.rooms(context).host(
                             Online.playerName(context), set, game.fullTitle, rom, bios, game.players, emulatorBuild(context), Prefs(context).deviceId,
-                            open = openRoom,
+                            // A challenge's room is for the two of you: locked, the friend invited at once.
+                            open = openRoom && challenge == null,
                         )
+                        made = { r.close() }
+                        if (challenge != null) invited = runCatching { Online.friends(context).invite(challenge.id, r.code, challenge = true) }.isSuccess
                         r.room to r
                     } else {
-                        Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId) to null
+                        val rm = Room.host(Online.playerName(context), set, game.fullTitle, rom, bios, game.players, build = emulatorBuild(context), device = Prefs(context).deviceId)
+                        made = { rm.close() }
+                        rm to null
                     }
                 }
                 // Gone back from the game picker meanwhile: the room's closed again, not started.
@@ -191,7 +221,20 @@ fun TwoPlayerDialog(
                 }
                 Netplay.room = room
                 Netplay.online = internet
+                if (challenge != null) {
+                    android.widget.Toast.makeText(
+                        context,
+                        if (invited) "Challenge sent to ${challenge.name}: they join from their invite"
+                        else "Couldn't send ${challenge.name} the challenge: share the room code from the room instead",
+                        android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
                 onStart(game, set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Exception) {
                 val why = (e as? OnlineError)?.let(::explainRoomTrouble) ?: e.message ?: e.javaClass.simpleName
                 if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: $why", android.widget.Toast.LENGTH_LONG).show()
@@ -217,15 +260,30 @@ fun TwoPlayerDialog(
                 onLibrary = onLibrary,
                 onBack = back,
                 onJoined = onStart,
-                joinCode = joinCode,
-                onCodeTaken = onCodeTaken,
+                joinCode = joinCode ?: friendRoom,
+                onCodeTaken = {
+                    onCodeTaken()
+                    friendRoom = null
+                },
+                onChat = { screen = TwoPlayer.Chat(it) },
+                onChallenge = { screen = TwoPlayer.PickGame(online = true, challenge = it) },
+            )
+            is TwoPlayer.Chat -> FriendChatPage(
+                shown.friend,
+                onBack = back,
+                onChallenge = { screen = TwoPlayer.PickGame(online = true, challenge = it) },
+                onJoin = { room ->
+                    friendRoom = room
+                    screen = TwoPlayer.Hub
+                },
             )
             is TwoPlayer.PickGame -> {
                 val hasBios = remember { roms.has(BIOS) }
                 val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
                 PickGameScreen(
                     ready,
-                    onPick = { (g, set) -> host(g, set, shown.online) },
+                    onPick = { (g, set) -> host(g, set, shown.online, shown.challenge) },
+                    challenge = shown.challenge?.name,
                     onLibrary = onLibrary,
                     onBack = back,
                     online = shown.online,
@@ -238,6 +296,13 @@ fun TwoPlayerDialog(
                 )
             }
         }
+    }
+    if (opening) {
+        GameOnLoading(making, onCancel = {
+            // A room made after this is closed again (host checks it's still wanted).
+            hostWork?.cancel()
+            opening = false
+        })
     }
 }
 
@@ -253,6 +318,8 @@ private fun Hub(
     onJoined: (Game, String) -> Unit,
     joinCode: String? = null,
     onCodeTaken: () -> Unit = {},
+    onChat: (com.kofarcade.core.online.Friend) -> Unit = {},
+    onChallenge: (com.kofarcade.core.online.Friend) -> Unit = {},
 ) {
     val context = LocalContext.current
     val hosts = remember { mutableStateListOf<FoundHost>() }
@@ -261,7 +328,11 @@ private fun Hub(
     var status by remember { mutableStateOf<MpStatus?>(null) }
     var action by remember { mutableStateOf<(() -> Unit)?>(null) }
     var busy by remember { mutableStateOf(false) }
+    // While joining: what's happening (the GAME ON screen), and the join, to cancel.
+    var loading by remember { mutableStateOf<String?>(null) }
+    var work by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val scope = rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(busy) { if (!busy) loading = null }
     // Gone from this screen: a join that's let in afterwards leaves at once.
     val left = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
@@ -318,8 +389,15 @@ private fun Hub(
     }
 
     fun say(text: String, actionLabel: String? = null, bad: Boolean = true, onAction: (() -> Unit)? = null) {
+        loading = null
         status = MpStatus(text, actionLabel, bad = bad)
         action = onAction
+    }
+
+    // Joining: the GAME ON screen, saying what's happening now.
+    fun step(text: String) {
+        status = null
+        loading = "$text…"
     }
 
     DisposableEffect(Unit) {
@@ -345,8 +423,9 @@ private fun Hub(
             return
         }
         busy = true
-        say("Joining ${found.beacon.name}'s room…", bad = false)
-        scope.launch {
+        step("Joining ${found.beacon.name}'s room")
+        work = scope.launch {
+            var made: (() -> Unit)? = null
             try {
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
@@ -364,7 +443,10 @@ private fun Hub(
                         } catch (e: Redirected) {
                             joinAt(InetAddress.getByName(e.at.host), e.at.port)
                         }
-                        joined.also { room -> if (left.get()) room.close() }
+                        joined.also { room ->
+                            made = { room.close() }
+                            if (left.get()) room.close()
+                        }
                     } finally {
                         // The game screen ties the game to the Wi-Fi itself from here.
                         link.stop()
@@ -377,6 +459,11 @@ private fun Hub(
                 Netplay.room = room
                 status = null
                 onJoined(game, set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
@@ -400,8 +487,8 @@ private fun Hub(
             return
         }
         busy = true
-        say("Looking for room $key…", bad = false)
-        scope.launch {
+        step("Finding room $key")
+        work = scope.launch {
             try {
                 val found = withContext(Dispatchers.IO) {
                     val (ip, port) = target
@@ -427,8 +514,9 @@ private fun Hub(
     fun joinByCode(clean: String, nearby: (() -> Unit)?) {
         if (busy) return
         busy = true
-        say("Looking for room ${OnlineRooms.pretty(clean)}…", bad = false)
-        scope.launch {
+        step("Finding room ${OnlineRooms.pretty(clean)}")
+        work = scope.launch {
+            var made: (() -> Unit)? = null
             try {
                 val rooms = Online.rooms(context)
                 val info = withContext(Dispatchers.IO) {
@@ -443,7 +531,7 @@ private fun Hub(
                     say("You need $what to join ${info.ownerName ?: "this"} room.", "Get it from the library", onAction = onLibrary)
                     return@launch
                 }
-                say("Joining ${info.ownerName ?: "the"} room…", bad = false)
+                step("Connecting to ${info.ownerName ?: "the"} room")
                 val online = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("${info.set}.zip") ?: error("Can't read ${info.set}.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
@@ -451,7 +539,10 @@ private fun Hub(
                         throw Refused("Your copy of $title differs from the host's. Download it from the library on every phone, so all play the same version.")
                     }
                     rooms.join(info, Online.playerName(context), info.set, rom, bios, emulatorBuild(context), Prefs(context).deviceId)
-                        .also { if (left.get()) it.close() }
+                        .also {
+                            made = { it.close() }
+                            if (left.get()) it.close()
+                        }
                 }
                 if (left.get() || !isActive) {
                     // Off the main thread: leaving waits for the goodbye and tells the server.
@@ -462,6 +553,11 @@ private fun Hub(
                 Netplay.online = online
                 status = null
                 onJoined(game, info.set)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
+                // away, so what was made is closed here (off the main thread: it says goodbye).
+                made?.let { close -> Thread { runCatching { close() } }.start() }
+                throw e
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
@@ -510,18 +606,38 @@ private fun Hub(
         }
     }
 
-    // From a room link: its code, joined at once (not over a game still on, or a join under way).
+    // A room's code from its link or QR code: joined at once (not over a game still on, or a join under way).
+    fun joinFromLink(code: String) {
+        key = formatKeyInput(code)
+        when {
+            Netplay.room != null -> say("You're still in a room. Leave that game first, then tap Join.")
+            busy -> {}
+            !internet -> say("No internet: joining by code needs it. Nearby rooms work without (same Wi-Fi or hotspot).")
+            else -> joinByCode(code, null)
+        }
+    }
+
     androidx.compose.runtime.LaunchedEffect(joinCode) {
         if (joinCode != null) {
-            key = formatKeyInput(joinCode)
             onCodeTaken()
-            when {
-                Netplay.room != null -> say("You're still in a room. Leave that game first, then tap Join.")
-                busy -> {}
-                !internet -> say("No internet: joining by code needs it. Nearby rooms work without (same Wi-Fi or hotspot).")
-                else -> joinByCode(joinCode, null)
-            }
+            joinFromLink(joinCode)
         }
+    }
+
+    // A friend's room QR code, scanned here: Google's scanner (Play services) opens, reads it, and the room's joined.
+    fun scanQr() {
+        val activity = context as? android.app.Activity ?: return
+        val options = com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions.Builder()
+            .setBarcodeFormats(com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE)
+            .build()
+        com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(activity, options).startScan()
+            .addOnSuccessListener { barcode ->
+                val code = scannedRoomCode(barcode.rawValue)
+                if (code != null) joinFromLink(code) else say("That QR code isn't a room. Scan the code in your friend's room.")
+            }
+            .addOnFailureListener {
+                say("The scanner didn't open on this phone. Type the room code instead: your friend sees it under the QR code.")
+            }
     }
 
     // A room on the list: an open one joins at once; a locked one asks for its code.
@@ -634,6 +750,7 @@ private fun Hub(
         onStatusAction = { action?.invoke() },
         onHost = onHost,
         onJoinKey = ::joinAny,
+        onScan = if (internet) ::scanQr else null,
         onJoinRoom = { i -> hosts.getOrNull(i)?.let(::connect) },
         onBack = onBack,
         internet = internet,
@@ -664,6 +781,8 @@ private fun Hub(
             joinByCode(code, null)
         },
         onRemoveFriend = { f -> friendCall { it.remove(f.id); null } },
+        onChatFriend = onChat,
+        onChallengeFriend = onChallenge,
         onBlockFriend = { f ->
             friendCall {
                 it.block(f.id)
@@ -671,6 +790,14 @@ private fun Hub(
             }
         },
     )
+    loading?.let { text ->
+        GameOnLoading(text, onCancel = {
+            // Let go: a join that gets in after this leaves at once (the join checks).
+            work?.cancel()
+            busy = false
+            loading = null
+        })
+    }
 }
 
 /** What's typed as a friend code: letters and numbers, "K7Q2-MX8P". */
@@ -701,6 +828,8 @@ fun MultiplayerHub(
     onJoinKey: () -> Unit,
     onJoinRoom: (Int) -> Unit,
     onBack: () -> Unit,
+    /** Scans a friend's room QR code, or null (no internet: no online rooms to scan). */
+    onScan: (() -> Unit)? = null,
     /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
     internet: Boolean = true,
     onHostOnline: () -> Unit = {},
@@ -723,6 +852,8 @@ fun MultiplayerHub(
     onJoinFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
     onRemoveFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
     onBlockFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
+    onChatFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
+    onChallengeFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
 ) {
     ArcadeScreen(
         title = "Play together",
@@ -736,7 +867,7 @@ fun MultiplayerHub(
         friends?.let { InviteCards(it.invites, busy, onJoinInvite, onDismissInvite) }
 
         // The three ways in, big and plain: anyone, a friend's code, your own room.
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (internet) {
                 BigChoice(
                     "Quick match", "Play anyone who's online now",
@@ -749,11 +880,11 @@ fun MultiplayerHub(
                 enabled = !busy,
                 onClick = if (internet) onHostOnline else onHost,
             ) { Text("+", color = Palette.gold, fontSize = 30.sp, fontWeight = FontWeight.Black) }
-            JoinCodeCard(key, onKey, busy, onJoinKey, internet)
+            JoinCodeCard(key, onKey, busy, onJoinKey, internet, onScan)
         }
 
         if (friends != null) {
-            FriendsSection(friends, busy, friendCode, onFriendCode, onAddFriend, onShareCode, onAnswerFriend, onJoinFriend, onRemoveFriend, onBlockFriend)
+            FriendsSection(friends, busy, friendCode, onFriendCode, onAddFriend, onShareCode, onAnswerFriend, onJoinFriend, onRemoveFriend, onBlockFriend, onChatFriend, onChallengeFriend)
         }
 
         // Rooms to join: nearby first (no lag, no data), then online.
@@ -835,9 +966,9 @@ private fun BigChoice(
     }
 }
 
-/** Got a code from a friend: type it, Join. */
+/** Got a code from a friend: type it, Join; or scan their room's QR code. */
 @Composable
-private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, onJoin: () -> Unit, internet: Boolean) {
+private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, onJoin: () -> Unit, internet: Boolean, onScan: (() -> Unit)?) {
     Panel {
         Text("Got a code from a friend?", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
         Spacer(Modifier.height(10.dp))
@@ -848,6 +979,10 @@ private fun JoinCodeCard(key: String, onKey: (String) -> Unit, busy: Boolean, on
             )
             Spacer(Modifier.width(12.dp))
             GoldButton("Join", onJoin, enabled = !busy && key.isNotBlank())
+        }
+        if (onScan != null) {
+            Spacer(Modifier.height(10.dp))
+            GhostButton("Scan their QR code", onScan, Modifier.fillMaxWidth(), enabled = !busy)
         }
     }
 }
@@ -910,9 +1045,21 @@ fun PickGameScreen(
     /** Online: the room's made open (listed, anyone joins) or locked (only with its code). */
     open: Boolean = true,
     onOpen: (Boolean) -> Unit = {},
+    /** Challenging this friend: the room's made for the two of you (locked), and they're invited. */
+    challenge: String? = null,
 ) {
-    ArcadeScreen(title = if (online) "Create a room" else "Create nearby room", kicker = "Pick the game", onBack = onBack) {
-        if (online) {
+    ArcadeScreen(
+        title = when {
+            challenge != null -> "Challenge $challenge"
+            online -> "Create a room"
+            else -> "Create nearby room"
+        },
+        kicker = "Pick the game",
+        onBack = onBack,
+    ) {
+        if (challenge != null) {
+            Text("$challenge gets your challenge at once, and joins with a tap.", color = Palette.muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+        } else if (online) {
             SectionLabel("Who can join")
             // Both cards as tall as the taller one (one's text may take two lines).
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -934,13 +1081,13 @@ fun PickGameScreen(
         } else {
             // Wide picture cards: one a row in portrait, two or three side by side in landscape.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth > 820.dp) 3 else if (maxWidth > 560.dp) 2 else 1
+                val columns = if (maxWidth > Breakpoints.lg) 3 else if (maxWidth > Breakpoints.md) 2 else 1
                 val gap = 12.dp
                 val cardWidth = (maxWidth - gap * (columns - 1)) / columns
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                     ready.chunked(columns).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth)) { onPick(pick) } }
+                            row.forEach { pick -> HostCard(pick.first, pick.second, Modifier.width(cardWidth), if (challenge != null) "Challenge" else "Host") { onPick(pick) } }
                         }
                     }
                 }
@@ -952,7 +1099,7 @@ fun PickGameScreen(
 
 /** A game to host: its picture filling a wide card, how many can play, and a gold Host button. */
 @Composable
-private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> Unit) {
+private fun HostCard(game: Game, set: String, modifier: Modifier, label: String = "Host", onHost: () -> Unit) {
     WideGameCard(
         game,
         set,
@@ -961,7 +1108,7 @@ private fun HostCard(game: Game, set: String, modifier: Modifier, onHost: () -> 
         onClick = onHost,
         tag = { PictureTag("${game.players} players", Palette.green) },
         info = { Text(game.subtitle ?: game.series, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1) },
-        action = { GoldButton("Host", onHost, play = true, compact = true) },
+        action = { GoldButton(label, onHost, play = true, compact = true) },
     )
 }
 
@@ -1020,7 +1167,7 @@ private const val LIST_RETRY_MS = 20_000L
 @Composable
 private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth > 1100.dp) 3 else if (maxWidth > 700.dp) 2 else 1
+        val columns = if (maxWidth > Breakpoints.xl) 3 else if (maxWidth > Breakpoints.md) 2 else 1
         val gap = 12.dp
         Column(verticalArrangement = Arrangement.spacedBy(gap)) {
             (0 until count).chunked(columns).forEach { row ->
@@ -1049,3 +1196,94 @@ fun shareJoinReport(context: Context, code: String, e: Throwable) {
         .putExtra(Intent.EXTRA_TEXT, report)
     runCatching { context.startActivity(Intent.createChooser(send, "Send join report")) }
 }
+
+
+/**
+ * The chat with a friend, live: what's new every few seconds while it's open
+ * (and the friend's status every 15), sending, Challenge and Join.
+ */
+@Composable
+private fun FriendChatPage(
+    start: com.kofarcade.core.online.Friend,
+    onBack: () -> Unit,
+    onChallenge: (com.kofarcade.core.online.Friend) -> Unit,
+    onJoin: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var friend by remember { mutableStateOf(start) }
+    val messages = remember { mutableStateListOf<com.kofarcade.core.online.FriendMessage>() }
+    var typed by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf<String?>(null) }
+    var sending by remember { mutableStateOf(false) }
+    var poke by remember { mutableStateOf(0) }
+    val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.LaunchedEffect(start.id) {
+        val server = Online.friends(context)
+        var statusAt = 0L
+        // Only while it's on screen: asking marks their messages read ("Seen"), and costs calls.
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+        statusAt = 0L
+        while (isActive) {
+            val after = messages.lastOrNull()?.id ?: 0L
+            withContext(Dispatchers.IO) { runCatching { server.chat(start.id, after) } }
+                .onSuccess { got ->
+                    note = null
+                    // Yours sent meanwhile may be in already; their "seen" changes come with a full read now and then.
+                    val have = messages.map { it.id }.toSet()
+                    messages += got.filter { it.id !in have }
+                }
+                .onFailure { note = (it as? OnlineError)?.let(::explainFriendTrouble) ?: "Couldn't load the chat." }
+            if (System.currentTimeMillis() - statusAt > FRIEND_STATUS_EVERY_MS) {
+                statusAt = System.currentTimeMillis()
+                withContext(Dispatchers.IO) { runCatching { server.list() } }.getOrNull()
+                    ?.firstOrNull { it.id == start.id }?.let { friend = it.copy(unread = 0) }
+                // "Seen" on yours: the whole chat again, now and then.
+                withContext(Dispatchers.IO) { runCatching { server.chat(start.id) } }.getOrNull()?.let { all ->
+                    if (all.map { it.id to it.seen } != messages.map { it.id to it.seen }) {
+                        messages.clear()
+                        messages += all
+                    }
+                }
+            }
+            // Asked again in a few seconds, or at once after a send.
+            kotlinx.coroutines.withTimeoutOrNull(FRIEND_CHAT_EVERY_MS) { snapshotFlowFirstChange { poke } }
+        }
+        }
+    }
+    fun send(text: String) {
+        val body = text.trim()
+        if (body.isEmpty() || sending) return
+        sending = true
+        scope.launch {
+            withContext(Dispatchers.IO) { runCatching { Online.friends(context).send(start.id, body) } }
+                .onSuccess {
+                    if (text == typed) typed = ""
+                    note = null
+                    poke++
+                }
+                .onFailure {
+                    note = (it as? OnlineError)?.let { e ->
+                        if (e is OnlineError.Refused && e.code == "54000") "Slow down a little: too many messages." else explainFriendTrouble(e)
+                    } ?: "Couldn't send: ${it.message}"
+                }
+            sending = false
+        }
+    }
+    FriendChatScreen(
+        friend, messages, typed, onType = { typed = it.take(300) }, onSend = ::send, onBack = onBack,
+        onChallenge = { onChallenge(friend) },
+        onJoin = { friend.room?.let(onJoin) },
+        busy = sending, note = note,
+    )
+}
+
+// Waits until [read]'s value changes (a send: the chat's asked again at once).
+private suspend fun <T> snapshotFlowFirstChange(read: () -> T) {
+    val first = read()
+    androidx.compose.runtime.snapshotFlow(read).first { it != first }
+}
+
+// A friend's chat asks for new messages this often while it's open, and their status every 15 s.
+private const val FRIEND_CHAT_EVERY_MS = 3_000L
+private const val FRIEND_STATUS_EVERY_MS = 15_000L

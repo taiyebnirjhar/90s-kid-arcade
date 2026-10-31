@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -83,6 +85,8 @@ data class RoomPerson(
     val id: Int = -1,
     /** The host muted their voice for the room. */
     val voiceMuted: Boolean = false,
+    /** This phone muted them (voice and chat), for every room. */
+    val mutedHere: Boolean = false,
 )
 
 /** What the game screen shows of its room. */
@@ -324,29 +328,33 @@ fun RoomSheetContent(
     onOpen: (Boolean) -> Unit = {},
     /** The host mutes (true) or unmutes a member's voice for the room. */
     onVoiceMute: (Int, Boolean) -> Unit = { _, _ -> },
+    /** Anyone mutes (true) or unmutes a member on their own phone: their voice and chat. */
+    onMuteHere: (Int, Boolean) -> Unit = { _, _ -> },
     onWatchersListen: (Boolean) -> Unit = {},
     onInvite: (RoomFriend) -> Unit = {},
+    /** The buttons too (false: the sheet pins them under it, RoomSheetActions). */
+    withActions: Boolean = true,
 ) {
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
         // Side by side only where each half has room for its text (wider with bigger text).
-        if (maxWidth > 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
+        if (maxWidth > Breakpoints.md * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Column(Modifier.weight(1f)) {
                     RoomHeader(ui, first, onCopy, onShare, onOpen)
-                    RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+                    if (withActions) RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
                 }
                 Column(Modifier.weight(1f)) {
-                    RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
+                    RoomPeople(ui, onFree, onVoiceMute, onMuteHere, onWatchersListen)
                     RoomInvites(ui, onInvite)
                 }
             }
         } else {
             Column {
                 RoomHeader(ui, first, onCopy, onShare, onOpen)
-                RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
+                RoomPeople(ui, onFree, onVoiceMute, onMuteHere, onWatchersListen)
                 RoomInvites(ui, onInvite)
-                RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+                if (withActions) RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
             }
         }
     }
@@ -425,11 +433,11 @@ private fun RoomOpenRow(open: Boolean, canChange: Boolean, onOpen: (Boolean) -> 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit, onVoiceMute: (Int, Boolean) -> Unit, onWatchersListen: (Boolean) -> Unit) {
+private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit, onVoiceMute: (Int, Boolean) -> Unit, onMuteHere: (Int, Boolean) -> Unit, onWatchersListen: (Boolean) -> Unit) {
     SectionLabel("Players")
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (seat in 0 until ui.maxPlayers) {
-            SeatRow(seat, ui.players.find { it.seat == seat }, ui.canFree, onFree, ui.voiceHost, onVoiceMute)
+            SeatRow(seat, ui.players.find { it.seat == seat }, ui.canFree, onFree, ui.voiceHost, onVoiceMute, ui.online, onMuteHere)
         }
     }
     SectionLabel("Watching")
@@ -439,7 +447,21 @@ private fun RoomPeople(ui: RoomUi, onFree: (Int) -> Unit, onVoiceMute: (Int, Boo
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (w in ui.watchers) {
                 val name = w.name + if (w.you && w.name != "You") " (you)" else ""
-                Tag(if (w.line > 0) "${w.line}. $name" else name, if (w.you) Palette.gold else Palette.muted)
+                val label = if (w.line > 0) "${w.line}. $name" else name
+                if (ui.online && !w.you) {
+                    // A tap mutes a watcher on this phone (their voice and chat); again, unmutes.
+                    val muted = w.mutedHere || w.voiceMuted
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clip(RoundedCornerShape(50)).clickable(enabled = !w.voiceMuted) { onMuteHere(w.id, !w.mutedHere) }
+                            .semantics { contentDescription = if (muted) "$label, muted: tap to unmute" else "$label: tap to mute" },
+                    ) {
+                        Tag(label, if (muted) Palette.red else Palette.muted)
+                        SpeakerIcon(Modifier.padding(start = 4.dp).size(14.dp), on = !muted, color = Palette.muted)
+                    }
+                } else {
+                    Tag(label, if (w.you) Palette.gold else Palette.muted)
+                }
             }
         }
     }
@@ -478,9 +500,35 @@ private fun RoomInvites(ui: RoomUi, onInvite: (RoomFriend) -> Unit) {
     }
 }
 
+/**
+ * The room sheet's buttons, pinned under it so they're always in view: in
+ * one row where it's wide (landscape), stacked where it's narrow.
+ */
 @Composable
-private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
-    Spacer(Modifier.height(18.dp))
+fun RoomSheetActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
+    BoxWithConstraints {
+        if (maxWidth > Breakpoints.md * LocalDensity.current.fontScale.coerceAtLeast(1f) && !(ui.watching && ui.linePlace > 0)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                if (ui.watching) {
+                    GoldButton("Take a seat", onSeat, Modifier.weight(1.4f), play = true)
+                    GhostButton("Back to watching", onClose, Modifier.weight(1f))
+                } else {
+                    GoldButton(if (first) "Start playing" else "Back to the game", onClose, Modifier.weight(1.4f), play = true)
+                    GhostButton("Watch instead", onWatch, Modifier.weight(1f))
+                }
+                GhostButton("Leave", onLeave, Modifier.weight(0.7f), danger = true)
+            }
+        } else {
+            // The narrowest phones: the short words, so no button breaks over two lines.
+            val short = maxWidth < 330.dp
+            Column { RoomActions(ui, first, onSeat, onWatch, onLeave, onClose, top = 4.dp, short = short) }
+        }
+    }
+}
+
+@Composable
+private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit, top: androidx.compose.ui.unit.Dp = 18.dp, short: Boolean = false) {
+    Spacer(Modifier.height(top))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (ui.watching && ui.linePlace > 0) {
             Panel(highlight = true) {
@@ -494,19 +542,33 @@ private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch:
         } else {
             GoldButton(if (first) "Start playing" else "Back to the game", onClose, Modifier.fillMaxWidth(), play = true)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (ui.watching) {
-                GhostButton("Back to watching", onClose, Modifier.weight(1f))
-            } else {
-                GhostButton("Watch instead", onWatch, Modifier.weight(1f))
+        // Two buttons in a narrow column (the narrowest phones, a sheet's side column): the short words,
+        // so neither breaks over two lines.
+        BoxWithConstraints {
+            val shortWords = short || maxWidth < 330.dp
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (ui.watching) {
+                    GhostButton(if (shortWords) "Back" else "Back to watching", onClose, Modifier.weight(1f))
+                } else {
+                    GhostButton(if (shortWords) "Watch" else "Watch instead", onWatch, Modifier.weight(1f))
+                }
+                GhostButton("Leave", onLeave, Modifier.weight(1f), danger = true)
             }
-            GhostButton("Leave", onLeave, Modifier.weight(1f), danger = true)
         }
     }
 }
 
 @Composable
-private fun SeatRow(seat: Int, who: RoomPerson?, canFree: Boolean, onFree: (Int) -> Unit, voiceHost: Boolean = false, onVoiceMute: (Int, Boolean) -> Unit = { _, _ -> }) {
+private fun SeatRow(
+    seat: Int,
+    who: RoomPerson?,
+    canFree: Boolean,
+    onFree: (Int) -> Unit,
+    voiceHost: Boolean = false,
+    onVoiceMute: (Int, Boolean) -> Unit = { _, _ -> },
+    online: Boolean = false,
+    onMuteHere: (Int, Boolean) -> Unit = { _, _ -> },
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
@@ -557,11 +619,16 @@ private fun SeatRow(seat: Int, who: RoomPerson?, canFree: Boolean, onFree: (Int)
                 Tag("You", Palette.gold, filled = true)
             }
             if (voiceHost && !who.you) {
+                // The host: muted for the whole room (so for the host too).
                 Spacer(Modifier.width(6.dp))
                 GhostButton(if (who.voiceMuted) "Unmute" else "Mute", { onVoiceMute(who.id, !who.voiceMuted) }, compact = true)
             } else if (who.voiceMuted) {
                 Spacer(Modifier.width(6.dp))
                 Tag("Muted", Palette.red)
+            } else if (online && !who.you) {
+                // Anyone else: muted on this phone only (their voice and chat), for every room.
+                Spacer(Modifier.width(6.dp))
+                GhostButton(if (who.mutedHere) "Unmute" else "Mute", { onMuteHere(who.id, !who.mutedHere) }, compact = true)
             }
         }
     }

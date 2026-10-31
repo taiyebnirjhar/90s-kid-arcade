@@ -8,7 +8,14 @@
 <meta name="theme-color" content="#0B0B12">
 <meta property="og:title" content="90s Kid Arcade">
 <meta property="og:description" content="Arcade classics on Android with one-tap specials, and play with friends online or nearby.">
-<meta property="og:image" content="https://arcade.taiyebnirjhor.com/img/home.png">
+<meta property="og:image" content="https://arcade.taiyebnirjhor.com/img/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="90s Kid Arcade: GAME ON, with KOF, Metal Slug and Capcom games">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://arcade.taiyebnirjhor.com/img/share.png">
+<meta property="og:url" content="https://arcade.taiyebnirjhor.com/">
+<meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B12'/%3E%3Ctext x='32' y='42' font-family='Arial Black,Arial' font-weight='900' font-style='italic' font-size='26' text-anchor='middle' fill='%23E8B21A'%3E90s%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,12 +79,21 @@
   /* Hero */
   .hero { position: relative; padding: 18px 0 24px; overflow: hidden; }
   @media (min-width: 861px) { .hero { padding: 48px 0 32px; } }
+  /* Behind the phone: arcade calls scrolling by, row against row, like a cabinet's attract mode. */
   .hero .ghost {
-    position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+    /* In the phone's stage, as wide as the screen: centred on the phone. */
+    position: absolute; left: 50%; top: 50%; width: 200vw; transform: translate(-50%, -50%); z-index: 0;
+    display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 18px);
     font-family: var(--head); font-style: italic; font-weight: 900; text-transform: uppercase;
-    font-size: clamp(120px, 22vw, 330px); line-height: .8; white-space: nowrap; color: transparent;
-    -webkit-text-stroke: 1.5px rgba(241, 240, 247, .07); pointer-events: none; user-select: none;
+    font-size: clamp(84px, 16vw, 240px); line-height: .82; white-space: nowrap; color: transparent;
+    pointer-events: none; user-select: none; overflow: hidden;
   }
+  .hero .ghost .row { display: flex; width: max-content; -webkit-text-stroke: 1.5px rgba(241, 240, 247, .08); animation: marquee 38s linear infinite; }
+  .hero .ghost .row span { padding-right: .35em; }
+  .hero .ghost .row.back { animation-direction: reverse; animation-duration: 46s; }
+  .hero .ghost .row.gold { -webkit-text-stroke-color: rgba(232, 178, 26, .16); animation-duration: 54s; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .hero .ghost .row { animation: none; } }
   .hero .wrap { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
   @media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; gap: 48px; } }
   h1 { margin: 14px 0 18px; line-height: .86; font-size: clamp(64px, 11vw, 132px); }
@@ -322,7 +338,6 @@
 </header>
 
 <div class="hero">
-  <div class="ghost" aria-hidden="true">Play more</div>
   <div class="wrap">
     <div>
       <div class="kicker">The arcade in your pocket</div>
@@ -346,6 +361,11 @@
       </ul>
     </div>
     <div class="stage">
+      <div class="ghost" aria-hidden="true">
+        <div class="row"><span>Play more · Insert coin · Play more · Insert coin · </span><span>Play more · Insert coin · Play more · Insert coin · </span></div>
+        <div class="row back gold"><span>Game on · Press start · Game on · Press start · </span><span>Game on · Press start · Game on · Press start · </span></div>
+        <div class="row"><span>Here comes a new challenger · Here comes a new challenger · </span><span>Here comes a new challenger · Here comes a new challenger · </span></div>
+      </div>
       <div class="phone" role="img" aria-label="The app's home screen: KOF '97 to continue, and shelves of King of Fighters, Metal Slug and Capcom games">
         <div class="screen">
           <span class="cam"></span>

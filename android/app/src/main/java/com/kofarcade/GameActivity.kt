@@ -134,7 +134,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val SPEAKING_MS = 300L
         private const val SPEAKING_LEVEL = 0.02
         // Friends are told what this phone plays this often (they see it for 2 minutes).
-        private const val PRESENCE_MS = 60_000L
+        private const val PRESENCE_MS = 20_000L
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
@@ -624,6 +624,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var roomUi by mutableStateOf<RoomUi?>(null)
         private set
 
+    /**
+     * Getting into the room (joining, then the game catching up): what the
+     * connection's doing, for the GAME ON screen over the game; null once
+     * the game's on (later waits show in the small line in the middle).
+     */
+    val startingUp: String?
+        get() {
+            val r = room ?: return null
+            // The host opening its own room has its room sheet up instead (the code to share).
+            if (r.isOwner || (netStarted && !catchingUp) || netStatus.visibility != View.VISIBLE) return null
+            return netStatus.text?.toString()
+        }
+
+    /** Leaves while still getting in. */
+    fun cancelJoining() = finish()
+
     /** News over the game, gone by itself. */
     var announcement by mutableStateOf<Announcement?>(null)
         private set
@@ -657,7 +673,19 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     /** Lines to show over the game as bubbles: none from muted players, none while the panel's open. */
     val chatBubbles: List<ChatShown>
-        get() = if (!look.chatBubbles || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+        get() = if (!bubblesOn || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+
+    /** Messages show over the game as bubbles (the chat panel's switch, Settings: Chat bubbles). */
+    var bubblesOn by mutableStateOf(true)
+        private set
+
+    /** The chat panel's switch: messages over the game on or hidden (saved). */
+    fun setBubbles(on: Boolean) {
+        prefs.chatBubbles = on
+        look = look.copy(chatBubbles = on)
+        bubblesOn = on
+        announce(if (on) "Messages show on the game" else "Messages hidden: the chat button counts new ones")
+    }
 
     fun openChat() {
         chatOpen = true
@@ -698,6 +726,32 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** Who's speaking now (names), for the speaking chips. */
     var speaking by mutableStateOf(emptyList<String>())
         private set
+
+    /** Others' voices play on this phone (the speaker button, Settings: Voices). */
+    var voicesOn by mutableStateOf(true)
+        private set
+
+    /** The speaker button: everyone's voices off on this phone, or on again (saved, as Settings: Voices). */
+    fun toggleVoices() {
+        val on = !look.voices
+        prefs.voices = on
+        look = look.copy(voices = on)
+        voicesOn = on
+        applyVoice()
+        announce(if (on) "Voices on" else "Voices muted: you don't hear anyone. Tap the speaker to hear them again.")
+    }
+
+    /** Mutes (or unmutes) member [id] on this phone only, voice and chat, for every room from now on. */
+    fun muteHere(id: Int, mute: Boolean) {
+        val r = room ?: return
+        val m = r.members.values.find { it.id == id } ?: return
+        if (m.device.isEmpty()) return
+        mutedPlayers = if (mute) mutedPlayers + m.device else mutedPlayers - m.device
+        prefs.mutedPlayers = mutedPlayers
+        applyVoice()
+        updateRoomUi()
+        announce(if (mute) "${m.name} is muted for you" else "${m.name} is unmuted")
+    }
 
     /** The mic is held open (Settings: Your mic) rather than push to talk. */
     val micOpenMode: Boolean get() = look.micOpen
@@ -861,10 +915,34 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Only while on screen: in the background, friends see it go offline.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // What's new from friends comes with it: a challenge or message is said over the game, once.
+                var seenInvite = Long.MAX_VALUE
+                var seenMessage = Long.MAX_VALUE
                 while (isActive) {
                     val r = room
                     val code = r?.key?.takeIf { r.internet != null }
-                    withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).presence(set, code) } }
+                    val news = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).news(set, code) }.getOrNull() }
+                    if (news != null) {
+                        // The first ask only learns what's already there (not news to this game).
+                        if (seenInvite == Long.MAX_VALUE) {
+                            seenInvite = news.invite?.id ?: 0L
+                            seenMessage = news.message?.id ?: 0L
+                        } else {
+                            news.invite?.takeIf { it.id > seenInvite && it.room != code }?.let { inv ->
+                                seenInvite = inv.id
+                                val title = com.kofarcade.core.gameForSet(inv.set)?.fullTitle ?: inv.set
+                                announce(
+                                    (if (inv.challenge) "${inv.name} challenges you to $title" else "${inv.name} invites you to $title") +
+                                        ": back to the menu to join",
+                                    big = true,
+                                )
+                            }
+                            news.message?.takeIf { it.id > seenMessage }?.let { m ->
+                                seenMessage = m.id
+                                announce("${m.name}: ${m.body.take(60)}")
+                            }
+                        }
+                    }
                     delay(PRESENCE_MS)
                 }
             }
@@ -915,6 +993,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     line = it.line,
                     id = it.id,
                     voiceMuted = it.id in r.voiceRules.muted,
+                    mutedHere = it.device.isNotEmpty() && it.device in mutedPlayers,
                 )
             }
         }
@@ -1788,6 +1867,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun applyLook(l: Look) {
         look = l
+        voicesOn = l.voices
+        bubblesOn = l.chatBubbles
         hud.tweaks = prefs.tweaks(layoutKey())
         applyScreen()
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)

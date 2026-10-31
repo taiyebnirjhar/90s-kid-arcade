@@ -823,6 +823,39 @@ kept 30 days.
 - Notifications when the app is closed (Firebase Cloud Messaging).
 - Block.
 
+### Built: friends, more alive (November 2026)
+
+The owner asked for friend requests, friend chat, online/offline,
+challenges and instant rooms, focused on UX, with no notifications for now.
+What was decided and built (`20261102000000_friend_chat.sql`):
+
+- **Friend chat outside rooms.** Messages are up to 300 characters. Each
+  player can send 20 a minute and 300 a day. Messages are kept 30 days, at
+  most 200 per pair, and only friends can write. A chat open in the app asks
+  for new messages every 3 s, and marks "Seen" on yours. Quick lines: Play
+  now?, Rematch?, GG, On my way, 5 min, Later.
+- **What's new, one call (`friend_news`).** It returns requests waiting,
+  unread messages, invites, and the newest message and invite. The app asks
+  every 15 s while it's open, on any page but Online, and every 20 s in a
+  game. The call also keeps you shown online, replacing the separate
+  presence call. Results:
+  - The Online chip shows a red count.
+  - A banner on any page offers Join (an invite or challenge) or Reply (a
+    message).
+  - In a game, a challenge or message is announced over the game.
+- **Challenge.** A friend online has a Challenge button; a friend in a room
+  still has Join. You pick the game, a locked room is made for the two of
+  you, and the friend is invited at once with `challenge = true`. They see
+  "Rafi challenges you" with Join.
+- **Last seen.** `presence.active_at` is kept 30 days. Going offline keeps
+  it, and friends offline show "Last seen 3 h ago".
+- **No notifications yet.** With the app closed nothing arrives. FCM, as
+  above, needs a Firebase project from the owner.
+- **Free plan.** Each call is a few hundred bytes, made only while the app
+  is on screen. At 15 s that's about 240 calls an hour per open app, well
+  inside Supabase's free egress (5 GB). If it ever nears the limit, the
+  15 s goes to 30 s first.
+
 ## Step 3: Public play and bots
 
 - **Game lobby:** players online for each game, nearest first.

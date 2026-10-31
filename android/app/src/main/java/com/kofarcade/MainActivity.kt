@@ -1,5 +1,7 @@
 package com.kofarcade
 
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -69,8 +71,17 @@ class MainActivity : ComponentActivity() {
         return code
     }
 
+    // Open on screen (the news is only asked then).
+    private var resumed = false
+
+    override fun onPause() {
+        super.onPause()
+        resumed = false
+    }
+
     override fun onResume() {
         super.onResume()
+        resumed = true
         refresh++
         // Games played since: sent quietly, only for a phone that signed in
         // before (a first sign-in waits for the profile page).
@@ -114,18 +125,27 @@ class MainActivity : ComponentActivity() {
                 twoPlayer = true
             }
         }
-        // A friend's invite, shown on Home (asked every 20 s while it's on screen, only once this phone's been online).
-        var invite by remember { mutableStateOf<com.kofarcade.core.online.Invite?>(null) }
-        val seenInvites = remember { mutableSetOf<Long>() }
-        androidx.compose.runtime.LaunchedEffect(twoPlayer, library, profilePage) {
-            invite = null
-            if (twoPlayer || library || profilePage || !Online.signedIn(this@MainActivity)) return@LaunchedEffect
+        // What's new from friends (requests, messages, invites and challenges): asked every
+        // 15 s while the app's open on any page but Online (which shows them itself), only
+        // once this phone's been online. It also keeps this phone shown online to friends.
+        var news by remember { mutableStateOf(com.kofarcade.core.online.FriendNews()) }
+        // The banner hides what's been answered or waved away, until something newer comes.
+        var hiddenMessage by rememberSaveable { mutableStateOf(0L) }
+        var hiddenInvite by rememberSaveable { mutableStateOf(0L) }
+        var chatWith by remember { mutableStateOf<com.kofarcade.core.online.Friend?>(null) }
+        androidx.compose.runtime.LaunchedEffect(twoPlayer) {
+            if (twoPlayer) return@LaunchedEffect
             while (true) {
-                val got = withContext(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).invites() }.getOrNull() }
-                invite = got?.firstOrNull { it.id !in seenInvites }
-                kotlinx.coroutines.delay(HOME_INVITES_MS)
+                if (resumed && Online.signedIn(this@MainActivity)) {
+                    withContext(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).news() }.getOrNull() }?.let { news = it }
+                }
+                kotlinx.coroutines.delay(NEWS_EVERY_MS)
             }
         }
+        val banner = news.copy(
+            message = news.message?.takeIf { it.id > hiddenMessage },
+            invite = news.invite?.takeIf { it.id > hiddenInvite },
+        )
         // Taken (and its file deleted) once: kept across rotation until it's answered.
         var crash by rememberSaveable { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).
@@ -195,6 +215,7 @@ class MainActivity : ComponentActivity() {
             heroText = if (needsBios(hero)) "neogeo.zip: every Neo Geo game needs it to start." else null,
             profileName = profile?.name,
             profileIcon = profile?.icon,
+            onlineBadge = news.count,
         )
 
         // Pages fade into each other instead of cutting.
@@ -212,6 +233,8 @@ class MainActivity : ComponentActivity() {
                     roms,
                     joinCode = linkCode,
                     onCodeTaken = { linkCode = null },
+                    chatWith = chatWith,
+                    onChatTaken = { chatWith = null },
                     onStart = { game, set ->
                         twoPlayer = false
                         play(game, netplay = true, set = set)
@@ -233,31 +256,40 @@ class MainActivity : ComponentActivity() {
                         onLongGame = { if (sets[it.id] != null) remove = it },
                         onProfile = { profilePage = true },
                     )
-                    invite?.let { inv ->
-                        androidx.compose.foundation.layout.Box(
-                            androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
-                                .navigationBarsPadding()
-                                .padding(16.dp)
-                                .widthIn(max = 520.dp),
-                        ) {
-                            InviteCards(
-                                listOf(inv),
-                                busy = false,
-                                onJoin = {
-                                    seenInvites += it.id
-                                    invite = null
-                                    lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(it.id) } }
-                                    linkCode = it.room
-                                },
-                                onDismiss = {
-                                    seenInvites += it.id
-                                    invite = null
-                                    lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(it.id) } }
-                                },
-                            )
-                        }
-                    }
                 }
+            }
+        }
+        // Over every page but Online: the newest invite or challenge (Join), else message (Reply).
+        if (!twoPlayer && (banner.invite != null || banner.message != null)) {
+            androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                FriendNewsBanner(
+                    banner,
+                    onOpen = {
+                        val inv = banner.invite
+                        val msg = banner.message
+                        if (inv != null) {
+                            hiddenInvite = inv.id
+                            lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(inv.id) } }
+                            library = false
+                            profilePage = false
+                            linkCode = inv.room
+                        } else if (msg != null) {
+                            hiddenMessage = msg.id
+                            library = false
+                            profilePage = false
+                            chatWith = com.kofarcade.core.online.Friend(msg.from, msg.name, msg.icon, com.kofarcade.core.online.Friend.Status.FRIEND)
+                            twoPlayer = true
+                        }
+                    },
+                    onDismiss = {
+                        banner.invite?.let { inv ->
+                            hiddenInvite = inv.id
+                            lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(inv.id) } }
+                        } ?: banner.message?.let { hiddenMessage = it.id }
+                    },
+                    modifier = androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
+                        .navigationBarsPadding().padding(16.dp).widthIn(max = 520.dp),
+                )
             }
         }
 
@@ -354,4 +386,4 @@ class MainActivity : ComponentActivity() {
 }
 
 // A friend's invite is looked for this often while Home is on screen.
-private const val HOME_INVITES_MS = 20_000L
+private const val NEWS_EVERY_MS = 15_000L

@@ -89,6 +89,8 @@ data class HomeUi(
     /** Your profile's name and icon, once made (else the chip just says Profile). */
     val profileName: String? = null,
     val profileIcon: Int? = null,
+    /** Things from friends waiting (requests, messages, invites): a badge on Online. */
+    val onlineBadge: Int = 0,
 )
 
 /**
@@ -111,33 +113,35 @@ fun HomeScreen(
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
         val screenWidth = maxWidth
+        val chipsBeside = landscape && maxWidth >= Breakpoints.lg
         // Most of the screen in landscape; a bit under half in portrait, so the first row peeks in.
         val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         val chips: @Composable () -> Unit = {
-            HeaderChip("Online", gold = true, onClick = onTwoPlayer)
+            HeaderChip("Online", gold = true, badge = ui.onlineBadge, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            // Landscape has room for the chips beside the logo; portrait puts them under the banner.
-            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { landscape }, onProfile)
+            // A phone held sideways (lg) has room for the chips beside the logo; narrower screens
+            // (upright, or a squarer tablet sideways) put them under the banner.
+            Hero(ui, heroHeight, landscape, onHero, chips.takeIf { chipsBeside }, onProfile)
             Column(Modifier.windowInsetsPadding(sides)) {
-                if (!landscape) {
+                if (!chipsBeside) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 10.dp),
                     ) { chips() }
                 }
                 // First run: what's left to do before the first game, in order.
                 val anyReady = ui.sets.values.any { it != null }
                 if (!ui.hasBios || !anyReady) {
-                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 560.dp))
+                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 20.dp, vertical = 10.dp).widthIn(max = 560.dp))
                 }
                 // Portrait: two cards and a peek of the third, so the row reads as scrollable.
-                val cardWidth = if (landscape) 232.dp else ((screenWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
+                val cardWidth = if (landscape) 232.dp else ((screenWidth - 56.dp) / 2.25f).coerceIn(144.dp, 220.dp)
                 for ((series, games) in GAMES.groupBy { it.series }) {
                     Text(
                         series,
@@ -147,9 +151,9 @@ fun HomeScreen(
                         fontStyle = FontStyle.Italic,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 10.dp),
                     )
-                    LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(games, key = { it.id }) { game ->
                             GameCard(
                                 game,
@@ -167,7 +171,7 @@ fun HomeScreen(
                         "Game pictures: libretro thumbnails.",
                     color = Palette.muted.copy(alpha = 0.7f),
                     fontSize = 12.sp,
-                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 24.dp),
+                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 28.dp),
                 )
             }
         }
@@ -175,14 +179,14 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, onClick: () -> Unit) {
+private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, badge: Int = 0, onClick: () -> Unit) {
     // The hero's button is the gold one: Online is gold-edged beside it, not filled.
     val source = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .pressScale(source)
-            .height(44.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(50))
             .background(if (gold) Palette.gold.copy(alpha = 0.1f) else if (warn) Palette.red.copy(alpha = 0.15f) else Palette.panel)
             .border(1.dp, if (gold) Palette.gold.copy(alpha = 0.8f) else if (warn) Palette.red.copy(alpha = 0.5f) else Palette.line, RoundedCornerShape(50))
@@ -200,6 +204,10 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
             fontWeight = FontWeight.Black,
             letterSpacing = 1.sp,
         )
+        if (badge > 0) {
+            Spacer(Modifier.width(8.dp))
+            CountBadge(badge, color = Palette.red)
+        }
     }
 }
 
@@ -221,7 +229,7 @@ private fun ProfileChip(name: String?, icon: Int?, onClick: () -> Unit, iconOnly
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .pressScale(source)
-            .height(44.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(50))
             .background(Palette.bg.copy(alpha = 0.6f))
             .border(1.dp, Palette.line, RoundedCornerShape(50))
@@ -277,7 +285,7 @@ private fun Hero(
         val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp),
+            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp),
         ) {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
@@ -287,15 +295,15 @@ private fun Hero(
                 Spacer(Modifier.width(8.dp))
             }
             // Your profile, top right, as on a console.
-            // Portrait has room for the icon alone beside the logo.
-            ProfileChip(ui.profileName.takeIf { landscape }, ui.profileIcon, onProfile, iconOnly = !landscape)
+            // With the chips under the banner, the icon alone beside the logo.
+            ProfileChip(ui.profileName.takeIf { chips != null }, ui.profileIcon, onProfile, iconOnly = chips == null)
         }
         Column(
             Modifier
                 .align(Alignment.BottomStart)
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                 .fillMaxWidth(if (landscape) 0.6f else 1f)
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = 20.dp, end = 20.dp, bottom = 18.dp),
         ) {
             Kicker(ui.heroLabel)
             Spacer(Modifier.height(2.dp))

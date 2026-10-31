@@ -112,7 +112,7 @@ class UiSnapshots {
 
     @Test
     fun twoPlayerMenu() = shot("twoplayer_menu") {
-        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {})
+        MultiplayerHub(emptyList(), "", {}, null, false, {}, {}, {}, {}, {}, onScan = {})
     }
 
     private val picks get() = listOf("kof97", "kof2002", "sengoku3", "dino").map { gameById(it)!! to it }
@@ -780,7 +780,7 @@ class UiSnapshots {
     @Composable
     private fun OnlineHub() = MultiplayerHub(
         listOf(HostChoice("Cadillacs and Dinosaurs", "Pixel 8", true, 2, 3, "K7Q-2M", game = gameById("dino"))),
-        "", {}, null, false, {}, {}, {}, {}, {}, online = onlineRooms,
+        "", {}, null, false, {}, {}, {}, {}, {}, onScan = {}, online = onlineRooms,
     )
 
     @Test
@@ -861,7 +861,7 @@ class UiSnapshots {
         landscape()
         shot("chat_panel") {
             GameBehind {
-                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
+                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {}, bubbles = false)
             }
         }
     }
@@ -873,6 +873,7 @@ class UiSnapshots {
             Box(Modifier.fillMaxSize()) {
                 Hud()
                 Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp)) {
+                    SpeakerButton(on = true, onToggle = {})
                     MicButton(on = true, talking = false, pushToTalk = false, onToggle = {}, onTalk = {})
                     ChatButton(2, {})
                     RoomPill(roomUi.copy(online = true, pingMs = 48), {})
@@ -907,6 +908,32 @@ class UiSnapshots {
         }
     }
 
+    // A player (not the host): mutes a trash talker on their own phone, a seat or a watcher; the speaker's off for all.
+    @Test
+    fun roomSheetMuteHere() {
+        landscape()
+        shot("room_sheet_mute_here") {
+            Box(Modifier.fillMaxSize()) {
+                OverGame {
+                    SheetFrame(width = 880) {
+                        RoomSheetContent(
+                            RoomUi(
+                                "K7Q-2MX", 2,
+                                listOf(
+                                    RoomPerson("Rafi", 0, host = true, id = 0, mutedHere = true), RoomPerson("You", 1, you = true, id = 1),
+                                    RoomPerson("Tanu", -1, id = 2, mutedHere = true), RoomPerson("Pixel 8", -1, id = 3),
+                                ),
+                                watching = false, online = true, pingMs = 40,
+                            ),
+                            first = false, {}, {}, {}, {}, {}, {},
+                        )
+                    }
+                }
+                SpeakerButton(on = false, onToggle = {}, modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp))
+            }
+        }
+    }
+
     @Test
     fun onlineFriends() {
         val ui = FriendsUi(
@@ -914,11 +941,11 @@ class UiSnapshots {
                     friends = listOf(
                         com.kofarcade.core.online.Friend("1", "Tanu", 4, com.kofarcade.core.online.Friend.Status.INCOMING),
                         com.kofarcade.core.online.Friend("2", "Rafi", 2, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, playing = "kof97", room = "K7Q2MX", roomSpace = true),
-                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true),
-                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND),
+                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, unread = 2, lastMessage = "rematch tonight?"),
+                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND, lastSeenMs = System.currentTimeMillis() - 3 * 3_600_000L),
                         com.kofarcade.core.online.Friend("5", "Nabil", 12, com.kofarcade.core.online.Friend.Status.OUTGOING),
                     ),
-                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0)),
+                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0, challenge = true)),
                 )
         shot("online_friends") {
             Column(Modifier.padding(16.dp)) {
@@ -926,6 +953,104 @@ class UiSnapshots {
                 FriendsSection(ui, false, "", {}, {}, {}, { _, _ -> }, {}, {}, {})
             }
         }
+    }
+
+    private val chatFriend = com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true)
+    private val chatMessages = listOf(
+        com.kofarcade.core.online.FriendMessage(1, false, "you up for some KOF?", 0, true),
+        com.kofarcade.core.online.FriendMessage(2, true, "Play now?", 0, true),
+        com.kofarcade.core.online.FriendMessage(3, false, "5 min, finishing dinner", 0, true),
+        com.kofarcade.core.online.FriendMessage(4, true, "ok, challenge me when you're back. I'm taking Iori this time", 0, false),
+    )
+
+    @Test
+    fun friendChat() = shot("friend_chat") {
+        FriendChatScreen(chatFriend, chatMessages, "", {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun friendChatEmpty() = shot("friend_chat_empty") {
+        FriendChatScreen(chatFriend.copy(online = false, lastSeenMs = System.currentTimeMillis() - 20 * 60_000L), emptyList(), "", {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun friendChatLandscape() {
+        landscape()
+        shot("friend_chat_landscape") { FriendChatScreen(chatFriend.copy(room = "K7Q2MX", roomSpace = true), chatMessages, "gg", {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun homeFriendNews() = shot("home_friend_news") {
+        Box(Modifier.fillMaxSize()) {
+            HomeScreen(homeUi.copy(onlineBadge = 3), {}, {}, {}, {}, {}, {})
+            FriendNewsBanner(
+                com.kofarcade.core.online.FriendNews(
+                    invites = 1,
+                    invite = com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0, challenge = true),
+                ),
+                {}, {}, Modifier.align(Alignment.BottomCenter).padding(16.dp),
+            )
+        }
+    }
+
+    @Test
+    fun homeFriendMessage() = shot("home_friend_message") {
+        Box(Modifier.fillMaxSize()) {
+            HomeScreen(homeUi.copy(onlineBadge = 1), {}, {}, {}, {}, {}, {})
+            FriendNewsBanner(
+                com.kofarcade.core.online.FriendNews(unread = 1, message = com.kofarcade.core.online.NewsMessage(4, "3", "Mim", 9, "rematch tonight? I've been practising")),
+                {}, {}, Modifier.align(Alignment.BottomCenter).padding(16.dp),
+            )
+        }
+    }
+
+    @Test
+    fun pickGameChallenge() = shot("pick_challenge") { PickGameScreen(picks, {}, {}, {}, online = true, challenge = "Mim") }
+
+    @Test fun gameOnJoining() = shot("game_on_joining") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}) }
+
+    @Test
+    fun gameOnLandscape() {
+        landscape()
+        shot("game_on_landscape") { GameBehind { GameOnLoading("Joining Rafi's room…", onCancel = {}, overGame = true) } }
+    }
+
+    // The room as it opens (first) and the GAME ON screen, at every kind of screen: nothing cut, the main button in view.
+    @Composable
+    private fun FirstRoom() = OverGame {
+        val ui = RoomUi("K7Q-2MX", 2, listOf(RoomPerson("You", 0, you = true, host = true)), watching = false, online = true, open = true, canOpen = true, voiceHost = true)
+        SheetFrame(width = 880, footer = { RoomSheetActions(ui, true, {}, {}, {}, {}) }) {
+            RoomSheetContent(ui, first = true, {}, {}, {}, {}, {}, {}, withActions = false)
+        }
+    }
+
+    @Test fun breakpointsSmallLandscape() {
+        smallLandscape()
+        shot("bp_room_small_landscape") { FirstRoom() }
+        shot("bp_gameon_small_landscape") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}, overGame = true) }
+    }
+    @Test fun breakpointsPhoneLandscape() {
+        landscape()
+        shot("bp_room_phone_landscape") { FirstRoom() }
+    }
+    @Test fun breakpointsTiny() {
+        tiny()
+        shot("bp_room_tiny") { FirstRoom() }
+        shot("bp_gameon_tiny") { GameOnLoading("Finding room K7Q-2MX…", onCancel = {}) }
+    }
+    @Test fun breakpointsTablet() {
+        tablet()
+        shot("bp_room_tablet") { FirstRoom() }
+        shot("bp_gameon_tablet") { GameOnLoading("Making your room…", onCancel = {}) }
+    }
+    @Test fun breakpointsTabletPortrait() {
+        tablet(portrait = true)
+        shot("bp_room_tablet_portrait") { FirstRoom() }
+    }
+    @Test fun breakpointsBigText() {
+        bigText(1.5f, landscape = true)
+        shot("bp_room_big_text") { FirstRoom() }
+        shot("bp_gameon_big_text") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}, overGame = true) }
     }
 
     @Test fun smallChatPanel() {

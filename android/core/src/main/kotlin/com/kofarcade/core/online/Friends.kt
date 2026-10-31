@@ -9,6 +9,7 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 
 /** A friend, or a request one way or the other. */
@@ -25,12 +26,31 @@ data class Friend(
     val room: String? = null,
     /** Their room has space for another phone. */
     val roomSpace: Boolean = false,
+    /** When they were last on (wall clock, ms), or null: never seen. */
+    val lastSeenMs: Long? = null,
+    /** Their messages you haven't read. */
+    val unread: Int = 0,
+    /** The last message between you (yours if [lastMessageMine]), or null. */
+    val lastMessage: String? = null,
+    val lastMessageMine: Boolean = false,
 ) {
     enum class Status { FRIEND, INCOMING, OUTGOING }
 }
 
 /** An invite to a friend's room. */
-data class Invite(val id: Long, val from: String, val name: String, val icon: Int, val room: String, val set: String, val atMs: Long)
+data class Invite(val id: Long, val from: String, val name: String, val icon: Int, val room: String, val set: String, val atMs: Long, val challenge: Boolean = false)
+
+/** A message in a chat with a friend. [seen]: they've read it (yours), or you have (theirs). */
+data class FriendMessage(val id: Long, val mine: Boolean, val body: String, val atMs: Long, val seen: Boolean)
+
+/** A friend's newest unread message, for the app's banner. */
+data class NewsMessage(val id: Long, val from: String, val name: String, val icon: Int, val body: String)
+
+/** What's new for this player: waiting requests, unread messages, invites, and the newest of each. */
+data class FriendNews(val requests: Int = 0, val unread: Int = 0, val invites: Int = 0, val message: NewsMessage? = null, val invite: Invite? = null) {
+    /** Everything waiting on the player (the Online button's badge). */
+    val count: Int get() = requests + unread + invites
+}
 
 /** A player this phone blocked. */
 data class Blocked(val id: String, val name: String, val icon: Int)
@@ -54,9 +74,16 @@ interface FriendServer {
     /** What this phone is doing now: the game ([set], null on the menus) and its internet [room]. */
     fun presence(set: String?, room: String?)
     fun offline()
-    fun invite(id: String, room: String)
+    /** Invites friend [id] to your [room]; [challenge]: the room was made for them. */
+    fun invite(id: String, room: String, challenge: Boolean = false)
     fun invites(): List<Invite>
     fun dismiss(invite: Long)
+    /** Says [body] to friend [id]. */
+    fun send(id: String, body: String): Long
+    /** The chat with friend [id]: messages after [after] (0: the last 100), oldest first; theirs marked read. */
+    fun chat(id: String, after: Long = 0): List<FriendMessage>
+    /** What's new, and that this phone's on (doing [set], in [room]): asked every few seconds while the app's open. */
+    fun news(set: String? = null, room: String? = null): FriendNews
 }
 
 /** [FriendServer] on Supabase. */
@@ -105,6 +132,10 @@ class SupabaseFriends(private val supa: Supabase) : FriendServer {
             playing = r.str("game_set"),
             room = r.str("room"),
             roomSpace = r["room_space"]?.jsonPrimitive?.booleanOrNull ?: false,
+            lastSeenMs = r.time("last_seen"),
+            unread = r.int("unread"),
+            lastMessage = r.str("last_message"),
+            lastMessageMine = r["last_message_mine"]?.jsonPrimitive?.booleanOrNull ?: false,
         )
     }
 
@@ -119,11 +150,50 @@ class SupabaseFriends(private val supa: Supabase) : FriendServer {
         supa.rpc("go_offline", buildJsonObject {})
     }
 
-    override fun invite(id: String, room: String) {
+    override fun invite(id: String, room: String, challenge: Boolean) {
         supa.rpc("invite_friend", buildJsonObject {
             put("player", id)
             put("room_code", room)
+            put("challenge", challenge)
         })
+    }
+
+    override fun send(id: String, body: String): Long =
+        supa.rpc("send_friend_message", buildJsonObject {
+            put("player", id)
+            put("body", body)
+        }).jsonPrimitive.long
+
+    override fun chat(id: String, after: Long): List<FriendMessage> =
+        rows(supa.rpc("friend_chat", buildJsonObject {
+            put("player", id)
+            put("after_id", after)
+        })).map { r ->
+            FriendMessage(
+                id = r["id"]!!.jsonPrimitive.long,
+                mine = r["mine"]?.jsonPrimitive?.booleanOrNull ?: false,
+                body = r.str("body") ?: "",
+                atMs = r.time("created_at") ?: 0L,
+                seen = r["seen"]?.jsonPrimitive?.booleanOrNull ?: false,
+            )
+        }
+
+    override fun news(set: String?, room: String?): FriendNews {
+        val r = rows(supa.rpc("friend_news", buildJsonObject {
+            put("game_set", set)
+            put("room_code", room)
+        })).firstOrNull() ?: return FriendNews()
+        val message = r["message_id"]?.jsonPrimitive?.longOrNull?.let { id ->
+            NewsMessage(id, r.str("message_from") ?: "", r.str("message_name") ?: "A friend", r.int("message_icon"), r.str("message_body") ?: "")
+        }
+        val invite = r["invite_id"]?.jsonPrimitive?.longOrNull?.let { id ->
+            Invite(
+                id, r.str("invite_from") ?: "", r.str("invite_name") ?: "A friend", r.int("invite_icon"),
+                r.str("invite_room") ?: "", r.str("invite_set") ?: "", 0L,
+                challenge = r["invite_challenge"]?.jsonPrimitive?.booleanOrNull ?: false,
+            )
+        }
+        return FriendNews(r.int("requests"), r.int("unread"), r.int("invites"), message, invite?.takeIf { it.room.isNotEmpty() })
     }
 
     override fun invites(): List<Invite> = rows(supa.rpc("my_invites", buildJsonObject {})).map { r ->
@@ -134,7 +204,8 @@ class SupabaseFriends(private val supa: Supabase) : FriendServer {
             icon = r.int("icon"),
             room = r.str("room")!!,
             set = r.str("game_set") ?: "",
-            atMs = runCatching { java.time.OffsetDateTime.parse(r.str("created_at")).toInstant().toEpochMilli() }.getOrDefault(0L),
+            atMs = r.time("created_at") ?: 0L,
+            challenge = r["challenge"]?.jsonPrimitive?.booleanOrNull ?: false,
         )
     }
 
@@ -147,6 +218,11 @@ class SupabaseFriends(private val supa: Supabase) : FriendServer {
     private fun JsonObject.str(key: String): String? = this[key]?.jsonPrimitive?.contentOrNull
 
     private fun JsonObject.int(key: String): Int = this[key]?.jsonPrimitive?.intOrNull ?: 0
+
+    // A timestamp (Postgres' ISO form) as wall-clock ms, or null.
+    private fun JsonObject.time(key: String): Long? = str(key)?.let { t ->
+        runCatching { java.time.OffsetDateTime.parse(t.replace(' ', 'T')).toInstant().toEpochMilli() }.getOrNull()
+    }
 }
 
 /** A friend code as shown: "K7Q2-MX8P". */
