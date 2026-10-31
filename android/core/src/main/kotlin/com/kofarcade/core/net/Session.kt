@@ -1656,6 +1656,13 @@ class Room private constructor(
                 game = epoch
                 next = frame
             }
+            voiceAfter()
+        }
+
+        // What the clearing dropped that still holds: the room's voice rules.
+        private fun voiceAfter() {
+            val rules = voiceRules.takeIf { it != VoiceRules() }?.let { encode(it) } ?: return
+            queue.add { line.send(Msg.VOICE, rules) }
         }
 
         /** The next game, from its start. */
@@ -1667,6 +1674,7 @@ class Room private constructor(
                 game = epoch
                 next = 0
             }
+            voiceAfter()
         }
 
         fun retire() {
