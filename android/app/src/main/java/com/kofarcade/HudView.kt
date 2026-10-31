@@ -393,6 +393,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val pillW = pills.map { (k, t) -> text.measureText(t) + 24 * d + if (k == Kind.FACING) 19 * d else 0f }
         text.letterSpacing = 0f
         var x = w / 2 - (pillW.sum() + 8 * d * (pills.size - 1)) / 2
+        val barLeft = x
+        val barRight = w - x
         pills.forEachIndexed { i, (k, _) ->
             els += El(
                 "top", k, placed("top", RectF(x, top + 4 * d, x + pillW[i], top + 30 * d)), false,
@@ -454,13 +456,26 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = c.toString())
         }
         val skillR = 26 * d * sc
+        // Big buttons on a narrow screen: a high move that would sit on
+        // COIN / START goes beside them, on the side away from the buttons.
+        fun belowBar(p: Pt): Pt {
+            val r = skillR * 1.15f
+            val cx = ax + p.x * mirror
+            val cy = ay + p.y
+            val onBar = cx + r > barLeft && cx - r < barRight && cy - r < top + 30 * d + 6 * d
+            if (!onBar) return p
+            val left = barLeft - r - 6 * d
+            val right = barRight + r + 6 * d
+            val nx = if (mirror > 0) left else right
+            return Pt((nx - ax) * mirror, p.y)
+        }
         // Moves on an outer ring; Sengoku 3's first three sit higher and bigger.
         val brawler = st.layout == Layout.BRAWLER
         // Six buttons: a slightly tighter ring, so the last move clears Block.
         val ring = arcPositions(st.moves.size, 3 * s, 72f, if (six) 21f else 23f).mapIndexed { i, p ->
             when {
-                brawler && i == 1 -> Pt(-0.52f * s, -2.98f * s)
-                brawler && i == 2 -> Pt(-1.93f * s, -2.94f * s)
+                brawler && i == 1 -> belowBar(Pt(-0.52f * s, -2.98f * s))
+                brawler && i == 2 -> belowBar(Pt(-1.93f * s, -2.94f * s))
                 else -> p
             }
         }
@@ -475,7 +490,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                 "move:$i", Kind.SKILL, rect, true, move = m,
                 glyph = glyph,
                 buttons = buttons,
-                label = ellipsize(m.shortName, rect.width() / 2 * 2.7f),
+                // No wider than this, so it stays clear of the next move round the ring.
+                label = ellipsize(m.shortName, rect.width() / 2 * 2.2f),
                 seq = if (glyph == null) arrayOf(sequenceLines(m.cmd), sequenceLines(mirrored(m.cmd))) else null,
                 chips = buttons.map(::buttonName),
             )
@@ -565,6 +581,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun circle(cx: Float, cy: Float, r: Float) = RectF(cx - r, cy - r, cx + r, cy + r)
+
+    /** Every control's spot as laid out (id, bounds, round), the stick's home included: for the layout tests. */
+    internal fun controlSpots(): List<Triple<String, RectF, Boolean>> =
+        elements.map { Triple(it.id, RectF(it.rect), it.round) } + Triple("stick", circle(homeX, homeY, stickRadius()), true)
 
     private fun glyphPath(cmd: String, cx: Float, cy: Float, half: Float): Path? {
         val g = motionGlyph(cmd) ?: return null
@@ -706,6 +726,23 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
     private fun centeredText(canvas: Canvas, s: String, cx: Float, cy: Float, size: Float, color: Int = Color.WHITE) {
         text.textSize = size
+        text.color = color
+        canvas.drawText(s, cx, cy - (text.ascent() + text.descent()) / 2, text)
+        text.color = Color.WHITE
+    }
+
+    /** [size], or smaller so the widest of [lines] fits in [width]: words stay inside their button. */
+    private fun fitSize(lines: List<String>, size: Float, width: Float): Float {
+        text.textSize = size
+        var widest = 0f
+        for (l in lines) widest = maxOf(widest, text.measureText(l))
+        return if (widest > width) size * width / widest else size
+    }
+
+    private fun fittedText(canvas: Canvas, s: String, cx: Float, cy: Float, size: Float, width: Float, color: Int = Color.WHITE) {
+        text.textSize = size
+        val w = text.measureText(s)
+        text.textSize = if (w > width) size * width / w else size
         text.color = color
         canvas.drawText(s, cx, cy - (text.ascent() + text.descent()) / 2, text)
         text.color = Color.WHITE
@@ -854,7 +891,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         } else {
             // A button sequence ("D B C C ↑"): its inputs, on two lines if long.
             val lines = el.seq!![if (state.facingLeft) 1 else 0]
-            val size = el.r * 0.375f
+            val size = fitSize(lines, el.r * 0.375f, el.r * 1.7f)
             for (i in lines.indices) {
                 val dy = (i - (lines.size - 1) / 2f) * size * 1.15f
                 centeredText(canvas, lines[i], el.cx, el.cy + dy, size, tint)
@@ -899,8 +936,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             sys.on -> Color.rgb(127, 240, 180)
             else -> Color.WHITE
         }
-        centeredText(canvas, sys.name, el.cx, el.cy - el.r * 0.2f, el.r * 0.43f, tint)
-        centeredText(canvas, sys.sub, el.cx, el.cy + el.r * 0.3f, el.r * 0.36f, withAlpha(tint, 150))
+        fittedText(canvas, sys.name, el.cx, el.cy - el.r * 0.2f, el.r * 0.43f, el.r * 1.7f, tint)
+        fittedText(canvas, sys.sub, el.cx, el.cy + el.r * 0.3f, el.r * 0.36f, el.r * 1.5f, withAlpha(tint, 150))
         drawSweep(canvas, el)
     }
 
@@ -980,9 +1017,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         canvas.drawCircle(kx, ky, kr - ring.strokeWidth / 2, ring)
     }
 
-    // A sequence's inputs as text lines: "D B C C ↑", split in two if long.
+    // A sequence's inputs as text lines: "D B C C ↑", in two lines if long
+    // (shrunk to fit when drawn). A very long one (Garou's Deadly Rave) shows
+    // how it starts: all of it wouldn't be readable in a button.
     private fun sequenceLines(cmd: String): List<String> {
-        val tokens = toArrows(cmd).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
+        val all = toArrows(cmd).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
+        if (all.size > 8) return listOf(all[0], all.drop(1).take(3).joinToString(" ") + " …")
+        val tokens = all
         return if (tokens.size > 3) {
             listOf(tokens.take((tokens.size + 1) / 2).joinToString(" "), tokens.drop((tokens.size + 1) / 2).joinToString(" "))
         } else {
