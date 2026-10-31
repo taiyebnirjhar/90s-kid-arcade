@@ -49,6 +49,57 @@ object Online {
         )
     }
 
+    /** Friends: requests, the list, presence and invites. */
+    fun friends(context: Context): com.kofarcade.core.online.FriendServer {
+        account(context)
+        return com.kofarcade.core.online.SupabaseFriends(supabase!!)
+    }
+
+    /** Whether this phone has been online before (signed in, with a profile): nothing online is asked for otherwise. */
+    fun signedIn(context: Context): Boolean = account(context).profile()?.pending == false
+
+    /** Reporting a player (chat, voice, name, play). */
+    fun reports(context: Context): com.kofarcade.core.online.Reports {
+        account(context)
+        return com.kofarcade.core.online.Reports(supabase!!)
+    }
+
+    // When each kind of problem was last sent: once in 2 minutes each is plenty.
+    private val lastProblem = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /**
+     * Sends the connection log by itself when something went wrong ([kind]:
+     * join, host, lost, ended), so the owner sees problems players never
+     * report. Only on a phone that's been online before (no account is made
+     * for it), unless the player turned it off (Settings); in the background,
+     * and nothing is said if it can't go.
+     */
+    fun reportProblem(context: Context, kind: String, room: String?, error: Throwable? = null, reason: String? = null) {
+        val app = context.applicationContext
+        if (!Prefs(app).problemReports) return
+        val now = System.currentTimeMillis()
+        val last = lastProblem[kind]
+        if (last != null && now - last < PROBLEM_EVERY_MS) return
+        lastProblem[kind] = now
+        val log = com.kofarcade.core.net.NetLog.dump()
+        Thread({
+            runCatching {
+                if (!signedIn(app)) return@runCatching
+                account(app)
+                com.kofarcade.core.online.ProblemReports(supabase!!).send(
+                    kind,
+                    runCatching { emulatorBuild(app) }.getOrNull(),
+                    "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}",
+                    room,
+                    error?.let { "${it.javaClass.simpleName}: ${it.message}" } ?: reason,
+                    log,
+                )
+            }
+        }, "problem-report").apply { isDaemon = true }.start()
+    }
+
+    private const val PROBLEM_EVERY_MS = 120_000L
+
     /** A first profile's name, until the player picks one. */
     fun defaultName(): String = "Player ${Random.nextInt(1000, 10000)}"
 

@@ -10,6 +10,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -143,6 +144,12 @@ open class RoomTest {
             news += message
         }
 
+        val chat = CopyOnWriteArrayList<ChatLine>()
+
+        override fun onChat(line: ChatLine) {
+            chat += line
+        }
+
         fun play() {
             room.start(this)
             thread(isDaemon = true) {
@@ -219,6 +226,73 @@ open class RoomTest {
         waitFor("pause") { a.partnerPaused == true }
         g.sendPause(false)
         waitFor("resume") { a.partnerPaused == false }
+    }
+
+    @Test
+    fun chatReachesEveryPhoneSaidByWhoReallySaidItAndAFloodStops() {
+        val h = host(device = "dev-host")
+        h.startState = byteArrayOf(1)
+        val a = FakeGame(h).apply { play() }
+        waitFor("host playing") { a.epoch == 1 }
+        val g = join(h, "Guest", device = "dev-guest")
+        val b = FakeGame(g).apply { play() }
+        val w = join(h, "Watcher", device = "dev-watch")
+        val c = FakeGame(w).apply { play() }
+        waitFor("both in") { h.watcherCount == 2 && b.epoch >= 1 && c.epoch >= 1 }
+        g.requestSeat()
+        waitFor("guest playing") { g.localPlayer == 1 }
+
+        assertTrue(g.say("GG", quick = true))
+        assertTrue(w.say("  nice\n  combo  "))
+        assertTrue(h.say("Rematch?", quick = true))
+        for (game in listOf(a, b, c)) waitFor("three lines on ${game.room.localId}") { game.chat.size == 3 }
+        for (game in listOf(a, b, c)) {
+            val byText = game.chat.associateBy { it.text }
+            assertEquals("Guest", byText.getValue("GG").name)
+            assertEquals("dev-guest", byText.getValue("GG").device)
+            assertTrue(byText.getValue("GG").quick)
+            assertEquals("Watcher", byText.getValue("nice combo").name, "one line, spaces squeezed")
+            assertEquals(h.localId, byText.getValue("Rematch?").from)
+        }
+        assertEquals(3, w.chat.size, "the room keeps what was said")
+        // Nothing to say says nothing.
+        assertFalse(g.say("   "))
+
+        // A flood: five lines in ten seconds go (GG was one), the rest are dropped, and the sender is told.
+        repeat(9) { g.say("spam $it") }
+        waitFor("told to slow down") { b.news.any { "Slow down" in it } }
+        Thread.sleep(300)
+        assertEquals(4, a.chat.count { it.text.startsWith("spam") })
+        assertEquals(4, c.chat.count { it.text.startsWith("spam") })
+        assertTrue(Room.cleanChat("x".repeat(500))!!.length == Room.CHAT_MAX)
+    }
+
+    @Test
+    fun theHostsVoiceRulesReachEveryPhoneNewcomersToo() {
+        val h = host()
+        h.startState = byteArrayOf(1)
+        FakeGame(h).apply { play() }
+        val g = join(h, "Guest")
+        FakeGame(g).apply { play() }
+        waitFor("guest in") { h.watcherCount == 1 }
+        g.requestSeat()
+        waitFor("guest playing") { g.localPlayer == 1 }
+        assertTrue(g.maySpeak)
+
+        h.setVoiceRules(VoiceRules(muted = listOf(g.localId), watchersListen = true))
+        waitFor("guest muted") { !g.maySpeak && g.voiceRules.watchersListen }
+        assertTrue(h.maySpeak)
+        // A newcomer watches, and watchers only listen.
+        val w = join(h, "Watcher")
+        FakeGame(w).apply { play() }
+        waitFor("watcher told") { w.voiceRules.watchersListen && w.watching }
+        assertFalse(w.maySpeak)
+        h.setVoiceRules(VoiceRules())
+        waitFor("all may speak") { g.maySpeak && w.maySpeak }
+        // Only the host sets them.
+        g.setVoiceRules(VoiceRules(muted = listOf(h.localId)))
+        Thread.sleep(200)
+        assertTrue(h.maySpeak)
     }
 
     @Test

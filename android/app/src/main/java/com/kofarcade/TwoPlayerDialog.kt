@@ -110,7 +110,7 @@ data class HostChoice(
  * Which FBNeo build this app runs (a hash of the core library), so phones
  * with different builds don't join a game they'd play a little differently.
  */
-private fun emulatorBuild(context: Context): String = runCatching {
+fun emulatorBuild(context: Context): String = runCatching {
     val core = java.io.File(context.applicationInfo.nativeLibraryDir, "libfbneo_libretro_android.so")
     val digest = java.security.MessageDigest.getInstance("SHA-256")
     core.inputStream().use { input ->
@@ -194,6 +194,7 @@ fun TwoPlayerDialog(
             } catch (e: Exception) {
                 val why = (e as? OnlineError)?.let(::explainRoomTrouble) ?: e.message ?: e.javaClass.simpleName
                 if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: $why", android.widget.Toast.LENGTH_LONG).show()
+                Online.reportProblem(context, "host", null, e)
             } finally {
                 opening = false
             }
@@ -206,6 +207,12 @@ fun TwoPlayerDialog(
                 roms,
                 onHost = { screen = TwoPlayer.PickGame() },
                 onHostOnline = { screen = TwoPlayer.PickGame(online = true) },
+                // Quick match with no open room to join: an open room of your own, listed for anyone.
+                onHostOpen = {
+                    openRoom = true
+                    Prefs(context).openRooms = true
+                    screen = TwoPlayer.PickGame(online = true)
+                },
                 onLibrary = onLibrary,
                 onBack = back,
                 onJoined = onStart,
@@ -239,6 +246,7 @@ private fun Hub(
     roms: RomStore,
     onHost: () -> Unit,
     onHostOnline: () -> Unit,
+    onHostOpen: () -> Unit,
     onLibrary: () -> Unit,
     onBack: () -> Unit,
     onJoined: (Game, String) -> Unit,
@@ -259,6 +267,9 @@ private fun Hub(
     DisposableEffect(Unit) {
         onDispose { left.set(true) }
     }
+    // Friends: the list, requests and invites, asked with the rooms.
+    var friends by remember { mutableStateOf(FriendsUi()) }
+    var friendCode by remember { mutableStateOf("") }
     // Rooms online (the server's list), asked again every few seconds while this screen's up.
     val listed = remember { mutableStateListOf<ListedRoom>() }
     var listNote by remember { mutableStateOf<String?>(null) }
@@ -270,7 +281,9 @@ private fun Hub(
             return@LaunchedEffect
         }
         val rooms = Online.rooms(context)
+        val server = Online.friends(context)
         var signedIn = false
+        var presenceAt = 0L
         while (isActive) {
             val got = withContext(Dispatchers.IO) {
                 runCatching {
@@ -279,6 +292,17 @@ private fun Hub(
                     rooms.list()
                 }
             }
+            // Friends too: who's on, their rooms, requests and invites; and that this phone's on (each minute).
+            val f = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (System.currentTimeMillis() - presenceAt > PRESENCE_EVERY_MS) {
+                        server.presence(null, null)
+                        presenceAt = System.currentTimeMillis()
+                    }
+                    FriendsUi(Online.account(context).profile()?.friendCode, server.list(), server.invites())
+                }
+            }
+            friends = f.getOrElse { friends.copy(note = (it as? OnlineError)?.let(::explainRoomTrouble) ?: "Couldn't load your friends.") }
             got.onSuccess {
                 listNote = null
                 if (it != listed.toList()) {
@@ -457,7 +481,16 @@ private fun Hub(
             } catch (e: OnlineError) {
                 say(explainRoomTrouble(e))
             } catch (e: Exception) {
-                if (isActive) say("Couldn't join: ${e.message ?: e.javaClass.simpleName}")
+                // The phones didn't reach each other: what the connection tried, to send.
+                if (isActive) {
+                    val why = if (e is java.net.SocketTimeoutException || "timed out" in e.message.orEmpty()) {
+                        "Couldn't reach the room's phones in time. Try again; if it keeps happening, send the report."
+                    } else {
+                        "Couldn't join: ${e.message ?: e.javaClass.simpleName}"
+                    }
+                    say(why, "Send report") { shareJoinReport(context, clean, e) }
+                    Online.reportProblem(context, "join", clean, e)
+                }
             }
             busy = false
         }
@@ -501,6 +534,68 @@ private fun Hub(
         if (code != null) joinByCode(code, null) else askedLocked = r
     }
 
+    // Quick match: the open room with a free seat (else room to watch) of a
+    // game this phone has, the list's order (live ones first); none, a new open room.
+    fun quickMatch() {
+        fun have(r: ListedRoom): Boolean {
+            val g = gameForSet(r.set) ?: return false
+            return roms.has("${r.set}.zip") && (!g.neoGeo || roms.has(BIOS))
+        }
+        val open = listed.filter { it.open && it.code != null && have(it) }
+        val pick = open.firstOrNull { it.members < it.maxPlayers } ?: open.firstOrNull { it.members < com.kofarcade.core.net.MAX_MEMBERS }
+        if (pick != null) {
+            joinListed(pick)
+        } else {
+            onHostOpen()
+        }
+    }
+
+    // A friend action on the server (it returns what to tell the player, if anything), then the list again.
+    fun friendCall(call: (com.kofarcade.core.online.FriendServer) -> String?) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val server = Online.friends(context)
+                    val told = call(server)
+                    told to FriendsUi(Online.account(context).profile()?.friendCode, server.list(), server.invites())
+                }
+            }
+            busy = false
+            r.onSuccess { (told, list) ->
+                friends = list
+                if (told != null) say(told, bad = false)
+            }.onFailure {
+                say((it as? OnlineError)?.let { e -> explainFriendTrouble(e) } ?: "Couldn't do that: ${it.message}")
+            }
+        }
+    }
+
+    fun addFriend() {
+        val code = friendCode.uppercase().filter { it.isLetterOrDigit() }
+        if (code.length != 8) {
+            say("A friend code has 8 letters and numbers, like K7Q2-MX8P: it's on your friend's Online screen.")
+            return
+        }
+        friendCode = ""
+        friendCall {
+            when (it.request(code)) {
+                com.kofarcade.core.online.Asked.FRIENDS -> "You're friends now."
+                com.kofarcade.core.online.Asked.ASKED -> "Asked. You're friends once they accept."
+            }
+        }
+    }
+
+    fun shareCode() {
+        val code = friends.myCode ?: return
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, "Add me on 90s Kid Arcade: my friend code is ${com.kofarcade.core.online.prettyFriendCode(code)}")
+        }
+        context.startActivity(Intent.createChooser(send, "Share your friend code"))
+    }
+
     askedLocked?.let { r ->
         LockedRoomDialog(
             hostName = r.ownerName ?: "The host",
@@ -542,7 +637,53 @@ private fun Hub(
         onBack = onBack,
         internet = internet,
         onHostOnline = onHostOnline,
+        onQuickMatch = ::quickMatch,
+        friends = if (internet) friends else null,
+        friendCode = friendCode,
+        onFriendCode = { friendCode = formatFriendCode(it) },
+        onAddFriend = ::addFriend,
+        onShareCode = ::shareCode,
+        onJoinInvite = { inv ->
+            // Seen: off the list (in the background), and in.
+            scope.launch(Dispatchers.IO) { runCatching { Online.friends(context).dismiss(inv.id) } }
+            friends = friends.copy(invites = friends.invites - inv)
+            key = formatKeyInput(inv.room)
+            joinByCode(inv.room, null)
+        },
+        onDismissInvite = { inv -> friendCall { it.dismiss(inv.id); null } },
+        onAnswerFriend = { f, yes ->
+            friendCall {
+                it.answer(f.id, yes)
+                if (yes) "You and ${f.name} are friends" else null
+            }
+        },
+        onJoinFriend = { f ->
+            val code = f.room ?: return@MultiplayerHub
+            key = formatKeyInput(code)
+            joinByCode(code, null)
+        },
+        onRemoveFriend = { f -> friendCall { it.remove(f.id); null } },
+        onBlockFriend = { f ->
+            friendCall {
+                it.block(f.id)
+                "${f.name} is blocked: they can't find you or invite you"
+            }
+        },
     )
+}
+
+/** What's typed as a friend code: letters and numbers, "K7Q2-MX8P". */
+fun formatFriendCode(text: String): String {
+    val clean = text.uppercase().filter { it.isLetterOrDigit() }.take(8)
+    return if (clean.length > 4) clean.take(4) + "-" + clean.drop(4) else clean
+}
+
+/** A friend call that failed, in words. */
+fun explainFriendTrouble(e: OnlineError): String = when {
+    e is OnlineError.Refused && e.code == "P0002" -> "No player has that code. Check it with your friend."
+    e is OnlineError.Refused && e.code == "22023" -> "That's your own code: give it to a friend instead."
+    e is OnlineError.Refused && e.code == "53400" -> e.message ?: "Too many friends and requests."
+    else -> explainRoomTrouble(e)
 }
 
 // ----- The pages, from plain data (so they can be previewed) -----
@@ -567,6 +708,20 @@ fun MultiplayerHub(
     onJoinOnline: (Int) -> Unit = {},
     /** Why the list couldn't be had (no profile service, say), or null. */
     onlineNote: String? = null,
+    /** Quick match: into an open room of a game you have, else a new open one. */
+    onQuickMatch: () -> Unit = {},
+    /** Friends (with internet), or null. */
+    friends: FriendsUi? = null,
+    friendCode: String = "",
+    onFriendCode: (String) -> Unit = {},
+    onAddFriend: () -> Unit = {},
+    onShareCode: () -> Unit = {},
+    onJoinInvite: (com.kofarcade.core.online.Invite) -> Unit = {},
+    onDismissInvite: (com.kofarcade.core.online.Invite) -> Unit = {},
+    onAnswerFriend: (com.kofarcade.core.online.Friend, Boolean) -> Unit = { _, _ -> },
+    onJoinFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
+    onRemoveFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
+    onBlockFriend: (com.kofarcade.core.online.Friend) -> Unit = {},
 ) {
     ArcadeScreen(
         title = "Online",
@@ -581,6 +736,7 @@ fun MultiplayerHub(
             StatusPanel(it, onStatusAction)
             Spacer(Modifier.height(8.dp))
         }
+        friends?.let { InviteCards(it.invites, busy, onJoinInvite, onDismissInvite) }
         // No internet: not an error, a feature.
         if (!internet) {
             NearbyPlayCard()
@@ -600,6 +756,17 @@ fun MultiplayerHub(
         // Rooms online: anyone's, open ones first.
         if (internet) {
             SectionLabel("Rooms online")
+            Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Quick match", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
+                        Text("Into an open room of a game you have; none, and yours opens for anyone.", color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    GoldButton("Play", onQuickMatch, enabled = !busy, compact = true, play = true)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             when {
                 online.isNotEmpty() -> CardGrid(online.size) { i -> OnlineRoomCard(online[i], enabled = !busy && online[i].have) { onJoinOnline(i) } }
                 onlineNote != null -> Text(onlineNote, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp)
@@ -609,6 +776,9 @@ fun MultiplayerHub(
                     icon = { RadarIcon(Modifier.size(28.dp)) },
                 )
             }
+        }
+        if (friends != null) {
+            FriendsSection(friends, busy, friendCode, onFriendCode, onAddFriend, onShareCode, onAnswerFriend, onJoinFriend, onRemoveFriend, onBlockFriend)
         }
         // Join with a code: an online room's (friends anywhere) or a nearby room's key.
         SectionLabel("Join with a code")
@@ -820,6 +990,8 @@ private fun LockedRoomDialog(hostName: String, title: String, onJoin: (String) -
 
 /** How often the Online screen asks for the rooms online (and again after a failure). */
 private const val LIST_EVERY_MS = 8_000L
+// This phone says it's online this often while the Online screen is up (friends see it for 2 minutes).
+private const val PRESENCE_EVERY_MS = 60_000L
 private const val LIST_RETRY_MS = 20_000L
 
 /** [count] cards, one a row on a phone, two or three side by side on a tablet or a phone held sideways. */
@@ -838,4 +1010,20 @@ private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
             }
         }
     }
+}
+
+/** A join that failed: the connection log (what each way tried), to send to the app's maker. */
+fun shareJoinReport(context: Context, code: String, e: Throwable) {
+    val report = buildString {
+        appendLine("90s Kid Arcade join report")
+        appendLine("Phone: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, Android ${android.os.Build.VERSION.RELEASE}")
+        appendLine("Room: ${OnlineRooms.pretty(code)}")
+        appendLine("Error: ${e.javaClass.simpleName}: ${e.message}")
+        appendLine()
+        append(com.kofarcade.core.net.NetLog.dump())
+    }
+    val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+        .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade join report")
+        .putExtra(Intent.EXTRA_TEXT, report)
+    runCatching { context.startActivity(Intent.createChooser(send, "Send join report")) }
 }

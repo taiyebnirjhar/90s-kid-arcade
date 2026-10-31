@@ -713,6 +713,93 @@ fixes they led to. Still open, and why:
 | Supabase's free project pauses after a week idle | Fine while building; Pro once people play |
 | Rollback replays too slow on old phones | Measured in 1.6; the window capped by phone speed |
 
+## Steps 2-4: work breakdown
+
+**Asked (2026-10-31):** the owner asked to build the rest of online play
+overnight ("complete online setup, like voice, chat"), as one PR. Built in
+this order, chat and voice first since they were named:
+
+| Phase | Work | Needs from the owner |
+|---|---|---|
+| 4.1 | **Room chat**: quick chat ("GG", "Rematch?"...) and text, in nearby and internet rooms; a word filter (on by default), muting a player, reporting one (internet) | Nothing |
+| 4.2 | **Voice** in internet rooms: the mic off when you join, push-to-talk or open mic, voice volume and mute all, mute one player, the host mutes one for the room or makes watchers listen-only, who's speaking | Nothing (the relay's stop, D8, covers voice too) |
+| 2.1 | **Friends, server**: friend codes, requests (accept, decline), remove, block; what each friend is doing (online, playing which game, in which room); invites | Nothing: deployed with the PR |
+| 2.2 | **Friends, app**: the list on the Online screen, add by code or from a room, requests, invite to your room, join or watch a friend's game, block | Nothing |
+| 2.3 | **Notifications** with the app closed (Firebase Cloud Messaging) | A Firebase project (free); later |
+| 3.1 | **Seat rotation**, set by the host: winner stays, everyone rotates, next in line | Nothing |
+| 3.2 | **Quick match**: any open room of that game with space, else a new open one | Nothing |
+| 3.3 | **Reports** and limits on how often | Nothing |
+| 3.4 | Game lobby and "Live now" | Later |
+| 3.5 | Bots | Later: the largest piece |
+
+Each phase keeps nearby play and its tests working, as Step 1's did.
+
+**4.1 built (2026-10-31):** a chat line goes to the room's host, which
+fills in who said it (name, phone) and passes it on to every phone,
+watchers included: the same path in nearby and internet rooms, and old
+apps ignore it. The host lets a phone say 5 lines in 10 seconds; more are
+dropped and the sender is told. Each phone filters what it shows (Settings,
+Chat: word filter, chat over the game) and keeps who it muted. Lines show
+for 5 seconds at the top left, under the pause button, where no control
+is (the right side has the moves). Reports go to `report_player`
+(`20261101000000_reports.sql`): 20 a day each, the same one again within a
+day ignored, read by the owner in Supabase's dashboard.
+
+**4.2 built (2026-10-31):** voice rides the internet room's connections
+(one per pair of phones, so a room of 8 is at most 7 streams each way):
+an audio track each way, receive-only until the player taps the mic
+button, so the phone records nothing before (and the app asks for the
+microphone only then). Turning it on or off negotiates each connection
+again (`Signal.AGAIN` asks the offerer for a new offer). Settings, Chat:
+voices on or off, voice volume, and the mic open or push to talk (hold
+the mic button). Voices play at the media volume with the phone's echo
+canceller and noise suppressor. A player muted here (from chat) isn't
+played; the host can mute one for the room or let watchers only listen
+(`Msg.VOICE`, from the room sheet). Who's speaking shows under the pause
+button. Nearby rooms have no voice: the players are in the same place.
+Voice through the relay counts toward D8's stop like the game.
+
+**2.1 and 2.2 built (2026-10-31):** friends live in four tables nobody
+reads directly (`20261101000100_friends.sql`): friendships (a request
+until accepted; asking someone who asked you makes you friends),
+blocks, presence (what a player's doing, seen by friends only) and
+invites (10 minutes). The app says what it's doing every minute while the
+Online screen or a game is on screen (online for 2 minutes after);
+nothing online is asked for on a phone that never went online. The
+Online screen shows invites at the top (Join, or turn down), then
+Friends: requests (Accept, Decline), friends online first with what
+they play and Join where they're in a room (locked or open: friends get
+the code), Remove and Block, and adding one by their 8-letter code (your
+own to share). In a room: invite friends online from the room sheet;
+from chat, ask a player to be friends or block them (also muted). A
+blocked player can't find you by code, ask you or invite you, either way.
+Without notifications (2.3), an invite shows on the friend's Home screen
+(looked for every 20 seconds while it's up) and at the top of Online.
+
+**Step 3, built in part (2026-10-31):**
+
+- **3.1 Seat rotation:** "winner stays" and "next in line" are what the
+  room already does, from each game's own countdown: the challenger who
+  lost lets their continue run out, their seat goes to the first in line,
+  and the winner stays. "Everyone rotates" needs each game's match end
+  read from its memory (a game-by-game job, like `Game.seats`): later.
+- **3.2 Quick match:** on the Online screen, from the server's list: the
+  first open room of a game this phone has with a free seat (else room to
+  watch); none, and the player opens one, open, for anyone. Matching by
+  ping comes with the lobby (3.4).
+- **3.3 Reports:** from chat, with a reason (what they wrote, voice, name,
+  how they play, something else); 20 a day each (above). Challenges, and
+  limits on them, come with the lobby.
+- **3.4 Lobby and Live now, 3.5 bots:** later.
+
+**Problem reports (2026-10-31, the owner's ask: players never send them):**
+a phone that's been online sends its connection log by itself when a join
+fails, a room can't be made, or a room is lost or ends
+(`20261101000200_problem_reports.sql`); read in the dashboard (see
+[online-setup.md](online-setup.md#reading-problem-reports)). Within the free
+plan: 20 a day from a player, 20,000 in 30 days in all, logs cut to 32 KB,
+kept 30 days.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.

@@ -10,6 +10,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -17,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.kofarcade.core.BIOS
 import com.kofarcade.core.GAMES
@@ -108,6 +112,18 @@ class MainActivity : ComponentActivity() {
                 library = false
                 profilePage = false
                 twoPlayer = true
+            }
+        }
+        // A friend's invite, shown on Home (asked every 20 s while it's on screen, only once this phone's been online).
+        var invite by remember { mutableStateOf<com.kofarcade.core.online.Invite?>(null) }
+        val seenInvites = remember { mutableSetOf<Long>() }
+        androidx.compose.runtime.LaunchedEffect(twoPlayer, library, profilePage) {
+            invite = null
+            if (twoPlayer || library || profilePage || !Online.signedIn(this@MainActivity)) return@LaunchedEffect
+            while (true) {
+                val got = withContext(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).invites() }.getOrNull() }
+                invite = got?.firstOrNull { it.id !in seenInvites }
+                kotlinx.coroutines.delay(HOME_INVITES_MS)
             }
         }
         // Taken (and its file deleted) once: kept across rotation until it's answered.
@@ -206,16 +222,42 @@ class MainActivity : ComponentActivity() {
                     },
                     onClose = { twoPlayer = false },
                 )
-                Page.HOME -> HomeScreen(
-                    ui,
-                    onTwoPlayer = { twoPlayer = true },
-                    onLibrary = { library = true },
-                    onBios = { ask = Pick.Bios },
-                    onHero = { open(hero) },
-                    onGame = ::open,
-                    onLongGame = { if (sets[it.id] != null) remove = it },
-                    onProfile = { profilePage = true },
-                )
+                Page.HOME -> androidx.compose.foundation.layout.Box {
+                    HomeScreen(
+                        ui,
+                        onTwoPlayer = { twoPlayer = true },
+                        onLibrary = { library = true },
+                        onBios = { ask = Pick.Bios },
+                        onHero = { open(hero) },
+                        onGame = ::open,
+                        onLongGame = { if (sets[it.id] != null) remove = it },
+                        onProfile = { profilePage = true },
+                    )
+                    invite?.let { inv ->
+                        androidx.compose.foundation.layout.Box(
+                            androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                                .padding(16.dp)
+                                .widthIn(max = 520.dp),
+                        ) {
+                            InviteCards(
+                                listOf(inv),
+                                busy = false,
+                                onJoin = {
+                                    seenInvites += it.id
+                                    invite = null
+                                    lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(it.id) } }
+                                    linkCode = it.room
+                                },
+                                onDismiss = {
+                                    seenInvites += it.id
+                                    invite = null
+                                    lifecycleScope.launch(Dispatchers.IO) { runCatching { Online.friends(this@MainActivity).dismiss(it.id) } }
+                                },
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -310,3 +352,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+// A friend's invite is looked for this often while Home is on screen.
+private const val HOME_INVITES_MS = 20_000L

@@ -258,6 +258,36 @@ Home → **Online**.
   line** to just watch), and the next seat that opens is yours in turn. The press goes in once you're seated, so in KOF COIN
   then START brings you in as the challenger. The host follows the same
   rule, and anyone can give their seat up with **Watch instead**.
+- **Chat**: the speech bubble by the room pill opens the chat down the
+  right side (the game goes on): quick lines ("GG", "Rematch?", "Nice!"…)
+  in one tap, or type one. What's said shows for a few seconds at the top
+  left, under the pause button, where no control is. Tap someone's line to
+  mute them (kept for every room), or, in an internet room, to add them
+  as a friend, report them (pick why) or block them. A word filter stars
+  out swear words (Settings → Chat turns it, and the lines over the game,
+  off). The host passes each line on; a phone that says more than 5 in
+  10 seconds is told to slow down.
+- **Voice** (internet rooms): the mic button by the chat is off when you
+  join (crossed out); tap it to talk (the app asks for the microphone the
+  first time; nothing is recorded before). Settings → Chat: the mic open
+  or push to talk (hold the button), voices on or off and their own
+  volume. Who's speaking shows at the top left. The host can mute someone
+  for the room, or let watchers only listen, from the room sheet. Voice
+  goes the same way as the game (direct, else the relay) and uses roughly
+  10-20 MB an hour.
+- **Friends** (Online screen): your 8-letter friend code to share, adding
+  a friend by theirs (or from a room's chat), requests to accept or
+  decline, and your friends online first with what they're playing: **Join**
+  goes straight into their internet room, open or locked. From a room's
+  sheet, invite friends who are online; an invite shows at the top of
+  their Online screen. **Block** works both ways: a blocked player can't
+  find you, ask you or invite you.
+- **Problem reports**: when a join fails or a room is lost, the phone
+  sends its connection log to the app's maker by itself (only once you've
+  been online; Settings → Screen turns it off). It holds what the
+  connection tried, the phone's model and the room's code, nothing else.
+- **Quick match** (Online screen): into an open room of a game you have
+  (one with a free seat first); with none, yours opens for anyone.
 - **Play from a saved state**: the host or any player picks **Load state
   for everyone** in the pause menu (and confirms). The host's phone checks
   the save fits this game (a save of another game or another version of it

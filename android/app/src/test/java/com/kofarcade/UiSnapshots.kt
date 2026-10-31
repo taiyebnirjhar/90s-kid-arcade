@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -812,6 +813,97 @@ class UiSnapshots {
     @Test fun tabletRoomSheet() { tablet(); shot("tablet_room_sheet") { OverGame { SheetFrame(width = 880) { RoomSheetContent(roomUi, first = false, {}, {}, {}, {}, {}, {}) } } } }
     @Test fun tabletControls() = controlsShotWith("tablet_controls", SettingsTab.CONTROLS) { tablet() }
     @Test fun tabletHud() { tablet(); shot("tablet_hud") { Hud() } }
+
+    // ----- Room chat -----
+
+    private val chatSample = listOf(
+        ChatShown(1, 1, "Rafi", "d1", "GG", true, false, 1_000),
+        ChatShown(2, 0, "You", "me", "Rematch?", true, true, 2_000),
+        ChatShown(3, 2, "Tanu", "d2", "that last combo was clean, how do you do the 2nd super", false, false, 3_000),
+        ChatShown(4, 1, "Rafi", "d1", "623+P then cancel into the DM", false, false, 4_000),
+        ChatShown(5, 3, "Mim", "d3", "Wait a sec", true, false, 5_000),
+    )
+
+    @Test
+    fun chatPanel() {
+        landscape()
+        shot("chat_panel") {
+            GameBehind {
+                ChatPanel(chatSample, muted = setOf("d3"), canReport = true, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
+            }
+        }
+    }
+
+    @Test
+    fun chatBubbles() {
+        landscape()
+        shot("chat_bubbles") {
+            Box(Modifier.fillMaxSize()) {
+                Hud()
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp)) {
+                    MicButton(on = true, talking = false, pushToTalk = false, onToggle = {}, onTalk = {})
+                    ChatButton(2, {})
+                    RoomPill(roomUi.copy(online = true, pingMs = 48), {})
+                }
+                Column(Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 60.dp)) {
+                    SpeakingChips(listOf("Rafi"), Modifier.padding(bottom = 4.dp))
+                    ChatBubbles(chatSample.take(4), max = 2, now = { 4_500 })
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomSheetVoiceHost() {
+        landscape()
+        shot("room_sheet_voice_host") {
+            OverGame {
+                SheetFrame(width = 880) {
+                    RoomSheetContent(
+                        RoomUi(
+                            "K7Q-2MX", 2,
+                            listOf(
+                                RoomPerson("You", 0, you = true, host = true, id = 0), RoomPerson("Mim", 1, id = 1, voiceMuted = true),
+                                RoomPerson("Tanu", -1, id = 2), RoomPerson("Pixel 8", -1, id = 3),
+                            ),
+                            watching = false, canFree = true, online = true, pingMs = 40, open = true, canOpen = true, voiceHost = true, watchersListen = true,
+                        ),
+                        first = false, {}, {}, {}, {}, {}, {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun onlineFriends() {
+        val ui = FriendsUi(
+                    myCode = "K7Q2MX8P",
+                    friends = listOf(
+                        com.kofarcade.core.online.Friend("1", "Tanu", 4, com.kofarcade.core.online.Friend.Status.INCOMING),
+                        com.kofarcade.core.online.Friend("2", "Rafi", 2, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, playing = "kof97", room = "K7Q2MX", roomSpace = true),
+                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true),
+                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND),
+                        com.kofarcade.core.online.Friend("5", "Nabil", 12, com.kofarcade.core.online.Friend.Status.OUTGOING),
+                    ),
+                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0)),
+                )
+        shot("online_friends") {
+            Column(Modifier.padding(16.dp)) {
+                InviteCards(ui.invites, false, {}, {})
+                FriendsSection(ui, false, "", {}, {}, {}, { _, _ -> }, {}, {}, {})
+            }
+        }
+    }
+
+    @Test fun smallChatPanel() {
+        smallLandscape()
+        shot("small_chat_panel") {
+            GameBehind {
+                ChatPanel(chatSample, muted = emptySet(), canReport = false, onSay = { _, _ -> }, onMute = { _, _ -> }, onReport = { _, _ -> }, onClose = {})
+            }
+        }
+    }
 }
 
 /**

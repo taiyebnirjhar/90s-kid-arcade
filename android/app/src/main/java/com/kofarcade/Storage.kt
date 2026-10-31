@@ -259,6 +259,36 @@ class Prefs(context: Context) {
         get() = sp.getFloat("volume", 1f)
         set(v) = sp.edit().putFloat("volume", v).apply()
 
+    /** Room chat: the last lines over the game as bubbles. */
+    var chatBubbles: Boolean
+        get() = sp.getBoolean("chatBubbles", true)
+        set(v) = sp.edit().putBoolean("chatBubbles", v).apply()
+
+    /** Room chat: swear words starred out (ChatFilter). */
+    var chatFilter: Boolean
+        get() = sp.getBoolean("chatFilter", true)
+        set(v) = sp.edit().putBoolean("chatFilter", v).apply()
+
+    /** Voice in internet rooms: the others' voices play (off: mute all). */
+    var voices: Boolean
+        get() = sp.getBoolean("voices", true)
+        set(v) = sp.edit().putBoolean("voices", v).apply()
+
+    /** How loud the others' voices play, 0.1 to 1 (apart from the game's volume). */
+    var voiceVolume: Float
+        get() = sp.getFloat("voiceVolume", 1f)
+        set(v) = sp.edit().putFloat("voiceVolume", v).apply()
+
+    /** The mic, once on: open (true) or push to talk (hold the mic button). */
+    var micOpen: Boolean
+        get() = sp.getBoolean("micOpen", true)
+        set(v) = sp.edit().putBoolean("micOpen", v).apply()
+
+    /** Players whose chat (and voice) this phone doesn't show, by their phone's id (Member.device). */
+    var mutedPlayers: Set<String>
+        get() = sp.getStringSet("mutedPlayers", null)?.toSet() ?: emptySet()
+        set(v) = sp.edit().putStringSet("mutedPlayers", v).apply()
+
     /** Your private ROM library (a Cloudflare Worker in front of R2; see server/). */
     var libraryUrl: String
         get() = sp.getString("libraryUrl", null)?.takeIf { it.isNotBlank() } ?: Library.DEFAULT_URL
@@ -272,6 +302,11 @@ class Prefs(context: Context) {
     fun librarySet(file: String): String? = sp.getString("lib.$file", null)
 
     fun setLibrarySet(file: String, set: String?) = sp.edit().putString("lib.$file", set).apply()
+
+    /** Multiplayer problems (a join that fails, a room lost) send the connection log to the app's maker by themselves. */
+    var problemReports: Boolean
+        get() = sp.getBoolean("problemReports", true)
+        set(v) = sp.edit().putBoolean("problemReports", v).apply()
 
     /** Shows what detection reads, to check it (and map unknown fighters) on a phone. */
     var detectInfo: Boolean

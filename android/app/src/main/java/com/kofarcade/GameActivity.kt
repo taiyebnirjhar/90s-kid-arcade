@@ -110,9 +110,17 @@ data class Look(
     val rapidFire: Boolean = true,
     val sound: Boolean = true,
     val volume: Float = 1f,
+    val chatBubbles: Boolean = true,
+    val chatFilter: Boolean = true,
+    val voices: Boolean = true,
+    val voiceVolume: Float = 1f,
+    val micOpen: Boolean = true,
 )
 
-fun Prefs.look() = Look(screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume)
+fun Prefs.look() = Look(
+    screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume,
+    chatBubbles, chatFilter, voices, voiceVolume, micOpen,
+)
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
 class GameActivity : ComponentActivity(), HudView.Listener {
@@ -122,6 +130,11 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         /** Multiplayer: play in [Netplay.room] instead of alone. */
         const val EXTRA_NETPLAY = "netplay"
         private const val MAX_MOVES = 6
+        // Who's speaking: checked this often, louder than this.
+        private const val SPEAKING_MS = 300L
+        private const val SPEAKING_LEVEL = 0.02
+        // Friends are told what this phone plays this often (they see it for 2 minutes).
+        private const val PRESENCE_MS = 60_000L
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
@@ -256,6 +269,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         game = g
         set = s
         prefs = Prefs(this)
+        mutedPlayers = prefs.mutedPlayers
+        tellFriends()
         prefs.lastGame = game.id
         // Games played, for the profile (counted on the phone; synced from home).
         if (savedInstanceState == null) {
@@ -613,6 +628,263 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var announcement by mutableStateOf<Announcement?>(null)
         private set
 
+    // ----- Room chat -----
+
+    /** The room's chat as shown here: filtered if the filter is on. */
+    val chatLines = androidx.compose.runtime.mutableStateListOf<ChatShown>()
+
+    /** The chat panel is open (the game goes on behind it). */
+    var chatOpen by mutableStateOf(false)
+        private set
+
+    /** Lines said since the chat panel was last open. */
+    var chatUnread by mutableStateOf(0)
+        private set
+
+    /** Players this phone doesn't hear, by their phone's id. */
+    var mutedPlayers by mutableStateOf(emptySet<String>())
+        private set
+
+    private var chatCount = 0L
+
+    private fun heardChat(r: Room, line: com.kofarcade.core.net.ChatLine) {
+        val mine = line.from == r.localId
+        val text = if (look.chatFilter) com.kofarcade.core.net.ChatFilter.clean(line.text) else line.text
+        chatLines += ChatShown(chatCount++, line.from, line.name, line.device, text, line.quick, mine, System.currentTimeMillis())
+        while (chatLines.size > Room.CHAT_KEEP) chatLines.removeAt(0)
+        if (!mine && !chatOpen && line.device !in mutedPlayers) chatUnread++
+    }
+
+    /** Lines to show over the game as bubbles: none from muted players, none while the panel's open. */
+    val chatBubbles: List<ChatShown>
+        get() = if (!look.chatBubbles || chatOpen) emptyList() else chatLines.filter { it.device.isEmpty() || it.device !in mutedPlayers }
+
+    fun openChat() {
+        chatOpen = true
+        chatUnread = 0
+    }
+
+    fun closeChat() {
+        chatOpen = false
+        chatUnread = 0
+    }
+
+    /** Says [text] to the room ([quick]: a quick-chat line). */
+    fun sayInRoom(text: String, quick: Boolean) = sendNet { it.say(text, quick) }
+
+    /** Mutes (or unmutes) the player who said [line], on this phone, for every room from now on. */
+    fun mutePlayer(line: ChatShown, mute: Boolean) {
+        if (line.device.isEmpty()) return
+        mutedPlayers = if (mute) mutedPlayers + line.device else mutedPlayers - line.device
+        prefs.mutedPlayers = mutedPlayers
+        applyVoice()
+        announce(if (mute) "${line.name} is muted. Tap their line again to unmute." else "${line.name} is unmuted")
+    }
+
+    // ----- Voice (internet rooms) -----
+
+    /** An internet room: voice is there (the mic button shows). */
+    var canVoice by mutableStateOf(false)
+        private set
+
+    /** The player turned their mic on (it's off when they join). */
+    var micOn by mutableStateOf(false)
+        private set
+
+    /** Push to talk: the mic button is held. */
+    var talking by mutableStateOf(false)
+        private set
+
+    /** Who's speaking now (names), for the speaking chips. */
+    var speaking by mutableStateOf(emptyList<String>())
+        private set
+
+    /** The mic is held open (Settings: Your mic) rather than push to talk. */
+    val micOpenMode: Boolean get() = look.micOpen
+
+    private val micPermission = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) setMic(true) else announce("Voice needs the microphone: allow it in the phone's settings for 90s Kid Arcade")
+    }
+
+    /** The mic button: on (asking for the microphone the first time) or off. */
+    fun toggleMic() {
+        if (micOn) {
+            setMic(false)
+            return
+        }
+        val r = room ?: return
+        if (!r.maySpeak) {
+            announce(if (r.localId in r.voiceRules.muted) "The host muted your voice" else "Watchers only listen in this room")
+            return
+        }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            setMic(true)
+        } else {
+            micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun setMic(on: Boolean) {
+        micOn = on
+        talking = false
+        applyVoice()
+        if (on) announce(if (look.micOpen) "Mic on: the room hears you" else "Mic on: hold the mic button to talk") else announce("Mic off")
+    }
+
+    /** Push to talk: the mic button pressed ([down]) or let go. */
+    fun pushToTalk(down: Boolean) {
+        if (!micOn || look.micOpen) return
+        talking = down
+        AndroidRtc.get(this).talking(down)
+    }
+
+    // Who this phone sends its voice to and plays, and how loud: after any change to the mic, the room, its rules or the settings.
+    private fun applyVoice() {
+        val r = room
+        val t = r?.internet
+        canVoice = t != null
+        if (r == null || t == null) return
+        if (micOn && !r.maySpeak) {
+            micOn = false
+            announce(if (r.localId in r.voiceRules.muted) "The host muted your voice" else "Watchers only listen in this room")
+        }
+        val send = micOn
+        AndroidRtc.get(this).talking(send && (look.micOpen || talking))
+        val volumes = r.members.values.filter { it.id != r.localId && it.host.isNotEmpty() }.associate { m ->
+            val off = !look.voices || m.device in mutedPlayers || m.id in r.voiceRules.muted || (r.voiceRules.watchersListen && m.seat < 0)
+            m.host to if (off) 0.0 else look.voiceVolume.toDouble()
+        }
+        lifecycleScope.launch(netSends) {
+            t.voice(send)
+            volumes.forEach { (host, v) -> t.voiceVolume(host, v) }
+        }
+    }
+
+    // Who's speaking, a few times a second, while in an internet room.
+    private fun watchSpeakers(r: Room) {
+        val t = r.internet ?: return
+        lifecycleScope.launch {
+            while (isActive && room === r) {
+                delay(SPEAKING_MS)
+                val levels = withContext(Dispatchers.IO) { runCatching { t.voiceLevels() }.getOrDefault(emptyMap()) }
+                val now = levels.filterValues { it > SPEAKING_LEVEL }.keys.mapNotNull { host -> r.members.values.find { it.host == host } }
+                    .filter { it.device !in mutedPlayers && it.id !in r.voiceRules.muted }
+                    .map { it.name }
+                if (now != speaking) speaking = now
+            }
+            speaking = emptyList()
+        }
+    }
+
+    /** Host: mutes (or unmutes) member [id]'s voice for the whole room. */
+    fun muteForRoom(id: Int, mute: Boolean) {
+        val r = room ?: return
+        val rules = r.voiceRules
+        r.setVoiceRules(rules.copy(muted = if (mute) (rules.muted + id).distinct() else rules.muted - id))
+    }
+
+    /** Host: watchers only listen (true), or may talk too. */
+    fun watchersListen(on: Boolean) {
+        val r = room ?: return
+        r.setVoiceRules(r.voiceRules.copy(watchersListen = on))
+    }
+
+    // ----- Friends (internet rooms) -----
+
+    // Friends online, to invite from the room sheet; and who's been invited.
+    private var inviteFriends = emptyList<com.kofarcade.core.online.Friend>()
+    private val invited = HashSet<String>()
+
+    private fun roomFriends(r: Room): List<RoomFriend> {
+        val inRoom = r.members.values.map { it.host }.toSet()
+        return inviteFriends.filter { it.status == com.kofarcade.core.online.Friend.Status.FRIEND && it.online && it.id !in inRoom }
+            .map { RoomFriend(it.id, it.name, it.icon, friendStatus(it), invited = it.id in invited) }
+    }
+
+    // The room sheet of an internet room: friends online to invite, asked for again each time it opens.
+    private fun loadFriendsToInvite() {
+        if (room?.internet == null || !Online.signedIn(this)) return
+        lifecycleScope.launch {
+            val got = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).list() }.getOrNull() } ?: return@launch
+            inviteFriends = got
+            updateRoomUi()
+        }
+    }
+
+    /** Invites [f] to this internet room. */
+    fun inviteFriend(f: RoomFriend) {
+        val code = room?.key?.takeIf { room?.internet != null } ?: return
+        invited += f.id
+        updateRoomUi()
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).invite(f.id, code) }.exceptionOrNull() }
+            if (error != null) {
+                invited -= f.id
+                updateRoomUi()
+                announce(com.kofarcade.core.online.explainOnline(error))
+            } else {
+                announce("Invited ${f.name}: they see it on their Online screen")
+            }
+        }
+    }
+
+    // A chat line's player in an internet room: their player id.
+    private fun playerOf(line: ChatShown): String? = room?.members?.get(line.from)?.host?.takeIf { room?.internet != null && it.isNotEmpty() }
+
+    /** Asks the player who said [line] to be friends. */
+    fun addFriendFrom(line: ChatShown) {
+        val player = playerOf(line) ?: return
+        lifecycleScope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).requestById(player) } }
+            announce(
+                r.fold(
+                    { if (it == com.kofarcade.core.online.Asked.FRIENDS) "You and ${line.name} are friends" else "Asked ${line.name} to be friends" },
+                    { (it as? com.kofarcade.core.online.OnlineError)?.let(::explainFriendTrouble) ?: "Couldn't ask: ${it.message}" },
+                ),
+            )
+        }
+    }
+
+    /** Blocks the player who said [line]: muted here at once, and they can't find or invite you. */
+    fun blockFrom(line: ChatShown) {
+        val player = playerOf(line) ?: return
+        mutePlayer(line, true)
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).block(player) }.exceptionOrNull() }
+            announce(if (error == null) "${line.name} is blocked" else com.kofarcade.core.online.explainOnline(error))
+        }
+    }
+
+    // While playing (and signed in): friends see the game, and the internet room to join.
+    private fun tellFriends() {
+        if (!Online.signedIn(this)) return
+        // Only while on screen: in the background, friends see it go offline.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    val r = room
+                    val code = r?.key?.takeIf { r.internet != null }
+                    withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).presence(set, code) } }
+                    delay(PRESENCE_MS)
+                }
+            }
+        }
+    }
+
+    /** An internet room: the player who said [line], reported to the app's maker with their last lines. */
+    fun reportPlayer(line: ChatShown, reason: com.kofarcade.core.online.ReportReason) {
+        val r = room ?: return
+        val player = r.members[line.from]?.host?.takeIf { roomUi?.online == true && it.isNotEmpty() } ?: return
+        val said = chatLines.filter { it.from == line.from }.takeLast(10).joinToString("\n") { "${it.name}: ${it.text}" }
+        val code = roomUi?.key
+        lifecycleScope.launch {
+            val error = withContext(Dispatchers.IO) {
+                runCatching { Online.reports(this@GameActivity).report(player, reason, code, said) }.exceptionOrNull()
+            }
+            announce(if (error == null) "Reported ${line.name}. Thanks: every report is read." else com.kofarcade.core.online.explainOnline(error))
+        }
+    }
+
     fun announce(text: String, big: Boolean = false) {
         announcement = Announcement(text, big)
     }
@@ -641,6 +913,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     away = it.away,
                     holdEnds = if (it.away) r.holdEnds(it.id) else 0L,
                     line = it.line,
+                    id = it.id,
+                    voiceMuted = it.id in r.voiceRules.muted,
                 )
             }
         }
@@ -649,12 +923,15 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         roomUi = RoomUi(
             key, r.maxPlayers, people, watching = members.isNotEmpty() && r.watching, canFree = r.isOwner, online = r.overInternet, pingMs = r.pingMs,
             open = online?.open, canOpen = online?.canOpen == true,
+            voiceHost = r.isOwner && r.internet != null, watchersListen = r.voiceRules.watchersListen,
+            friends = roomFriends(r),
         )
     }
 
     /** Opens the room sheet (the game goes on: it's not the pause menu). */
     fun openRoom() {
         updateRoomUi()
+        loadFriendsToInvite()
         show(GameDialog.Room())
     }
 
@@ -743,6 +1020,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun gameMs(): Long = LibretroDroid.getNetFrame().toLong() * 1000 / 60
 
     private fun startNetplay(room: Room) {
+        // Voice (internet rooms): the mic button, the room's volumes, who's speaking.
+        canVoice = room.internet != null
+        applyVoice()
+        watchSpeakers(room)
         // An internet room's ping changes with the network: the pill's bars follow it.
         if (room.overInternet) lifecycleScope.launch {
             while (isActive && this@GameActivity.room === room) {
@@ -803,7 +1084,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     updateRoomUi()
                 }
 
-                override fun onRoster() = runOnUiThread { updateRoomUi() }
+                override fun onRoster() = runOnUiThread {
+                    updateRoomUi()
+                    applyVoice()
+                }
+
+                override fun onVoiceRules(rules: com.kofarcade.core.net.VoiceRules) = runOnUiThread {
+                    if (destroyed) return@runOnUiThread
+                    updateRoomUi()
+                    applyVoice()
+                }
+
+                override fun onChat(line: com.kofarcade.core.net.ChatLine) = runOnUiThread { if (!destroyed) heardChat(room, line) }
 
                 // The game's own word: this seat's player never started, or
                 // their game is over. Null where the game can't say.
@@ -1057,6 +1349,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
      */
     private fun reconnect(lost: Room, reason: String) {
         if (isFinishing || room !== lost || reconnecting?.isActive == true) return
+        Online.reportProblem(this, "lost", roomUi?.key, reason = reason)
         netLost = true
         applyNetFreeze()
         announce(reason)
@@ -1122,7 +1415,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun netEnded(reason: String) {
         if (isFinishing) return
+        Online.reportProblem(this, "ended", roomUi?.key, reason = reason)
         room?.close()
+        micOn = false
+        canVoice = false
         netStatus.visibility = View.GONE
         show(GameDialog.Error(reason, title = "Multiplayer game ended"))
     }
@@ -1497,6 +1793,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         hud.opacity = l.opacity
         applySound(l.sound, l.volume)
         updateHud()
+        applyVoice()
     }
 
     /** Sound on, for the pause menu's quick switch. */

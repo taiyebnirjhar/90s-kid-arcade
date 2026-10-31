@@ -110,6 +110,34 @@ class WebRtcTransport(
         runCatching { p.pc?.path()?.get(500, TimeUnit.MILLISECONDS) }.getOrNull()?.let { p.id to it }
     }.toMap()
 
+    // Voice: whether this phone sends its mic, and how loud each phone's voice plays.
+    @Volatile private var voiceOn = false
+    private val voiceVolumes = ConcurrentHashMap<String, Double>()
+
+    /** Whether this phone's mic is sent to the others (off: it isn't recorded). */
+    val voice: Boolean get() = voiceOn
+
+    /**
+     * Turns this phone's voice on or off for every phone of the room: each
+     * connection is negotiated again (the offerer offers, or is asked to).
+     */
+    fun voice(on: Boolean) {
+        if (voiceOn == on) return
+        voiceOn = on
+        peers.values.forEach { it.voiceChanged() }
+    }
+
+    /** How loud [host]'s voice plays: 0 not at all (muted), 1 as it comes. Kept for its next connections too. */
+    fun voiceVolume(host: String, volume: Double) {
+        voiceVolumes[host] = volume
+        peers[host]?.pc?.setVoiceVolume(volume)
+    }
+
+    /** How loud each phone is speaking now (0 to 1), of those sending their voice. */
+    fun voiceLevels(): Map<String, Double> = peers.values.mapNotNull { p ->
+        runCatching { p.pc?.voiceLevel()?.get(300, TimeUnit.MILLISECONDS) }.getOrNull()?.let { p.id to it }
+    }.toMap()
+
     /** Asks for a new way to every phone: after this phone's network changed (Wi-Fi to 4G). */
     fun networkChanged() = peers.values.forEach { it.restartIce() }
 
@@ -149,6 +177,7 @@ class WebRtcTransport(
             Signal.ANSWER -> peer.onAnswer(s)
             Signal.CANDIDATE -> peer.onCandidate(s)
             Signal.RESTART -> peer.restartIce()
+            Signal.AGAIN -> peer.renegotiate()
             Signal.BYE -> peer.end("${s.from} left")
         }
     }
@@ -188,6 +217,18 @@ class WebRtcTransport(
         // The answerer's last offer and answer: a repeated offer gets the same answer again.
         private var lastOffer: String? = null
         private var lastAnswer: Sdp? = null
+        // A new offer was wanted (voice changed) while another was out: made once that's answered.
+        private var againLater = false
+        // Which kinds of way (host, srflx, relay) each side has told so far, for the connection log.
+        private val waysOut = java.util.Collections.synchronizedSet(HashSet<String>())
+        private val waysIn = java.util.Collections.synchronizedSet(HashSet<String>())
+
+        // "rtc: phone2 way out: relay" the first time a kind of candidate goes or comes.
+        fun noteWay(sdp: String, out: Boolean) {
+            val kind = sdp.split(" ").let { f -> f.getOrNull(f.indexOf("typ") + 1) } ?: return
+            val seen = if (out) waysOut else waysIn
+            if (seen.add(kind)) NetLog.add("rtc: $id way ${if (out) "out" else "in"}: $kind")
+        }
 
         // Whether the channels are open: read by waiting threads, so under [lock].
         private val lock = Object()
@@ -237,7 +278,10 @@ class WebRtcTransport(
                 while (!(reliableOpen && quickOpen)) {
                     if (closed) throw SocketException("Closed")
                     val now = System.nanoTime()
-                    if (now >= until) throw SocketTimeoutException("connect timed out")
+                    if (now >= until) {
+                        NetLog.add("rtc: $id not connected in time (ways out: ${waysOut.sorted().joinToString().ifEmpty { "none" }}; in: ${waysIn.sorted().joinToString().ifEmpty { "none" }})")
+                        throw SocketTimeoutException("connect timed out")
+                    }
                     // Asked again now and then: a hello can be lost while the other phone starts.
                     if (now - asked > HELLO_AGAIN_NS) {
                         asked = now
@@ -266,8 +310,13 @@ class WebRtcTransport(
             lastAnswer = null
             answeredBy = null
             offeredBy = null
+            againLater = false
+            waysOut.clear()
+            waysIn.clear()
             val events = Events()
             val made = rtc.peer(iceServers(), events)
+            made.setVoice(voiceOn)
+            voiceVolumes[id]?.let(made::setVoiceVolume)
             events.pc = made
             pc = made
             return made
@@ -374,6 +423,10 @@ class WebRtcTransport(
                     if (pc !== target) return@act
                     early.forEach(target::addCandidate)
                     early.clear()
+                    if (againLater) {
+                        againLater = false
+                        renew(ice = false)
+                    }
                 }
             }
         }
@@ -387,20 +440,39 @@ class WebRtcTransport(
             val target = pc ?: return@act
             if (s.gen != gen) return@act
             val c = Candidate(s.mid, s.index, sdp)
+            noteWay(sdp, out = false)
             if (remoteSet && early.isEmpty()) target.addCandidate(c) else early += c
         }
 
         /** A new way to the same phone, keeping the connection and its links. */
-        fun restartIce(): Unit = act {
+        fun restartIce(): Unit = act { renew(ice = true) }
+
+        /** The same connection negotiated again (this phone's voice changed). */
+        fun renegotiate(): Unit = act { renew(ice = false) }
+
+        /** This phone's voice changed: the connection says so in a new offer and answer. */
+        fun voiceChanged(): Unit = act {
             val target = pc ?: return@act
+            target.setVoice(voiceOn)
+            renew(ice = false)
+        }
+
+        // A new offer on this connection: with an ICE restart ([ice]: a new
+        // way), or without (voice; tried [tries] more times if not answered).
+        // The answerer asks the offerer for it.
+        private fun renew(ice: Boolean, tries: Int = 2) {
+            val target = pc ?: return
             if (!offerer) {
-                signalSafely(Signal(Signal.RESTART, self, id, gen = gen))
-                return@act
+                signalSafely(Signal(if (ice) Signal.RESTART else Signal.AGAIN, self, id, gen = gen))
+                return
             }
-            if (restarting || !remoteSet) return@act
+            if (restarting || !remoteSet) {
+                if (!ice) againLater = true
+                return
+            }
             restarting = true
             val g = gen
-            target.offer(restart = true).whenComplete { sdp, e ->
+            target.offer(restart = ice).whenComplete { sdp, e ->
                 act {
                     if (e != null || sdp == null) {
                         restarting = false
@@ -416,7 +488,7 @@ class WebRtcTransport(
                                 restarting = false
                                 // Not answered (the answer lost while signaling was down): again,
                                 // rather than waiting for the connection to be declared failed.
-                                if (disconnectedSince != 0L) restartIce()
+                                if (disconnectedSince != 0L) restartIce() else if (!ice && tries > 0) renew(ice = false, tries = tries - 1)
                             }
                         }, RESTART_AFTER_MS * 2, TimeUnit.MILLISECONDS)
                     }
@@ -457,6 +529,7 @@ class WebRtcTransport(
                 val g = gen
                 // An open room: the internet address (and any candidate carrying it) stays here.
                 val sdp = if (hideAddresses) PrivateCandidates.candidate(candidate.sdp) ?: return else candidate.sdp
+                if (current()) noteWay(sdp, out = true)
                 if (current()) signalSafely(Signal(Signal.CANDIDATE, self, id, gen = g, sdp = sdp, mid = candidate.mid, index = candidate.index))
             }
 

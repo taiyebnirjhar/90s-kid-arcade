@@ -74,6 +74,21 @@ import com.kofarcade.core.toArrows
 fun GameDialogs(game: GameActivity) {
     if (game.editing) EditBar(game)
     RoomLayer(game)
+    if (game.chatOpen) {
+        Overlay(onDismiss = { game.closeChat() }, scrim = false) {
+            ChatPanel(
+                game.chatLines,
+                game.mutedPlayers,
+                canReport = game.roomUi?.online == true,
+                onSay = { text, quick -> game.sayInRoom(text, quick) },
+                onMute = { line, mute -> game.mutePlayer(line, mute) },
+                onReport = { line, reason -> game.reportPlayer(line, reason) },
+                onClose = { game.closeChat() },
+                onAddFriend = if (game.roomUi?.online == true) ({ game.addFriendFrom(it) }) else null,
+                onBlock = if (game.roomUi?.online == true) ({ game.blockFrom(it) }) else null,
+            )
+        }
+    }
     when (val d = game.dialog) {
         null -> Unit
         GameDialog.Pause -> PauseMenu(game)
@@ -106,6 +121,9 @@ fun GameDialogs(game: GameActivity) {
                     onClose = { game.close() },
                     onFree = { game.freeHeldSeat(it) },
                     onOpen = { game.setRoomOpen(it) },
+                    onVoiceMute = { id, mute -> game.muteForRoom(id, mute) },
+                    onWatchersListen = { game.watchersListen(it) },
+                    onInvite = { game.inviteFriend(it) },
                 )
             }
         }
@@ -125,7 +143,17 @@ private fun RoomLayer(game: GameActivity) {
     }
     if (game.dialog != null || game.editing) return
     Box(Modifier.fillMaxWidth().padding(top = 12.dp, end = 14.dp)) {
-        RoomPill(ui, onClick = { game.openRoom() }, Modifier.align(Alignment.TopEnd))
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd)) {
+            if (game.canVoice) MicButton(game.micOn, game.talking, !game.micOpenMode, onToggle = { game.toggleMic() }, onTalk = { game.pushToTalk(it) })
+            ChatButton(game.chatUnread, onClick = { game.openChat() })
+            RoomPill(ui, onClick = { game.openRoom() })
+        }
+        // Under the pause button, where no control is.
+        Column(Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 48.dp)) {
+            SpeakingChips(game.speaking, Modifier.padding(bottom = 4.dp))
+            // Two lines under someone speaking, so the stack stays clear of Block.
+            ChatBubbles(game.chatBubbles, max = if (game.speaking.isEmpty()) 3 else 2)
+        }
         AnnouncementBanner(news, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
     }
 }
@@ -552,6 +580,7 @@ private fun ControlsSettings(game: GameActivity) {
     val p = game.settings
     var look by remember { mutableStateOf(p.look()) }
     var info by remember { mutableStateOf(p.detectInfo) }
+    var reports by remember { mutableStateOf(p.problemReports) }
 
     // Every change shows on the game right away; Save keeps it, Cancel puts
     // back what was saved.
@@ -568,6 +597,8 @@ private fun ControlsSettings(game: GameActivity) {
             canDetect = game.canDetect,
             canRapid = game.hasRapidFire,
             detectInfo = info,
+            problemReports = reports,
+            onProblemReports = { reports = it },
             onDetectInfo = { info = it },
             onCancel = ::cancel,
             onSave = {
@@ -583,7 +614,13 @@ private fun ControlsSettings(game: GameActivity) {
                 p.rapidFire = look.rapidFire
                 p.soundOn = look.sound
                 p.volume = look.volume
+                p.chatBubbles = look.chatBubbles
+                p.chatFilter = look.chatFilter
+                p.voices = look.voices
+                p.voiceVolume = look.voiceVolume
+                p.micOpen = look.micOpen
                 p.detectInfo = info
+                p.problemReports = reports
                 game.applyPrefs()
                 game.close()
             },

@@ -40,6 +40,33 @@ class WebRtcTransportTest {
     }
 
     @Test
+    fun voiceIsNegotiatedAgainWhenEitherPhoneTurnsItOnOrOffAndTheLinksCarryOn() {
+        val (a, b, links) = pair()
+        fun until(what: String, check: () -> Boolean) {
+            val end = System.currentTimeMillis() + 10_000
+            while (!check()) {
+                assertTrue(System.currentTimeMillis() < end, "timed out: $what")
+                Thread.sleep(20)
+            }
+        }
+        assertTrue(a.voiceLevels().isEmpty() && b.voiceLevels().isEmpty(), "no voice until a mic is on")
+        // The answerer's mic on: it asks the offerer for a new offer, and answers with its voice.
+        b.voice(true)
+        until("b heard on a") { b.self in a.voiceLevels() }
+        assertTrue(a.self !in b.voiceLevels())
+        // The offerer's too: it offers again itself.
+        a.voice(true)
+        until("a heard on b") { a.self in b.voiceLevels() }
+        b.voice(false)
+        until("b quiet") { b.self !in a.voiceLevels() }
+        assertTrue(a.self in b.voiceLevels())
+        // The game's links never noticed.
+        links.first.send(3, byteArrayOf(9))
+        links.second.timeoutMs = 5_000
+        assertEquals(9, links.second.receive().second[0].toInt())
+    }
+
+    @Test
     fun eitherPhoneCanConnectFirst() {
         // phone2 > phone1: phone2 asks phone1 to offer.
         val a = phone()
