@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -122,14 +123,21 @@ fun ChatButton(unread: Int, onClick: () -> Unit, modifier: Modifier = Modifier) 
             ChatIcon(Modifier.size(15.dp))
         }
         if (unread > 0) {
-            Text(
-                if (unread > 9) "9+" else "$unread",
-                color = Color.White,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.align(Alignment.TopEnd).padding(start = 18.dp).clip(CircleShape).background(Palette.red)
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
-            )
+            // A round red badge on the button's corner.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.align(Alignment.TopEnd).offset(x = 5.dp, y = (-3).dp).size(15.dp).clip(CircleShape).background(Palette.red),
+            ) {
+                Text(
+                    if (unread > 9) "9+" else "$unread",
+                    color = Color.White,
+                    fontSize = 8.sp,
+                    lineHeight = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    style = androidx.compose.ui.text.TextStyle(platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false)),
+                )
+            }
         }
     }
 }

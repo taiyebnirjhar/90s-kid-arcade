@@ -122,7 +122,7 @@ fun ArcadeScreen(
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                     // Room under the last row to scroll it clear of the bar.
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = if (bottomBar != null) 96.dp else 8.dp),
                 content = content,
             )
             if (bottomBar != null) {
@@ -131,7 +131,7 @@ fun ArcadeScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                         .background(Brush.verticalGradient(0f to Palette.bg.copy(alpha = 0f), 0.35f to Palette.bg))
-                        .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 12.dp),
+                        .padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 12.dp),
                 ) { Box(Modifier.widthIn(max = 560.dp)) { bottomBar() } }
             }
         }
@@ -153,7 +153,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.6.sp,
-        modifier = modifier.padding(top = 24.dp, bottom = 12.dp),
+        modifier = modifier.padding(top = 28.dp, bottom = 14.dp),
     )
 }
 
@@ -173,7 +173,7 @@ fun Panel(
             .background(if (highlight) Palette.gold.copy(alpha = 0.08f) else Palette.panel)
             .border(1.dp, if (highlight) Palette.gold.copy(alpha = 0.7f) else Palette.line, shape)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(16.dp),
+            .padding(18.dp),
         content = content,
     )
 }

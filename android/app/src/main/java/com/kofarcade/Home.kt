@@ -130,16 +130,16 @@ fun HomeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 10.dp),
                     ) { chips() }
                 }
                 // First run: what's left to do before the first game, in order.
                 val anyReady = ui.sets.values.any { it != null }
                 if (!ui.hasBios || !anyReady) {
-                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 560.dp))
+                    SetupCard(ui.hasBios, anyReady, onBios, onLibrary, Modifier.padding(horizontal = 20.dp, vertical = 10.dp).widthIn(max = 560.dp))
                 }
                 // Portrait: two cards and a peek of the third, so the row reads as scrollable.
-                val cardWidth = if (landscape) 232.dp else ((screenWidth - 40.dp) / 2.25f).coerceIn(144.dp, 220.dp)
+                val cardWidth = if (landscape) 232.dp else ((screenWidth - 56.dp) / 2.25f).coerceIn(144.dp, 220.dp)
                 for ((series, games) in GAMES.groupBy { it.series }) {
                     Text(
                         series,
@@ -149,9 +149,9 @@ fun HomeScreen(
                         fontStyle = FontStyle.Italic,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 10.dp),
                     )
-                    LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(games, key = { it.id }) { game ->
                             GameCard(
                                 game,
@@ -169,7 +169,7 @@ fun HomeScreen(
                         "Game pictures: libretro thumbnails.",
                     color = Palette.muted.copy(alpha = 0.7f),
                     fontSize = 12.sp,
-                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 24.dp),
+                    modifier = Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 28.dp),
                 )
             }
         }
@@ -279,7 +279,7 @@ private fun Hero(
         val safe = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp),
+            modifier = Modifier.windowInsetsPadding(safe).fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp),
         ) {
             Text("90s KID ", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.text)
             Text("ARCADE", fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = Palette.gold)
@@ -297,7 +297,7 @@ private fun Hero(
                 .align(Alignment.BottomStart)
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                 .fillMaxWidth(if (landscape) 0.6f else 1f)
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = 20.dp, end = 20.dp, bottom = 18.dp),
         ) {
             Kicker(ui.heroLabel)
             Spacer(Modifier.height(2.dp))

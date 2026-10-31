@@ -789,7 +789,7 @@ fun MultiplayerHub(
         friends?.let { InviteCards(it.invites, busy, onJoinInvite, onDismissInvite) }
 
         // The three ways in, big and plain: anyone, a friend's code, your own room.
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (internet) {
                 BigChoice(
                     "Quick match", "Play anyone who's online now",
