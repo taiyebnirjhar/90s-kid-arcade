@@ -119,12 +119,21 @@ fun GameDialogs(game: GameActivity) {
             Spacer(Modifier.size(16.dp))
             GoldButton("Load for everyone", { game.loadForEveryone() }, Modifier.fillMaxWidth())
         }
-        is GameDialog.Room -> Sheet(onDismiss = { game.close() }, width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 880 else 460) {
+        is GameDialog.Room -> Sheet(
+            onDismiss = { game.close() },
+            width = if (LocalConfiguration.current.screenWidthDp > LocalConfiguration.current.screenHeightDp) 880 else 460,
+            footer = {
+                game.roomUi?.let { ui ->
+                    RoomSheetActions(ui, d.first, onSeat = { game.takeSeat() }, onWatch = { game.watchInstead() }, onLeave = { game.finish() }, onClose = { game.close() })
+                }
+            },
+        ) {
             val ui = game.roomUi
             if (ui != null) {
                 RoomSheetContent(
                     ui,
                     first = d.first,
+                    withActions = false,
                     onCopy = { game.copyRoomKey() },
                     onShare = { game.shareRoomKey() },
                     onSeat = { game.takeSeat() },
@@ -177,22 +186,30 @@ private fun Sheet(
     width: Int = 360,
     /** False where a stray tap outside would throw edits away. */
     dismissOutside: Boolean = true,
+    /** Always in view under the content (which scrolls if it must): the sheet's main buttons. */
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = dismissOutside)) {
-        SheetFrame(width, content)
+        SheetFrame(width, footer, content)
     }
 }
 
 /** The [Sheet]'s panel, centred (so it can be previewed). */
 @Composable
-fun SheetFrame(width: Int = 360, content: @Composable () -> Unit) = TextScaleCap {
+fun SheetFrame(width: Int = 360, footer: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) = TextScaleCap {
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Small phones: a smaller slant and margins, so more fits across.
         val narrow = maxWidth < 760.dp
         val slant = if (narrow) 14.dp else 22.dp
         Box(Modifier.widthIn(max = width.dp).padding(horizontal = if (narrow) 6.dp else 16.dp, vertical = 8.dp).slantPanel(left = slant, right = slant, alpha = 0.96f)) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = slant + 14.dp, vertical = 14.dp)) { content() }
+            Column {
+                // The content scrolls on a short screen; the footer (the main buttons) never goes out of view.
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = slant + 14.dp, vertical = 14.dp)) { content() }
+                if (footer != null) {
+                    Box(Modifier.padding(start = slant + 14.dp, end = slant + 14.dp, bottom = 12.dp)) { footer() }
+                }
+            }
         }
     }
 }

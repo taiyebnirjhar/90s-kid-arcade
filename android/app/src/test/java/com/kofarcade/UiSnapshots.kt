@@ -936,6 +936,44 @@ class UiSnapshots {
         shot("game_on_landscape") { GameBehind { GameOnLoading("Joining Rafi's room…", onCancel = {}, overGame = true) } }
     }
 
+    // The room as it opens (first) and the GAME ON screen, at every kind of screen: nothing cut, the main button in view.
+    @Composable
+    private fun FirstRoom() = OverGame {
+        val ui = RoomUi("K7Q-2MX", 2, listOf(RoomPerson("You", 0, you = true, host = true)), watching = false, online = true, open = true, canOpen = true, voiceHost = true)
+        SheetFrame(width = 880, footer = { RoomSheetActions(ui, true, {}, {}, {}, {}) }) {
+            RoomSheetContent(ui, first = true, {}, {}, {}, {}, {}, {}, withActions = false)
+        }
+    }
+
+    @Test fun breakpointsSmallLandscape() {
+        smallLandscape()
+        shot("bp_room_small_landscape") { FirstRoom() }
+        shot("bp_gameon_small_landscape") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}, overGame = true) }
+    }
+    @Test fun breakpointsPhoneLandscape() {
+        landscape()
+        shot("bp_room_phone_landscape") { FirstRoom() }
+    }
+    @Test fun breakpointsTiny() {
+        tiny()
+        shot("bp_room_tiny") { FirstRoom() }
+        shot("bp_gameon_tiny") { GameOnLoading("Finding room K7Q-2MX…", onCancel = {}) }
+    }
+    @Test fun breakpointsTablet() {
+        tablet()
+        shot("bp_room_tablet") { FirstRoom() }
+        shot("bp_gameon_tablet") { GameOnLoading("Making your room…", onCancel = {}) }
+    }
+    @Test fun breakpointsTabletPortrait() {
+        tablet(portrait = true)
+        shot("bp_room_tablet_portrait") { FirstRoom() }
+    }
+    @Test fun breakpointsBigText() {
+        bigText(1.5f, landscape = true)
+        shot("bp_room_big_text") { FirstRoom() }
+        shot("bp_gameon_big_text") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}, overGame = true) }
+    }
+
     @Test fun smallChatPanel() {
         smallLandscape()
         shot("small_chat_panel") {

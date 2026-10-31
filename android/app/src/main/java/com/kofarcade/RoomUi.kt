@@ -326,6 +326,8 @@ fun RoomSheetContent(
     onVoiceMute: (Int, Boolean) -> Unit = { _, _ -> },
     onWatchersListen: (Boolean) -> Unit = {},
     onInvite: (RoomFriend) -> Unit = {},
+    /** The buttons too (false: the sheet pins them under it, RoomSheetActions). */
+    withActions: Boolean = true,
 ) {
     // Wide (landscape): key and buttons on the left, who's in on the right, so it fits without scrolling.
     BoxWithConstraints {
@@ -334,7 +336,7 @@ fun RoomSheetContent(
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Column(Modifier.weight(1f)) {
                     RoomHeader(ui, first, onCopy, onShare, onOpen)
-                    RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+                    if (withActions) RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
                 }
                 Column(Modifier.weight(1f)) {
                     RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
@@ -346,7 +348,7 @@ fun RoomSheetContent(
                 RoomHeader(ui, first, onCopy, onShare, onOpen)
                 RoomPeople(ui, onFree, onVoiceMute, onWatchersListen)
                 RoomInvites(ui, onInvite)
-                RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
+                if (withActions) RoomActions(ui, first, onSeat, onWatch, onLeave, onClose)
             }
         }
     }
@@ -478,9 +480,35 @@ private fun RoomInvites(ui: RoomUi, onInvite: (RoomFriend) -> Unit) {
     }
 }
 
+/**
+ * The room sheet's buttons, pinned under it so they're always in view: in
+ * one row where it's wide (landscape), stacked where it's narrow.
+ */
 @Composable
-private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
-    Spacer(Modifier.height(18.dp))
+fun RoomSheetActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit) {
+    BoxWithConstraints {
+        if (maxWidth > 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) && !(ui.watching && ui.linePlace > 0)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                if (ui.watching) {
+                    GoldButton("Take a seat", onSeat, Modifier.weight(1.4f), play = true)
+                    GhostButton("Back to watching", onClose, Modifier.weight(1f))
+                } else {
+                    GoldButton(if (first) "Start playing" else "Back to the game", onClose, Modifier.weight(1.4f), play = true)
+                    GhostButton("Watch instead", onWatch, Modifier.weight(1f))
+                }
+                GhostButton("Leave", onLeave, Modifier.weight(0.7f), danger = true)
+            }
+        } else {
+            // The narrowest phones: the short words, so no button breaks over two lines.
+            val short = maxWidth < 330.dp
+            Column { RoomActions(ui, first, onSeat, onWatch, onLeave, onClose, top = 4.dp, short = short) }
+        }
+    }
+}
+
+@Composable
+private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch: () -> Unit, onLeave: () -> Unit, onClose: () -> Unit, top: androidx.compose.ui.unit.Dp = 18.dp, short: Boolean = false) {
+    Spacer(Modifier.height(top))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (ui.watching && ui.linePlace > 0) {
             Panel(highlight = true) {
@@ -496,9 +524,9 @@ private fun RoomActions(ui: RoomUi, first: Boolean, onSeat: () -> Unit, onWatch:
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (ui.watching) {
-                GhostButton("Back to watching", onClose, Modifier.weight(1f))
+                GhostButton(if (short) "Back" else "Back to watching", onClose, Modifier.weight(1f))
             } else {
-                GhostButton("Watch instead", onWatch, Modifier.weight(1f))
+                GhostButton(if (short) "Watch" else "Watch instead", onWatch, Modifier.weight(1f))
             }
             GhostButton("Leave", onLeave, Modifier.weight(1f), danger = true)
         }

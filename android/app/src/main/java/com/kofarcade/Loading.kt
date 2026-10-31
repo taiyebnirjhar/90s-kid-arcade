@@ -75,20 +75,22 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
             // Nothing behind is pressed while it's up.
             .clickable(remember { MutableInteractionSource() }, indication = null) {},
     ) {
-        val big = (maxWidth.value / 4.2f).coerceIn(64f, 150f).sp
+        // Fits a landscape phone's height as well as a portrait one's width, never cut or scrolling.
+        val big = minOf(maxWidth.value / 4.2f, maxHeight.value / 3.6f).coerceIn(44f, 150f).sp
+        val short = maxHeight < 420.dp
         // Behind it all, as on the website: arcade calls scrolling by, row against row.
-        val rowSize = (maxWidth.value / 6f).coerceIn(48f, 110f).sp
+        val rowSize = minOf(maxWidth.value / 6f, maxHeight.value / 5f).coerceIn(36f, 110f).sp
         Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             MarqueeRow("PLAY MORE · INSERT COIN · ", rowSize, still, 14_000, Color.White.copy(alpha = 0.06f))
             MarqueeRow("GAME ON · PRESS START · ", rowSize, still, 17_000, Palette.gold.copy(alpha = 0.12f), backwards = true)
             MarqueeRow("HERE COMES A NEW CHALLENGER · ", rowSize, still, 20_000, Color.White.copy(alpha = 0.06f))
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp).widthIn(max = 560.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 24.dp, vertical = if (short) 8.dp else 24.dp).widthIn(max = 560.dp)) {
             Row {
                 Text("90S KID ", color = Palette.text, fontFamily = ArcadeFont, fontSize = 22.sp)
                 Text("ARCADE", color = Palette.gold, fontFamily = ArcadeFont, fontSize = 22.sp)
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(if (short) 2.dp else 10.dp))
             // GAME ON: outlined letters, gold filling them from the left.
             Box(contentAlignment = Alignment.Center) {
                 val style = TextStyle(fontFamily = ArcadeFont, fontSize = big, textAlign = TextAlign.Center, letterSpacing = 1.sp)
@@ -101,7 +103,7 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
                     },
                 )
             }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(if (short) 8.dp else 18.dp))
             Text(step, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(Modifier.height(14.dp))
             // A bar that keeps running: it's working.
@@ -118,7 +120,7 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
                 )
             }
             if (onCancel != null) {
-                Spacer(Modifier.height(26.dp))
+                Spacer(Modifier.height(if (short) 12.dp else 26.dp))
                 GhostButton("Cancel", onCancel, compact = true)
             }
         }
