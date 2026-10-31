@@ -7,7 +7,8 @@ import java.util.concurrent.CompletableFuture
 // Android (the app's adapter), a desktop build in the tests, or a simulated
 // one. One peer connection per pair of phones, with two data channels set
 // up in advance on both sides (negotiated, fixed ids): RELIABLE (ordered,
-// for links) and QUICK (unordered, no resends, for inputs).
+// for links) and QUICK (unordered, no resends, for inputs); and, for voice,
+// an audio track each way that sends only while the player's mic is on.
 
 /** A STUN or TURN server, as WebRTC takes it. */
 data class IceServer(val urls: List<String>, val username: String? = null, val credential: String? = null)
@@ -56,6 +57,19 @@ interface RtcPeer {
 
     /** Which way it's connected, once it is. */
     fun path(): CompletableFuture<PathInfo?>
+
+    /**
+     * Voice: send this phone's mic to the other ([send]) from the next offer
+     * or answer on. Off, the mic isn't recorded at all. Either way the other
+     * phone's voice is heard if it sends.
+     */
+    fun setVoice(send: Boolean) {}
+
+    /** How loud the other phone's voice plays: 0 not at all, 1 as it comes. */
+    fun setVoiceVolume(volume: Double) {}
+
+    /** How loud the other phone is speaking now (0 to 1); null if it isn't sending or the library can't say. */
+    fun voiceLevel(): CompletableFuture<Double?> = CompletableFuture.completedFuture(null)
 
     fun close()
 

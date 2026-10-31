@@ -745,6 +745,20 @@ is (the right side has the moves). Reports go to `report_player`
 (`20261101000000_reports.sql`): 20 a day each, the same one again within a
 day ignored, read by the owner in Supabase's dashboard.
 
+**4.2 built (2026-10-31):** voice rides the internet room's connections
+(one per pair of phones, so a room of 8 is at most 7 streams each way):
+an audio track each way, receive-only until the player taps the mic
+button, so the phone records nothing before (and the app asks for the
+microphone only then). Turning it on or off negotiates each connection
+again (`Signal.AGAIN` asks the offerer for a new offer). Settings, Chat:
+voices on or off, voice volume, and the mic open or push to talk (hold
+the mic button). Voices play at the media volume with the phone's echo
+canceller and noise suppressor. A player muted here (from chat) isn't
+played; the host can mute one for the room or let watchers only listen
+(`Msg.VOICE`, from the room sheet). Who's speaking shows under the pause
+button. Nearby rooms have no voice: the players are in the same place.
+Voice through the relay counts toward D8's stop like the game.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.

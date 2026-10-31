@@ -119,6 +119,8 @@ fun GameDialogs(game: GameActivity) {
                     onClose = { game.close() },
                     onFree = { game.freeHeldSeat(it) },
                     onOpen = { game.setRoomOpen(it) },
+                    onVoiceMute = { id, mute -> game.muteForRoom(id, mute) },
+                    onWatchersListen = { game.watchersListen(it) },
                 )
             }
         }
@@ -139,11 +141,16 @@ private fun RoomLayer(game: GameActivity) {
     if (game.dialog != null || game.editing) return
     Box(Modifier.fillMaxWidth().padding(top = 12.dp, end = 14.dp)) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd)) {
+            if (game.canVoice) MicButton(game.micOn, game.talking, !game.micOpenMode, onToggle = { game.toggleMic() }, onTalk = { game.pushToTalk(it) })
             ChatButton(game.chatUnread, onClick = { game.openChat() })
             RoomPill(ui, onClick = { game.openRoom() })
         }
         // Under the pause button, where no control is.
-        ChatBubbles(game.chatBubbles, Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 48.dp))
+        Column(Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 48.dp)) {
+            SpeakingChips(game.speaking, Modifier.padding(bottom = 4.dp))
+            // Two lines under someone speaking, so the stack stays clear of Block.
+            ChatBubbles(game.chatBubbles, max = if (game.speaking.isEmpty()) 3 else 2)
+        }
         AnnouncementBanner(news, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
     }
 }
@@ -603,6 +610,9 @@ private fun ControlsSettings(game: GameActivity) {
                 p.volume = look.volume
                 p.chatBubbles = look.chatBubbles
                 p.chatFilter = look.chatFilter
+                p.voices = look.voices
+                p.voiceVolume = look.voiceVolume
+                p.micOpen = look.micOpen
                 p.detectInfo = info
                 game.applyPrefs()
                 game.close()

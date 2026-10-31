@@ -128,6 +128,9 @@ interface RoomListener {
 
     /** A line of room chat (this phone's own too, once the owner passed it on). */
     fun onChat(line: ChatLine) {}
+
+    /** The host changed the room's voice rules (who's muted, whether watchers only listen). */
+    fun onVoiceRules(rules: VoiceRules) {}
 }
 
 /** A link to another phone of the room ([id]: its member id, -1 before it has one). */
@@ -775,6 +778,27 @@ class Room private constructor(
         return runCatching { line.send(Msg.LOAD, pack(state)) }.isSuccess
     }
 
+    /** An internet room's connections (voice rides them); null on Wi-Fi. */
+    val internet: WebRtcTransport? get() = transport as? WebRtcTransport
+
+    /** The host's word on voice: who's muted for the room, whether watchers only listen. */
+    @Volatile var voiceRules = VoiceRules()
+        private set
+
+    /** Whether this phone may speak now: not muted by the host, and not a watcher where watchers only listen. */
+    val maySpeak: Boolean get() = localId !in voiceRules.muted && !(watching && voiceRules.watchersListen)
+
+    /** Owner: sets the room's voice rules, for everyone. */
+    fun setVoiceRules(rules: VoiceRules) {
+        if (!isOwner) return
+        worker.execute {
+            voiceRules = rules
+            val payload = encode(rules)
+            for (line in ownerLines()) if (line.id in members) sendTo(line, Msg.VOICE, payload)
+            listener?.onVoiceRules(rules)
+        }
+    }
+
     /** The room's chat so far, oldest first: the last [CHAT_KEEP] lines this phone heard. */
     val chat: List<ChatLine> get() = synchronized(chatLines) { chatLines.toList() }
 
@@ -1044,9 +1068,12 @@ class Room private constructor(
 
     // Tells everyone who's in, for the same game.
     private fun roster() {
+        // Voice rules too, for newcomers (only where the host set any).
+        val rules = voiceRules.takeIf { it != VoiceRules() }?.let { encode(it) }
         for (line in ownerLines()) {
             if (line.id !in members) continue
             sendTo(line, Msg.ROSTER, encode(Seating(epoch, localId, membersFor(line))))
+            if (rules != null) sendTo(line, Msg.VOICE, rules)
         }
         listener?.onRoster()
     }
@@ -1741,6 +1768,10 @@ class Room private constructor(
                     }
                     Msg.NEWS -> news(String(payload))
                     Msg.CHAT -> runCatching { decode<ChatLine>(payload) }.getOrNull()?.let(::heard)
+                    Msg.VOICE -> runCatching { decode<VoiceRules>(payload) }.getOrNull()?.let { rules ->
+                        voiceRules = rules
+                        listener?.onVoiceRules(rules)
+                    }
                     Msg.BYE -> {
                         ownerGone(line)
                         return
@@ -1765,6 +1796,8 @@ class Room private constructor(
         while (true) {
             val (t, payload) = line.receive()
             if (t == Msg.STATE) return payload
+            // The voice rules a newcomer is told on its way in are kept.
+            if (t == Msg.VOICE) runCatching { decode<VoiceRules>(payload) }.getOrNull()?.let { voiceRules = it }
             if (t !in SKIPPABLE && t != Msg.INPUTS) throw IOException("Expected the game state")
         }
     }
@@ -2150,7 +2183,7 @@ class Room private constructor(
         private const val FRESH_NS = 50_000_000L
         private const val LINE_QUIET_NS = 10_000_000_000L
         private const val ARRIVING_QUIET_NS = 60_000_000_000L
-        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME, Msg.CHAT)
+        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME, Msg.CHAT, Msg.VOICE)
 
         /** Lines of chat a phone keeps. */
         const val CHAT_KEEP = 50

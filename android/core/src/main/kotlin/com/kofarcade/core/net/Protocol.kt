@@ -156,6 +156,14 @@ data class ChatLine(
     val at: Long = 0,
 )
 
+/**
+ * The host's word on voice in an internet room: members it [muted] for
+ * everyone (their phones turn the mic off, the others don't play them),
+ * and whether watchers only listen ([watchersListen]).
+ */
+@Serializable
+data class VoiceRules(val muted: List<Int> = emptyList(), val watchersListen: Boolean = false)
+
 /** The room moved to another owner (two had it, after a split): rejoin it there. */
 @Serializable
 data class Moved(val host: String, val port: Int)
@@ -199,6 +207,8 @@ internal object Msg {
     const val LOAD: Byte = 23
     /** A line of chat ([ChatLine]): a phone to the owner, the owner to everyone. */
     const val CHAT: Byte = 24
+    /** Owner to everyone: the room's [VoiceRules]. */
+    const val VOICE: Byte = 25
 }
 
 /**

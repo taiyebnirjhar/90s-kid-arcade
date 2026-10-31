@@ -36,6 +36,8 @@ data class Signal(
         const val RESTART = "restart"
         /** This phone is leaving: drop the connection. */
         const val BYE = "bye"
+        /** The answerer asks for a new offer on the same connection (its voice changed). */
+        const val AGAIN = "again"
 
         private val json = Json { ignoreUnknownKeys = true }
 

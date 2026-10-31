@@ -138,11 +138,28 @@ class FakePeer(private val rtc: RtcNet, val host: String, target: RtcPeer.Events
         if (!closed && opened) events.onMessage(channel, data)
     }
 
+    /** Voice: what this phone wants (setVoice), and what the last offer and answer agreed (it sends its voice). */
+    @Volatile var wantsVoice = false
+    @Volatile var sendsVoice = false
+    @Volatile var playVolume = 1.0
+    private var offers = 0
+
+    override fun setVoice(send: Boolean) {
+        wantsVoice = send
+    }
+
+    override fun setVoiceVolume(volume: Double) {
+        playVolume = volume
+    }
+
+    override fun voiceLevel(): CompletableFuture<Double?> = CompletableFuture.completedFuture(if (remote?.sendsVoice == true) 0.5 else null)
+
     override fun offer(restart: Boolean): CompletableFuture<Sdp> = synchronized(lock) {
         hasLocal = true
         if (restart) restarts++
         candidateSoon()
-        CompletableFuture.completedFuture(Sdp("offer", "$id/$restarts"))
+        // Each offer its own (a new one is a new negotiation; one sent again is the same).
+        CompletableFuture.completedFuture(Sdp("offer", "$id/$restarts/${offers++}"))
     }
 
     override fun answer(offer: Sdp): CompletableFuture<Sdp> {
@@ -157,6 +174,7 @@ class FakePeer(private val rtc: RtcNet, val host: String, target: RtcPeer.Events
                 needsRestart = false
                 r.needsRestart = false
             }
+            sendsVoice = wantsVoice
             candidateSoon()
         }
         tryConnect()
@@ -169,6 +187,7 @@ class FakePeer(private val rtc: RtcNet, val host: String, target: RtcPeer.Events
             remote = r
             hasRemote = true
             needsRestart = false
+            sendsVoice = wantsVoice
         }
         tryConnect()
         return CompletableFuture.completedFuture(Unit)

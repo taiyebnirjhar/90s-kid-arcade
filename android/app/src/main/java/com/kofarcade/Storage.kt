@@ -269,6 +269,21 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("chatFilter", true)
         set(v) = sp.edit().putBoolean("chatFilter", v).apply()
 
+    /** Voice in internet rooms: the others' voices play (off: mute all). */
+    var voices: Boolean
+        get() = sp.getBoolean("voices", true)
+        set(v) = sp.edit().putBoolean("voices", v).apply()
+
+    /** How loud the others' voices play, 0.1 to 1 (apart from the game's volume). */
+    var voiceVolume: Float
+        get() = sp.getFloat("voiceVolume", 1f)
+        set(v) = sp.edit().putFloat("voiceVolume", v).apply()
+
+    /** The mic, once on: open (true) or push to talk (hold the mic button). */
+    var micOpen: Boolean
+        get() = sp.getBoolean("micOpen", true)
+        set(v) = sp.edit().putBoolean("micOpen", v).apply()
+
     /** Players whose chat (and voice) this phone doesn't show, by their phone's id (Member.device). */
     var mutedPlayers: Set<String>
         get() = sp.getStringSet("mutedPlayers", null)?.toSet() ?: emptySet()

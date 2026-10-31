@@ -841,10 +841,36 @@ class UiSnapshots {
             Box(Modifier.fillMaxSize()) {
                 Hud()
                 Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 14.dp)) {
+                    MicButton(on = true, talking = false, pushToTalk = false, onToggle = {}, onTalk = {})
                     ChatButton(2, {})
                     RoomPill(roomUi.copy(online = true, pingMs = 48), {})
                 }
-                ChatBubbles(chatSample.take(4), Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 60.dp), now = { 4_500 })
+                Column(Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 60.dp)) {
+                    SpeakingChips(listOf("Rafi"), Modifier.padding(bottom = 4.dp))
+                    ChatBubbles(chatSample.take(4), max = 2, now = { 4_500 })
+                }
+            }
+        }
+    }
+
+    @Test
+    fun roomSheetVoiceHost() {
+        landscape()
+        shot("room_sheet_voice_host") {
+            OverGame {
+                SheetFrame(width = 880) {
+                    RoomSheetContent(
+                        RoomUi(
+                            "K7Q-2MX", 2,
+                            listOf(
+                                RoomPerson("You", 0, you = true, host = true, id = 0), RoomPerson("Mim", 1, id = 1, voiceMuted = true),
+                                RoomPerson("Tanu", -1, id = 2), RoomPerson("Pixel 8", -1, id = 3),
+                            ),
+                            watching = false, canFree = true, online = true, pingMs = 40, open = true, canOpen = true, voiceHost = true, watchersListen = true,
+                        ),
+                        first = false, {}, {}, {}, {}, {}, {},
+                    )
+                }
             }
         }
     }

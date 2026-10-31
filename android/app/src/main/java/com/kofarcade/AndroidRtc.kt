@@ -8,31 +8,69 @@ import com.kofarcade.core.net.PeerState
 import com.kofarcade.core.net.RtcFactory
 import com.kofarcade.core.net.RtcPeer
 import com.kofarcade.core.net.Sdp
+import android.media.AudioAttributes
+import org.webrtc.AudioSource
+import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
+import org.webrtc.MediaStreamTrack
 import org.webrtc.RtpReceiver
+import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
+import org.webrtc.audio.JavaAudioDeviceModule
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 
 /**
  * Google's WebRTC (stream-webrtc-android) behind core's [RtcFactory]: the
- * internet rooms' connections. Data channels only (no camera or mic), so
- * nothing asks for permissions. One factory for the app.
+ * internet rooms' connections. Data channels, and an audio track each way
+ * for voice: it only receives until the player turns their mic on (the
+ * game screen asks for the microphone then), so the mic isn't recorded
+ * before. One factory for the app.
  */
 class AndroidRtc private constructor(context: Context) : RtcFactory {
     private val factory: PeerConnectionFactory
 
     init {
-        PeerConnectionFactory.initialize(
-            PeerConnectionFactory.InitializationOptions.builder(context.applicationContext).createInitializationOptions(),
+        val app = context.applicationContext
+        PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(app).createInitializationOptions())
+        // Voices play like the game (the phone's media volume), with the
+        // phone's own echo canceller and noise suppressor on the mic.
+        val audio = JavaAudioDeviceModule.builder(app)
+            .setUseHardwareAcousticEchoCanceler(true)
+            .setUseHardwareNoiseSuppressor(true)
+            .setAudioAttributes(
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build(),
+            )
+            .createAudioDeviceModule()
+        factory = PeerConnectionFactory.builder().setAudioDeviceModule(audio).createPeerConnectionFactory()
+    }
+
+    // The mic: one track for every connection, made the first time voice is on.
+    private var micSource: AudioSource? = null
+    private var micTrack: AudioTrack? = null
+
+    @Synchronized
+    private fun mic(): AudioTrack = micTrack ?: run {
+        val source = factory.createAudioSource(
+            MediaConstraints().apply {
+                for (k in listOf("googEchoCancellation", "googNoiseSuppression", "googAutoGainControl", "googHighpassFilter")) {
+                    mandatory += MediaConstraints.KeyValuePair(k, "true")
+                }
+            },
         )
-        factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
+        micSource = source
+        factory.createAudioTrack("mic", source).also { micTrack = it }
+    }
+
+    /** Push to talk: the mic track sends only while [talking] (the connections stay set up for voice). */
+    fun talking(talking: Boolean) {
+        micTrack?.setEnabled(talking)
     }
 
     override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events)
@@ -40,6 +78,8 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
     private inner class Peer(ice: List<IceServer>, private val events: RtcPeer.Events) : RtcPeer, PeerConnection.Observer {
         private val pc: PeerConnection
         private val channels: Array<DataChannel>
+        @Volatile private var sendVoice = false
+        @Volatile private var volume = 1.0
 
         init {
             val config = PeerConnection.RTCConfiguration(
@@ -90,8 +130,48 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
             if (restart) mandatory += MediaConstraints.KeyValuePair("IceRestart", "true")
         }
 
+        // The audio transceiver: the offerer adds it with its first offer; the
+        // answerer's comes with the offer (none from an app before voice).
+        private fun audio(): RtpTransceiver? = pc.transceivers.firstOrNull { it.mediaType == MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO && !it.isStopped }
+
+        // The voice this phone wants, on the transceiver: sending its mic, or only listening.
+        private fun applyVoice(t: RtpTransceiver) {
+            if (sendVoice) {
+                t.sender.setTrack(mic(), false)
+                t.direction = RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+            } else {
+                t.sender.setTrack(null, false)
+                t.direction = RtpTransceiver.RtpTransceiverDirection.RECV_ONLY
+            }
+        }
+
+        override fun setVoice(send: Boolean) {
+            sendVoice = send
+        }
+
+        override fun setVoiceVolume(volume: Double) {
+            this.volume = volume
+            (audio()?.receiver?.track() as? AudioTrack)?.setVolume(volume)
+        }
+
+        override fun voiceLevel(): CompletableFuture<Double?> {
+            val done = CompletableFuture<Double?>()
+            val receiver = audio()?.receiver
+            if (receiver == null) return CompletableFuture.completedFuture(null)
+            pc.getStats(receiver) { report ->
+                val inbound = report.statsMap.values.firstOrNull { it.type == "inbound-rtp" }
+                done.complete((inbound?.members?.get("audioLevel") as? Number)?.toDouble())
+            }
+            return done
+        }
+
         override fun offer(restart: Boolean): CompletableFuture<Sdp> {
             val done = CompletableFuture<Sdp>()
+            val t = audio() ?: pc.addTransceiver(
+                MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
+                RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY),
+            )
+            applyVoice(t)
             pc.createOffer(object : Observer(done) {
                 override fun onCreateSuccess(sdp: SessionDescription) = setLocal(sdp, done)
             }, constraints(restart))
@@ -102,6 +182,7 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
             val done = CompletableFuture<Sdp>()
             pc.setRemoteDescription(object : Observer(done) {
                 override fun onSetSuccess() {
+                    audio()?.let(::applyVoice)
                     pc.createAnswer(object : Observer(done) {
                         override fun onCreateSuccess(sdp: SessionDescription) = setLocal(sdp, done)
                     }, constraints(false))
@@ -196,7 +277,10 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
         override fun onRemoveStream(stream: MediaStream) {}
         override fun onDataChannel(channel: DataChannel) {}
         override fun onRenegotiationNeeded() {}
-        override fun onAddTrack(receiver: RtpReceiver, streams: Array<out MediaStream>) {}
+        // The other phone's voice: played at its volume (0 for one muted here).
+        override fun onAddTrack(receiver: RtpReceiver, streams: Array<out MediaStream>) {
+            (receiver.track() as? AudioTrack)?.setVolume(volume)
+        }
     }
 
     /** An SDP step that fails [done] on failure; success is the subclass's. */

@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Keeps Wi-Fi awake during a two-player game (WifiLock). -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Voice in internet rooms: asked for only when the player turns their mic on. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:name=".ArcadeApp"

@@ -268,6 +268,34 @@ open class RoomTest {
     }
 
     @Test
+    fun theHostsVoiceRulesReachEveryPhoneNewcomersToo() {
+        val h = host()
+        h.startState = byteArrayOf(1)
+        FakeGame(h).apply { play() }
+        val g = join(h, "Guest")
+        FakeGame(g).apply { play() }
+        waitFor("guest in") { h.watcherCount == 1 }
+        g.requestSeat()
+        waitFor("guest playing") { g.localPlayer == 1 }
+        assertTrue(g.maySpeak)
+
+        h.setVoiceRules(VoiceRules(muted = listOf(g.localId), watchersListen = true))
+        waitFor("guest muted") { !g.maySpeak && g.voiceRules.watchersListen }
+        assertTrue(h.maySpeak)
+        // A newcomer watches, and watchers only listen.
+        val w = join(h, "Watcher")
+        FakeGame(w).apply { play() }
+        waitFor("watcher told") { w.voiceRules.watchersListen && w.watching }
+        assertFalse(w.maySpeak)
+        h.setVoiceRules(VoiceRules())
+        waitFor("all may speak") { g.maySpeak && w.maySpeak }
+        // Only the host sets them.
+        g.setVoiceRules(VoiceRules(muted = listOf(h.localId)))
+        Thread.sleep(200)
+        assertTrue(h.maySpeak)
+    }
+
+    @Test
     fun watchersComingAndGoingNeverStopThePlayers() {
         val h = host()
         val a = FakeGame(h).apply { play() }

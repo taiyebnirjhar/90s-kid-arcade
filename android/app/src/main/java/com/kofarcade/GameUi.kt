@@ -432,6 +432,13 @@ fun ControlsPanel(
                     SettingsTab.CHAT -> {
                         ToggleRow("Chat over the game", look.chatBubbles, { onLook(look.copy(chatBubbles = it)) }, sub = "In rooms: the last lines, for a few seconds")
                         ToggleRow("Word filter", look.chatFilter, { onLook(look.copy(chatFilter = it)) }, sub = "Swear words show as ****")
+                        ToggleRow("Voices", look.voices, { onLook(look.copy(voices = it)) }, sub = "Internet rooms: hear the others talk")
+                        StepRow("Voice volume", look.voiceVolume, 0.1f..1f, 0.1f, sub = if (look.voices) "Apart from the game's volume" else "Voices are off") {
+                            onLook(look.copy(voiceVolume = it, voices = true))
+                        }
+                        PickRow("Your mic", listOf(true, false), look.micOpen, { if (it) "Open" else "Push to talk" }, sub = if (look.micOpen) "Once on, it's on until you turn it off" else "Hold the mic button to talk") {
+                            onLook(look.copy(micOpen = it))
+                        }
                     }
                     SettingsTab.MOVES -> {
                         PickRow("Move names", LabelMode.entries, look.labelMode, { it.label }, sub = "Names under the move buttons") { onLook(look.copy(labelMode = it)) }

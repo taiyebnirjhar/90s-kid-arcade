@@ -43,7 +43,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -138,7 +140,7 @@ fun ChatButton(unread: Int, onClick: () -> Unit, modifier: Modifier = Modifier) 
  * never in the way of a touch.
  */
 @Composable
-fun ChatBubbles(lines: List<ChatShown>, modifier: Modifier = Modifier, now: () -> Long = System::currentTimeMillis) {
+fun ChatBubbles(lines: List<ChatShown>, modifier: Modifier = Modifier, max: Int = 3, now: () -> Long = System::currentTimeMillis) {
     var clock by remember { mutableLongStateOf(now()) }
     LaunchedEffect(lines.lastOrNull()?.key) {
         while (true) {
@@ -147,7 +149,7 @@ fun ChatBubbles(lines: List<ChatShown>, modifier: Modifier = Modifier, now: () -
             kotlinx.coroutines.delay(250)
         }
     }
-    val shown = lines.takeLast(3)
+    val shown = lines.takeLast(max)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier.widthIn(max = 260.dp)) {
         for (l in shown) {
             AnimatedVisibility(clock - l.at < BUBBLE_MS, enter = fadeIn(), exit = fadeOut()) {
@@ -331,5 +333,79 @@ private fun ChatRow(l: ChatShown, open: Boolean, isMuted: Boolean, onTap: () -> 
             fontWeight = if (l.quick) FontWeight.Bold else FontWeight.Normal,
             fontStyle = if (isMuted) FontStyle.Italic else FontStyle.Normal,
         )
+    }
+}
+
+/** A drawn microphone, crossed out while it's off. */
+@Composable
+fun MicIcon(modifier: Modifier = Modifier, on: Boolean, color: Color = Palette.text) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = Stroke(width = w * 0.1f)
+        drawRoundRect(color, Offset(w * 0.34f, h * 0.06f), Size(w * 0.32f, h * 0.52f), CornerRadius(w * 0.16f))
+        val cup = Path().apply {
+            moveTo(w * 0.18f, h * 0.42f)
+            cubicTo(w * 0.18f, h * 0.82f, w * 0.82f, h * 0.82f, w * 0.82f, h * 0.42f)
+        }
+        drawPath(cup, color, style = stroke)
+        drawLine(color, Offset(w * 0.5f, h * 0.76f), Offset(w * 0.5f, h * 0.94f), w * 0.1f)
+        if (!on) drawLine(Palette.red, Offset(w * 0.12f, h * 0.1f), Offset(w * 0.88f, h * 0.9f), w * 0.12f)
+    }
+}
+
+/**
+ * The mic button by the chat button: off (crossed) when you join; a tap
+ * turns it on. In push-to-talk, once on, hold it to talk.
+ */
+@Composable
+fun MicButton(on: Boolean, talking: Boolean, pushToTalk: Boolean, onToggle: () -> Unit, onTalk: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val live = on && (!pushToTalk || talking)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(if (live) Palette.green.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.55f))
+            .border(1.dp, if (on) Palette.green else Color.White.copy(alpha = 0.12f), CircleShape)
+            .then(
+                if (on && pushToTalk) {
+                    // Hold to talk; a quick tap (no hold) turns the mic off.
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                val start = System.currentTimeMillis()
+                                onTalk(true)
+                                tryAwaitRelease()
+                                onTalk(false)
+                                if (System.currentTimeMillis() - start < 200) onToggle()
+                            },
+                        )
+                    }
+                } else {
+                    Modifier.clickable(onClick = onToggle)
+                },
+            )
+            .semantics { contentDescription = if (on) "Mic on" else "Mic off"; role = Role.Button },
+    ) {
+        MicIcon(Modifier.size(15.dp), on = on, color = if (live) Color.White else Palette.text)
+    }
+}
+
+/** Who's speaking now: small chips with a mic, under the chat bubbles' corner. */
+@Composable
+fun SpeakingChips(names: List<String>, modifier: Modifier = Modifier) {
+    if (names.isEmpty()) return
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) {
+        for (n in names.take(3)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Palette.green.copy(alpha = 0.75f)).padding(horizontal = 8.dp, vertical = 3.dp),
+            ) {
+                MicIcon(Modifier.size(11.dp), on = true, color = Color.White)
+                Spacer(Modifier.width(4.dp))
+                Text(n, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 90.dp))
+            }
+        }
     }
 }
