@@ -1073,7 +1073,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 override fun onLost(reason: String) = runOnUiThread { reconnect(room, reason) }
 
                 override fun onPartnerPaused(player: Int, paused: Boolean) = runOnUiThread {
-                    remotePaused = room.partnerPaused
+                    // Online nobody can stop the game (an older app's pause is ignored).
+                    remotePaused = room.partnerPaused && room.internet == null
                     applyNetFreeze()
                 }
 
@@ -1153,7 +1154,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                         netLost = false
                         lastSumFrame = -1
                         lastNetFrame = -1
-                        remotePaused = room.partnerPaused
+                        remotePaused = room.partnerPaused && room.internet == null
                         hud.releaseAll()
                         pad.releaseAll()
                         localMask = 0
@@ -1751,6 +1752,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             block = game.block,
             run = game.run,
             facingButton = !detecting,
+            menuGear = gameGoesOn,
         )
     }
 
@@ -1815,6 +1817,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val settings: Prefs get() = prefs
 
     val gameTitle: String get() = game.fullTitle
+
+    /** The game and the version played, for its picture (the pause menu). */
+    val playing: Pair<Game, String> get() = game to set
 
     // ----- Dialogs, pause, save states -----
 
@@ -1897,8 +1902,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
+    /** An internet room: the menu never pauses the game (nobody can stop a match), and only the host restarts or loads for everyone. */
+    val gameGoesOn: Boolean get() = room?.internet != null
+
+    /** Restart or load a save for everyone: anyone playing in a nearby room; only the host online. */
+    val canChangeGame: Boolean get() = room?.let { !it.watching && (it.internet == null || it.isOwner) } ?: true
+
     private fun pauseEmulation() {
         room?.let { r ->
+            if (r.internet != null) {
+                // Online the game goes on under the menu: the player just stops pressing.
+                hud.releaseAll()
+                pad.releaseAll()
+                localMask = 0
+                return
+            }
             // Everyone waits while a player's menu is open (a watcher's stops nobody).
             hud.releaseAll()
             pad.releaseAll()

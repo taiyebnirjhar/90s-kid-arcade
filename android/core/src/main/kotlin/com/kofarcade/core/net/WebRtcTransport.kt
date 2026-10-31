@@ -224,10 +224,20 @@ class WebRtcTransport(
         private val waysIn = java.util.Collections.synchronizedSet(HashSet<String>())
 
         // "rtc: phone2 way out: relay" the first time a kind of candidate goes or comes.
-        fun noteWay(sdp: String, out: Boolean) {
-            val kind = sdp.split(" ").let { f -> f.getOrNull(f.indexOf("typ") + 1) } ?: return
+        fun noteWay(sdp: String, out: Boolean, held: Boolean = false) {
+            val f = sdp.split(" ")
+            val kind = f.getOrNull(f.indexOf("typ") + 1) ?: return
+            // A host way's kind of address too (private, public, IPv6, mDNS): never the address.
+            val addr = f.getOrNull(4).orEmpty()
+            val what = if (kind != "host") kind else "host " + when {
+                addr.endsWith(".local") -> "mdns"
+                ":" in addr -> "ipv6"
+                PrivateCandidates.localOnly(addr) -> "private"
+                else -> "public"
+            }
+            val label = if (held) "$what (kept back)" else what
             val seen = if (out) waysOut else waysIn
-            if (seen.add(kind)) NetLog.add("rtc: $id way ${if (out) "out" else "in"}: $kind")
+            if (seen.add(label)) NetLog.add("rtc: $id way ${if (out) "out" else "in"}: $label")
         }
 
         // Whether the channels are open: read by waiting threads, so under [lock].
@@ -528,7 +538,15 @@ class WebRtcTransport(
             override fun onCandidate(candidate: Candidate) {
                 val g = gen
                 // An open room: the internet address (and any candidate carrying it) stays here.
-                val sdp = if (hideAddresses) PrivateCandidates.candidate(candidate.sdp) ?: return else candidate.sdp
+                val sdp = if (hideAddresses) {
+                    PrivateCandidates.candidate(candidate.sdp) ?: run {
+                        // Kept back (it would tell strangers this phone's internet address): said, without the address.
+                        if (current()) noteWay(candidate.sdp, out = true, held = true)
+                        return
+                    }
+                } else {
+                    candidate.sdp
+                }
                 if (current()) noteWay(sdp, out = true)
                 if (current()) signalSafely(Signal(Signal.CANDIDATE, self, id, gen = g, sdp = sdp, mid = candidate.mid, index = candidate.index))
             }

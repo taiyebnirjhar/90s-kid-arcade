@@ -792,6 +792,20 @@ Without notifications (2.3), an invite shows on the friend's Home screen
   limits on them, come with the lobby.
 - **3.4 Lobby and Live now, 3.5 bots:** later.
 
+**No pausing online (2026-11-01, the owner's ask):** in an internet room
+the menu doesn't stop the game: its button is a gear, the menu says "the
+game goes on", the player's buttons let go, and a pause from an older app
+is ignored, so nobody can freeze a match to stall or cheat. Restart and
+load for everyone are the host's alone online. Nearby rooms are as before.
+
+**Live test (2026-11-01):** `LiveOnlineTest` plays a locked room between
+two guests of the live project with real WebRTC (sign-in, code, Realtime
+signaling, relay credentials, 300 frames each way, chat, voice on and off,
+friends): it passes. An open room can't connect from a cloud sandbox (a
+public address, kept back, and no way to the relay), so the connection log
+now names each way's kind ("host public (kept back)", "relay"), never the
+address: the phones' problem reports will show whether their relay worked.
+
 **Problem reports (2026-10-31, the owner's ask: players never send them):**
 a phone that's been online sends its connection log by itself when a join
 fails, a room can't be made, or a room is lost or ends

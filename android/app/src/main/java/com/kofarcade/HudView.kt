@@ -159,6 +159,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val block: Boolean = false,
         /** Pushing the stick to its edge left or right runs. */
         val run: Boolean = false,
+        /** An internet room: the menu doesn't pause the game, so its button is a gear, not pause. */
+        val menuGear: Boolean = false,
     )
 
     var state = State()
@@ -751,10 +753,28 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private fun drawPause(canvas: Canvas, el: El) {
         glass(canvas, el, glow = Color.WHITE)
         fill.color = Color.WHITE
+        if (state.menuGear) {
+            drawGear(canvas, el.cx, el.cy, 7.5f * d)
+            return
+        }
         val bw = 3.4f * d
         val bh = 11 * d
         canvas.drawRoundRect(el.cx - 4.5f * d - bw / 2, el.cy - bh / 2, el.cx - 4.5f * d + bw / 2, el.cy + bh / 2, d, d, fill)
         canvas.drawRoundRect(el.cx + 4.5f * d - bw / 2, el.cy - bh / 2, el.cx + 4.5f * d + bw / 2, el.cy + bh / 2, d, d, fill)
+    }
+
+    // A cog: eight teeth round a ring.
+    private fun drawGear(canvas: Canvas, cx: Float, cy: Float, r: Float) {
+        val tooth = r * 0.34f
+        for (i in 0 until 8) {
+            canvas.save()
+            canvas.rotate(i * 45f, cx, cy)
+            canvas.drawRect(cx - tooth / 2, cy - r - tooth * 0.55f, cx + tooth / 2, cy - r + tooth * 0.6f, fill)
+            canvas.restore()
+        }
+        ring.color = Color.WHITE
+        ring.strokeWidth = r * 0.42f
+        canvas.drawCircle(cx, cy, r * 0.72f, ring)
     }
 
     private fun drawPill(canvas: Canvas, el: El) {

@@ -140,6 +140,12 @@ fun PauseContent(
     /** The game's sound, and its quick switch (the menu stays open). */
     soundOn: Boolean = true,
     onSound: () -> Unit = {},
+    /** An internet room: the menu doesn't stop the game. */
+    goesOn: Boolean = false,
+    /** Restart and load for everyone may be offered (online: the host only). */
+    canChangeGame: Boolean = true,
+    /** The game's picture, by its name (games without a fighter to show). */
+    picture: (@Composable () -> Unit)? = null,
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -172,13 +178,13 @@ fun PauseContent(
                 if (netplay) item("Room & players", onClick = onRoom)
                 // Save states. In a room, a player's save is loaded for everyone (the host checks it first).
                 item("Save state", onClick = onSave)
-                if (!netplay) item("Load state", onClick = onLoad) else if (!watching) item("Load state for everyone", onClick = onLoad)
+                if (!netplay) item("Load state", onClick = onLoad) else if (!watching && canChangeGame) item("Load state for everyone", onClick = onLoad)
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
                 item(if (soundOn) "Sound: on" else "Sound: off", onClick = onSound)
                 item("Settings", onClick = onControls)
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
-                if (netplay && !watching) item("Restart for everyone", onClick = onRestart)
+                if (netplay && !watching && canChangeGame) item("Restart for everyone", onClick = onRestart)
                 // Alone the game goes on where you left it; this starts it afresh.
                 if (!netplay) item("Start over", onClick = onRestart)
                 item(if (netplay) "Leave the game" else "Quit to game list", danger = true, onClick = onQuit)
@@ -198,7 +204,11 @@ fun PauseContent(
                     .padding(start = 40.dp, end = 30.dp),
             ) {
                 Text(
-                    if (watching) "WATCHING" else "PAUSED",
+                    when {
+                        watching -> "WATCHING"
+                        goesOn -> "MENU"
+                        else -> "PAUSED"
+                    },
                     color = Color.White,
                     fontSize = if (narrow) 34.sp else 44.sp,
                     fontWeight = FontWeight.Black,
@@ -208,7 +218,7 @@ fun PauseContent(
             }
             if (netplay) {
                 Text(
-                    (if (watching) "The game goes on" else "For everyone").uppercase(),
+                    (if (watching || goesOn) "The game goes on" else "For everyone").uppercase(),
                     color = Ink,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Black,
@@ -225,16 +235,23 @@ fun PauseContent(
                     .slantPanel(left = 14.dp, right = 0.dp, alpha = 0.75f)
                     .padding(start = 26.dp, end = 30.dp, top = 8.dp, bottom = 8.dp),
             ) {
-                Text(
-                    title.uppercase(),
-                    color = Palette.gold,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic,
-                    letterSpacing = 1.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        title.uppercase(),
+                        color = Palette.gold,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        fontStyle = FontStyle.Italic,
+                        letterSpacing = 1.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (fighter == null && picture != null) {
+                        Spacer(Modifier.width(10.dp))
+                        Box(Modifier.size(width = 64.dp, height = 44.dp).clip(RoundedCornerShape(6.dp))) { picture() }
+                    }
+                }
                 if (fighter != null) {
                     Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
