@@ -1818,6 +1818,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     val gameTitle: String get() = game.fullTitle
 
+    /** The game and the version played, for its picture (the pause menu). */
+    val playing: Pair<Game, String> get() = game to set
+
     // ----- Dialogs, pause, save states -----
 
     fun show(d: GameDialog) {

@@ -464,6 +464,38 @@ class UiSnapshots {
         }
     }
 
+    // Every kind of game's pause menu: a fighter with its face, action games with their picture, and online (the game goes on).
+    @Test
+    fun pauseEveryKind() {
+        landscape()
+        for ((id, fighter) in listOf("mslug" to null, "dino" to null, "snowbros" to null, "moomesa" to null, "garou" to "Terry Bogard")) {
+            val g = gameById(id)!!
+            shot("pause_$id") {
+                GameBehind {
+                    PauseContent(
+                        g.fullTitle, fighter, false, {}, {}, {}, {}, {}, {}, {}, {},
+                        playback = "60.00 frames a second, with the screen (60 Hz).",
+                        picture = { ArtImage(g, g.sets.first(), com.kofarcade.core.Art.TITLE, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop, label = false) },
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun pauseOnline() {
+        landscape()
+        shot("pause_online") {
+            Box(Modifier.fillMaxSize()) {
+                Hud()
+                PauseContent(
+                    "KOF '97", "Iori Yagami", true, {}, {}, {}, {}, {}, {}, {}, {},
+                    roomInfo = "Room K7Q-2MX · 2 of 2 playing", roomStatus = "ping 48 ms", goesOn = true, canChangeGame = false,
+                )
+            }
+        }
+    }
+
     @Test
     fun roster() {
         landscape()

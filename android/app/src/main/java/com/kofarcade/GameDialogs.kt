@@ -267,6 +267,10 @@ private fun PauseMenu(game: GameActivity) {
             soundOn = game.soundOn,
             onSound = { game.toggleSound() },
             goesOn = game.gameGoesOn,
+            picture = {
+                val (g, set) = game.playing
+                ArtImage(g, set, com.kofarcade.core.Art.TITLE, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop, label = false)
+            },
             canChangeGame = game.canChangeGame,
             onResume = { game.close() },
             onRestart = { game.restartGame() },

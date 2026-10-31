@@ -144,6 +144,8 @@ fun PauseContent(
     goesOn: Boolean = false,
     /** Restart and load for everyone may be offered (online: the host only). */
     canChangeGame: Boolean = true,
+    /** The game's picture, by its name (games without a fighter to show). */
+    picture: (@Composable () -> Unit)? = null,
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -233,16 +235,23 @@ fun PauseContent(
                     .slantPanel(left = 14.dp, right = 0.dp, alpha = 0.75f)
                     .padding(start = 26.dp, end = 30.dp, top = 8.dp, bottom = 8.dp),
             ) {
-                Text(
-                    title.uppercase(),
-                    color = Palette.gold,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic,
-                    letterSpacing = 1.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        title.uppercase(),
+                        color = Palette.gold,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        fontStyle = FontStyle.Italic,
+                        letterSpacing = 1.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (fighter == null && picture != null) {
+                        Spacer(Modifier.width(10.dp))
+                        Box(Modifier.size(width = 64.dp, height = 44.dp).clip(RoundedCornerShape(6.dp))) { picture() }
+                    }
+                }
                 if (fighter != null) {
                     Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
