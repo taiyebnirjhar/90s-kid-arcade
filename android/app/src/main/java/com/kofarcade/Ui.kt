@@ -107,7 +107,7 @@ fun ArcadeScreen(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(Palette.panel)
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(Palette.panel)
                     .border(1.dp, Palette.line, CircleShape).clickable(onClick = onBack)
                     .semantics { contentDescription = "Back"; role = Role.Button },
             ) { BackIcon(Modifier.size(14.dp)) }
@@ -474,7 +474,7 @@ private fun RoundKey(text: String, enabled: Boolean, onClick: () -> Unit) {
 fun ArcadeField(
     value: String,
     onChange: (String) -> Unit,
-    label: String,
+    label: String?,
     modifier: Modifier = Modifier,
     placeholder: String = "",
     password: Boolean = false,
@@ -486,8 +486,10 @@ fun ArcadeField(
     var shown by remember { mutableStateOf(false) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
     Column(modifier.fillMaxWidth()) {
-        Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-        Spacer(Modifier.height(6.dp))
+        if (label != null) {
+            Text(label, color = Palette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Spacer(Modifier.height(6.dp))
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.bg)

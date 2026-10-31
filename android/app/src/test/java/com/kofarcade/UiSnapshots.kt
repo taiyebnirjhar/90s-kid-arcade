@@ -941,11 +941,11 @@ class UiSnapshots {
                     friends = listOf(
                         com.kofarcade.core.online.Friend("1", "Tanu", 4, com.kofarcade.core.online.Friend.Status.INCOMING),
                         com.kofarcade.core.online.Friend("2", "Rafi", 2, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, playing = "kof97", room = "K7Q2MX", roomSpace = true),
-                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true),
-                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND),
+                        com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true, unread = 2, lastMessage = "rematch tonight?"),
+                        com.kofarcade.core.online.Friend("4", "Shuvo", 30, com.kofarcade.core.online.Friend.Status.FRIEND, lastSeenMs = System.currentTimeMillis() - 3 * 3_600_000L),
                         com.kofarcade.core.online.Friend("5", "Nabil", 12, com.kofarcade.core.online.Friend.Status.OUTGOING),
                     ),
-                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0)),
+                    invites = listOf(com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0, challenge = true)),
                 )
         shot("online_friends") {
             Column(Modifier.padding(16.dp)) {
@@ -954,6 +954,58 @@ class UiSnapshots {
             }
         }
     }
+
+    private val chatFriend = com.kofarcade.core.online.Friend("3", "Mim", 9, com.kofarcade.core.online.Friend.Status.FRIEND, online = true)
+    private val chatMessages = listOf(
+        com.kofarcade.core.online.FriendMessage(1, false, "you up for some KOF?", 0, true),
+        com.kofarcade.core.online.FriendMessage(2, true, "Play now?", 0, true),
+        com.kofarcade.core.online.FriendMessage(3, false, "5 min, finishing dinner", 0, true),
+        com.kofarcade.core.online.FriendMessage(4, true, "ok, challenge me when you're back. I'm taking Iori this time", 0, false),
+    )
+
+    @Test
+    fun friendChat() = shot("friend_chat") {
+        FriendChatScreen(chatFriend, chatMessages, "", {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun friendChatEmpty() = shot("friend_chat_empty") {
+        FriendChatScreen(chatFriend.copy(online = false, lastSeenMs = System.currentTimeMillis() - 20 * 60_000L), emptyList(), "", {}, {}, {}, {}, {})
+    }
+
+    @Test
+    fun friendChatLandscape() {
+        landscape()
+        shot("friend_chat_landscape") { FriendChatScreen(chatFriend.copy(room = "K7Q2MX", roomSpace = true), chatMessages, "gg", {}, {}, {}, {}, {}) }
+    }
+
+    @Test
+    fun homeFriendNews() = shot("home_friend_news") {
+        Box(Modifier.fillMaxSize()) {
+            HomeScreen(homeUi.copy(onlineBadge = 3), {}, {}, {}, {}, {}, {})
+            FriendNewsBanner(
+                com.kofarcade.core.online.FriendNews(
+                    invites = 1,
+                    invite = com.kofarcade.core.online.Invite(9, "2", "Rafi", 2, "K7Q2MX", "kof97", 0, challenge = true),
+                ),
+                {}, {}, Modifier.align(Alignment.BottomCenter).padding(16.dp),
+            )
+        }
+    }
+
+    @Test
+    fun homeFriendMessage() = shot("home_friend_message") {
+        Box(Modifier.fillMaxSize()) {
+            HomeScreen(homeUi.copy(onlineBadge = 1), {}, {}, {}, {}, {}, {})
+            FriendNewsBanner(
+                com.kofarcade.core.online.FriendNews(unread = 1, message = com.kofarcade.core.online.NewsMessage(4, "3", "Mim", 9, "rematch tonight? I've been practising")),
+                {}, {}, Modifier.align(Alignment.BottomCenter).padding(16.dp),
+            )
+        }
+    }
+
+    @Test
+    fun pickGameChallenge() = shot("pick_challenge") { PickGameScreen(picks, {}, {}, {}, online = true, challenge = "Mim") }
 
     @Test fun gameOnJoining() = shot("game_on_joining") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}) }
 

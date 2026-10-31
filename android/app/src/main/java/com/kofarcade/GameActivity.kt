@@ -134,7 +134,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         private const val SPEAKING_MS = 300L
         private const val SPEAKING_LEVEL = 0.02
         // Friends are told what this phone plays this often (they see it for 2 minutes).
-        private const val PRESENCE_MS = 60_000L
+        private const val PRESENCE_MS = 20_000L
         private const val CORE = "libfbneo_libretro_android.so"
         // How often a seat's "in the fight" byte is looked at (Game.seats with a countdown).
         private const val SEAT_SAMPLE_MS = 500L
@@ -915,10 +915,34 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Only while on screen: in the background, friends see it go offline.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // What's new from friends comes with it: a challenge or message is said over the game, once.
+                var seenInvite = Long.MAX_VALUE
+                var seenMessage = Long.MAX_VALUE
                 while (isActive) {
                     val r = room
                     val code = r?.key?.takeIf { r.internet != null }
-                    withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).presence(set, code) } }
+                    val news = withContext(Dispatchers.IO) { runCatching { Online.friends(this@GameActivity).news(set, code) }.getOrNull() }
+                    if (news != null) {
+                        // The first ask only learns what's already there (not news to this game).
+                        if (seenInvite == Long.MAX_VALUE) {
+                            seenInvite = news.invite?.id ?: 0L
+                            seenMessage = news.message?.id ?: 0L
+                        } else {
+                            news.invite?.takeIf { it.id > seenInvite && it.room != code }?.let { inv ->
+                                seenInvite = inv.id
+                                val title = com.kofarcade.core.gameForSet(inv.set)?.fullTitle ?: inv.set
+                                announce(
+                                    (if (inv.challenge) "${inv.name} challenges you to $title" else "${inv.name} invites you to $title") +
+                                        ": back to the menu to join",
+                                    big = true,
+                                )
+                            }
+                            news.message?.takeIf { it.id > seenMessage }?.let { m ->
+                                seenMessage = m.id
+                                announce("${m.name}: ${m.body.take(60)}")
+                            }
+                        }
+                    }
                     delay(PRESENCE_MS)
                 }
             }

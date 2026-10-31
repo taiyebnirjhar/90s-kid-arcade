@@ -89,6 +89,8 @@ data class HomeUi(
     /** Your profile's name and icon, once made (else the chip just says Profile). */
     val profileName: String? = null,
     val profileIcon: Int? = null,
+    /** Things from friends waiting (requests, messages, invites): a badge on Online. */
+    val onlineBadge: Int = 0,
 )
 
 /**
@@ -116,7 +118,7 @@ fun HomeScreen(
         val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         val chips: @Composable () -> Unit = {
-            HeaderChip("Online", gold = true, onClick = onTwoPlayer)
+            HeaderChip("Online", gold = true, badge = ui.onlineBadge, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
@@ -177,7 +179,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, onClick: () -> Unit) {
+private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, warn: Boolean = false, badge: Int = 0, onClick: () -> Unit) {
     // The hero's button is the gold one: Online is gold-edged beside it, not filled.
     val source = remember { MutableInteractionSource() }
     Row(
@@ -202,6 +204,10 @@ private fun HeaderChip(text: String, gold: Boolean = false, dot: Color? = null, 
             fontWeight = FontWeight.Black,
             letterSpacing = 1.sp,
         )
+        if (badge > 0) {
+            Spacer(Modifier.width(8.dp))
+            CountBadge(badge, color = Palette.red)
+        }
     }
 }
 
