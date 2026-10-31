@@ -580,6 +580,7 @@ private fun ControlsSettings(game: GameActivity) {
     val p = game.settings
     var look by remember { mutableStateOf(p.look()) }
     var info by remember { mutableStateOf(p.detectInfo) }
+    var reports by remember { mutableStateOf(p.problemReports) }
 
     // Every change shows on the game right away; Save keeps it, Cancel puts
     // back what was saved.
@@ -596,6 +597,8 @@ private fun ControlsSettings(game: GameActivity) {
             canDetect = game.canDetect,
             canRapid = game.hasRapidFire,
             detectInfo = info,
+            problemReports = reports,
+            onProblemReports = { reports = it },
             onDetectInfo = { info = it },
             onCancel = ::cancel,
             onSave = {
@@ -617,6 +620,7 @@ private fun ControlsSettings(game: GameActivity) {
                 p.voiceVolume = look.voiceVolume
                 p.micOpen = look.micOpen
                 p.detectInfo = info
+                p.problemReports = reports
                 game.applyPrefs()
                 game.close()
             },

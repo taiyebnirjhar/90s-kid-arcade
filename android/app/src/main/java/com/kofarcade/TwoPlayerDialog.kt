@@ -110,7 +110,7 @@ data class HostChoice(
  * Which FBNeo build this app runs (a hash of the core library), so phones
  * with different builds don't join a game they'd play a little differently.
  */
-private fun emulatorBuild(context: Context): String = runCatching {
+fun emulatorBuild(context: Context): String = runCatching {
     val core = java.io.File(context.applicationInfo.nativeLibraryDir, "libfbneo_libretro_android.so")
     val digest = java.security.MessageDigest.getInstance("SHA-256")
     core.inputStream().use { input ->
@@ -194,6 +194,7 @@ fun TwoPlayerDialog(
             } catch (e: Exception) {
                 val why = (e as? OnlineError)?.let(::explainRoomTrouble) ?: e.message ?: e.javaClass.simpleName
                 if (isActive) android.widget.Toast.makeText(context, "Couldn't open a room: $why", android.widget.Toast.LENGTH_LONG).show()
+                Online.reportProblem(context, "host", null, e)
             } finally {
                 opening = false
             }
@@ -488,6 +489,7 @@ private fun Hub(
                         "Couldn't join: ${e.message ?: e.javaClass.simpleName}"
                     }
                     say(why, "Send report") { shareJoinReport(context, clean, e) }
+                    Online.reportProblem(context, "join", clean, e)
                 }
             }
             busy = false

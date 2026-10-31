@@ -282,6 +282,10 @@ Home → **Online**.
   sheet, invite friends who are online; an invite shows at the top of
   their Online screen. **Block** works both ways: a blocked player can't
   find you, ask you or invite you.
+- **Problem reports**: when a join fails or a room is lost, the phone
+  sends its connection log to the app's maker by itself (only once you've
+  been online; Settings → Screen turns it off). It holds what the
+  connection tried, the phone's model and the room's code, nothing else.
 - **Quick match** (Online screen): into an open room of a game you have
   (one with a free seat first); with none, yours opens for anyone.
 - **Play from a saved state**: the host or any player picks **Load state

@@ -27,3 +27,22 @@ class Reports(private val supa: Supabase) {
         })
     }
 }
+
+/**
+ * Problem reports (send_problem_report, 20261101000200_problem_reports.sql):
+ * a phone's connection log, sent by itself when joining fails or a room is
+ * lost, for the owner to read in Supabase's dashboard.
+ */
+class ProblemReports(private val supa: Supabase) {
+    /** What went wrong ([kind]: join, host, lost, ended), on which [app] build and [phone], in [room], with this [log]. */
+    fun send(kind: String, app: String?, phone: String?, room: String?, error: String?, log: String) {
+        supa.rpc("send_problem_report", buildJsonObject {
+            put("kind", kind)
+            put("app", app?.take(64))
+            put("phone", phone?.take(128))
+            put("room", room?.take(32))
+            put("error", error?.take(1000))
+            put("log", log.takeLast(32_000))
+        })
+    }
+}

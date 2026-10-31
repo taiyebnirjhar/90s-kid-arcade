@@ -303,6 +303,11 @@ class Prefs(context: Context) {
 
     fun setLibrarySet(file: String, set: String?) = sp.edit().putString("lib.$file", set).apply()
 
+    /** Multiplayer problems (a join that fails, a room lost) send the connection log to the app's maker by themselves. */
+    var problemReports: Boolean
+        get() = sp.getBoolean("problemReports", true)
+        set(v) = sp.edit().putBoolean("problemReports", v).apply()
+
     /** Shows what detection reads, to check it (and map unknown fighters) on a phone. */
     var detectInfo: Boolean
         get() = sp.getBoolean("detectInfo", false)

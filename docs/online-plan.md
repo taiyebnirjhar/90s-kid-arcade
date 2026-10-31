@@ -792,6 +792,14 @@ Without notifications (2.3), an invite shows on the friend's Home screen
   limits on them, come with the lobby.
 - **3.4 Lobby and Live now, 3.5 bots:** later.
 
+**Problem reports (2026-10-31, the owner's ask: players never send them):**
+a phone that's been online sends its connection log by itself when a join
+fails, a room can't be made, or a room is lost or ends
+(`20261101000200_problem_reports.sql`); read in the dashboard (see
+[online-setup.md](online-setup.md#reading-problem-reports)). Within the free
+plan: 20 a day from a player, 20,000 in 30 days in all, logs cut to 32 KB,
+kept 30 days.
+
 ## Step 2: Friends
 
 - Add a friend by code or after a match. Requests are accepted or declined.

@@ -120,3 +120,16 @@ Public values only; they're in the app (`android/app/build.gradle.kts`) since ph
 - [x] `CF_TURN_KEY_ID` and `CF_TURN_KEY_TOKEN` saved as Supabase secrets
 - [x] `CF_ANALYTICS_TOKEN` (Account Analytics: Read) and `CF_ACCOUNT_ID` saved as Supabase secrets
 - [x] Server parts on the project: GitHub secrets for automatic deploys (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`); first deployed 2026-10-29
+
+## Reading problem reports
+
+Phones send their connection log by themselves when joining fails, a room
+can't be made, or a room is lost or ends badly (only phones that have been
+online before; players can turn it off in Settings, Screen). To read them:
+Supabase dashboard → **Table Editor** → `problem_reports`, newest last (sort
+by `created_at`). Each row says what went wrong (`kind`: join, host, lost,
+ended), the app build, the phone, the room's code, the error, and the log:
+which ways each phone offered and got (`rtc: … way out: relay`), whether
+it connected, and why it gave up. Player reports (chat, voice) are in
+`reports`. Both keep 30 days at most within the free plan: 20 problem
+reports a day from a player, 20,000 a month in all.

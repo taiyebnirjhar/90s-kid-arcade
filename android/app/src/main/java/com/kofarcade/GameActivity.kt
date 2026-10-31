@@ -1349,6 +1349,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
      */
     private fun reconnect(lost: Room, reason: String) {
         if (isFinishing || room !== lost || reconnecting?.isActive == true) return
+        Online.reportProblem(this, "lost", roomUi?.key, reason = reason)
         netLost = true
         applyNetFreeze()
         announce(reason)
@@ -1414,6 +1415,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun netEnded(reason: String) {
         if (isFinishing) return
+        Online.reportProblem(this, "ended", roomUi?.key, reason = reason)
         room?.close()
         micOn = false
         canVoice = false
