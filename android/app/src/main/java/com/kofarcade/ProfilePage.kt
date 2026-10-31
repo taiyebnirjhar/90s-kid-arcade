@@ -223,7 +223,7 @@ fun ProfileScreen(
             }
             Spacer(Modifier.height(24.dp))
             Text(
-                "A guest profile, kept on this phone. Wins show here once public play comes.",
+                "A guest profile, kept on this phone. Wins show here once public play comes.\n90s Kid Arcade ${BuildConfig.VERSION_NAME}",
                 color = Palette.muted.copy(alpha = 0.8f),
                 fontSize = 12.sp,
                 lineHeight = 17.sp,

@@ -467,7 +467,7 @@ private fun Hub(
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
-                    "app builds" in m || "app versions" in m -> say(m, "Get the latest app") {
+                    "app builds" in m || "app versions" in m -> say("$m This phone has ${BuildConfig.VERSION_NAME}.", "Get the latest app") {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(APP_DOWNLOAD)))
                     }
                     "differs" in m -> say(m, "Open the library", onAction = onLibrary)
@@ -561,7 +561,7 @@ private fun Hub(
             } catch (e: Refused) {
                 val m = e.message.orEmpty()
                 when {
-                    "app builds" in m || "app versions" in m -> say(m, "Get the latest app") {
+                    "app builds" in m || "app versions" in m -> say("$m This phone has ${BuildConfig.VERSION_NAME}.", "Get the latest app") {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(APP_DOWNLOAD)))
                     }
                     "differs" in m -> say(m, "Open the library", onAction = onLibrary)

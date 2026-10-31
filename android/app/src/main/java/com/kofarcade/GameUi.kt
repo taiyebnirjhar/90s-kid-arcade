@@ -434,6 +434,7 @@ fun ControlsPanel(
                         PickRow("Picture", ScreenMode.entries, look.screen, { it.short }, sub = look.screen.label) { onLook(look.copy(screen = it)) }
                         if (canDetect) ToggleRow("Detection readout", detectInfo, onDetectInfo, sub = "For checking fighter detection works")
                         ToggleRow("Send problem reports", problemReports, onProblemReports, sub = "A join or room that fails sends its connection log, to fix it")
+                        Text("90s Kid Arcade ${BuildConfig.VERSION_NAME}", color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp))
                     }
                     SettingsTab.CONTROLS -> {
                         PickRow("Stick", StickMode.entries, look.stick, { it.short }, sub = look.stick.label) { onLook(look.copy(stick = it)) }

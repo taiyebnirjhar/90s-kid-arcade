@@ -89,7 +89,7 @@ object Online {
                 com.kofarcade.core.online.ProblemReports(supabase!!).send(
                     kind,
                     runCatching { emulatorBuild(app) }.getOrNull(),
-                    "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}",
+                    "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}, app ${BuildConfig.VERSION_NAME}",
                     room,
                     error?.let { "${it.javaClass.simpleName}: ${it.message}" } ?: reason,
                     log,
