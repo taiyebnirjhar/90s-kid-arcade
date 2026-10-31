@@ -266,6 +266,8 @@ private fun PauseMenu(game: GameActivity) {
             onReport = { game.shareConnectionReport() },
             soundOn = game.soundOn,
             onSound = { game.toggleSound() },
+            goesOn = game.gameGoesOn,
+            canChangeGame = game.canChangeGame,
             onResume = { game.close() },
             onRestart = { game.restartGame() },
             onSave = { game.saveState() },
