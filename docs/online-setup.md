@@ -133,3 +133,20 @@ which ways each phone offered and got (`rtc: … way out: relay`), whether
 it connected, and why it gave up. Player reports (chat, voice) are in
 `reports`. Both keep 30 days at most within the free plan: 20 problem
 reports a day from a player, 20,000 a month in all.
+
+### A reader account (for fixing problems from outside the dashboard)
+
+One account can read problem reports (`read_problem_reports`) and nothing
+else, so they can be read without the dashboard:
+
+1. Supabase dashboard → **Authentication** → **Users** → **Add user** →
+   **Create new user**: an email (any, e.g. `reports@yourdomain`) and a
+   strong password, **Auto Confirm User** on.
+2. Copy that user's **User UID** (click the user).
+3. **SQL Editor** → run (with the UID):
+   `insert into public.problem_readers (id) values ('THE-USER-UID');`
+4. Reading: sign in with that email and password
+   (`POST /auth/v1/token?grant_type=password`, the app's public key), then
+   `POST /rest/v1/rpc/read_problem_reports` with `{"days": 3}`.
+
+To take it away: `delete from public.problem_readers;` (or delete the user).
