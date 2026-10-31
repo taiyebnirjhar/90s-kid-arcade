@@ -159,13 +159,17 @@ fun TwoPlayerDialog(
     var opening by remember { mutableStateOf(false) }
     // Online rooms: open (listed, anyone joins) or locked (only with the code), as last picked.
     var openRoom by remember { mutableStateOf(Prefs(context).openRooms) }
+    // Making a room: the GAME ON screen, and the job, to cancel.
+    var making by remember { mutableStateOf("") }
+    var hostWork by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     // Opens a room for the game and starts playing; the game screen shows its key
     // (or, [online], its code: the room is made on the server, friends anywhere join).
     fun host(game: Game, set: String, online: Boolean) {
         if (opening) return
         opening = true
-        scope.launch {
+        making = if (online) "Making your room…" else "Opening your room on this Wi-Fi…"
+        hostWork = scope.launch {
             try {
                 // Never dropped half-made: if the screen's gone by the time
                 // the room is open, it's closed again.
@@ -239,6 +243,13 @@ fun TwoPlayerDialog(
             }
         }
     }
+    if (opening) {
+        GameOnLoading(making, onCancel = {
+            // A room made after this is closed again (host checks it's still wanted).
+            hostWork?.cancel()
+            opening = false
+        })
+    }
 }
 
 // The hub: finds rooms nearby, joins by key or by tap.
@@ -261,7 +272,11 @@ private fun Hub(
     var status by remember { mutableStateOf<MpStatus?>(null) }
     var action by remember { mutableStateOf<(() -> Unit)?>(null) }
     var busy by remember { mutableStateOf(false) }
+    // While joining: what's happening (the GAME ON screen), and the join, to cancel.
+    var loading by remember { mutableStateOf<String?>(null) }
+    var work by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val scope = rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(busy) { if (!busy) loading = null }
     // Gone from this screen: a join that's let in afterwards leaves at once.
     val left = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
@@ -318,8 +333,15 @@ private fun Hub(
     }
 
     fun say(text: String, actionLabel: String? = null, bad: Boolean = true, onAction: (() -> Unit)? = null) {
+        loading = null
         status = MpStatus(text, actionLabel, bad = bad)
         action = onAction
+    }
+
+    // Joining: the GAME ON screen, saying what's happening now.
+    fun step(text: String) {
+        status = null
+        loading = "$text…"
     }
 
     DisposableEffect(Unit) {
@@ -345,8 +367,8 @@ private fun Hub(
             return
         }
         busy = true
-        say("Joining ${found.beacon.name}'s room…", bad = false)
-        scope.launch {
+        step("Joining ${found.beacon.name}'s room")
+        work = scope.launch {
             try {
                 val room = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("$set.zip") ?: error("Can't read $set.zip")
@@ -400,8 +422,8 @@ private fun Hub(
             return
         }
         busy = true
-        say("Looking for room $key…", bad = false)
-        scope.launch {
+        step("Finding room $key")
+        work = scope.launch {
             try {
                 val found = withContext(Dispatchers.IO) {
                     val (ip, port) = target
@@ -427,8 +449,8 @@ private fun Hub(
     fun joinByCode(clean: String, nearby: (() -> Unit)?) {
         if (busy) return
         busy = true
-        say("Looking for room ${OnlineRooms.pretty(clean)}…", bad = false)
-        scope.launch {
+        step("Finding room ${OnlineRooms.pretty(clean)}")
+        work = scope.launch {
             try {
                 val rooms = Online.rooms(context)
                 val info = withContext(Dispatchers.IO) {
@@ -443,7 +465,7 @@ private fun Hub(
                     say("You need $what to join ${info.ownerName ?: "this"} room.", "Get it from the library", onAction = onLibrary)
                     return@launch
                 }
-                say("Joining ${info.ownerName ?: "the"} room…", bad = false)
+                step("Connecting to ${info.ownerName ?: "the"} room")
                 val online = withContext(NonCancellable + Dispatchers.IO) {
                     val rom = roms.fingerprint("${info.set}.zip") ?: error("Can't read ${info.set}.zip")
                     val bios = if (game.neoGeo) roms.fingerprint(BIOS) ?: error("Can't read the BIOS") else 0L
@@ -671,6 +693,14 @@ private fun Hub(
             }
         },
     )
+    loading?.let { text ->
+        GameOnLoading(text, onCancel = {
+            // Let go: a join that gets in after this leaves at once (the join checks).
+            work?.cancel()
+            busy = false
+            loading = null
+        })
+    }
 }
 
 /** What's typed as a friend code: letters and numbers, "K7Q2-MX8P". */

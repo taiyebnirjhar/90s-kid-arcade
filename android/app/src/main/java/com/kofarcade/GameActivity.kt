@@ -624,6 +624,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     var roomUi by mutableStateOf<RoomUi?>(null)
         private set
 
+    /**
+     * Getting into the room (joining, then the game catching up): what the
+     * connection's doing, for the GAME ON screen over the game; null once
+     * the game's on (later waits show in the small line in the middle).
+     */
+    val startingUp: String?
+        get() {
+            val r = room ?: return null
+            // The host opening its own room has its room sheet up instead (the code to share).
+            if (r.isOwner || (netStarted && !catchingUp) || netStatus.visibility != View.VISIBLE) return null
+            return netStatus.text?.toString()
+        }
+
+    /** Leaves while still getting in. */
+    fun cancelJoining() = finish()
+
     /** News over the game, gone by itself. */
     var announcement by mutableStateOf<Announcement?>(null)
         private set

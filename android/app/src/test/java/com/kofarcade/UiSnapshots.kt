@@ -928,6 +928,14 @@ class UiSnapshots {
         }
     }
 
+    @Test fun gameOnJoining() = shot("game_on_joining") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}) }
+
+    @Test
+    fun gameOnLandscape() {
+        landscape()
+        shot("game_on_landscape") { GameBehind { GameOnLoading("Joining Rafi's room…", onCancel = {}, overGame = true) } }
+    }
+
     @Test fun smallChatPanel() {
         smallLandscape()
         shot("small_chat_panel") {

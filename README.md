@@ -517,3 +517,5 @@ workflow), then `cd android && ./gradlew :app:assembleDebug`.
 
 GPL-3.0-or-later (LibretroDroid is GPL-3.0). FBNeo has its own
 non-commercial license.
+
+The app's GAME ON screen and the website use the font Barlow Condensed (Jeremy Tribby, SIL Open Font License 1.1).

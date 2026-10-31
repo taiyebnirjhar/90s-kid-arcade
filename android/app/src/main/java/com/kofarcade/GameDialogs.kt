@@ -72,6 +72,18 @@ import com.kofarcade.core.toArrows
 
 @Composable
 fun GameDialogs(game: GameActivity) {
+    // Getting into the room: the GAME ON screen (asked a few times a second: the connection's words change).
+    var starting by remember { mutableStateOf(game.startingUp) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            starting = game.startingUp
+            kotlinx.coroutines.delay(150)
+        }
+    }
+    starting?.let {
+        GameOnLoading(it, onCancel = { game.cancelJoining() }, overGame = true)
+        return
+    }
     if (game.editing) EditBar(game)
     RoomLayer(game)
     if (game.chatOpen) {

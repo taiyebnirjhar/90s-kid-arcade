@@ -72,12 +72,22 @@
   /* Hero */
   .hero { position: relative; padding: 18px 0 24px; overflow: hidden; }
   @media (min-width: 861px) { .hero { padding: 48px 0 32px; } }
+  /* Behind the phone: arcade calls scrolling by, row against row, like a cabinet's attract mode. */
   .hero .ghost {
-    position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+    position: absolute; left: 0; right: 0; top: 52%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 18px);
     font-family: var(--head); font-style: italic; font-weight: 900; text-transform: uppercase;
-    font-size: clamp(120px, 22vw, 330px); line-height: .8; white-space: nowrap; color: transparent;
-    -webkit-text-stroke: 1.5px rgba(241, 240, 247, .07); pointer-events: none; user-select: none;
+    font-size: clamp(84px, 16vw, 240px); line-height: .82; white-space: nowrap; color: transparent;
+    pointer-events: none; user-select: none; overflow: hidden;
   }
+  .hero .ghost .row { display: flex; width: max-content; -webkit-text-stroke: 1.5px rgba(241, 240, 247, .08); animation: marquee 38s linear infinite; }
+  .hero .ghost .row span { padding-right: .35em; }
+  .hero .ghost .row.back { animation-direction: reverse; animation-duration: 46s; }
+  .hero .ghost .row.gold { -webkit-text-stroke-color: rgba(232, 178, 26, .16); animation-duration: 54s; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+  /* Phones: behind the phone shot, below the words. */
+  @media (max-width: 860px) { .hero .ghost { top: 74%; } }
+  @media (prefers-reduced-motion: reduce) { .hero .ghost .row { animation: none; } }
   .hero .wrap { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
   @media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; gap: 48px; } }
   h1 { margin: 14px 0 18px; line-height: .86; font-size: clamp(64px, 11vw, 132px); }
@@ -322,7 +332,11 @@
 </header>
 
 <div class="hero">
-  <div class="ghost" aria-hidden="true">Play more</div>
+  <div class="ghost" aria-hidden="true">
+    <div class="row"><span>Play more · Insert coin · Play more · Insert coin · </span><span>Play more · Insert coin · Play more · Insert coin · </span></div>
+    <div class="row back gold"><span>Game on · Press start · Game on · Press start · </span><span>Game on · Press start · Game on · Press start · </span></div>
+    <div class="row"><span>Here comes a new challenger · Here comes a new challenger · </span><span>Here comes a new challenger · Here comes a new challenger · </span></div>
+  </div>
   <div class="wrap">
     <div>
       <div class="kicker">The arcade in your pocket</div>
