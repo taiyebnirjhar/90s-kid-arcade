@@ -219,6 +219,16 @@ class WebRtcTransport(
         private var lastAnswer: Sdp? = null
         // A new offer was wanted (voice changed) while another was out: made once that's answered.
         private var againLater = false
+        // Which kinds of way (host, srflx, relay) each side has told so far, for the connection log.
+        private val waysOut = java.util.Collections.synchronizedSet(HashSet<String>())
+        private val waysIn = java.util.Collections.synchronizedSet(HashSet<String>())
+
+        // "rtc: phone2 way out: relay" the first time a kind of candidate goes or comes.
+        fun noteWay(sdp: String, out: Boolean) {
+            val kind = sdp.split(" ").let { f -> f.getOrNull(f.indexOf("typ") + 1) } ?: return
+            val seen = if (out) waysOut else waysIn
+            if (seen.add(kind)) NetLog.add("rtc: $id way ${if (out) "out" else "in"}: $kind")
+        }
 
         // Whether the channels are open: read by waiting threads, so under [lock].
         private val lock = Object()
@@ -268,7 +278,10 @@ class WebRtcTransport(
                 while (!(reliableOpen && quickOpen)) {
                     if (closed) throw SocketException("Closed")
                     val now = System.nanoTime()
-                    if (now >= until) throw SocketTimeoutException("connect timed out")
+                    if (now >= until) {
+                        NetLog.add("rtc: $id not connected in time (ways out: ${waysOut.sorted().joinToString().ifEmpty { "none" }}; in: ${waysIn.sorted().joinToString().ifEmpty { "none" }})")
+                        throw SocketTimeoutException("connect timed out")
+                    }
                     // Asked again now and then: a hello can be lost while the other phone starts.
                     if (now - asked > HELLO_AGAIN_NS) {
                         asked = now
@@ -298,6 +311,8 @@ class WebRtcTransport(
             answeredBy = null
             offeredBy = null
             againLater = false
+            waysOut.clear()
+            waysIn.clear()
             val events = Events()
             val made = rtc.peer(iceServers(), events)
             made.setVoice(voiceOn)
@@ -425,6 +440,7 @@ class WebRtcTransport(
             val target = pc ?: return@act
             if (s.gen != gen) return@act
             val c = Candidate(s.mid, s.index, sdp)
+            noteWay(sdp, out = false)
             if (remoteSet && early.isEmpty()) target.addCandidate(c) else early += c
         }
 
@@ -513,6 +529,7 @@ class WebRtcTransport(
                 val g = gen
                 // An open room: the internet address (and any candidate carrying it) stays here.
                 val sdp = if (hideAddresses) PrivateCandidates.candidate(candidate.sdp) ?: return else candidate.sdp
+                if (current()) noteWay(sdp, out = true)
                 if (current()) signalSafely(Signal(Signal.CANDIDATE, self, id, gen = g, sdp = sdp, mid = candidate.mid, index = candidate.index))
             }
 

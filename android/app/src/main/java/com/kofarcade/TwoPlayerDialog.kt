@@ -480,7 +480,15 @@ private fun Hub(
             } catch (e: OnlineError) {
                 say(explainRoomTrouble(e))
             } catch (e: Exception) {
-                if (isActive) say("Couldn't join: ${e.message ?: e.javaClass.simpleName}")
+                // The phones didn't reach each other: what the connection tried, to send.
+                if (isActive) {
+                    val why = if (e is java.net.SocketTimeoutException || "timed out" in e.message.orEmpty()) {
+                        "Couldn't reach the room's phones in time. Try again; if it keeps happening, send the report."
+                    } else {
+                        "Couldn't join: ${e.message ?: e.javaClass.simpleName}"
+                    }
+                    say(why, "Send report") { shareJoinReport(context, clean, e) }
+                }
             }
             busy = false
         }
@@ -1000,4 +1008,20 @@ private fun CardGrid(count: Int, card: @Composable (Int) -> Unit) {
             }
         }
     }
+}
+
+/** A join that failed: the connection log (what each way tried), to send to the app's maker. */
+fun shareJoinReport(context: Context, code: String, e: Throwable) {
+    val report = buildString {
+        appendLine("90s Kid Arcade join report")
+        appendLine("Phone: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, Android ${android.os.Build.VERSION.RELEASE}")
+        appendLine("Room: ${OnlineRooms.pretty(code)}")
+        appendLine("Error: ${e.javaClass.simpleName}: ${e.message}")
+        appendLine()
+        append(com.kofarcade.core.net.NetLog.dump())
+    }
+    val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+        .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade join report")
+        .putExtra(Intent.EXTRA_TEXT, report)
+    runCatching { context.startActivity(Intent.createChooser(send, "Send join report")) }
 }
