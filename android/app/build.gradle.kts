@@ -19,8 +19,16 @@ android {
         applicationId = "com.kofarcade"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        // The build's number (CI: the workflow's run number, always rising), so each
+        // APK installs over the last as a newer one and says which it is: 1.0.231.
+        // A build on a branch is marked as a test; one on a computer is "dev".
+        val build = System.getenv("APP_BUILD")?.toIntOrNull()
+        versionCode = build ?: 1
+        versionName = when {
+            build == null -> "1.0-dev"
+            System.getenv("APP_CHANNEL").isNullOrEmpty() -> "1.0.$build"
+            else -> "1.0.$build-${System.getenv("APP_CHANNEL")}"
+        }
         // Online play's server (docs/online-setup.md): the project's address and
         // its public key. Only what the database's rules let a guest do is
         // possible with it; the secret keys never leave the server.
