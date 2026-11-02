@@ -270,6 +270,16 @@ decision was made in the conversation. Get the time now with
   release downloads, shown in hundreds ("100+", "200+" ...; the owner:
   "No need to show every single count").
 
+### 2026-11-03 04:17 Dhaka · Releases: Actions needs "Read and write" permissions
+- Found: #68's APK (v1.0.245) built and passed its tests, but publishing its
+  release failed twice with "HTTP 403: Resource not accessible by
+  integration", although `android.yml` asks for `contents: write` and the
+  same step published v1.0.243 an hour before.
+- Done: the owner set Settings → Actions → General → Workflow permissions
+  to "Read and write permissions"; a fresh main build (workflow_dispatch)
+  published v1.0.246 and the website serves it (`version.json` code 246).
+  v1.0.245 was never released. If the 403 comes back, check that setting first.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -281,7 +291,8 @@ As of 2026-11-03 03:36 Dhaka:
 - **Merged before it:** #68 (download count, in-app updates), #69 and #70
   (server deploy fixes; the count's server side is live). #68's APK,
   v1.0.245, is the first with in-app updates.
-- **Latest release before it:** v1.0.243 (#67). The website serves the newest.
+- **Latest release:** v1.0.246 (through #72), the first with updates inside
+  the app. The website serves it.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
