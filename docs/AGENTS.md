@@ -6,7 +6,7 @@ earlier conversation. **Keep them true:** each change that decides
 something adds a dated entry to `decisions.md`, and anything here that a
 change makes wrong is fixed in the same pull request.
 
-Last full review of this handbook: 2026-11-03 03:00 Dhaka.
+Last full review of this handbook: 2026-11-03 02:57 Dhaka.
 
 ---
 

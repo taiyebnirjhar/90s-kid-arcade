@@ -158,24 +158,24 @@ decision was made in the conversation. Get the time now with
   addresses: a locked room or a challenge is faster).
 - Release: v1.0.238.
 
-### 2026-11-03 02:30 Dhaka · Welcome uses the owner's photo with pixel shades (PR #67, open)
+### 2026-11-03 02:35 Dhaka · Welcome uses the owner's photo with pixel shades (PR #67, open)
 - Asked: "Use my image as avatar instead of TN", then "swag sunglasses on
   top of my glasses… fit it well".
 - Decided: `res/drawable-nodpi/invited_by.jpg` (head and shoulders,
   384 px) in the gold ring; pixel "deal with it" shades drawn on a 21×6
   grid over his glasses (44% wide, from 32.5% down), dropping in 0.5 s
   after the screen opens.
-- A lower, fuller version (7 rows, filled bridge) was tried at 2026-11-03 02:45 Dhaka and
-  **reverted** at the owner's request ("doesn't look good, back to like
+- A lower, fuller version (7 rows, filled bridge) was tried at 02:37 and
+  **reverted** at 02:41 at the owner's request ("doesn't look good, back to like
   image attached").
 - Note: the repo is public, so the photo is public on GitHub.
 
-### 2026-11-03 03:00 Dhaka · Play from My Library (PR #67, open)
+### 2026-11-03 02:45 Dhaka · Play from My Library (PR #67, open)
 - Asked: a player downloaded a game and didn't know how to start it.
 - Decided: games on the phone show **Play** on their Library card (Neo Geo
   games once the BIOS is there); tapping the card plays.
 
-### 2026-11-03 03:10 Dhaka · Docs for agents (PR #67, open)
+### 2026-11-03 02:57 Dhaka · Docs for agents (PR #67, open)
 - Asked: "keep docs for every single decision with date and time and
   complete context… so a new session can continue without friction… a
   comprehensive doc for AI agents."
