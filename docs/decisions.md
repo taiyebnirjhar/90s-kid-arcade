@@ -267,8 +267,8 @@ decision was made in the conversation. Get the time now with
   counted from #70 on. The owner downloaded it ~50 times and friends many more.
 - Decided: 100 from before counting began (the owner's estimate,
   `data-base="100"` in `site/index.html`), plus site taps and GitHub's
-  release downloads. The page shows "100+" before the build fills it in;
-  a tap on Download adds one on screen right away.
+  release downloads, shown in hundreds ("100+", "200+" ...; the owner:
+  "No need to show every single count").
 
 ---
 

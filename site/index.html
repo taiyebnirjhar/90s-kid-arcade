@@ -360,8 +360,8 @@
         <a class="btn" href="#install">How to install</a>
       </div>
       <ul class="stats">
-        <!-- Downloads: 100 from before counting began (the owner's estimate), plus this
-             site's Download taps and GitHub's release downloads. -->
+        <!-- Downloads, in hundreds (100+, 200+ ...): 100 from before counting began (the
+             owner's estimate), plus this site's Download taps and GitHub's release downloads. -->
         <li id="live-downloads" data-base="100" data-github="0"><b>100+</b> downloads</li>
         <li><b>27</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
@@ -620,13 +620,7 @@
     }
     // Every Download button counts one (it still downloads if this can't go).
     document.querySelectorAll('a[href="90s-Kid-Arcade.apk"]').forEach(function (a) {
-      a.addEventListener("click", function () {
-        try { rpc("note_download", true); } catch (e) {}
-        // The number goes up on screen too, right away.
-        var b = document.querySelector("#live-downloads b");
-        var now = b && Number(b.textContent.replace(/[^0-9]/g, ""));
-        if (now) b.textContent = (now + 1).toLocaleString("en");
-      });
+      a.addEventListener("click", function () { try { rpc("note_download", true); } catch (e) {} });
     });
     var site = rpc("download_count").then(function (r) { return r.ok ? r.json() : 0; }).catch(function () { return 0; });
     var github = fetch("https://api.github.com/repos/taiyebnirjhar/90s-kid-arcade/releases?per_page=100")
@@ -643,7 +637,8 @@
       var gh = got[1] >= 0 ? got[1] : Number(el.getAttribute("data-github")) || 0;
       var n = (Number(el.getAttribute("data-base")) || 0) + (Number(got[0]) || 0) + gh;
       if (!(n > 0)) return;
-      el.querySelector("b").textContent = n.toLocaleString("en");
+      // Shown in hundreds: 100+, 200+, 300+ ...
+      el.querySelector("b").textContent = (Math.floor(n / 100) * 100).toLocaleString("en") + "+";
       el.hidden = false;
     });
   })();
