@@ -43,9 +43,13 @@ jobs:
         working-directory: server
         run: |
           supabase link --project-ref "$SUPABASE_PROJECT_REF"
-          # --linked: the project linked above (newer CLIs push to a local stack unless told).
-          supabase db push --linked
+          # --remote: the project linked above (newer CLIs push to a local stack unless
+          # told); --yes: CI can't answer the "apply N migrations?" prompt.
+          supabase db push --remote --yes
       - name: Functions
         if: steps.ready.outputs.ok == 'true'
         working-directory: server
-        run: supabase functions deploy turn-credentials --project-ref "$SUPABASE_PROJECT_REF"
+        # --yes for a CLI that asks to confirm; one that doesn't know it deploys without.
+        run: |
+          supabase functions deploy turn-credentials --project-ref "$SUPABASE_PROJECT_REF" --yes \
+            || supabase functions deploy turn-credentials --project-ref "$SUPABASE_PROJECT_REF"
