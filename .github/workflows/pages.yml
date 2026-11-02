@@ -38,6 +38,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release download latest --pattern 90s-Kid-Arcade.apk --dir site --clobber
+      - name: What version the site serves (the app checks it, to offer the update)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The newest numbered release (v1.0.<run>): its number, and its "What's new" lines.
+          tag=$(gh release list --limit 30 --json tagName,createdAt --jq '[.[] | select(.tagName | startswith("v1."))] | sort_by(.createdAt) | reverse | .[0].tagName // ""')
+          if [ -z "$tag" ]; then echo "No numbered release yet: no version.json"; exit 0; fi
+          gh release view "$tag" --json body --jq .body > "$RUNNER_TEMP/notes.md"
+          TAG="$tag" python3 - <<'PY'
+          import json, os, re
+          tag = os.environ["TAG"]
+          name = tag[1:]
+          lines = open(os.environ["RUNNER_TEMP"] + "/notes.md").read().splitlines()
+          new = lines[lines.index("### What's new") + 1:] if "### What's new" in lines else []
+          notes = [re.sub(r" \(#\d+\)$", "", l[2:]).strip() for l in new if l.startswith("- ")][:6]
+          json.dump({
+              "code": int(name.split(".")[-1]),
+              "name": name,
+              "notes": notes,
+              "apk": "https://arcade.taiyebnirjhor.com/90s-Kid-Arcade.apk",
+          }, open("site/version.json", "w"), indent=1)
+          print(open("site/version.json").read())
+          PY
       - name: The link preview card, with the games' pictures (none kept in the repo)
         # Rendered from share-card.html by the runner's Chrome: libretro's thumbnails are
         # fetched now. If it can't be made, the app's old screenshot stands in.

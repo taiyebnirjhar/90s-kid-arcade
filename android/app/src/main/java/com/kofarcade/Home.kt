@@ -91,6 +91,8 @@ data class HomeUi(
     val profileIcon: Int? = null,
     /** Things from friends waiting (requests, messages, invites): a badge on Online. */
     val onlineBadge: Int = 0,
+    /** A newer version to install (its name): an Update chip first in the header. */
+    val update: String? = null,
 )
 
 /**
@@ -109,6 +111,7 @@ fun HomeScreen(
     onGame: (Game) -> Unit,
     onLongGame: (Game) -> Unit,
     onProfile: () -> Unit = {},
+    onUpdate: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -118,6 +121,7 @@ fun HomeScreen(
         val heroHeight = if (landscape) maxHeight * 0.6f else (maxHeight * 0.46f).coerceIn(320.dp, 460.dp)
         val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         val chips: @Composable () -> Unit = {
+            if (ui.update != null) HeaderChip("Update", gold = true, dot = Palette.red, onClick = onUpdate)
             HeaderChip("Online", gold = true, badge = ui.onlineBadge, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             // Without the BIOS, the banner and the setup card already ask for it.

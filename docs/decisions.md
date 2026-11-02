@@ -202,6 +202,28 @@ decision was made in the conversation. Get the time now with
 - Where: `server/supabase/migrations/20261103000000_download_count.sql`,
   its test, `site/index.html`.
 
+### 2026-11-03 03:17 Dhaka · Updates inside the app
+- Asked: "alert / badge on app, with button to on click update, when new
+  version comes, so they don't need to download from website again and
+  again. Keep it UI/UX friendly."
+- Decided:
+  - The website publishes `version.json` (build number, name, "What's new"
+    from the newest `v1.0.*` release, the APK's address) when it deploys.
+  - The app asks for it on opening (every 3 hours at most). A newer build
+    shows an **Update** chip (red dot) first in the home header, and its card
+    opens by itself once per version: version, what's new, **Update now**.
+  - The app downloads the APK itself (progress on the card, size checked),
+    then opens Android's installer (FileProvider); the first time, Android's
+    "install unknown apps" switch for this app opens, explained on the card,
+    and coming back installs. Same signing key, so it installs over with
+    games and settings kept.
+- Not chosen: Play Store updates (the app isn't on it); silent installs
+  (Android doesn't allow them for sideloaded apps).
+- Where: `Updates.kt`, `core/AppUpdate.kt` (+ test), `MainActivity.kt`,
+  `Home.kt`, the manifest (`REQUEST_INSTALL_PACKAGES`, provider),
+  `res/xml/file_paths.xml`, `.github/workflows/pages.yml`.
+- Note: the first build with this sees updates only from the next one on.
+
 ---
 
 ## Where things stand (update whenever it changes)

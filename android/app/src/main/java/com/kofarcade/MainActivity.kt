@@ -97,6 +97,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumed = true
         refresh++
+        // A newer version on the website (asked every few hours), and back from allowing installs.
+        AppUpdates.check(this)
+        AppUpdates.resumed(this)
         // Games played since: sent quietly, only for a phone that signed in
         // before (a first sign-in waits for the profile page).
         val account = Online.account(this)
@@ -160,6 +163,16 @@ class MainActivity : ComponentActivity() {
             message = news.message?.takeIf { it.id > hiddenMessage },
             invite = news.invite?.takeIf { it.id > hiddenInvite },
         )
+        // A newer version: its chip on home, and (once per version) its card opens by itself.
+        val updateState by AppUpdates.state.collectAsState()
+        var showUpdate by remember { mutableStateOf(false) }
+        androidx.compose.runtime.LaunchedEffect(updateState) {
+            val s = updateState
+            if (s is UpdateState.Available && prefs.updateOffered != s.update.code) {
+                prefs.updateOffered = s.update.code
+                showUpdate = true
+            }
+        }
         // A game downloaded from the library landed (on any page, or while the app was away): look again.
         val landed by LibraryDownloads.get(this).installed.collectAsState()
         androidx.compose.runtime.LaunchedEffect(landed) { if (landed > 0) refresh++ }
@@ -233,6 +246,11 @@ class MainActivity : ComponentActivity() {
             profileName = profile?.name,
             profileIcon = profile?.icon,
             onlineBadge = news.count,
+            update = (updateState as? UpdateState.Available)?.update?.name
+                ?: (updateState as? UpdateState.Downloading)?.update?.name
+                ?: (updateState as? UpdateState.Ready)?.update?.name
+                ?: (updateState as? UpdateState.NeedsPermission)?.update?.name
+                ?: (updateState as? UpdateState.Failed)?.update?.name,
         )
 
         // Pages fade into each other instead of cutting.
@@ -276,6 +294,7 @@ class MainActivity : ComponentActivity() {
                         onGame = ::open,
                         onLongGame = { if (sets[it.id] != null) remove = it },
                         onProfile = { profilePage = true },
+                        onUpdate = { showUpdate = true },
                     )
                 }
             }
@@ -312,6 +331,15 @@ class MainActivity : ComponentActivity() {
                         .navigationBarsPadding().padding(16.dp).widthIn(max = 520.dp),
                 )
             }
+        }
+
+        if (showUpdate && updateState != UpdateState.None) {
+            UpdateDialog(
+                updateState,
+                BuildConfig.VERSION_NAME,
+                onUpdate = { AppUpdates.download(this@MainActivity) },
+                onLater = { showUpdate = false },
+            )
         }
 
         ask?.let { p ->

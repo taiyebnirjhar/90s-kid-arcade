@@ -206,6 +206,11 @@ class Prefs(context: Context) {
     // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
+    /** The update whose card opened by itself already (its build number): once per version. */
+    var updateOffered: Int
+        get() = sp.getInt("updateOffered", 0)
+        set(v) = sp.edit().putInt("updateOffered", v).apply()
+
     /** The first-run welcome (onboarding) was seen, or skipped. */
     var onboarded: Boolean
         get() = sp.getBoolean("onboarded", false)
