@@ -209,6 +209,11 @@ with a sleeping foreground command.
 - The Supabase CLI runs at `latest` in `server-deploy.yml`: its defaults can
   change (2026-11-03 `db push` began targeting a local stack, then asking
   to confirm: now `db push --remote --yes`). After a server PR merges, check that "Server deploy" passed.
+- GitHub expressions have no real ternary: `cond && '' || 'x'` is always
+  `'x'` (an empty string is falsy). That made every main build
+  `1.0.<run>-test` until 2026-11-03; write `!cond && 'x' || ''`.
+- Releases 403 ("Resource not accessible by integration"): the repo's
+  Settings → Actions → General → Workflow permissions must be "Read and write".
 - `cancel-in-progress` on branch builds: a newer push cancels the older run,
   so a "cancelled" run is normal.
 

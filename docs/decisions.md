@@ -270,18 +270,38 @@ decision was made in the conversation. Get the time now with
   release downloads, shown in hundreds ("100+", "200+" ...; the owner:
   "No need to show every single count").
 
+### 2026-11-03 04:17 Dhaka · Releases: Actions needs "Read and write" permissions
+- Found: #68's APK (v1.0.245) built and passed its tests, but publishing its
+  release failed twice with "HTTP 403: Resource not accessible by
+  integration", although `android.yml` asks for `contents: write` and the
+  same step published v1.0.243 an hour before.
+- Done: the owner set Settings → Actions → General → Workflow permissions
+  to "Read and write permissions"; a fresh main build (workflow_dispatch)
+  published v1.0.246 and the website serves it (`version.json` code 246).
+  v1.0.245 was never released. If the 403 comes back, check that setting first.
+
+### 2026-11-03 04:31 Dhaka · Main builds no longer say "-test"
+- Asked: (screenshot) the profile shows "90s Kid Arcade 1.0.246-test".
+- Found: `APP_CHANNEL: ${{ github.ref == 'refs/heads/main' && '' || 'test' }}`
+  is always `test`, since GitHub's `&& ||` treats the empty string as false.
+  Every main build since versioning began was labelled `-test`; nothing
+  else reads the label, and updates compare `versionCode` only.
+- Decided: `github.ref != 'refs/heads/main' && 'test' || ''`. Main builds
+  are `1.0.<run>`, branch builds `1.0.<run>-test`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
 As of 2026-11-03 03:36 Dhaka:
 
-- **Open:** the download count from 100 PR (see the last entry). #71
-  (count baked into the page) merged.
+- **Open:** the "-test" label fix PR (see the last entry). #71 and #72
+  (download count, from 100+ in hundreds) merged.
 - **Merged before it:** #68 (download count, in-app updates), #69 and #70
   (server deploy fixes; the count's server side is live). #68's APK,
   v1.0.245, is the first with in-app updates.
-- **Latest release before it:** v1.0.243 (#67). The website serves the newest.
+- **Latest release:** v1.0.246 (through #72), the first with updates inside
+  the app. The website serves it.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
