@@ -43,7 +43,8 @@ jobs:
         working-directory: server
         run: |
           supabase link --project-ref "$SUPABASE_PROJECT_REF"
-          supabase db push
+          # --linked: the project linked above (newer CLIs push to a local stack unless told).
+          supabase db push --linked
       - name: Functions
         if: steps.ready.outputs.ok == 'true'
         working-directory: server
