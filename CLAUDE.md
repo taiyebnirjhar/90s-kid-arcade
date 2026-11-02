@@ -1,5 +1,18 @@
 # Notes for working on this repo
 
+## Read first: docs/AGENTS.md and docs/decisions.md
+
+[docs/AGENTS.md](docs/AGENTS.md) is the handbook: the owner's workflow
+rules (branch, PRs he merges himself, trailers, telling him when to merge
+and when the APK is ready), hard rules, a map of the code, every build,
+test and release command, services, and gotchas.
+[docs/decisions.md](docs/decisions.md) logs every decision with its date and
+time (UTC), what was asked, what was decided and why, and ends with where
+things stand. Rely on them rather than on memory of earlier sessions.
+**Every pull request that decides something adds a dated entry to
+decisions.md and updates "Where things stand"; anything in AGENTS.md the
+change makes wrong is fixed in the same PR.**
+
 ## The repo is `taiyebnirjhar/90s-kid-arcade`
 
 It was renamed from `kof-arcade`. Use `90s-kid-arcade` for every GitHub call

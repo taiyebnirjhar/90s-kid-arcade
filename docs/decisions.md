@@ -1,0 +1,202 @@
+# Decision log
+
+Every decision about the app, newest last, with when (UTC), who asked, what
+was decided and why, and where it lives. Read [AGENTS.md](AGENTS.md) first
+for how the project works. **Add an entry for every decision, in the same
+pull request that makes it** (format below). "Owner" is Taiyeb Nirjhor.
+
+```
+### YYYY-MM-DD HH:MM UTC · Short title (#PR)
+- Asked: what the owner asked, in his words where it matters.
+- Decided: what was built or chosen, and the alternatives turned down.
+- Why: the reason (a report, a rule, a cost).
+- Where: files, settings, docs.
+```
+
+Times before 2026-10-31 are merge times of the pull requests (from git);
+later ones are when the decision was made in the conversation.
+
+---
+
+## Foundations (2026-10-25 to 2026-10-28)
+
+### 2026-10-25 · The app: FBNeo on Android, controls made per game (#1–#23)
+- Decided: Kotlin app on LibretroDroid with the FBNeo core (downloaded in
+  CI, never committed); our own HUD (`HudView`) with one-tap specials for
+  fighters from sourced move data; automatic fighter detection from game
+  RAM (`docs/kof-ram.md`); ROMs only from the player (import, or the private
+  library). APK built by GitHub Actions and published as the `latest` release.
+- Why: arcade classics playable on a phone without a stick's skills.
+
+### 2026-10-26 · Same-Wi-Fi multiplayer that heals (#24–#35)
+- Decided: rooms on the local network (hotspot works), drop-in/drop-out,
+  watchers, host migration, rejoin after drops, everyone binds to the
+  room's Wi-Fi. Game art bundled into the APK at build time (no network at
+  runtime). Sound on/off and volume.
+- Decided (and dropped): Kotlin Multiplatform core for an iPhone version,
+  put on hold the same day (#35: "Drop the iPhone groundwork").
+
+### 2026-10-26 / 27 · Smoothness (#36, #37)
+- Decided: a shared 60 fps pace across phones, frames locked to the screen,
+  late frames made up, crisp sound (AudioPipe: rate control on the averaged
+  fill, cubic resampler, gap-free underruns). Native tests in CI.
+
+### 2026-10-28 · Online play, money and licensing planned (#40)
+- Decided: the plan in `docs/online-plan.md` (steps 1–4, connection order
+  nearby → direct → relay, free plans only with hard stops, no money while
+  FBNeo is used; licensing path).
+
+## Online play built (2026-10-29 to 2026-10-31)
+
+### 2026-10-29 12:57 UTC · Seats follow the game's countdown (#41)
+- Decided: a watcher's COIN/START takes a free seat, or one the game shows
+  out (never started, or continue countdown over). No timer of ours. Each
+  game declares `Game.seats`; `GamesTest` enforces it. Rule in CLAUDE.md.
+
+### 2026-10-29 17:58 → 23:05 UTC · Online phases 1.1–1.9 (#42, #44–#47)
+- Decided: transport seam (1.1); Supabase server: rooms, members, Realtime
+  signaling rules, TURN credentials with the 900/950 GB stop (1.2); guest
+  sign-in and profile (1.3); WebRTC transport (1.4); rooms by code,
+  smoothness online, a line for seats, one Online screen (1.5–1.9).
+
+### 2026-10-29 19:44 UTC · More games; load a state for everyone (#43)
+- Mystic Warriors, Sunset Riders, Snow Bros., J.J. Squawkers.
+
+### 2026-10-30 07:04 → 13:17 UTC · Review, open/locked rooms, sizes (#48–#57)
+- Decided: open rooms (listed, anyone joins; relay only, addresses hidden)
+  and locked rooms (code only); every screen and text size; online games no
+  longer double speed; library retries server hiccups; Supabase kept awake
+  (a call every 3 days, `keep-awake.yml`); open rooms let phones on one
+  Wi-Fi connect directly while still hiding internet addresses.
+
+### 2026-10-31 07:47 UTC · Garou, Last Blade 1 & 2, Samurai Shodown II, Moo Mesa (#58)
+- Note: Bust-A-Move 2 wanted, but the owner's file was the N64 game, not the
+  arcade one; needs `pbobbl2n.zip`.
+
+### 2026-10-31 13:05 UTC · Button layouts with room to press (#59)
+
+## Social and polish (2026-10-31 to 2026-11-02)
+
+### 2026-10-31 19:10 UTC · Chat, voice, friends, quick match, reports (#60)
+- Asked: "Complete online setup, like voice, chat", in one PR.
+- Decided: room chat (quick lines, typed, filter, 5 per 10 s, 120 chars),
+  voice (WebRTC audio, open mic or push to talk, host rules), friends
+  (codes, requests, presence, invites, block), quick match, player reports.
+- Also decided: **automatic problem reports** (a failed join/room sends its
+  connection log; players can turn it off), read by a dedicated reader
+  account in `problem_readers` (the owner made it; its login is not in the
+  repo). Publishing reports in public CI logs was refused (public repo).
+
+### 2026-10-31 19:46 UTC · No pausing online; a live test (#61)
+- Asked: online games can't be paused (cheating, griefing); a gear replaces
+  pause; full test pass; online smoothness first; keep logs.
+- Decided: the menu opens while the game goes on online; `LiveOnlineTest`
+  (real Supabase + WebRTC); settings test; pause snapshots.
+- Finding: open rooms can't connect from the cloud sandbox (public IP, no
+  UDP to the relay): the open-room live test is behind `LIVE_OPEN=1`.
+
+### 2026-10-31 20:19 UTC · An Online screen a 10-year-old understands (#62)
+- Decided: big choices (Quick match, Make a room), a "Got a code?" card,
+  friends, "Rooms you can join", same Wi-Fi as a small line.
+
+### 2026-10-31 20:22 UTC · Website on arcade.taiyebnirjhor.com (#63)
+- Decided: a subdomain of the owner's domain (Cloudflare DNS CNAME → GitHub
+  Pages); room links use it; the old github.io links still work.
+- Owner chose to keep the ROM library private behind its key.
+
+### 2026-10-31 22:09 UTC · Friends chat and challenges, compact UI, GAME ON, QR, mutes (#64)
+- Asked (several messages): a meaningful loading screen with the logo and
+  "GAME ON"; website text as a marquee centred on the phone; landscape
+  never cut; "keep the UI compact on every screen… same ratio, same feel…
+  breakpoints like Tailwind… no mercy"; then smaller still with more gaps;
+  mute speaker; mute on-screen messages; QR codes that work; friends with
+  chat, online/offline, challenge/instant room (no notifications for now).
+- Decided:
+  - GAME ON loading screen (website font Barlow Condensed, OFL), Cancel.
+  - One UI scale by the short side; `Breakpoints` sm/md/lg/xl; final scale
+    470 design units across a 411 dp phone, text ×0.93, buttons 44/38.
+  - Speaker button (all voices off), per-player mute for everyone, chat
+    bubbles ON SCREEN/HIDDEN switch.
+  - App Links (`assetlinks.json`, `autoVerify`) so a camera scan opens the
+    app; an in-app QR scanner (Play services, no camera permission).
+  - Friend chat (300 chars, 20/min, 300/day via `message_quota`, 30 days,
+    200 per pair), `friend_news` (requests, unread, invites; also presence)
+    every 15 s, banner + red count, challenges, last seen.
+  - Link previews: a 1200×630 share card rendered at deploy from
+    `site/share-card.html` (game pictures fetched then, never committed).
+- Turned down: push notifications (need a Firebase project from the owner).
+
+### 2026-11-01 06:55 UTC · Versions and releases (#65)
+- Asked: "Are we managing tags and version on GitHub?" → build it.
+- Decided: `versionCode` = run number, `versionName` `1.0.<run>`; a release
+  `v1.0.<run>` per main build with "What's new"; `latest` follows. The
+  version shows in Settings and Profile and goes with problem reports.
+- First numbered release: v1.0.233.
+
+### 2026-11-02 19:38 UTC · Background downloads, onboarding, rejoin fix, voices over the game (#66)
+- Asked: library downloads stop when leaving and sometimes look done but
+  aren't; "it should keep downloading on bg"; onboarding as if referred by
+  Taiyeb (welcome → key → Neo Geo BIOS first → favourite game); a join
+  report (Samsung M14, room S3S-TGV: "connect timed out"); game sound
+  drowns voices and leaks into the mic.
+- Decided:
+  - One app-wide download queue + a foreground service (dataSync) with a
+    notification; whole files only (size checked; Range resume where the
+    Worker allows, else restart; 3 tries); Stop; Waiting.
+  - `server/worker.js` answers Range (206) once redeployed by hand.
+  - Onboarding, four steps, skippable, once, only on a fresh phone.
+  - Rejoin bug: a late "left" from the previous visit removed the new
+    membership, so Realtime refused the channel → per-player room claims
+    (`RoomClaims`), and a refused channel gets back in (3 times max).
+  - Sound gaps on slow phones: adaptive AudioPipe target (halved run-outs in
+    a simulation; long network stalls still pause the sound by design).
+  - Voices: the game ducks to 25% while anyone talks (mic level for your
+    own talk), voices ×2.5, setting "Game quieter while people talk".
+- Not done: making open rooms connect directly (they stay relay-only to hide
+  addresses: a locked room or a challenge is faster).
+- Release: v1.0.238.
+
+### 2026-11-02 20:30 UTC · Welcome uses the owner's photo with pixel shades (PR #67, open)
+- Asked: "Use my image as avatar instead of TN", then "swag sunglasses on
+  top of my glasses… fit it well".
+- Decided: `res/drawable-nodpi/invited_by.jpg` (head and shoulders,
+  384 px) in the gold ring; pixel "deal with it" shades drawn on a 21×6
+  grid over his glasses (44% wide, from 32.5% down), dropping in 0.5 s
+  after the screen opens.
+- A lower, fuller version (7 rows, filled bridge) was tried at 20:45 UTC and
+  **reverted** at the owner's request ("doesn't look good, back to like
+  image attached").
+- Note: the repo is public, so the photo is public on GitHub.
+
+### 2026-11-02 21:00 UTC · Play from My Library (PR #67, open)
+- Asked: a player downloaded a game and didn't know how to start it.
+- Decided: games on the phone show **Play** on their Library card (Neo Geo
+  games once the BIOS is there); tapping the card plays.
+
+### 2026-11-02 21:10 UTC · Docs for agents (PR #67, open)
+- Asked: "keep docs for every single decision with date and time and
+  complete context… so a new session can continue without friction… a
+  comprehensive doc for AI agents."
+- Decided: `docs/AGENTS.md` (how everything works and is done) and this
+  log; CLAUDE.md points to both and requires an entry per decision.
+
+---
+
+## Where things stand (update whenever it changes)
+
+As of 2026-11-02 21:10 UTC:
+
+- **Open:** PR #67 (photo with pixel shades, Play in Library, these docs).
+  CI must be green before telling the owner to merge.
+- **Latest release:** v1.0.238 (#66). The website serves it.
+- **Waiting on the owner:**
+  - Redeploy `server/worker.js` in Cloudflare to get download resume
+    (optional; the app works without it).
+  - Real-phone feedback on voice ducking (if the game "pumps" with an open
+    mic, raise `MIC_SPEAKING_LEVEL` in `GameActivity`).
+  - A Firebase project, if he wants notifications with the app closed.
+  - `pbobbl2n.zip` (arcade Bust-A-Move 2), to add it.
+- **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3),
+  making Tailwind-like breakpoints cover any remaining hard-coded sizes.
+- **Watch:** problem reports (reader account) after the owner's friends
+  play online; the last report (2026-11-02, M14) led to the rejoin fix.
