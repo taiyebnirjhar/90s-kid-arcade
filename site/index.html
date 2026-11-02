@@ -361,7 +361,7 @@
       </div>
       <ul class="stats">
         <!-- Downloads: this site's Download taps and GitHub's release downloads, shown once they've come. -->
-        <li id="live-downloads" hidden><b>0</b> downloads</li>
+        <li id="live-downloads" data-github="0" hidden><b>0</b> downloads</li>
         <li><b>27</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
@@ -628,11 +628,14 @@
         var n = 0;
         list.forEach(function (rel) { (rel.assets || []).forEach(function (a) { n += a.download_count || 0; }); });
         return n;
-      }).catch(function () { return 0; });
+      }).catch(function () { return -1; });
     Promise.all([site, github]).then(function (got) {
-      var n = (Number(got[0]) || 0) + got[1];
       var el = document.getElementById("live-downloads");
-      if (!el || !(n > 0)) return;
+      if (!el) return;
+      // If GitHub can't be reached, the total baked in when the site was built stands in.
+      var gh = got[1] >= 0 ? got[1] : Number(el.getAttribute("data-github")) || 0;
+      var n = (Number(got[0]) || 0) + gh;
+      if (!(n > 0)) return;
       el.querySelector("b").textContent = n.toLocaleString("en");
       el.hidden = false;
     });
