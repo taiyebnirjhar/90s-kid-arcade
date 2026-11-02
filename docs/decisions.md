@@ -224,6 +224,14 @@ decision was made in the conversation. Get the time now with
   `res/xml/file_paths.xml`, `.github/workflows/pages.yml`.
 - Note: the first build with this sees updates only from the next one on.
 
+### 2026-11-03 03:29 Dhaka · Server deploy: push to the linked project
+- Found: #68's merge didn't put the download count on the server: the
+  Supabase CLI (`version: latest`) now runs `db push` against a local stack
+  unless told otherwise ("failed to connect to postgres … 127.0.0.1:54322").
+- Decided: `supabase db push --linked` in `server-deploy.yml`. Its merge
+  re-runs the deploy (the workflow file is one of its triggers), which
+  applies the waiting migration (`20261103000000_download_count.sql`).
+
 ---
 
 ## Where things stand (update whenever it changes)
