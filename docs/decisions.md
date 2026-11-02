@@ -188,13 +188,28 @@ decision was made in the conversation. Get the time now with
   earlier UTC entries were converted. New entries take the time from
   `TZ=Asia/Dhaka date '+%Y-%m-%d %H:%M'`.
 
+### 2026-11-03 03:11 Dhaka · A download count on the website
+- Asked: "we want active user/download count on website", then "only
+  download counts fine, no need others".
+- Decided: the website shows "N downloads" in its stats row: every tap on
+  a Download button counts one on the server (`note_download`, table
+  `site_counters`, read with `download_count`, both callable without
+  signing in), plus the release downloads GitHub counts. Hidden until the
+  number has come. Counting starts now (earlier website downloads weren't
+  counted).
+- Turned down (owner): player counts (daily anonymous pings from the app,
+  players this week, online now). Built and removed before committing.
+- Where: `server/supabase/migrations/20261103000000_download_count.sql`,
+  its test, `site/index.html`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
 As of 2026-11-03 03:04 Dhaka:
 
-- **Open:** no pull request. #67 (photo with pixel shades, Play in Library,
+- **Open:** the download count PR (see the last entry).
+- **Merged before it:** #67 (photo with pixel shades, Play in Library,
   these docs) merged at 2026-11-03 03:03 Dhaka; its APK is building as the
   next `v1.0.<run>` release.
 - **Latest release before it:** v1.0.238 (#66). The website serves the newest.
