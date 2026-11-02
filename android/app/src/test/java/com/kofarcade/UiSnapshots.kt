@@ -87,6 +87,7 @@ class UiSnapshots {
             LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false), gameById("sengoku3"), "sengoku3"),
             LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle, GAMES.find { "mslug3" in it.sets }, "mslug3"),
             LibraryRowUi("dino.zip", "Cadillacs and Dinosaurs", "dino.zip · 6.2 MB", RowState.OnPhone, gameById("dino"), "dino"),
+            LibraryRowUi("garou.zip", "Garou: Mark of the Wolves", "garou.zip · 77.3 MB", RowState.Queued, gameById("garou"), "garou"),
         ),
         busy = true,
     )
@@ -1006,6 +1007,20 @@ class UiSnapshots {
 
     @Test
     fun pickGameChallenge() = shot("pick_challenge") { PickGameScreen(picks, {}, {}, {}, online = true, challenge = "Mim") }
+
+    private fun onboard(ui: OnboardUi) = @androidx.compose.runtime.Composable { OnboardingScreen(ui, {}, {}, {}, {}, {}, {}, {}) }
+    private val onboardGames = listOf("kof97", "kof2002", "mslug", "mslug3", "dino", "garou", "sfiii3").mapNotNull { id ->
+        gameById(id)?.let { OnboardGame("$id.zip", it, it.sets.first(), 40f) }
+    }
+
+    @Test fun onboardWelcome() = shot("onboard_welcome") { onboard(OnboardUi(OnboardStep.WELCOME))() }
+    @Test fun onboardKey() = shot("onboard_key") { onboard(OnboardUi(OnboardStep.KEY, key = "taiyeb", keyError = "That key didn't open the library. Check it with $INVITED_BY."))() }
+    @Test fun onboardBios() = shot("onboard_bios") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Getting(0.42f)))() }
+    @Test fun onboardBiosDone() = shot("onboard_bios_done") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Done))() }
+    @Test fun onboardGames() = shot("onboard_games") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("kof97.zip", "mslug.zip")))() }
+    @Test fun onboardWelcomeSmall() { tiny(); shot("onboard_welcome_tiny") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
+    @Test fun onboardWelcomeLandscape() { landscape(); shot("onboard_welcome_landscape") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
+    @Test fun onboardGamesLandscape() { landscape(); shot("onboard_games_landscape") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("garou.zip")))() } }
 
     @Test fun gameOnJoining() = shot("game_on_joining") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}) }
 

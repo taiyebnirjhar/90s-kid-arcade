@@ -41,11 +41,16 @@ namespace libretrodroid {
  *   over the block rather than cut off. If it runs out, it fades out (no
  *   click), and only comes back, fading in, once the buffer has refilled to
  *   its target: one short pause, not a stutter on every frame after.
+ * - The target adapts: each time it runs out (a phone that can't always keep
+ *   up, a room waiting on the network), a little more sound is kept in hand,
+ *   up to twice the start; after a calm spell it comes back down, so a phone
+ *   that keeps up keeps the lowest delay.
  */
 class AudioPipe {
 public:
-    // [capacityFrames], [targetFrames]: the game's stereo frames.
-    AudioPipe(int32_t capacityFrames, int32_t targetFrames);
+    // [capacityFrames], [targetFrames]: the game's stereo frames. [adaptive]:
+    // the target grows after a run-out and comes back down when it's calm.
+    AudioPipe(int32_t capacityFrames, int32_t targetFrames, bool adaptive = true);
 
     // The game's thread: interleaved stereo. What doesn't fit is dropped (counted).
     void write(const int16_t* data, int32_t frames);
@@ -57,12 +62,16 @@ public:
 
     int32_t available() const;
     int32_t capacity() const { return capacityFrames; }
-    int32_t target() const { return targetFrames; }
+    // The target now (the device's thread moves it), and where it started.
+    int32_t target() const { return currentTarget.load(std::memory_order_relaxed); }
+    int32_t baseTarget() const { return targetFrames; }
 
     // Since the start: blocks that ran short (stretched, or faded out), and
     // the game's frames dropped for want of room.
     int64_t shortBlocks() const { return shortCount.load(std::memory_order_relaxed); }
     int64_t droppedFrames() const { return dropCount.load(std::memory_order_relaxed); }
+    // Times it ran out altogether (a pause, faded).
+    int64_t runOuts() const { return runOutCount.load(std::memory_order_relaxed); }
     // The rate control's adjustment now (0.01: playing 1% slower).
     double adjustment() const { return lastAdjust.load(std::memory_order_relaxed); }
 
@@ -72,6 +81,9 @@ private:
 
     const int32_t capacityFrames;
     const int32_t targetFrames;
+    const int32_t maxTarget;
+    const bool adaptive;
+    std::atomic<int32_t> currentTarget;
     std::unique_ptr<int16_t[]> ring;
     std::atomic<int64_t> written{0};
     std::atomic<int64_t> taken{0};
@@ -84,9 +96,11 @@ private:
     float last[2] = {};         // the last frame played, to fade out from
     double averageFill = -1.0;
     double integral = 0.0;
+    double calmSeconds = 0.0;   // since the last run-out
 
     std::atomic<int64_t> shortCount{0};
     std::atomic<int64_t> dropCount{0};
+    std::atomic<int64_t> runOutCount{0};
     std::atomic<double> lastAdjust{0.0};
 };
 

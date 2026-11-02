@@ -129,7 +129,7 @@ fun GameOnLoading(step: String, onCancel: (() -> Unit)? = null, overGame: Boolea
 
 // One row of outlined words, scrolling for ever (the text twice, so there's no seam).
 @Composable
-private fun MarqueeRow(text: String, size: androidx.compose.ui.unit.TextUnit, still: Boolean, ms: Int, color: Color, backwards: Boolean = false) {
+internal fun MarqueeRow(text: String, size: androidx.compose.ui.unit.TextUnit, still: Boolean, ms: Int, color: Color, backwards: Boolean = false) {
     var oneWidth by remember { mutableFloatStateOf(0f) }
     val anim = rememberInfiniteTransition(label = "marquee")
     val t by anim.animateFloat(0f, 1f, infiniteRepeatable(tween(ms, easing = LinearEasing), RepeatMode.Restart), label = "row")

@@ -64,15 +64,25 @@ async function serve(request, env) {
     } catch {
       return new Response("Bad file name", { status: 400 });
     }
-    const obj = await retried(() => env.ROMS.get(name));
+    // "Range: bytes=N-": the rest of a download that dropped partway (the app
+    // asks for it), so it's picked up there instead of starting over.
+    const asked = /^bytes=(\d+)-$/.exec(request.headers.get("Range") || "");
+    const from = asked ? Number(asked[1]) : 0;
+    const obj = await retried(() => (from > 0 ? env.ROMS.get(name, { range: { offset: from } }) : env.ROMS.get(name)));
     if (!obj) return new Response("Not found", { status: 404 });
-    return new Response(obj.body, {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Length": String(obj.size),
-        // RFC 6266: any name (quotes, non-ASCII) survives percent-encoded.
-        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
-      },
-    });
+    const headers = {
+      "Content-Type": "application/zip",
+      "Accept-Ranges": "bytes",
+      // RFC 6266: any name (quotes, non-ASCII) survives percent-encoded.
+      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
+    };
+    if (from > 0) {
+      if (from >= obj.size) return new Response("Range past the end", { status: 416, headers: { "Content-Range": `bytes */${obj.size}` } });
+      return new Response(obj.body, {
+        status: 206,
+        headers: { ...headers, "Content-Length": String(obj.size - from), "Content-Range": `bytes ${from}-${obj.size - 1}/${obj.size}` },
+      });
+    }
+    return new Response(obj.body, { headers: { ...headers, "Content-Length": String(obj.size) } });
   }
 }

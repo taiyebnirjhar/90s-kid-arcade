@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.fillMaxSize
 import android.content.Intent
 import android.os.Bundle
@@ -55,7 +56,20 @@ class MainActivity : ComponentActivity() {
         prefs = Prefs(this)
         // A link is taken once: not again when the activity is rebuilt (rotation, back from a game).
         if (savedInstanceState == null) linkCode = takeLink(intent)
-        setContent { KofTheme { Home() } }
+        setContent {
+            KofTheme {
+                // A fresh install: the welcome first (once), then home.
+                var welcome by rememberSaveable { mutableStateOf(needsOnboarding(prefs, roms)) }
+                if (welcome) {
+                    OnboardingFlow(prefs, roms) {
+                        welcome = false
+                        refresh++
+                    }
+                } else {
+                    Home()
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -146,6 +160,9 @@ class MainActivity : ComponentActivity() {
             message = news.message?.takeIf { it.id > hiddenMessage },
             invite = news.invite?.takeIf { it.id > hiddenInvite },
         )
+        // A game downloaded from the library landed (on any page, or while the app was away): look again.
+        val landed by LibraryDownloads.get(this).installed.collectAsState()
+        androidx.compose.runtime.LaunchedEffect(landed) { if (landed > 0) refresh++ }
         // Taken (and its file deleted) once: kept across rotation until it's answered.
         var crash by rememberSaveable { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).

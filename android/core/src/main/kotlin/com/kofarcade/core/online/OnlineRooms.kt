@@ -147,6 +147,25 @@ class SupabaseRooms(private val supa: Supabase) : RoomServer {
 class CantJoin(message: String) : Exception(message)
 
 /**
+ * Who on this phone is using each room code: a join under way, a room open.
+ * The server's "left" is said only when the last of them lets go, so a room
+ * left and joined again at once (its goodbye still going out in the
+ * background) never takes the new join's place in the room away with it.
+ */
+internal object RoomClaims {
+    private val counts = HashMap<String, Int>()
+
+    fun claim(code: String) = synchronized(counts) { counts[code] = (counts[code] ?: 0) + 1 }
+
+    /** Lets go of [code]: true if nobody on this phone uses it now (so it's left on the server). */
+    fun release(code: String): Boolean = synchronized(counts) {
+        val n = (counts[code] ?: 1) - 1
+        if (n <= 0) counts.remove(code) else counts[code] = n
+        n <= 0
+    }
+}
+
+/**
  * An internet room on this phone: the [room] (the same room logic as on
  * Wi-Fi), its code, and what keeps it going: the WebRTC transport, the
  * server's record (touched every minute while open). [close] leaves it all.
@@ -158,6 +177,8 @@ class OnlineRoom internal constructor(
     private val server: RoomServer,
     /** Listed with its code: anyone may join (as this phone last knew it). */
     open: Boolean = false,
+    /** Its claim in [RoomClaims] (this player's, on this room). */
+    private val claim: String = code,
 ) {
     @Volatile var open = open
         private set
@@ -187,7 +208,8 @@ class OnlineRoom internal constructor(
         keepAlive.shutdownNow()
         runCatching { room.close() }
         transport.close()
-        runCatching { server.leave(code) }
+        // Joined again meanwhile (the goodbye above takes a moment): still in it on the server.
+        if (RoomClaims.release(claim)) runCatching { server.leave(code) } else NetLog.add("room $code: joined again, still a member")
     }
 
     companion object {
@@ -219,19 +241,21 @@ class OnlineRooms(
     fun host(name: String, set: String, title: String, rom: Long, bios: Long, maxPlayers: Int, build: String = "", device: String = "", open: Boolean = false): OnlineRoom {
         val me = server.me()
         val code = server.create(set, rom, bios, maxPlayers, open)
+        val claim = "$me/$code"
+        RoomClaims.claim(claim)
         val ice = try {
             iceServers(code).also { if (open && !hasRelay(it())) throw CantJoin(NO_RELAY_TO_OPEN) }
         } catch (e: Exception) {
-            runCatching { server.leave(code) }
+            if (RoomClaims.release(claim)) runCatching { server.leave(code) }
             throw e
         }
         val transport = WebRtcTransport(signaling(code, me), rtc, ice, code, hideAddresses = open)
         try {
             val room = Room.host(name, set, title, rom, bios, maxPlayers, port = PORT, beaconPort = -1, build = build, device = device, transport = transport)
-            return OnlineRoom(room, code, transport, server, open)
+            return OnlineRoom(room, code, transport, server, open, claim)
         } catch (e: Exception) {
             transport.close()
-            runCatching { server.leave(code) }
+            if (RoomClaims.release(claim)) runCatching { server.leave(code) }
             throw e
         }
     }
@@ -249,13 +273,21 @@ class OnlineRooms(
      */
     fun join(info: RoomInfo, name: String, set: String, rom: Long, bios: Long, build: String = "", device: String = "", connectMs: Int = 15_000): OnlineRoom {
         val me = server.me()
-        server.join(info.code)
+        // Claimed before the server hears of it: a goodbye from this room's last visit, still on its way, leaves it be.
+        val claim = "$me/${info.code}"
+        RoomClaims.claim(claim)
+        try {
+            server.join(info.code)
+        } catch (e: Exception) {
+            RoomClaims.release(claim)
+            throw e
+        }
         val transport = try {
             val ice = iceServers(info.code)
             if (info.relayOnly && !hasRelay(ice())) throw CantJoin(NO_RELAY_TO_JOIN)
             WebRtcTransport(signaling(info.code, me), rtc, ice, info.code, hideAddresses = info.relayOnly)
         } catch (e: Exception) {
-            runCatching { server.leave(info.code) }
+            if (RoomClaims.release(claim)) runCatching { server.leave(info.code) }
             throw e
         }
         try {
@@ -268,7 +300,7 @@ class OnlineRooms(
                     } catch (e: Redirected) {
                         Room.join(transport, e.at, name, set, rom, bios, listenPort = PORT, beaconPort = -1, build = build, device = device, connectMs = connectMs)
                     }
-                    return OnlineRoom(room, info.code, transport, server, info.open)
+                    return OnlineRoom(room, info.code, transport, server, info.open, claim)
                 } catch (e: Refused) {
                     throw e
                 } catch (e: Exception) {
@@ -278,7 +310,7 @@ class OnlineRooms(
             throw last
         } catch (e: Exception) {
             transport.close()
-            runCatching { server.leave(info.code) }
+            if (RoomClaims.release(claim)) runCatching { server.leave(info.code) }
             throw e
         }
     }

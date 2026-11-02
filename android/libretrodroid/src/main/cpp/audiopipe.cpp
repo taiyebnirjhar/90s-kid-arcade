@@ -39,6 +39,9 @@ constexpr double MAX_I = 0.01;
 constexpr double MIN_STRETCH = 0.7;
 // Fades take this many output frames (under 3 ms).
 constexpr float FADE_FRAMES = 128.0f;
+// The adaptive target: a quarter of the start more after each run-out (up to
+// twice the start), an eighth back down after this long without one.
+constexpr double CALM_SECONDS = 20.0;
 
 // Catmull-Rom: between p1 and p2, at t (0 to 1).
 inline float cubic(float p0, float p1, float p2, float p3, float t) {
@@ -54,9 +57,12 @@ inline int16_t clip(float v) {
 
 }
 
-AudioPipe::AudioPipe(int32_t capacityFrames, int32_t targetFrames)
+AudioPipe::AudioPipe(int32_t capacityFrames, int32_t targetFrames, bool adaptive)
     : capacityFrames(std::max(capacityFrames, 4)),
       targetFrames(std::max(1, std::min(targetFrames, std::max(capacityFrames, 4) - 1))),
+      maxTarget(std::max(this->targetFrames, std::min(this->targetFrames * 2, this->capacityFrames - 1))),
+      adaptive(adaptive),
+      currentTarget(this->targetFrames),
       ring(new int16_t[(size_t) std::max(capacityFrames, 4) * 2]) {}
 
 int32_t AudioPipe::available() const {
@@ -120,6 +126,14 @@ void AudioPipe::read(int16_t* out, int32_t frames, double ratio, int32_t outputR
     if (frames <= 0) return;
     double seconds = (double) frames / std::max(outputRate, 1);
     int32_t available = this->available();
+    int32_t targetFrames = currentTarget.load(std::memory_order_relaxed);
+    // Calm for a while: the target comes back down a step, toward where it started.
+    calmSeconds += seconds;
+    if (adaptive && calmSeconds > CALM_SECONDS && targetFrames > this->targetFrames) {
+        targetFrames = std::max(this->targetFrames, targetFrames - std::max(1, this->targetFrames / 8));
+        currentTarget.store(targetFrames, std::memory_order_relaxed);
+        calmSeconds = 0.0;
+    }
 
     // Rate control, on the fill averaged past each frame's sawtooth.
     if (averageFill < 0) averageFill = available;
@@ -177,6 +191,10 @@ void AudioPipe::read(int16_t* out, int32_t frames, double ratio, int32_t outputR
         out[i * 2 + 1] = clip(last[1] * gain);
     }
     starving = true;
+    runOutCount.fetch_add(1, std::memory_order_relaxed);
+    calmSeconds = 0.0;
+    // Ran out: a little more in hand from now on (the refill waits for it).
+    if (adaptive) currentTarget.store(std::min(maxTarget, targetFrames + std::max(1, this->targetFrames / 4)), std::memory_order_relaxed);
 }
 
 }

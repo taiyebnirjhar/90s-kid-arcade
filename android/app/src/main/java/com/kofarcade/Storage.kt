@@ -206,6 +206,11 @@ class Prefs(context: Context) {
     // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
+    /** The first-run welcome (onboarding) was seen, or skipped. */
+    var onboarded: Boolean
+        get() = sp.getBoolean("onboarded", false)
+        set(v) = sp.edit().putBoolean("onboarded", v).apply()
+
     /** Online rooms are made open (listed for anyone to join) unless the player last picked locked. */
     var openRooms: Boolean
         get() = sp.getBoolean("openRooms", true)
@@ -275,6 +280,11 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putBoolean("voices", v).apply()
 
     /** How loud the others' voices play, 0.1 to 1 (apart from the game's volume). */
+    /** The game goes quieter while someone talks in a voice room. */
+    var duckGame: Boolean
+        get() = sp.getBoolean("duckGame", true)
+        set(v) = sp.edit().putBoolean("duckGame", v).apply()
+
     var voiceVolume: Float
         get() = sp.getFloat("voiceVolume", 1f)
         set(v) = sp.edit().putFloat("voiceVolume", v).apply()

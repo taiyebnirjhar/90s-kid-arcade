@@ -47,6 +47,8 @@ class RealtimeSignaling(
     private var attempt = 0
     private var token = ""
     @Volatile private var closed = false
+    // Times this channel got this phone back into its room on the server (a refusal while in use).
+    @Volatile private var heals = 0
     @Volatile private var handler: ((Signal) -> Unit)? = null
     private val waiting = ArrayDeque<Pair<Long, String>>()
 
@@ -182,7 +184,20 @@ class RealtimeSignaling(
                     val reason = payload?.get("response")?.jsonObject?.get("reason")?.jsonPrimitive?.contentOrNull ?: "refused"
                     problem = reason
                     NetLog.add("signaling: couldn't join room $room: $reason")
-                    // Not allowed (not a member, or the room closed): reconnecting won't change that soon.
+                    // Not a member any more while still using the room (left and joined again,
+                    // the old visit's "left" landing late): back in on the server, a few times at
+                    // most, and the reconnect below joins the channel again.
+                    if (!closed && heals < MAX_HEALS && ("permission" in reason.lowercase() || "unauthorized" in reason.lowercase())) {
+                        heals++
+                        runCatching {
+                            timers.execute {
+                                runCatching { supa.rpc("join_room", buildJsonObject { put("room_code", room) }) }
+                                    .onSuccess { NetLog.add("signaling: back in room $room on the server") }
+                                    .onFailure { NetLog.add("signaling: couldn't get back in room $room: ${it.message}") }
+                            }
+                        }
+                    }
+                    // Otherwise (the room closed): reconnecting won't change that soon.
                     synchronized(lock) { socket?.close(1000, "refused") }
                 }
             }
@@ -238,6 +253,7 @@ class RealtimeSignaling(
     }
 
     companion object {
+        private const val MAX_HEALS = 3
         private const val HEARTBEAT_MS = 25_000L
         private const val MAX_WAITING = 200
         /** Signals older than this aren't worth sending once back (the other side has moved on). */

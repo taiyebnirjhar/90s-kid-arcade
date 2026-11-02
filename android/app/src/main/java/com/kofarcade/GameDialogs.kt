@@ -661,6 +661,7 @@ private fun ControlsSettings(game: GameActivity) {
                 p.voices = look.voices
                 p.voiceVolume = look.voiceVolume
                 p.micOpen = look.micOpen
+                p.duckGame = look.duckGame
                 p.detectInfo = info
                 p.problemReports = reports
                 game.applyPrefs()
