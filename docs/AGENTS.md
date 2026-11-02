@@ -207,8 +207,8 @@ with a sleeping foreground command.
 - Paparazzi renders `LocalInspectionMode`: animations are drawn still there
   (`LocalStill` too).
 - The Supabase CLI runs at `latest` in `server-deploy.yml`: its defaults can
-  change (2026-11-03 `db push` began targeting a local stack: fixed with
-  `--linked`). After a server PR merges, check that "Server deploy" passed.
+  change (2026-11-03 `db push` began targeting a local stack, then asking
+  to confirm: now `db push --remote --yes`). After a server PR merges, check that "Server deploy" passed.
 - `cancel-in-progress` on branch builds: a newer push cancels the older run,
   so a "cancelled" run is normal.
 

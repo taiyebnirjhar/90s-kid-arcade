@@ -231,6 +231,10 @@ decision was made in the conversation. Get the time now with
 - Decided: `supabase db push --linked` in `server-deploy.yml`. Its merge
   re-runs the deploy (the workflow file is one of its triggers), which
   applies the waiting migration (`20261103000000_download_count.sql`).
+- Then (#69's deploy): it reached the project but stopped at "Apply 1
+  migration? … Re-run with --yes"; `--linked` is also deprecated. Now
+  `supabase db push --remote --yes`, and the functions deploy tries `--yes`
+  first.
 
 ### 2026-11-03 03:30 Dhaka · Link previews: a small JPEG card, fuller tags
 - Asked: the site's link in Messenger shows no card, title or description.
