@@ -63,6 +63,8 @@ data class LibraryRowUi(
     val state: RowState,
     val game: Game? = null,
     val set: String? = null,
+    /** On the phone and ready to start (a Neo Geo game: the BIOS is here too): Play shows. */
+    val playable: Boolean = false,
 )
 
 sealed interface RowState {
@@ -93,7 +95,7 @@ data class LibraryUi(
  * or broken zip says so instead of passing as on the phone.
  */
 @Composable
-fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: () -> Unit) {
+fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: () -> Unit, onPlay: (Game) -> Unit = {}) {
     var editing by remember { mutableStateOf(prefs.libraryKey == null) }
     var entries by remember { mutableStateOf<List<Library.Entry>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -148,7 +150,9 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         val game = gameForSet(set)
         val title = if (set == "neogeo") "Neo Geo BIOS" else game?.fullTitle
         val d = downloads[e.name]
+        val here = installed(e)
         LibraryRowUi(
+            playable = here && game != null && (!game.neoGeo || roms.has(com.kofarcade.core.BIOS)),
             game = game,
             set = set,
             file = e.name,
@@ -191,6 +195,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
             android.widget.Toast.makeText(context, "Downloads stopped", android.widget.Toast.LENGTH_SHORT).show()
         },
         onBack = onClose,
+        onPlay = { file -> rows.find { it.file == file }?.game?.let(onPlay) },
     )
 }
 
@@ -245,6 +250,7 @@ fun LibraryScreen(
     onDownloadAll: () -> Unit,
     onBack: () -> Unit,
     onStop: () -> Unit = {},
+    onPlay: (String) -> Unit = {},
 ) {
     val listed = !ui.askKey && !ui.loading && ui.error == null && ui.rows.isNotEmpty()
     val waiting = ui.rows.count { it.state == RowState.Idle || (it.state as? RowState.Done)?.retry == true }
@@ -360,7 +366,7 @@ fun LibraryScreen(
                     fontSize = 13.sp,
                 )
                 Spacer(Modifier.height(16.dp))
-                CardGrid(ui.rows) { row, m -> LibraryCard(row, ui.busy, m) { onDownload(row.file) } }
+                CardGrid(ui.rows) { row, m -> LibraryCard(row, ui.busy, m, onPlay = { onPlay(row.file) }) { onDownload(row.file) } }
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -412,7 +418,7 @@ fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.g
  * name and file under it. Tap a card that's only in the library to get it.
  */
 @Composable
-private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, onDownload: () -> Unit) {
+private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, onPlay: () -> Unit = {}, onDownload: () -> Unit) {
     // More can be added while others download: they wait their turn.
     val canGet = row.state == RowState.Idle || (row.state as? RowState.Done)?.retry == true
     val shape = RoundedCornerShape(16.dp)
@@ -426,7 +432,8 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
                 .clip(shape)
                 .background(Palette.panel)
                 .border(if (gold) 2.dp else 1.dp, if (gold) Palette.gold else Color.White.copy(alpha = 0.08f), shape)
-                .clickable(interactionSource = source, indication = null, enabled = canGet, onClick = onDownload),
+                // Tap: get it, or (on the phone, ready) play it.
+                .clickable(interactionSource = source, indication = null, enabled = canGet || row.playable, onClick = if (canGet) onDownload else onPlay),
         ) {
             if (row.game != null) {
                 ArtImage(row.game, row.set, Art.TITLE, Modifier.matchParentSize(), contentScale = ContentScale.Crop, grey = row.state == RowState.Idle)
@@ -444,6 +451,9 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             PictureTag(tag.first, tag.second, Modifier.align(Alignment.TopStart).padding(8.dp))
             when (val s = row.state) {
                 RowState.Idle -> GoldButton("Get", onDownload, Modifier.align(Alignment.BottomEnd).padding(8.dp), compact = true)
+                RowState.OnPhone, is RowState.Done -> if (row.playable) {
+                    GoldButton("Play", onPlay, Modifier.align(Alignment.BottomEnd).padding(8.dp), play = true, compact = true)
+                }
                 is RowState.Downloading -> Box(
                     Modifier
                         .align(Alignment.BottomCenter)

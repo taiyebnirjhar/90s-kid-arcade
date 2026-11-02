@@ -245,7 +245,11 @@ class MainActivity : ComponentActivity() {
         Crossfade(page, animationSpec = tween(220), label = "page") { shown ->
             when (shown) {
                 Page.PROFILE -> ProfileDialog(onClose = { profilePage = false })
-                Page.LIBRARY -> LibraryDialog(prefs, roms, onChanged = { refresh++ }, onClose = { library = false })
+                Page.LIBRARY -> LibraryDialog(
+                    prefs, roms, onChanged = { refresh++ }, onClose = { library = false },
+                    // Play from the library: the game starts (the library's still there on the way back).
+                    onPlay = { open(it) },
+                )
                 Page.MULTIPLAYER -> TwoPlayerDialog(
                     roms,
                     joinCode = linkCode,
