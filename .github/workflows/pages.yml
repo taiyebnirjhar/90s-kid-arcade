@@ -61,7 +61,7 @@ jobs:
           }, open("site/version.json", "w"), indent=1)
           print(open("site/version.json").read())
           PY
-      - name: Download count, baked in (shown even where the page can't reach GitHub)
+      - name: Download count, baked in (100 from before counting, plus GitHub's)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -69,7 +69,7 @@ jobs:
                 --jq '[.[].assets[].download_count] | add // 0' || echo 0)
           echo "GitHub release downloads: $n"
           if [ "${n:-0}" -gt 0 ] 2>/dev/null; then
-            sed -i "s#<li id=\"live-downloads\" data-github=\"0\" hidden><b>0</b>#<li id=\"live-downloads\" data-github=\"$n\"><b>$n</b>#" site/index.html
+            sed -i "s#data-github=\"0\"><b>100+</b>#data-github=\"$n\"><b>$(( (100 + n) / 100 * 100 ))+</b>#" site/index.html
             grep -n 'live-downloads"' site/index.html
           fi
       - name: The link preview card, with the games' pictures (none kept in the repo)

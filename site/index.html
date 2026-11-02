@@ -360,8 +360,9 @@
         <a class="btn" href="#install">How to install</a>
       </div>
       <ul class="stats">
-        <!-- Downloads: this site's Download taps and GitHub's release downloads, shown once they've come. -->
-        <li id="live-downloads" data-github="0" hidden><b>0</b> downloads</li>
+        <!-- Downloads, in hundreds (100+, 200+ ...): 100 from before counting began (the
+             owner's estimate), plus this site's Download taps and GitHub's release downloads. -->
+        <li id="live-downloads" data-base="100" data-github="0"><b>100+</b> downloads</li>
         <li><b>27</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
@@ -634,9 +635,10 @@
       if (!el) return;
       // If GitHub can't be reached, the total baked in when the site was built stands in.
       var gh = got[1] >= 0 ? got[1] : Number(el.getAttribute("data-github")) || 0;
-      var n = (Number(got[0]) || 0) + gh;
+      var n = (Number(el.getAttribute("data-base")) || 0) + (Number(got[0]) || 0) + gh;
       if (!(n > 0)) return;
-      el.querySelector("b").textContent = n.toLocaleString("en");
+      // Shown in hundreds: 100+, 200+, 300+ ...
+      el.querySelector("b").textContent = (Math.floor(n / 100) * 100).toLocaleString("en") + "+";
       el.hidden = false;
     });
   })();

@@ -259,13 +259,25 @@ decision was made in the conversation. Get the time now with
   at build time (`data-github`, shown, not hidden); the browser still adds
   the live site taps and a fresher GitHub total when it can.
 
+### 2026-11-03 03:44 Dhaka · Download count starts at 100
+- Asked: "Why only 3 downloads… It should start from 100. And increase
+  dynamically."
+- Found: the website serves its own copy of the APK, so GitHub's release
+  counter (3) never saw those downloads, and the site's taps were only
+  counted from #70 on. The owner downloaded it ~50 times and friends many more.
+- Decided: 100 from before counting began (the owner's estimate,
+  `data-base="100"` in `site/index.html`), plus site taps and GitHub's
+  release downloads, shown in hundreds ("100+", "200+" ...; the owner:
+  "No need to show every single count").
+
 ---
 
 ## Where things stand (update whenever it changes)
 
 As of 2026-11-03 03:36 Dhaka:
 
-- **Open:** the baked-in download count PR (see the last entry).
+- **Open:** the download count from 100 PR (see the last entry). #71
+  (count baked into the page) merged.
 - **Merged before it:** #68 (download count, in-app updates), #69 and #70
   (server deploy fixes; the count's server side is live). #68's APK,
   v1.0.245, is the first with in-app updates.
