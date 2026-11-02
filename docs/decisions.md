@@ -158,7 +158,7 @@ decision was made in the conversation. Get the time now with
   addresses: a locked room or a challenge is faster).
 - Release: v1.0.238.
 
-### 2026-11-03 02:35 Dhaka · Welcome uses the owner's photo with pixel shades (PR #67, open)
+### 2026-11-03 02:35 Dhaka · Welcome uses the owner's photo with pixel shades (#67)
 - Asked: "Use my image as avatar instead of TN", then "swag sunglasses on
   top of my glasses… fit it well".
 - Decided: `res/drawable-nodpi/invited_by.jpg` (head and shoulders,
@@ -170,19 +170,19 @@ decision was made in the conversation. Get the time now with
   image attached").
 - Note: the repo is public, so the photo is public on GitHub.
 
-### 2026-11-03 02:45 Dhaka · Play from My Library (PR #67, open)
+### 2026-11-03 02:45 Dhaka · Play from My Library (#67)
 - Asked: a player downloaded a game and didn't know how to start it.
 - Decided: games on the phone show **Play** on their Library card (Neo Geo
   games once the BIOS is there); tapping the card plays.
 
-### 2026-11-03 02:57 Dhaka · Docs for agents (PR #67, open)
+### 2026-11-03 02:57 Dhaka · Docs for agents (#67)
 - Asked: "keep docs for every single decision with date and time and
   complete context… so a new session can continue without friction… a
   comprehensive doc for AI agents."
 - Decided: `docs/AGENTS.md` (how everything works and is done) and this
   log; CLAUDE.md points to both and requires an entry per decision.
 
-### 2026-11-03 02:58 Dhaka · Times in the docs are Dhaka time (PR #67, open)
+### 2026-11-03 02:58 Dhaka · Times in the docs are Dhaka time (#67)
 - Asked: "Use dhaka time zone."
 - Decided: every date and time in these docs is Asia/Dhaka (UTC+6); the
   earlier UTC entries were converted. New entries take the time from
@@ -192,11 +192,12 @@ decision was made in the conversation. Get the time now with
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-03 02:58 Dhaka:
+As of 2026-11-03 03:04 Dhaka:
 
-- **Open:** PR #67 (photo with pixel shades, Play in Library, these docs).
-  CI must be green before telling the owner to merge.
-- **Latest release:** v1.0.238 (#66). The website serves it.
+- **Open:** no pull request. #67 (photo with pixel shades, Play in Library,
+  these docs) merged at 2026-11-03 03:03 Dhaka; its APK is building as the
+  next `v1.0.<run>` release.
+- **Latest release before it:** v1.0.238 (#66). The website serves the newest.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
@@ -207,4 +208,4 @@ As of 2026-11-03 02:58 Dhaka:
 - **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3),
   making Tailwind-like breakpoints cover any remaining hard-coded sizes.
 - **Watch:** problem reports (reader account) after the owner's friends
-  play online; the last report (2026-11-02, M14) led to the rejoin fix.
+  play online; the last report (2026-11-03, M14) led to the rejoin fix.
