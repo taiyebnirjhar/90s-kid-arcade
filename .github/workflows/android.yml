@@ -74,7 +74,7 @@ jobs:
         env:
           # The version: 1.0.<run number> on main, 1.0.<run number>-test on a branch.
           APP_BUILD: ${{ github.run_number }}
-          APP_CHANNEL: ${{ github.ref == 'refs/heads/main' && '' || 'test' }}
+          APP_CHANNEL: ${{ github.ref != 'refs/heads/main' && 'test' || '' }}
         run: |
           ./gradlew :app:assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk 90s-Kid-Arcade.apk

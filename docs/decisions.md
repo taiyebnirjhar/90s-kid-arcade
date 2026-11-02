@@ -280,14 +280,23 @@ decision was made in the conversation. Get the time now with
   published v1.0.246 and the website serves it (`version.json` code 246).
   v1.0.245 was never released. If the 403 comes back, check that setting first.
 
+### 2026-11-03 04:31 Dhaka · Main builds no longer say "-test"
+- Asked: (screenshot) the profile shows "90s Kid Arcade 1.0.246-test".
+- Found: `APP_CHANNEL: ${{ github.ref == 'refs/heads/main' && '' || 'test' }}`
+  is always `test`, since GitHub's `&& ||` treats the empty string as false.
+  Every main build since versioning began was labelled `-test`; nothing
+  else reads the label, and updates compare `versionCode` only.
+- Decided: `github.ref != 'refs/heads/main' && 'test' || ''`. Main builds
+  are `1.0.<run>`, branch builds `1.0.<run>-test`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
 As of 2026-11-03 03:36 Dhaka:
 
-- **Open:** the download count from 100 PR (see the last entry). #71
-  (count baked into the page) merged.
+- **Open:** the "-test" label fix PR (see the last entry). #71 and #72
+  (download count, from 100+ in hundreds) merged.
 - **Merged before it:** #68 (download count, in-app updates), #69 and #70
   (server deploy fixes; the count's server side is live). #68's APK,
   v1.0.245, is the first with in-app updates.
