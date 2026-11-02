@@ -56,7 +56,20 @@ class MainActivity : ComponentActivity() {
         prefs = Prefs(this)
         // A link is taken once: not again when the activity is rebuilt (rotation, back from a game).
         if (savedInstanceState == null) linkCode = takeLink(intent)
-        setContent { KofTheme { Home() } }
+        setContent {
+            KofTheme {
+                // A fresh install: the welcome first (once), then home.
+                var welcome by rememberSaveable { mutableStateOf(needsOnboarding(prefs, roms)) }
+                if (welcome) {
+                    OnboardingFlow(prefs, roms) {
+                        welcome = false
+                        refresh++
+                    }
+                } else {
+                    Home()
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

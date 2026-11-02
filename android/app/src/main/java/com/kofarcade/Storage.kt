@@ -206,6 +206,11 @@ class Prefs(context: Context) {
     // settings survive the rename.
     private val sp = context.getSharedPreferences("kof-arcade", Context.MODE_PRIVATE)
 
+    /** The first-run welcome (onboarding) was seen, or skipped. */
+    var onboarded: Boolean
+        get() = sp.getBoolean("onboarded", false)
+        set(v) = sp.edit().putBoolean("onboarded", v).apply()
+
     /** Online rooms are made open (listed for anyone to join) unless the player last picked locked. */
     var openRooms: Boolean
         get() = sp.getBoolean("openRooms", true)

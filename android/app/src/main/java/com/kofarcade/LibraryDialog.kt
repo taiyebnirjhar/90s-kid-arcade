@@ -132,28 +132,7 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
 
     fun installed(entry: Library.Entry): Boolean = prefs.librarySet(entry.name)?.let { roms.has("$it.zip") } == true
 
-    // Android 13 on asks before an app shows notifications: once, as the first download starts
-    // (the downloads go on either way; without it, their progress shows only here).
-    var pending by remember { mutableStateOf<List<Library.Entry>?>(null) }
-    val askNotify = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
-    ) {
-        pending?.let(queue::enqueue)
-        pending = null
-    }
-    fun download(picked: List<Library.Entry>) {
-        if (picked.isEmpty()) return
-        val needs = android.os.Build.VERSION.SDK_INT >= 33 && !askedNotify &&
-            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
-            android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (needs) {
-            askedNotify = true
-            pending = picked
-            askNotify.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            queue.enqueue(picked)
-        }
-    }
+    val download = rememberDownloadStarter(queue)
 
     LaunchedEffect(Unit) { if (!editing) load() }
     // Back leaves the page; the downloads keep going (the notification shows them).
@@ -217,6 +196,37 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
 
 // Asked once per run of the app (a "no" isn't asked again and again).
 private var askedNotify = false
+
+/**
+ * Starts downloads in [queue]. Android 13 on asks before an app shows
+ * notifications: asked once, as the first download starts (the downloads go
+ * on either way; without it, their progress shows only in the app).
+ */
+@Composable
+fun rememberDownloadStarter(queue: DownloadQueue): (List<Library.Entry>) -> Unit {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var pending by remember { mutableStateOf<List<Library.Entry>?>(null) }
+    val ask = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) {
+        pending?.let(queue::enqueue)
+        pending = null
+    }
+    return { picked ->
+        if (picked.isNotEmpty()) {
+            val needs = android.os.Build.VERSION.SDK_INT >= 33 && !askedNotify &&
+                androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (needs) {
+                askedNotify = true
+                pending = picked
+                ask.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                queue.enqueue(picked)
+            }
+        }
+    }
+}
 
 /** The library page itself, from plain data (so it can be previewed). */
 @Composable
@@ -513,7 +523,7 @@ private fun FileTile(title: String, modifier: Modifier, bios: Boolean) {
 
 /** A drawn microchip in gold, for the BIOS. */
 @Composable
-private fun ChipIcon(modifier: Modifier) {
+internal fun ChipIcon(modifier: Modifier) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
