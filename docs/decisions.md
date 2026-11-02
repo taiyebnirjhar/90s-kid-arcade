@@ -248,17 +248,28 @@ decision was made in the conversation. Get the time now with
   with `og:image:type`, `og:image:secure_url`, `og:site_name`, and
   `twitter:title`/`description` on both pages.
 
+### 2026-11-03 03:36 Dhaka · Download count shown even without GitHub
+- Asked: "Where is it" (the count still not on the site, Brave on Android).
+- Found: #70's deploy put `download_count` live (it answers 0: no taps
+  counted before). The stat stays hidden until the page itself reads a
+  total above 0, and the GitHub part is read from the visitor's browser, so
+  a browser that can't reach api.github.com (blocked or rate-limited) shows
+  nothing.
+- Decided: `pages.yml` bakes GitHub's release-download total into the page
+  at build time (`data-github`, shown, not hidden); the browser still adds
+  the live site taps and a fresher GitHub total when it can.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-03 03:04 Dhaka:
+As of 2026-11-03 03:36 Dhaka:
 
-- **Open:** the download count PR (see the last entry).
-- **Merged before it:** #67 (photo with pixel shades, Play in Library,
-  these docs) merged at 2026-11-03 03:03 Dhaka; its APK is building as the
-  next `v1.0.<run>` release.
-- **Latest release before it:** v1.0.238 (#66). The website serves the newest.
+- **Open:** the baked-in download count PR (see the last entry).
+- **Merged before it:** #68 (download count, in-app updates), #69 and #70
+  (server deploy fixes; the count's server side is live). #68's APK,
+  v1.0.245, is the first with in-app updates.
+- **Latest release before it:** v1.0.243 (#67). The website serves the newest.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).

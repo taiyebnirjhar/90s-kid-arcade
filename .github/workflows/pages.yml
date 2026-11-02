@@ -61,6 +61,17 @@ jobs:
           }, open("site/version.json", "w"), indent=1)
           print(open("site/version.json").read())
           PY
+      - name: Download count, baked in (shown even where the page can't reach GitHub)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh api "repos/${{ github.repository }}/releases?per_page=100" \
+                --jq '[.[].assets[].download_count] | add // 0' || echo 0)
+          echo "GitHub release downloads: $n"
+          if [ "${n:-0}" -gt 0 ] 2>/dev/null; then
+            sed -i "s#<li id=\"live-downloads\" data-github=\"0\" hidden><b>0</b>#<li id=\"live-downloads\" data-github=\"$n\"><b>$n</b>#" site/index.html
+            grep -n 'live-downloads"' site/index.html
+          fi
       - name: The link preview card, with the games' pictures (none kept in the repo)
         # Rendered from share-card.html by the runner's Chrome: libretro's thumbnails are
         # fetched now. If it can't be made, the app's old screenshot stands in.
