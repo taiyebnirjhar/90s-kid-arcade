@@ -23,8 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,7 +52,6 @@ import com.kofarcade.core.RomCheck
 import com.kofarcade.core.gameForSet
 import com.kofarcade.core.setName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -69,6 +68,8 @@ data class LibraryRowUi(
 sealed interface RowState {
     data object Idle : RowState
     data object OnPhone : RowState
+    /** In the queue, its turn to come. */
+    data object Queued : RowState
     data class Downloading(val fraction: Float) : RowState
     /** [retry]: it didn't come (the network, or cancelled): it can be got again. */
     data class Done(val message: String, val ok: Boolean, val retry: Boolean = false) : RowState
@@ -83,14 +84,13 @@ data class LibraryUi(
     val busy: Boolean = false,
 )
 
-/** One library file's download: bytes so far, then what the check found. */
-private data class Download(val done: Long = 0, val result: String? = null, val ok: Boolean = false, val retry: Boolean = false)
-
 /**
  * Your private ROM library: asks for the key once (the address is built
  * in, see [Library.DEFAULT_URL], and can be changed), then lists its zips
- * with a button each. Every download is checked like an import, so a broken
- * zip says what's missing instead of failing in the game.
+ * with a button each. Downloads run in the app's queue ([LibraryDownloads]),
+ * not this page: leaving it, or the app, doesn't stop them (a notification
+ * shows them). Every download is checked whole and like an import, so a cut
+ * or broken zip says so instead of passing as on the phone.
  */
 @Composable
 fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: () -> Unit) {
@@ -98,14 +98,17 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
     var entries by remember { mutableStateOf<List<Library.Entry>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
-    val downloads = remember { mutableStateMapOf<String, Download>() }
-    var busy by remember { mutableStateOf(false) }
-    var job by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val queue = remember { LibraryDownloads.get(context) }
+    val downloads by queue.state.collectAsState()
+    val busy by queue.active.collectAsState()
+    val landed by queue.installed.collectAsState()
     var key by remember { mutableStateOf(prefs.libraryKey.orEmpty()) }
     var url by remember { mutableStateOf(prefs.libraryUrl) }
     var showUrl by remember { mutableStateOf(prefs.libraryUrl != Library.DEFAULT_URL) }
     val scope = rememberCoroutineScope()
+    // A game landed (here or while away): the home screen looks again.
+    LaunchedEffect(landed) { if (landed > 0) onChanged() }
 
     fun library() = Library(prefs.libraryUrl, prefs.libraryKey.orEmpty())
 
@@ -129,69 +132,34 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
 
     fun installed(entry: Library.Entry): Boolean = prefs.librarySet(entry.name)?.let { roms.has("$it.zip") } == true
 
-    suspend fun download(entry: Library.Entry) {
-        downloads[entry.name] = Download()
-        try {
-            val (check, set) = withContext(Dispatchers.IO) {
-                // Its own scratch file: a download left running by a rotated
-                // screen can't trip over the next one.
-                val tmp = roms.partFile("library")
-                try {
-                    // The card's progress moves by whole percents: not a redraw of the page per 64 KB.
-                    var shown = -1L
-                    library().download(entry.name, tmp, cancelled = { !coroutineContext.isActive }) {
-                        val pct = if (entry.size > 0) it * 100 / entry.size else it shr 20
-                        if (pct != shown) {
-                            shown = pct
-                            downloads[entry.name] = Download(it)
-                        }
-                    }
-                } catch (e: Exception) {
-                    tmp.delete()
-                    throw e
-                }
-                val check = roms.add(tmp)
-                val set = when (check) {
-                    RomCheck.Bios -> "neogeo"
-                    is RomCheck.Game -> check.set.name
-                    else -> null
-                }
-                // Noted here, so a download that finishes after the screen
-                // was rotated still shows as on the phone.
-                prefs.setLibrarySet(entry.name, set)
-                check to set
-            }
-            downloads[entry.name] = Download(entry.size, check.message(), ok = set != null)
-            onChanged()
-        } catch (e: Exception) {
-            val why = if (e is kotlinx.coroutines.CancellationException || e is java.io.InterruptedIOException) "Cancelled" else "Download failed: ${e.message ?: e.javaClass.simpleName}"
-            downloads[entry.name] = Download(0, "$why. Tap to try again.", retry = true)
-            if (e is kotlinx.coroutines.CancellationException) throw e
-        }
+    // Android 13 on asks before an app shows notifications: once, as the first download starts
+    // (the downloads go on either way; without it, their progress shows only here).
+    var pending by remember { mutableStateOf<List<Library.Entry>?>(null) }
+    val askNotify = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) {
+        pending?.let(queue::enqueue)
+        pending = null
     }
-
-    fun downloadAll(picked: List<Library.Entry>) {
-        busy = true
-        job = scope.launch {
-            try {
-                // The BIOS first, so the games can be played as soon as they land.
-                picked.sortedBy { if (setName(it.name).startsWith("neogeo")) 0 else 1 }.forEach { download(it) }
-            } finally {
-                busy = false
-                job = null
-            }
+    fun download(picked: List<Library.Entry>) {
+        if (picked.isEmpty()) return
+        val needs = android.os.Build.VERSION.SDK_INT >= 33 && !askedNotify &&
+            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (needs) {
+            askedNotify = true
+            pending = picked
+            askNotify.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            queue.enqueue(picked)
         }
     }
 
     LaunchedEffect(Unit) { if (!editing) load() }
-    // Back while downloading stops the downloads (what's done stays); back again leaves.
+    // Back leaves the page; the downloads keep going (the notification shows them).
     BackHandler {
-        if (busy) {
-            job?.cancel()
-            android.widget.Toast.makeText(context, "Downloads stopped", android.widget.Toast.LENGTH_SHORT).show()
-        } else {
-            onClose()
-        }
+        if (busy) android.widget.Toast.makeText(context, "Downloads keep going: see the notification", android.widget.Toast.LENGTH_SHORT).show()
+        onClose()
     }
 
     val rows = entries.orEmpty().map { e ->
@@ -208,7 +176,10 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
             title = title ?: e.name.removeSuffix(".zip"),
             detail = (if (title != null) e.name + " · " else "") + "%.1f MB".format(e.size / 1_048_576.0),
             state = when {
+                d != null && d.queued -> RowState.Queued
                 d != null && d.result == null -> RowState.Downloading(if (e.size > 0) d.done.toFloat() / e.size else 0f)
+                // Got, then removed from the phone (long-press on home): not on the phone any more.
+                d?.result != null && d.ok && !installed(e) -> RowState.Idle
                 d?.result != null -> RowState.Done(d.result, d.ok, d.retry)
                 installed(e) -> RowState.OnPhone
                 else -> RowState.Idle
@@ -231,11 +202,21 @@ fun LibraryDialog(prefs: Prefs, roms: RomStore, onChanged: () -> Unit, onClose: 
         },
         onChangeKey = { editing = true },
         onRetry = ::load,
-        onDownload = { file -> entries?.find { it.name == file }?.let { downloadAll(listOf(it)) } },
-        onDownloadAll = { downloadAll(entries.orEmpty().filterNot(::installed)) },
-        onBack = { if (!busy) onClose() },
+        onDownload = { file -> entries?.find { it.name == file }?.let { download(listOf(it)) } },
+        onDownloadAll = {
+            val waiting = rows.filter { it.state == RowState.Idle || (it.state as? RowState.Done)?.retry == true }.map { it.file }.toSet()
+            download(entries.orEmpty().filter { it.name in waiting })
+        },
+        onStop = {
+            queue.cancelAll()
+            android.widget.Toast.makeText(context, "Downloads stopped", android.widget.Toast.LENGTH_SHORT).show()
+        },
+        onBack = onClose,
     )
 }
+
+// Asked once per run of the app (a "no" isn't asked again and again).
+private var askedNotify = false
 
 /** The library page itself, from plain data (so it can be previewed). */
 @Composable
@@ -253,9 +234,13 @@ fun LibraryScreen(
     onDownload: (String) -> Unit,
     onDownloadAll: () -> Unit,
     onBack: () -> Unit,
+    onStop: () -> Unit = {},
 ) {
     val listed = !ui.askKey && !ui.loading && ui.error == null && ui.rows.isNotEmpty()
     val waiting = ui.rows.count { it.state == RowState.Idle || (it.state as? RowState.Done)?.retry == true }
+    val coming = ui.rows.count { it.state == RowState.Queued || it.state is RowState.Downloading }
+    // Came, but the zip isn't a whole game (the check says what's missing).
+    val problems = ui.rows.count { (it.state as? RowState.Done)?.let { d -> !d.ok && !d.retry } == true }
     ArcadeScreen(
         title = "My Library",
         kicker = "Your games, one tap away",
@@ -264,12 +249,21 @@ fun LibraryScreen(
         // The page's one main action, in thumb reach.
         bottomBar = if (listed && (waiting > 0 || ui.busy)) {
             {
-                GoldButton(
-                    if (ui.busy) "Downloading…" else "Get all $waiting",
-                    onDownloadAll,
-                    Modifier.fillMaxWidth(),
-                    enabled = !ui.busy,
-                )
+                if (ui.busy) {
+                    // Downloading: how many are left, and Stop (they go on in the background otherwise).
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        GoldButton(
+                            if (waiting > 0) "Get the other $waiting too" else "Downloading $coming…",
+                            onDownloadAll,
+                            Modifier.weight(1f),
+                            enabled = waiting > 0,
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        GhostButton("Stop", onStop, danger = true)
+                    }
+                } else {
+                    GoldButton("Get all $waiting", onDownloadAll, Modifier.fillMaxWidth())
+                }
             }
         } else {
             null
@@ -340,7 +334,21 @@ fun LibraryScreen(
             )
             else -> {
                 Text("${ui.rows.size} games and files", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic)
-                Text(if (waiting == 0) "All on this phone" else "$waiting not on this phone yet", color = Palette.muted, fontSize = 13.sp)
+                Text(
+                    buildString {
+                        append(
+                            when {
+                                coming > 0 -> "$coming downloading · keeps going if you leave"
+                                waiting == 0 && problems == 0 -> "All on this phone"
+                                waiting == 0 -> "The rest are on this phone"
+                                else -> "$waiting not on this phone yet"
+                            },
+                        )
+                        if (problems > 0) append(" · $problems with a problem")
+                    },
+                    color = Palette.muted,
+                    fontSize = 13.sp,
+                )
                 Spacer(Modifier.height(16.dp))
                 CardGrid(ui.rows) { row, m -> LibraryCard(row, ui.busy, m) { onDownload(row.file) } }
             }
@@ -395,7 +403,8 @@ fun LockIcon(modifier: Modifier, open: Boolean = false, color: Color = Palette.g
  */
 @Composable
 private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, onDownload: () -> Unit) {
-    val canGet = (row.state == RowState.Idle || (row.state as? RowState.Done)?.retry == true) && !busy
+    // More can be added while others download: they wait their turn.
+    val canGet = row.state == RowState.Idle || (row.state as? RowState.Done)?.retry == true
     val shape = RoundedCornerShape(16.dp)
     val source = remember { MutableInteractionSource() }
     val gold = row.state is RowState.Downloading || lit(source)
@@ -416,6 +425,7 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             }
             val tag = when (val s = row.state) {
                 RowState.Idle -> "Not on phone" to Palette.muted
+                RowState.Queued -> "Waiting" to Palette.muted
                 RowState.OnPhone -> "On phone" to Palette.green
                 // Short: a phone's card is narrow (the bar on the picture says the rest).
                 is RowState.Downloading -> "Getting ${(s.fraction * 100).toInt()}%" to Palette.gold
@@ -423,7 +433,7 @@ private fun LibraryCard(row: LibraryRowUi, busy: Boolean, modifier: Modifier, on
             }
             PictureTag(tag.first, tag.second, Modifier.align(Alignment.TopStart).padding(8.dp))
             when (val s = row.state) {
-                RowState.Idle -> GoldButton("Get", onDownload, Modifier.align(Alignment.BottomEnd).padding(8.dp), enabled = !busy, compact = true)
+                RowState.Idle -> GoldButton("Get", onDownload, Modifier.align(Alignment.BottomEnd).padding(8.dp), compact = true)
                 is RowState.Downloading -> Box(
                     Modifier
                         .align(Alignment.BottomCenter)

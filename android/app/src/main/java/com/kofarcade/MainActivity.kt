@@ -1,6 +1,7 @@
 package com.kofarcade
 
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.fillMaxSize
 import android.content.Intent
 import android.os.Bundle
@@ -146,6 +147,9 @@ class MainActivity : ComponentActivity() {
             message = news.message?.takeIf { it.id > hiddenMessage },
             invite = news.invite?.takeIf { it.id > hiddenInvite },
         )
+        // A game downloaded from the library landed (on any page, or while the app was away): look again.
+        val landed by LibraryDownloads.get(this).installed.collectAsState()
+        androidx.compose.runtime.LaunchedEffect(landed) { if (landed > 0) refresh++ }
         // Taken (and its file deleted) once: kept across rotation until it's answered.
         var crash by rememberSaveable { mutableStateOf(CrashLog.take(this)) }
         // Re-read what's on disk whenever `refresh` changes (after a pick or a return from a game).

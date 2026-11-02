@@ -87,6 +87,7 @@ class UiSnapshots {
             LibraryRowUi("sengoku3 (1).zip", "Sengoku 3", "sengoku3 (1).zip · 43.9 MB", RowState.Done("This is Sengoku 3 (set 1), but it's missing 1 file the emulator needs:\n• 261-m1.m1 (sound program)", false), gameById("sengoku3"), "sengoku3"),
             LibraryRowUi("mslug3.zip", "Metal Slug 3", "mslug3.zip · 76.7 MB", RowState.Idle, GAMES.find { "mslug3" in it.sets }, "mslug3"),
             LibraryRowUi("dino.zip", "Cadillacs and Dinosaurs", "dino.zip · 6.2 MB", RowState.OnPhone, gameById("dino"), "dino"),
+            LibraryRowUi("garou.zip", "Garou: Mark of the Wolves", "garou.zip · 77.3 MB", RowState.Queued, gameById("garou"), "garou"),
         ),
         busy = true,
     )

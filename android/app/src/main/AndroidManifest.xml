@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Keeps Wi-Fi awake during a two-player game (WifiLock). -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Library downloads keep going with the app in the background (DownloadService), with a notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Voice in internet rooms: asked for only when the player turns their mic on. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -59,6 +63,11 @@
                 <data android:scheme="kidarcade" android:host="join" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <activity
             android:name=".GameActivity"
