@@ -365,6 +365,57 @@ void aHoldUpFadesOutAndBackWithoutAClick() {
     CHECK(now.silentMs < 200, "silent %.0f ms", now.silentMs);
 }
 
+// A slow phone in an internet room (a real report: a Samsung M14 over the
+// relay): every second or so the game holds up 30-60 ms (a rollback's
+// replay, a slow frame), then catches up at once. A fixed
+// target runs dry at nearly every hold-up; the adaptive one soon keeps
+// enough in hand, and comes back down once it's calm.
+void soundAdaptsToAPhoneThatHoldsUp() {
+    double perFrame = CORE_RATE / 60.0;
+    auto run = [&](bool adaptive, double holdsFor, int32_t* endTarget) {
+        AudioPipe pipe((int32_t) std::lround(perFrame * 6), (int32_t) std::lround(perFrame * 2), adaptive);
+        std::vector<int16_t> frame((size_t) std::lround(perFrame) * 2, 1000);
+        std::vector<int16_t> out(192 * 2);
+        std::mt19937 rng(7);
+        std::uniform_real_distribution<double> u(0, 1);
+        double gameAt = 0, nextHold = 1.0, holdUntil = -1;
+        long owed = 0;
+        int64_t outsAfterWarmUp = 0;
+        for (double t = 0; t < 120.0; t += 0.004) {
+            // The game: a frame each 1/60 s, unless held up; then the frames owed come at once.
+            while (gameAt <= t) {
+                if (gameAt < holdsFor && gameAt >= nextHold && holdUntil < 0) holdUntil = gameAt + 0.03 + 0.03 * u(rng);
+                if (holdUntil >= 0 && gameAt < holdUntil) {
+                    owed++;
+                } else {
+                    if (holdUntil >= 0) {
+                        holdUntil = -1;
+                        nextHold = gameAt + 0.6 + 0.8 * u(rng);
+                    }
+                    for (long i = 0; i <= owed; i++) pipe.write(frame.data(), (int32_t) std::lround(perFrame));
+                    owed = 0;
+                }
+                gameAt += 1.0 / 60;
+            }
+            pipe.read(out.data(), 192, CORE_RATE / DEVICE_RATE, DEVICE_RATE);
+            if (t < 30.0) outsAfterWarmUp = pipe.runOuts();
+        }
+        if (endTarget) *endTarget = pipe.target();
+        return pipe.runOuts() - outsAfterWarmUp;   // run-outs in the last 90 s
+    };
+    int32_t grown = 0, calmed = 0;
+    long fixedOuts = run(false, 1e9, nullptr);
+    long adaptiveOuts = run(true, 1e9, &grown);
+    // Hold-ups for the first minute only, then calm: the target comes back down.
+    run(true, 60.0, &calmed);
+    int32_t base = (int32_t) std::lround(perFrame * 2);
+    std::printf("  a phone that holds up 30-60 ms about every second: run-outs in 90 s, fixed target %ld, adaptive %ld (target %d -> %d, calm again %d)\n",
+                fixedOuts, adaptiveOuts, base, grown, calmed);
+    CHECK(adaptiveOuts * 2 <= fixedOuts, "adaptive %ld run-outs, fixed %ld", adaptiveOuts, fixedOuts);
+    CHECK(grown > base && grown <= base * 2, "target %d (from %d)", grown, base);
+    CHECK(calmed < grown, "calm: target %d, still %d", calmed, grown);
+}
+
 }
 
 int main() {
@@ -375,6 +426,7 @@ int main() {
     aScreenThatSpeedsUpUnsaidDoesntSpeedTheGameUp();
     soundStaysSteadyAndCrisp();
     aHoldUpFadesOutAndBackWithoutAClick();
+    soundAdaptsToAPhoneThatHoldsUp();
     if (failures > 0) {
         std::printf("%d failed\n", failures);
         return 1;

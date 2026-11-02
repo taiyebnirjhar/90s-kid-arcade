@@ -147,6 +147,24 @@ class OnlineRoomsTest {
         assertTrue(guest.room.watching)
     }
 
+    // A real report: a phone left a room and joined it again at once; the old
+    // visit's goodbye went out in the background, and its "left" reached the
+    // server after the new join, taking the new visit's place away (the room's
+    // signaling then refused it, and the join timed out). Now the last one to
+    // let go of the room on this phone is the only one that says "left".
+    @Test
+    fun aRoomLeftAndJoinedAgainAtOnceKeepsItsPlace() {
+        val host = phone("aaa").host("Host", "kof97", "KOF '97", rom = 11, bios = 22, maxPlayers = 2).started()
+        val guest = phone("bbb")
+        val first = guest.join(guest.find(host.code), "Rafi", "kof97", 11, 22).started()
+        // Joined again before the first visit's goodbye is done.
+        val again = guest.join(guest.find(host.code), "Rafi", "kof97", 11, 22).started()
+        first.close()
+        assertTrue("bbb" in server.members(host.code), "the old visit's goodbye took the new one's place: ${server.members(host.code)}")
+        again.close()
+        assertFalse("bbb" in server.members(host.code), "still in the room after leaving: ${server.members(host.code)}")
+    }
+
     @Test
     fun aGameStartsAtTheDelayForThePing() {
         val host = phone("aaa").host("Host", "kof97", "KOF '97", rom = 11, bios = 22, maxPlayers = 2).started()
