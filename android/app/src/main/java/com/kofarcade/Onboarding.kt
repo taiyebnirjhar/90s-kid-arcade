@@ -306,13 +306,16 @@ fun OnboardingScreen(
 @Composable
 private fun Welcome(short: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        // Taiyeb's initials in a gold ring: the welcome comes from a person.
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(if (short) 56.dp else 72.dp).clip(CircleShape).background(Palette.panel)
-                .border(2.dp, Palette.gold, CircleShape),
-        ) {
-            Text(initials(INVITED_BY), color = Palette.gold, fontFamily = ArcadeFont, fontSize = if (short) 24.sp else 30.sp)
+        // Taiyeb's photo in a gold ring (the welcome comes from a person), and the
+        // arcade's pixel shades dropping onto his glasses.
+        Box(Modifier.size(if (short) 68.dp else 88.dp).clip(CircleShape).background(Palette.panel).border(3.dp, Palette.gold, CircleShape)) {
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(R.drawable.invited_by),
+                contentDescription = INVITED_BY,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize(),
+            )
+            PixelShades(Modifier.matchParentSize())
         }
         Spacer(Modifier.height(12.dp))
         Text("$INVITED_BY invited you", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
@@ -463,5 +466,51 @@ private fun StepHead(kicker: String, title: String, body: String, center: Boolea
         Text(title, color = Palette.text, fontSize = 26.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, textAlign = if (center) TextAlign.Center else TextAlign.Start)
         Spacer(Modifier.height(8.dp))
         Text(body, color = Palette.muted, fontSize = 14.sp, lineHeight = 20.sp, textAlign = if (center) TextAlign.Center else TextAlign.Start)
+    }
+}
+
+
+// The pixel "deal with it" shades, as drawn on the 21 x 6 grid below ('#' black, 'o' a glint).
+private val SHADES = listOf(
+    "#####################",
+    "..#oo#####.#oo#####..",
+    "..#o######.#o######..",
+    "..########.########..",
+    "...######...######...",
+    "....####.....####....",
+)
+
+/**
+ * Pixel shades over the photo's glasses (where they are in invited_by.jpg:
+ * 28-72% across, 32.5-45% down), dropping into place once, as in the meme.
+ */
+@Composable
+private fun PixelShades(modifier: Modifier) {
+    val still = LocalInspectionMode.current || LocalStill.current
+    val drop = remember { androidx.compose.animation.core.Animatable(if (still) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        if (!still) {
+            kotlinx.coroutines.delay(500)
+            drop.animateTo(1f, androidx.compose.animation.core.tween(700, easing = androidx.compose.animation.core.LinearOutSlowInEasing))
+        }
+    }
+    androidx.compose.foundation.Canvas(modifier) {
+        val cols = SHADES[0].length
+        val cell = size.width * 0.44f / cols
+        val left = size.width * 0.5f - cell * cols / 2f
+        val top = size.height * 0.325f
+        // From above the picture, down onto the eyes.
+        val y0 = top - (1f - drop.value) * (top + cell * SHADES.size)
+        for ((r, line) in SHADES.withIndex()) {
+            for ((c, ch) in line.withIndex()) {
+                val color = when (ch) {
+                    '#' -> Color.Black
+                    'o' -> Color.White
+                    else -> continue
+                }
+                // A hair over a cell, so no seams show between the pixels.
+                drawRect(color, androidx.compose.ui.geometry.Offset(left + c * cell, y0 + r * cell), androidx.compose.ui.geometry.Size(cell + 0.6f, cell + 0.6f))
+            }
+        }
     }
 }
