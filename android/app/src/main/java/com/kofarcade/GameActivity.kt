@@ -115,11 +115,13 @@ data class Look(
     val voices: Boolean = true,
     val voiceVolume: Float = 1f,
     val micOpen: Boolean = true,
+    /** The game goes quieter while someone talks (you or the others), so voices come through. */
+    val duckGame: Boolean = true,
 )
 
 fun Prefs.look() = Look(
     screen, stick, size, opacity, labelMode, haptics, leftHanded, stepFrames, pressFrames, rapidFire, soundOn, volume,
-    chatBubbles, chatFilter, voices, voiceVolume, micOpen,
+    chatBubbles, chatFilter, voices, voiceVolume, micOpen, duckGame,
 )
 
 /** Runs one game: FBNeo through LibretroDroid, with our touch controls on top. */
@@ -133,6 +135,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Who's speaking: checked this often, louder than this.
         private const val SPEAKING_MS = 300L
         private const val SPEAKING_LEVEL = 0.02
+        // Voices play this much louder than their raw level (the volume setting's 100%), over the game.
+        private const val VOICE_GAIN = 2.5
+        // While someone talks the game plays at this share of its volume, stepping down and back up.
+        private const val DUCKED = 0.25f
+        private const val DUCK_DOWN_STEP = 0.4f
+        private const val DUCK_UP_STEP = 0.15f
+        // Your mic's level (0-1) that counts as talking.
+        private const val MIC_SPEAKING_LEVEL = 0.06
         // Friends are told what this phone plays this often (they see it for 2 minutes).
         private const val PRESENCE_MS = 20_000L
         private const val CORE = "libfbneo_libretro_android.so"
@@ -806,7 +816,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         AndroidRtc.get(this).talking(send && (look.micOpen || talking))
         val volumes = r.members.values.filter { it.id != r.localId && it.host.isNotEmpty() }.associate { m ->
             val off = !look.voices || m.device in mutedPlayers || m.id in r.voiceRules.muted || (r.voiceRules.watchersListen && m.seat < 0)
-            m.host to if (off) 0.0 else look.voiceVolume.toDouble()
+            m.host to if (off) 0.0 else look.voiceVolume.toDouble() * VOICE_GAIN
         }
         lifecycleScope.launch(netSends) {
             t.voice(send)
@@ -825,8 +835,16 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                     .filter { it.device !in mutedPlayers && it.id !in r.voiceRules.muted }
                     .map { it.name }
                 if (now != speaking) speaking = now
+                // Someone's voice playing, or yours going out: the game quieter, so voices come through
+                // (and less of the game reaches your mic).
+                val heard = look.voices && now.isNotEmpty()
+                val saying = micOn && (look.micOpen || talking) && AndroidRtc.get(this@GameActivity).micLevel > MIC_SPEAKING_LEVEL
+                duckTo(if (look.duckGame && (heard || saying)) DUCKED else 1f)
             }
             speaking = emptyList()
+            // Out of the room: the game's own volume again, at once.
+            duck = 1f
+            applySound(look.sound, look.volume)
         }
     }
 
@@ -1886,7 +1904,19 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // Squared, so each step up sounds like the same step (ears hear loudness that way).
     private fun applySound(on: Boolean, volume: Float) {
         soundOn = on
-        LibretroDroid.setVolume(if (on) volume * volume else 0f)
+        LibretroDroid.setVolume(if (on) volume * volume * duck else 0f)
+    }
+
+    // How loud the game is against its own volume: 1, or less while someone talks (voice rooms).
+    private var duck = 1f
+
+    // The game's sound moves toward [target] (quick down, so a first word isn't lost; slower back up).
+    private fun duckTo(target: Float) {
+        val next = if (target < duck) maxOf(target, duck - DUCK_DOWN_STEP) else minOf(target, duck + DUCK_UP_STEP)
+        if (next != duck) {
+            duck = next
+            applySound(look.sound, look.volume)
+        }
     }
 
     /** The pause menu's switch: sound off, or back on at its volume. Saved. */

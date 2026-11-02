@@ -457,6 +457,7 @@ fun ControlsPanel(
                         StepRow("Voice volume", look.voiceVolume, 0.1f..1f, 0.1f, sub = if (look.voices) "Apart from the game's volume" else "Voices are off") {
                             onLook(look.copy(voiceVolume = it, voices = true))
                         }
+                        ToggleRow("Game quieter while people talk", look.duckGame, { onLook(look.copy(duckGame = it)) }, sub = "Voices come through clearly, and less game sound reaches your mic")
                         PickRow("Your mic", listOf(true, false), look.micOpen, { if (it) "Open" else "Push to talk" }, sub = if (look.micOpen) "Once on, it's on until you turn it off" else "Hold the mic button to talk") {
                             onLook(look.copy(micOpen = it))
                         }

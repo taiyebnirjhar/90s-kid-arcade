@@ -280,6 +280,11 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putBoolean("voices", v).apply()
 
     /** How loud the others' voices play, 0.1 to 1 (apart from the game's volume). */
+    /** The game goes quieter while someone talks in a voice room. */
+    var duckGame: Boolean
+        get() = sp.getBoolean("duckGame", true)
+        set(v) = sp.edit().putBoolean("duckGame", v).apply()
+
     var voiceVolume: Float
         get() = sp.getFloat("voiceVolume", 1f)
         set(v) = sp.edit().putFloat("voiceVolume", v).apply()

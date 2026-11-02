@@ -44,12 +44,32 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
         val audio = JavaAudioDeviceModule.builder(app)
             .setUseHardwareAcousticEchoCanceler(true)
             .setUseHardwareNoiseSuppressor(true)
+            // How loud the mic is now (0-1), for ducking the game while you talk.
+            .setSamplesReadyCallback { s ->
+                val b = s.data
+                var sum = 0.0
+                var n = 0
+                var i = 0
+                while (i + 1 < b.size) {
+                    val v = ((b[i + 1].toInt() shl 8) or (b[i].toInt() and 0xFF)).toShort() / 32768.0
+                    sum += v * v
+                    n++
+                    i += 2
+                }
+                // Up at once, down slowly (a word's gaps don't count as silence).
+                val rms = if (n > 0) kotlin.math.sqrt(sum / n) else 0.0
+                micLevel = maxOf(rms, micLevel * 0.85)
+            }
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build(),
             )
             .createAudioDeviceModule()
         factory = PeerConnectionFactory.builder().setAudioDeviceModule(audio).createPeerConnectionFactory()
     }
+
+    /** The mic's level now (0-1, recorded sound before it goes out), while it's on. */
+    @Volatile var micLevel = 0.0
+        private set
 
     // The mic: one track for every connection, made the first time voice is on.
     private var micSource: AudioSource? = null
@@ -71,6 +91,7 @@ class AndroidRtc private constructor(context: Context) : RtcFactory {
     /** Push to talk: the mic track sends only while [talking] (the connections stay set up for voice). */
     fun talking(talking: Boolean) {
         micTrack?.setEnabled(talking)
+        if (!talking) micLevel = 0.0
     }
 
     override fun peer(ice: List<IceServer>, events: RtcPeer.Events): RtcPeer = Peer(ice, events)

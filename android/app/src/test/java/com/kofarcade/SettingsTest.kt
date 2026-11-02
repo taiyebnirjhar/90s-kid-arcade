@@ -30,6 +30,7 @@ class SettingsTest {
             ScreenMode.entries.last(), StickMode.entries.last(), 1.25f, 0.55f, LabelMode.entries.last(),
             haptics = false, leftHanded = true, stepFrames = 4, pressFrames = 9, rapidFire = false,
             sound = false, volume = 0.4f, chatBubbles = false, chatFilter = false, voices = false, voiceVolume = 0.3f, micOpen = false,
+            duckGame = false,
         )
         p.screen = changed.screen
         p.stick = changed.stick
@@ -48,6 +49,7 @@ class SettingsTest {
         p.voices = changed.voices
         p.voiceVolume = changed.voiceVolume
         p.micOpen = changed.micOpen
+        p.duckGame = changed.duckGame
         p.detectInfo = true
         p.problemReports = false
         p.openRooms = false
