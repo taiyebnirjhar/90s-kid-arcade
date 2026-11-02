@@ -70,6 +70,14 @@ jobs:
             --screenshot="$PWD/site/img/share.png" "file://$PWD/site/share-card.html" \
             && test -s site/img/share.png \
             || cp site/img/home.png site/img/share.png
+          # A small JPEG too (WhatsApp and others skip preview images over ~300 KB);
+          # if it can't be made, the pages point at the PNG instead.
+          if python3 -m pip install --quiet --break-system-packages pillow && \
+             python3 -c "from PIL import Image; Image.open('site/img/share.png').convert('RGB').save('site/img/share.jpg', quality=82, optimize=True)"; then
+            ls -la site/img/
+          else
+            sed -i 's#img/share.jpg#img/share.png#g; s#image/jpeg#image/png#g' site/index.html site/join.html
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

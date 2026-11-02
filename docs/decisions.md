@@ -232,6 +232,18 @@ decision was made in the conversation. Get the time now with
   re-runs the deploy (the workflow file is one of its triggers), which
   applies the waiting migration (`20261103000000_download_count.sql`).
 
+### 2026-11-03 03:30 Dhaka · Link previews: a small JPEG card, fuller tags
+- Asked: the site's link in Messenger shows no card, title or description.
+- Found: the page serves every tag and the 1200×630 card to Facebook's
+  crawler (checked with its user agent); Messenger keeps what it first saw
+  of a link for a long time, so the fix for an old share is Facebook's
+  Sharing Debugger ("Scrape Again"). The card was a 507 KB PNG, over the
+  ~300 KB some apps (WhatsApp) take.
+- Decided: the card is also published as a ~120 KB JPEG (`img/share.jpg`,
+  made by `pages.yml`; the pages fall back to the PNG if it can't be made),
+  with `og:image:type`, `og:image:secure_url`, `og:site_name`, and
+  `twitter:title`/`description` on both pages.
+
 ---
 
 ## Where things stand (update whenever it changes)
