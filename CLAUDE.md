@@ -7,7 +7,7 @@ rules (branch, PRs he merges himself, trailers, telling him when to merge
 and when the APK is ready), hard rules, a map of the code, every build,
 test and release command, services, and gotchas.
 [docs/decisions.md](docs/decisions.md) logs every decision with its date and
-time (UTC), what was asked, what was decided and why, and ends with where
+time (Dhaka, UTC+6: `TZ=Asia/Dhaka date`), what was asked, what was decided and why, and ends with where
 things stand. Rely on them rather than on memory of earlier sessions.
 **Every pull request that decides something adds a dated entry to
 decisions.md and updates "Where things stand"; anything in AGENTS.md the

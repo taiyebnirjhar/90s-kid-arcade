@@ -1,12 +1,12 @@
 # Handbook for AI agents (and anyone picking this up)
 
-Read this first, then [decisions.md](decisions.md) (every decision, dated,
-with why). Together they're meant to be enough to carry on without any
+Read this first, then [decisions.md](decisions.md) (every decision, dated
+in Dhaka time, with why). Together they're meant to be enough to carry on without any
 earlier conversation. **Keep them true:** each change that decides
 something adds a dated entry to `decisions.md`, and anything here that a
 change makes wrong is fixed in the same pull request.
 
-Last full review of this handbook: 2026-11-02 21:00 UTC.
+Last full review of this handbook: 2026-11-03 03:00 Dhaka.
 
 ---
 

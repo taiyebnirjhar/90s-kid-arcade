@@ -1,20 +1,22 @@
 # Decision log
 
-Every decision about the app, newest last, with when (UTC), who asked, what
+Every decision about the app, newest last, with when (Dhaka time, UTC+6), who asked, what
 was decided and why, and where it lives. Read [AGENTS.md](AGENTS.md) first
 for how the project works. **Add an entry for every decision, in the same
 pull request that makes it** (format below). "Owner" is Taiyeb Nirjhor.
 
 ```
-### YYYY-MM-DD HH:MM UTC · Short title (#PR)
+### YYYY-MM-DD HH:MM Dhaka · Short title (#PR)
 - Asked: what the owner asked, in his words where it matters.
 - Decided: what was built or chosen, and the alternatives turned down.
 - Why: the reason (a report, a rule, a cost).
 - Where: files, settings, docs.
 ```
 
-Times before 2026-10-31 are merge times of the pull requests (from git);
-later ones are when the decision was made in the conversation.
+All times are Dhaka time (Asia/Dhaka, UTC+6), the owner's. For pull requests
+up to #66 they're the merge times (from git); later ones are when the
+decision was made in the conversation. Get the time now with
+`TZ=Asia/Dhaka date '+%Y-%m-%d %H:%M'`.
 
 ---
 
@@ -48,36 +50,36 @@ later ones are when the decision was made in the conversation.
 
 ## Online play built (2026-10-29 to 2026-10-31)
 
-### 2026-10-29 12:57 UTC · Seats follow the game's countdown (#41)
+### 2026-10-29 18:57 Dhaka · Seats follow the game's countdown (#41)
 - Decided: a watcher's COIN/START takes a free seat, or one the game shows
   out (never started, or continue countdown over). No timer of ours. Each
   game declares `Game.seats`; `GamesTest` enforces it. Rule in CLAUDE.md.
 
-### 2026-10-29 17:58 → 23:05 UTC · Online phases 1.1–1.9 (#42, #44–#47)
+### 2026-10-29 23:58 → 2026-10-30 05:05 Dhaka · Online phases 1.1–1.9 (#42, #44–#47)
 - Decided: transport seam (1.1); Supabase server: rooms, members, Realtime
   signaling rules, TURN credentials with the 900/950 GB stop (1.2); guest
   sign-in and profile (1.3); WebRTC transport (1.4); rooms by code,
   smoothness online, a line for seats, one Online screen (1.5–1.9).
 
-### 2026-10-29 19:44 UTC · More games; load a state for everyone (#43)
+### 2026-10-30 01:44 Dhaka · More games; load a state for everyone (#43)
 - Mystic Warriors, Sunset Riders, Snow Bros., J.J. Squawkers.
 
-### 2026-10-30 07:04 → 13:17 UTC · Review, open/locked rooms, sizes (#48–#57)
+### 2026-10-30 13:04 → 19:17 Dhaka · Review, open/locked rooms, sizes (#48–#57)
 - Decided: open rooms (listed, anyone joins; relay only, addresses hidden)
   and locked rooms (code only); every screen and text size; online games no
   longer double speed; library retries server hiccups; Supabase kept awake
   (a call every 3 days, `keep-awake.yml`); open rooms let phones on one
   Wi-Fi connect directly while still hiding internet addresses.
 
-### 2026-10-31 07:47 UTC · Garou, Last Blade 1 & 2, Samurai Shodown II, Moo Mesa (#58)
+### 2026-10-31 13:47 Dhaka · Garou, Last Blade 1 & 2, Samurai Shodown II, Moo Mesa (#58)
 - Note: Bust-A-Move 2 wanted, but the owner's file was the N64 game, not the
   arcade one; needs `pbobbl2n.zip`.
 
-### 2026-10-31 13:05 UTC · Button layouts with room to press (#59)
+### 2026-10-31 19:05 Dhaka · Button layouts with room to press (#59)
 
 ## Social and polish (2026-10-31 to 2026-11-02)
 
-### 2026-10-31 19:10 UTC · Chat, voice, friends, quick match, reports (#60)
+### 2026-11-01 01:10 Dhaka · Chat, voice, friends, quick match, reports (#60)
 - Asked: "Complete online setup, like voice, chat", in one PR.
 - Decided: room chat (quick lines, typed, filter, 5 per 10 s, 120 chars),
   voice (WebRTC audio, open mic or push to talk, host rules), friends
@@ -87,7 +89,7 @@ later ones are when the decision was made in the conversation.
   account in `problem_readers` (the owner made it; its login is not in the
   repo). Publishing reports in public CI logs was refused (public repo).
 
-### 2026-10-31 19:46 UTC · No pausing online; a live test (#61)
+### 2026-11-01 01:46 Dhaka · No pausing online; a live test (#61)
 - Asked: online games can't be paused (cheating, griefing); a gear replaces
   pause; full test pass; online smoothness first; keep logs.
 - Decided: the menu opens while the game goes on online; `LiveOnlineTest`
@@ -95,16 +97,16 @@ later ones are when the decision was made in the conversation.
 - Finding: open rooms can't connect from the cloud sandbox (public IP, no
   UDP to the relay): the open-room live test is behind `LIVE_OPEN=1`.
 
-### 2026-10-31 20:19 UTC · An Online screen a 10-year-old understands (#62)
+### 2026-11-01 02:19 Dhaka · An Online screen a 10-year-old understands (#62)
 - Decided: big choices (Quick match, Make a room), a "Got a code?" card,
   friends, "Rooms you can join", same Wi-Fi as a small line.
 
-### 2026-10-31 20:22 UTC · Website on arcade.taiyebnirjhor.com (#63)
+### 2026-11-01 02:22 Dhaka · Website on arcade.taiyebnirjhor.com (#63)
 - Decided: a subdomain of the owner's domain (Cloudflare DNS CNAME → GitHub
   Pages); room links use it; the old github.io links still work.
 - Owner chose to keep the ROM library private behind its key.
 
-### 2026-10-31 22:09 UTC · Friends chat and challenges, compact UI, GAME ON, QR, mutes (#64)
+### 2026-11-01 04:09 Dhaka · Friends chat and challenges, compact UI, GAME ON, QR, mutes (#64)
 - Asked (several messages): a meaningful loading screen with the logo and
   "GAME ON"; website text as a marquee centred on the phone; landscape
   never cut; "keep the UI compact on every screen… same ratio, same feel…
@@ -126,14 +128,14 @@ later ones are when the decision was made in the conversation.
     `site/share-card.html` (game pictures fetched then, never committed).
 - Turned down: push notifications (need a Firebase project from the owner).
 
-### 2026-11-01 06:55 UTC · Versions and releases (#65)
+### 2026-11-01 12:55 Dhaka · Versions and releases (#65)
 - Asked: "Are we managing tags and version on GitHub?" → build it.
 - Decided: `versionCode` = run number, `versionName` `1.0.<run>`; a release
   `v1.0.<run>` per main build with "What's new"; `latest` follows. The
   version shows in Settings and Profile and goes with problem reports.
 - First numbered release: v1.0.233.
 
-### 2026-11-02 19:38 UTC · Background downloads, onboarding, rejoin fix, voices over the game (#66)
+### 2026-11-03 01:38 Dhaka · Background downloads, onboarding, rejoin fix, voices over the game (#66)
 - Asked: library downloads stop when leaving and sometimes look done but
   aren't; "it should keep downloading on bg"; onboarding as if referred by
   Taiyeb (welcome → key → Neo Geo BIOS first → favourite game); a join
@@ -156,35 +158,41 @@ later ones are when the decision was made in the conversation.
   addresses: a locked room or a challenge is faster).
 - Release: v1.0.238.
 
-### 2026-11-02 20:30 UTC · Welcome uses the owner's photo with pixel shades (PR #67, open)
+### 2026-11-03 02:30 Dhaka · Welcome uses the owner's photo with pixel shades (PR #67, open)
 - Asked: "Use my image as avatar instead of TN", then "swag sunglasses on
   top of my glasses… fit it well".
 - Decided: `res/drawable-nodpi/invited_by.jpg` (head and shoulders,
   384 px) in the gold ring; pixel "deal with it" shades drawn on a 21×6
   grid over his glasses (44% wide, from 32.5% down), dropping in 0.5 s
   after the screen opens.
-- A lower, fuller version (7 rows, filled bridge) was tried at 20:45 UTC and
+- A lower, fuller version (7 rows, filled bridge) was tried at 2026-11-03 02:45 Dhaka and
   **reverted** at the owner's request ("doesn't look good, back to like
   image attached").
 - Note: the repo is public, so the photo is public on GitHub.
 
-### 2026-11-02 21:00 UTC · Play from My Library (PR #67, open)
+### 2026-11-03 03:00 Dhaka · Play from My Library (PR #67, open)
 - Asked: a player downloaded a game and didn't know how to start it.
 - Decided: games on the phone show **Play** on their Library card (Neo Geo
   games once the BIOS is there); tapping the card plays.
 
-### 2026-11-02 21:10 UTC · Docs for agents (PR #67, open)
+### 2026-11-03 03:10 Dhaka · Docs for agents (PR #67, open)
 - Asked: "keep docs for every single decision with date and time and
   complete context… so a new session can continue without friction… a
   comprehensive doc for AI agents."
 - Decided: `docs/AGENTS.md` (how everything works and is done) and this
   log; CLAUDE.md points to both and requires an entry per decision.
 
+### 2026-11-03 02:58 Dhaka · Times in the docs are Dhaka time (PR #67, open)
+- Asked: "Use dhaka time zone."
+- Decided: every date and time in these docs is Asia/Dhaka (UTC+6); the
+  earlier UTC entries were converted. New entries take the time from
+  `TZ=Asia/Dhaka date '+%Y-%m-%d %H:%M'`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-02 21:10 UTC:
+As of 2026-11-03 02:58 Dhaka:
 
 - **Open:** PR #67 (photo with pixel shades, Play in Library, these docs).
   CI must be green before telling the owner to merge.
