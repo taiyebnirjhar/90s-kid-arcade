@@ -103,6 +103,7 @@
   .lead b { color: var(--text); font-weight: 600; }
   .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; padding: 0; list-style: none; }
+  .stats li[hidden] { display: none; }
   .stats li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(23, 23, 36, .8); border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
   .stats b { color: var(--text); font-family: var(--head); font-style: italic; font-weight: 800; font-size: 17px; }
   .stats i { width: 7px; height: 7px; border-radius: 50%; background: #3fbf6f; display: inline-block; box-shadow: 0 0 8px #3fbf6f; }
@@ -354,6 +355,8 @@
         <a class="btn" href="#install">How to install</a>
       </div>
       <ul class="stats">
+        <!-- Downloads: this site's Download taps and GitHub's release downloads, shown once they've come. -->
+        <li id="live-downloads" hidden><b>0</b> downloads</li>
         <li><b>27</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
@@ -594,6 +597,40 @@
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
     }, { rootMargin: "0px 0px -8% 0px" });
     els.forEach(function (e) { io.observe(e); });
+  })();
+</script>
+<script>
+  // Downloads: this site's Download taps (counted on the server) and the
+  // release downloads GitHub counts. The project's public address and
+  // publishable key: only what its rules let anyone do (count one, read the total).
+  (function () {
+    var SUPA = "https://ysbskjtvccdbhnfuccso.supabase.co";
+    var KEY = "sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE";
+    function rpc(name, keepalive) {
+      return fetch(SUPA + "/rest/v1/rpc/" + name, {
+        method: "POST", keepalive: !!keepalive,
+        headers: { apikey: KEY, "Content-Type": "application/json" }, body: "{}"
+      });
+    }
+    // Every Download button counts one (it still downloads if this can't go).
+    document.querySelectorAll('a[href="90s-Kid-Arcade.apk"]').forEach(function (a) {
+      a.addEventListener("click", function () { try { rpc("note_download", true); } catch (e) {} });
+    });
+    var site = rpc("download_count").then(function (r) { return r.ok ? r.json() : 0; }).catch(function () { return 0; });
+    var github = fetch("https://api.github.com/repos/taiyebnirjhar/90s-kid-arcade/releases?per_page=100")
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (list) {
+        var n = 0;
+        list.forEach(function (rel) { (rel.assets || []).forEach(function (a) { n += a.download_count || 0; }); });
+        return n;
+      }).catch(function () { return 0; });
+    Promise.all([site, github]).then(function (got) {
+      var n = (Number(got[0]) || 0) + got[1];
+      var el = document.getElementById("live-downloads");
+      if (!el || !(n > 0)) return;
+      el.querySelector("b").textContent = n.toLocaleString("en");
+      el.hidden = false;
+    });
   })();
 </script>
 </body>

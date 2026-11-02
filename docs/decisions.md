@@ -158,7 +158,7 @@ decision was made in the conversation. Get the time now with
   addresses: a locked room or a challenge is faster).
 - Release: v1.0.238.
 
-### 2026-11-03 02:35 Dhaka · Welcome uses the owner's photo with pixel shades (PR #67, open)
+### 2026-11-03 02:35 Dhaka · Welcome uses the owner's photo with pixel shades (#67)
 - Asked: "Use my image as avatar instead of TN", then "swag sunglasses on
   top of my glasses… fit it well".
 - Decided: `res/drawable-nodpi/invited_by.jpg` (head and shoulders,
@@ -170,33 +170,71 @@ decision was made in the conversation. Get the time now with
   image attached").
 - Note: the repo is public, so the photo is public on GitHub.
 
-### 2026-11-03 02:45 Dhaka · Play from My Library (PR #67, open)
+### 2026-11-03 02:45 Dhaka · Play from My Library (#67)
 - Asked: a player downloaded a game and didn't know how to start it.
 - Decided: games on the phone show **Play** on their Library card (Neo Geo
   games once the BIOS is there); tapping the card plays.
 
-### 2026-11-03 02:57 Dhaka · Docs for agents (PR #67, open)
+### 2026-11-03 02:57 Dhaka · Docs for agents (#67)
 - Asked: "keep docs for every single decision with date and time and
   complete context… so a new session can continue without friction… a
   comprehensive doc for AI agents."
 - Decided: `docs/AGENTS.md` (how everything works and is done) and this
   log; CLAUDE.md points to both and requires an entry per decision.
 
-### 2026-11-03 02:58 Dhaka · Times in the docs are Dhaka time (PR #67, open)
+### 2026-11-03 02:58 Dhaka · Times in the docs are Dhaka time (#67)
 - Asked: "Use dhaka time zone."
 - Decided: every date and time in these docs is Asia/Dhaka (UTC+6); the
   earlier UTC entries were converted. New entries take the time from
   `TZ=Asia/Dhaka date '+%Y-%m-%d %H:%M'`.
 
+### 2026-11-03 03:11 Dhaka · A download count on the website
+- Asked: "we want active user/download count on website", then "only
+  download counts fine, no need others".
+- Decided: the website shows "N downloads" in its stats row: every tap on
+  a Download button counts one on the server (`note_download`, table
+  `site_counters`, read with `download_count`, both callable without
+  signing in), plus the release downloads GitHub counts. Hidden until the
+  number has come. Counting starts now (earlier website downloads weren't
+  counted).
+- Turned down (owner): player counts (daily anonymous pings from the app,
+  players this week, online now). Built and removed before committing.
+- Where: `server/supabase/migrations/20261103000000_download_count.sql`,
+  its test, `site/index.html`.
+
+### 2026-11-03 03:17 Dhaka · Updates inside the app
+- Asked: "alert / badge on app, with button to on click update, when new
+  version comes, so they don't need to download from website again and
+  again. Keep it UI/UX friendly."
+- Decided:
+  - The website publishes `version.json` (build number, name, "What's new"
+    from the newest `v1.0.*` release, the APK's address) when it deploys.
+  - The app asks for it on opening (every 3 hours at most). A newer build
+    shows an **Update** chip (red dot) first in the home header, and its card
+    opens by itself once per version: version, what's new, **Update now**.
+  - The app downloads the APK itself (progress on the card, size checked),
+    then opens Android's installer (FileProvider); the first time, Android's
+    "install unknown apps" switch for this app opens, explained on the card,
+    and coming back installs. Same signing key, so it installs over with
+    games and settings kept.
+- Not chosen: Play Store updates (the app isn't on it); silent installs
+  (Android doesn't allow them for sideloaded apps).
+- Where: `Updates.kt`, `core/AppUpdate.kt` (+ test), `MainActivity.kt`,
+  `Home.kt`, the manifest (`REQUEST_INSTALL_PACKAGES`, provider),
+  `res/xml/file_paths.xml`, `.github/workflows/pages.yml`.
+- Note: the first build with this sees updates only from the next one on.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-03 02:58 Dhaka:
+As of 2026-11-03 03:04 Dhaka:
 
-- **Open:** PR #67 (photo with pixel shades, Play in Library, these docs).
-  CI must be green before telling the owner to merge.
-- **Latest release:** v1.0.238 (#66). The website serves it.
+- **Open:** the download count PR (see the last entry).
+- **Merged before it:** #67 (photo with pixel shades, Play in Library,
+  these docs) merged at 2026-11-03 03:03 Dhaka; its APK is building as the
+  next `v1.0.<run>` release.
+- **Latest release before it:** v1.0.238 (#66). The website serves the newest.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
@@ -207,4 +245,4 @@ As of 2026-11-03 02:58 Dhaka:
 - **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3),
   making Tailwind-like breakpoints cover any remaining hard-coded sizes.
 - **Watch:** problem reports (reader account) after the owner's friends
-  play online; the last report (2026-11-02, M14) led to the rejoin fix.
+  play online; the last report (2026-11-03, M14) led to the rejoin fix.

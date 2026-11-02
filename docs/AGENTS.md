@@ -179,6 +179,10 @@ with a sleeping foreground command.
   supports it, else restarted; 3 tries per file.
 - **Sound:** `AudioPipe` keeps a target buffer, adaptive (grows after
   run-outs, up to 2×; back down after 20 s calm).
+- **In-app updates:** the website's `version.json` (written by `pages.yml`
+  from the newest `v1.0.*` release) is compared with `BuildConfig.VERSION_CODE`;
+  `AppUpdates` downloads the APK to `cache/updates` and opens the installer
+  through the FileProvider (`${applicationId}.files`).
 - **Deep links:** `https://arcade.taiyebnirjhor.com/join.html?code=XXXXXX`
   (verified App Link via `assetlinks.json`, signed by the fixed debug key in
   `android/app/debug.keystore`), `kidarcade://join?code=…`, and the in-app

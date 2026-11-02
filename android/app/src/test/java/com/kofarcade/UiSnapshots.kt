@@ -1022,6 +1022,17 @@ class UiSnapshots {
     @Test fun onboardWelcomeLandscape() { landscape(); shot("onboard_welcome_landscape") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
     @Test fun onboardGamesLandscape() { landscape(); shot("onboard_games_landscape") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("garou.zip")))() } }
 
+    private val update = com.kofarcade.core.AppUpdate(
+        245, "1.0.245",
+        listOf("Play from My Library", "A download count on the website", "Your photo on the welcome screen"),
+        "https://arcade.taiyebnirjhor.com/90s-Kid-Arcade.apk",
+    )
+
+    @Test fun updateAvailable() = shot("update_available") { Box(Modifier.fillMaxSize().background(Palette.bg), contentAlignment = Alignment.Center) { UpdateCard(UpdateState.Available(update), "1.0.238", {}, {}) } }
+    @Test fun updateDownloading() = shot("update_downloading") { Box(Modifier.fillMaxSize().background(Palette.bg), contentAlignment = Alignment.Center) { UpdateCard(UpdateState.Downloading(update, 0.42f), "1.0.238", {}, {}) } }
+    @Test fun updatePermission() = shot("update_permission") { Box(Modifier.fillMaxSize().background(Palette.bg), contentAlignment = Alignment.Center) { UpdateCard(UpdateState.NeedsPermission(update, java.io.File("x")), "1.0.238", {}, {}) } }
+    @Test fun homeWithUpdate() = shot("home_update") { HomeScreen(homeUi.copy(update = "1.0.245"), {}, {}, {}, {}, {}, {}) }
+
     @Test fun gameOnJoining() = shot("game_on_joining") { GameOnLoading("Connecting to Rafi's room…", onCancel = {}) }
 
     @Test
