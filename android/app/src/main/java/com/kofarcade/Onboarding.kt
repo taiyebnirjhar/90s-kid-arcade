@@ -470,11 +470,12 @@ private fun StepHead(kicker: String, title: String, body: String, center: Boolea
 }
 
 
-// The pixel "deal with it" shades, as drawn on the 21 x 6 grid below ('#' black, 'o' a glint).
+// The pixel "deal with it" shades, as drawn on the 21 x 7 grid below ('#' black, 'o' a glint).
 private val SHADES = listOf(
     "#####################",
-    "..#oo#####.#oo#####..",
+    "..#oo#######oo#####..",
     "..#o######.#o######..",
+    "..########.########..",
     "..########.########..",
     "...######...######...",
     "....####.....####....",
@@ -482,7 +483,7 @@ private val SHADES = listOf(
 
 /**
  * Pixel shades over the photo's glasses (where they are in invited_by.jpg:
- * 28-72% across, 32.5-45% down), dropping into place once, as in the meme.
+ * 27.5-72.5% across, 33.5-48% down, the bridge too), dropping into place once, as in the meme.
  */
 @Composable
 private fun PixelShades(modifier: Modifier) {
@@ -496,9 +497,9 @@ private fun PixelShades(modifier: Modifier) {
     }
     androidx.compose.foundation.Canvas(modifier) {
         val cols = SHADES[0].length
-        val cell = size.width * 0.44f / cols
+        val cell = size.width * 0.45f / cols
         val left = size.width * 0.5f - cell * cols / 2f
-        val top = size.height * 0.325f
+        val top = size.height * 0.335f
         // From above the picture, down onto the eyes.
         val y0 = top - (1f - drop.value) * (top + cell * SHADES.size)
         for ((r, line) in SHADES.withIndex()) {
