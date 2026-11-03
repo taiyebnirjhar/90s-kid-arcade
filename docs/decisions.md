@@ -267,8 +267,10 @@ decision was made in the conversation. Get the time now with
   counted from #70 on. The owner downloaded it ~50 times and friends many more.
 - Decided: 100 from before counting began (the owner's estimate,
   `data-base="100"` in `site/index.html`), plus site taps and GitHub's
-  release downloads, shown in hundreds ("100+", "200+" ...; the owner:
-  "No need to show every single count").
+  release downloads. First shown in hundreds ("100+"); then the owner:
+  "Keep the download count visible it shows transparency": now the exact
+  number (1,234), shortened only from a million on (1.2M+) so the row
+  fits, and a tap on Download adds one on screen.
 
 ### 2026-11-03 04:17 Dhaka · Releases: Actions needs "Read and write" permissions
 - Found: #68's APK (v1.0.245) built and passed its tests, but publishing its
