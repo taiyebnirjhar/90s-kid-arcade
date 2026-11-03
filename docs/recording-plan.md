@@ -53,11 +53,15 @@ platforms later on top of the same video work.
   ran 10 s or more as it ends and on leaving, `MatchStore` keeps 20 plus
   starred. Settings → Save my matches (off) and the onboarding step.
   Tests: `recorder_test.cpp` (CI), `MatchTest` (file format, keeping).
-- **R2 Replays and the check.** The Replays screen on home: list, watch,
+- **R2 Replays and the check.** Built (2026-11-03 16:17); the check on a real phone
+  is the owner's (play a match with saving on, watch it: "Replay over ·
+  the same as the match ✓"). The Replays screen on home: list, watch,
   star, delete, space used. Watching runs the match as a room watcher does
   (`setNetplay` watching, the start state, every seat's inputs pushed) and
   compares each checksum with the saved one: the first proof on a phone
   (KOF 2002 Magic Plus, alone and online) that a replay is the match.
+  A replay uses its own saves folder (`replay-saves`), never records itself,
+  and doesn't count as a game played.
 - **R3 Save video and share.** Off-screen replay to MediaCodec at
   1080p60/720p60, sharp-pixel scaling, game sound, progress, into the
   gallery (MediaStore); then Share: WhatsApp (`com.whatsapp`), Messenger

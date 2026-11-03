@@ -1018,6 +1018,14 @@ class UiSnapshots {
     @Test fun onboardBios() = shot("onboard_bios") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Getting(0.42f)))() }
     @Test fun onboardBiosDone() = shot("onboard_bios_done") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Done))() }
     @Test fun onboardRecord() = shot("onboard_record") { onboard(OnboardUi(OnboardStep.RECORD))() }
+
+    private val replayRows = listOf(
+        ReplayRow("1.match", com.kofarcade.core.replay.MatchInfo("kof2002mp", "KOF 2002 Magic Plus", 1_793_700_000_000, 3 * 60 * 60 + 12 * 60, room = true, players = listOf("Taiyeb", "Rafi")), starred = true, playable = true),
+        ReplayRow("2.match", com.kofarcade.core.replay.MatchInfo("mslug", "Metal Slug", 1_793_600_000_000, 9 * 60 * 60), starred = false, playable = true),
+        ReplayRow("3.match", com.kofarcade.core.replay.MatchInfo("garou", "Garou", 1_793_500_000_000, 95 * 60), starred = false, playable = false),
+    )
+    @Test fun replays() = shot("replays") { ReplaysScreen(ReplaysUi(replayRows, saving = true, bytes = 1_400_000), {}, {}, {}, {}, {}) }
+    @Test fun replaysEmpty() = shot("replays_empty") { ReplaysScreen(ReplaysUi(emptyList(), saving = false), {}, {}, {}, {}, {}) }
     @Test fun onboardGames() = shot("onboard_games") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("kof97.zip", "mslug.zip")))() }
     @Test fun onboardWelcomeSmall() { tiny(); shot("onboard_welcome_tiny") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
     @Test fun onboardWelcomeLandscape() { landscape(); shot("onboard_welcome_landscape") { onboard(OnboardUi(OnboardStep.WELCOME))() } }

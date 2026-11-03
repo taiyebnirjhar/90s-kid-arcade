@@ -355,6 +355,17 @@ decision was made in the conversation. Get the time now with
 - The proof that a replay is the match moves to R2, where matches can be
   watched (it needs the watcher's replay path); the plan says so.
 
+### 2026-11-03 16:17 Dhaka · Recording R2: Replays (watch a saved match)
+- Asked: "Yes start R2, tell me when to merge".
+- Done: a **Replays** chip on home (shown once saving is on or a match is
+  saved) opens the list: game, players, length, date; star to keep, delete,
+  the saving switch, space used. Tapping one plays it in the game screen
+  as a room's watcher: the saved state, then every seat's inputs handed in
+  4 frames ahead (`REPLAY_LEAD`; more and a watcher races to catch up).
+  Each 2 s checksum is compared with the saved one (`ReplayCheck`); at the
+  end it says "the same as the match ✓" or when it went different.
+- Not yet proven on a phone: that needs the owner to play and watch one.
+
 ---
 
 ## Where things stand (update whenever it changes)

@@ -118,7 +118,19 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private enum class Page { HOME, LIBRARY, MULTIPLAYER, PROFILE }
+    /** A saved match, played again (docs/recording-plan.md). */
+    private fun watch(row: ReplayRow) {
+        val game = com.kofarcade.core.gameById(row.info.game) ?: return
+        val set = roms.setFor(game) ?: return
+        startActivity(
+            Intent(this, GameActivity::class.java)
+                .putExtra(GameActivity.EXTRA_GAME, game.id)
+                .putExtra(GameActivity.EXTRA_SET, set)
+                .putExtra(GameActivity.EXTRA_REPLAY, row.file),
+        )
+    }
+
+    private enum class Page { HOME, LIBRARY, MULTIPLAYER, PROFILE, REPLAYS }
 
     /** What the "add" dialog is for: the BIOS, or a game's ROM. */
     private sealed interface Pick {
@@ -134,6 +146,7 @@ class MainActivity : ComponentActivity() {
         var library by rememberSaveable { mutableStateOf(false) }
         var twoPlayer by rememberSaveable { mutableStateOf(false) }
         var profilePage by rememberSaveable { mutableStateOf(false) }
+        var replays by rememberSaveable { mutableStateOf(false) }
         // A room link: straight to Multiplayer, joining it.
         androidx.compose.runtime.LaunchedEffect(linkCode) {
             if (linkCode != null) {
@@ -183,6 +196,7 @@ class MainActivity : ComponentActivity() {
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
         val last = remember(refresh) { prefs.lastGame?.let(::gameById) }
         val profile = remember(refresh, profilePage) { Online.account(this).profile() }
+        val hasReplays = remember(refresh, replays) { prefs.saveMatches || MatchStore(this).list().isNotEmpty() }
 
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
@@ -251,6 +265,7 @@ class MainActivity : ComponentActivity() {
                 ?: (updateState as? UpdateState.Ready)?.update?.name
                 ?: (updateState as? UpdateState.NeedsPermission)?.update?.name
                 ?: (updateState as? UpdateState.Failed)?.update?.name,
+            replays = hasReplays,
         )
 
         // Pages fade into each other instead of cutting.
@@ -258,11 +273,13 @@ class MainActivity : ComponentActivity() {
             library -> Page.LIBRARY
             twoPlayer -> Page.MULTIPLAYER
             profilePage -> Page.PROFILE
+            replays -> Page.REPLAYS
             else -> Page.HOME
         }
         Crossfade(page, animationSpec = tween(220), label = "page") { shown ->
             when (shown) {
                 Page.PROFILE -> ProfileDialog(onClose = { profilePage = false })
+                Page.REPLAYS -> ReplaysDialog(prefs, roms, onWatch = ::watch, onClose = { replays = false })
                 Page.LIBRARY -> LibraryDialog(
                     prefs, roms, onChanged = { refresh++ }, onClose = { library = false },
                     // Play from the library: the game starts (the library's still there on the way back).
@@ -295,6 +312,7 @@ class MainActivity : ComponentActivity() {
                         onLongGame = { if (sets[it.id] != null) remove = it },
                         onProfile = { profilePage = true },
                         onUpdate = { showUpdate = true },
+                        onReplays = { replays = true },
                     )
                 }
             }

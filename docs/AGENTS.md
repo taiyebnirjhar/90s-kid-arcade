@@ -95,12 +95,13 @@ behind a key) inside the app.
 | --- | --- |
 | `android/app/src/main/java/com/kofarcade/` | The Android app (Kotlin, Jetpack Compose + `HudView`, a custom View for in-game controls). |
 | `MainActivity.kt` | Home, Library, Online, Profile pages; onboarding gate; friends' news banner; room links. |
-| `GameActivity.kt` | One game: emulator, HUD, rooms (Wi-Fi and online), voice, chat, presence and friends' news in-game. |
+| `GameActivity.kt` | One game: emulator, HUD, rooms (Wi-Fi and online), voice, chat, presence and friends' news in-game; replays (`EXTRA_REPLAY`: a saved match run as a room's watcher). |
 | `GameDialogs.kt`, `GameUi.kt` | Pause menu, settings, room sheet, sheets over the game. |
 | `TwoPlayerDialog.kt` | The Online screen (hub), joining/hosting, quick match, challenges, friend chat page, QR scan. |
 | `FriendsUi.kt`, `Chat.kt`, `RoomUi.kt` | Friends list/chat/banner; room chat, mic/speaker buttons; room sheet. |
 | `LibraryDialog.kt`, `Library.kt`, `LibraryDownloads.kt`, `DownloadService.kt` | My Library: the R2 library client (whole-file downloads, resume), the app-wide download queue, the foreground service. |
 | `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, save matches?, favourite games). |
+| `Replays.kt` | The Replays page (home chip): saved matches, star, delete, watch; the saving switch. |
 | `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
 | `Theme.kt` | Palette, the app-wide UI scale (`uiScale`, `DESIGN_SHORT_DP`), `Breakpoints`, text cap. |
 | `Storage.kt` | `RomStore` (zips, checks), `Prefs` (every setting). |

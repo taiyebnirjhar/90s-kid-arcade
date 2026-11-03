@@ -95,4 +95,19 @@ class MatchTest {
         assertEquals(listOf("m1", "m2", "m3", "m4", "m5", "m6", "m7").sorted(), gone.map { it.name }.sorted())
         assertTrue(MatchShelf.overflow(matches.take(5)).isEmpty())
     }
+
+    @Test
+    fun aReplayMatchesWhenEveryChecksumDoes() {
+        val check = ReplayCheck(listOf(120 to 1L, 240 to 2L, 360 to 3L))
+        check.see(120, 1L)
+        check.see(120, 1L)  // the same one again: counted once
+        check.see(130, 9L)  // a frame not saved: nothing to compare
+        check.see(240, 2L)
+        assertEquals(2, check.matched)
+        assertTrue(check.matches)
+        check.see(360, 4L)
+        assertEquals(360, check.wrongAt)
+        assertTrue(!check.matches)
+        assertTrue(!ReplayCheck(emptyList()).matches, "nothing checked proves nothing")
+    }
 }

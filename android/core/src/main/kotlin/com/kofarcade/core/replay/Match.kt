@@ -216,3 +216,34 @@ object MatchShelf {
     fun overflow(matches: List<SavedMatch>, keep: Int = KEEP): List<SavedMatch> =
         matches.filter { !it.starred }.sortedByDescending { it.savedAt }.drop(keep)
 }
+
+/**
+ * Whether a replay is the match: each checksum the replay reaches is
+ * compared with the one saved when it was played ([see] is given the
+ * newest one the emulator has, as often as liked).
+ */
+class ReplayCheck(sums: List<Pair<Int, Long>>) {
+    private val expected = sums.toMap()
+    private var last = -1
+
+    /** Checksums that matched so far. */
+    var matched = 0
+        private set
+
+    /** The first frame whose checksum didn't match, or -1. */
+    var wrongAt = -1
+        private set
+
+    fun see(frame: Int, sum: Long) {
+        if (frame <= last) return
+        last = frame
+        val want = expected[frame] ?: return
+        if (want == sum) matched++ else if (wrongAt < 0) wrongAt = frame
+    }
+
+    /** Every checksum reached so far matched (and there was one). */
+    val matches: Boolean get() = wrongAt < 0 && matched > 0
+}
+
+/** How far ahead of the game a replay's inputs are handed in (more, and a watcher races to catch up). */
+const val REPLAY_LEAD = 4

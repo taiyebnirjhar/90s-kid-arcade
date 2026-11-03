@@ -93,6 +93,8 @@ data class HomeUi(
     val onlineBadge: Int = 0,
     /** A newer version to install (its name): an Update chip first in the header. */
     val update: String? = null,
+    /** Saved matches, or saving on: a Replays chip. */
+    val replays: Boolean = false,
 )
 
 /**
@@ -112,6 +114,7 @@ fun HomeScreen(
     onLongGame: (Game) -> Unit,
     onProfile: () -> Unit = {},
     onUpdate: () -> Unit = {},
+    onReplays: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -124,6 +127,7 @@ fun HomeScreen(
             if (ui.update != null) HeaderChip("Update", gold = true, dot = Palette.red, onClick = onUpdate)
             HeaderChip("Online", gold = true, badge = ui.onlineBadge, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
+            if (ui.replays) HeaderChip("Replays", onClick = onReplays)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }
