@@ -69,7 +69,7 @@ platforms later on top of the same video work.
   not off screen and faster; faster is a later step. Native capture
   (`LibretroDroid::setCapture`: every frame drawn and the sound, kept until
   taken), `VideoMaker.kt` (EGL into the encoder's surface, sharp-bilinear
-  shader, H.264 1080p60 12 Mbps, 720p if the phone can't, AAC 192 kbps,
+  shader, H.264 1080p60 8 Mbps (was 12: 2.5 GB for 26 minutes), 720p at 5 if the phone can't, AAC 192 kbps,
   times by the game's own clock), `Videos.kt` (gallery, share buttons).
   Then, from the owner's first video: exactly 60 frames a second with the
   sound fitted (`AudioStretch`), nothing dropped (the replay waits on

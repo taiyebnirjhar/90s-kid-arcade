@@ -133,8 +133,9 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
         return try {
             val f = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
             f.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            // Pixel art at 60 a second: generous, so the pixels stay sharp.
-            f.setInteger(MediaFormat.KEY_BIT_RATE, if (lines >= 1080) 12_000_000 else 7_000_000)
+            // Pixel art compresses well: 8 Mbps keeps it clean at 1080p60 (about 60 MB a
+            // minute; 12 made a 26-minute match 2.5 GB, too big to share).
+            f.setInteger(MediaFormat.KEY_BIT_RATE, if (lines >= 1080) 8_000_000 else 5_000_000)
             f.setInteger(MediaFormat.KEY_FRAME_RATE, 60)
             f.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             codec.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)

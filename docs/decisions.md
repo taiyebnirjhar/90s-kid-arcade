@@ -402,6 +402,10 @@ decision was made in the conversation. Get the time now with
   count, no click between blocks); the replay holds its next inputs while
   more than 6 frames wait for the encoder (`captureBacklog`), so nothing
   is dropped; the picture smooth and the player's Screen shape.
+- Then: a 26-minute match's video was 2.5 GB ("Damn the file size is 2.5
+  GB"). The bitrate goes from 12 to 8 Mbps at 1080p (5 at 720p): about 60
+  MB a minute, still clean for pixel art. Short clips need the trim (R5),
+  next.
 
 ---
 
