@@ -323,6 +323,9 @@ decision was made in the conversation. Get the time now with
   sides and the profile picture covered it, and it looked blurry. Now the
   words are centred in the top half, title screens fill both sides in
   sharp pixels, and it's uploaded as PNG.
+- Then: "This description and post looks ai generated for emojies and its
+  tone… mimic my writing style". Rewritten in his voice: short, plain,
+  first person ("So I built it"), no emojis.
 
 ---
 
