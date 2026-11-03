@@ -247,3 +247,48 @@ class ReplayCheck(sums: List<Pair<Int, Long>>) {
 
 /** How far ahead of the game a replay's inputs are handed in (more, and a watcher races to catch up). */
 const val REPLAY_LEAD = 4
+
+/**
+ * The game's sound fitted to 60 frames a second, as the app plays it: a
+ * Neo Geo game runs at 59.19 frames a second, but the app shows it at 60
+ * (rooms by the clock, alone with a 60 Hz screen), its sound sped up to
+ * match. A video at 60 needs the same: [ratio] (the game's rate / 60) of
+ * the samples, by linear interpolation, carried smoothly from one call to
+ * the next. Stereo 16-bit, interleaved.
+ */
+class AudioStretch(private val ratio: Double) {
+    private val step = 1.0 / ratio
+    // Where the next output sample falls, counted from the first input sample still held.
+    private var pos = 0.0
+    private var lastL = 0
+    private var lastR = 0
+    private var started = false
+
+    fun process(input: ShortArray): ShortArray {
+        val frames = input.size / 2
+        if (frames == 0) return ShortArray(0)
+        // The input as one run: the last sample of the previous call, then these.
+        fun l(i: Int) = if (i < 0) lastL else input[i * 2].toInt()
+        fun r(i: Int) = if (i < 0) lastR else input[i * 2 + 1].toInt()
+        if (!started) {
+            started = true
+            lastL = input[0].toInt()
+            lastR = input[1].toInt()
+        }
+        val out = ShortArray(((frames - pos) / step + 2).toInt().coerceAtLeast(0) * 2)
+        var n = 0
+        // pos counts from the previous call's last sample (index -1).
+        // Up to (not at) this block's last sample: one exactly there is the next call's first, from lastL/lastR.
+        while (pos < frames) {
+            val i = kotlin.math.floor(pos).toInt() - 1
+            val f = pos - kotlin.math.floor(pos)
+            out[n++] = (l(i) + (l(i + 1) - l(i)) * f).toInt().toShort()
+            out[n++] = (r(i) + (r(i + 1) - r(i)) * f).toInt().toShort()
+            pos += step
+        }
+        pos -= frames
+        lastL = input[(frames - 1) * 2].toInt()
+        lastR = input[(frames - 1) * 2 + 1].toInt()
+        return out.copyOf(n)
+    }
+}

@@ -97,6 +97,8 @@ public:
     std::vector<int32_t> takeCapturedFrame();
     // The sound since last taken: stereo 16-bit samples, at getAvInfo's rate.
     std::vector<int16_t> takeCapturedAudio();
+    // Frames captured and not yet taken: a replay made into a video waits while there are many.
+    int captureBacklog();
     // {the game's frames a second, its sound's samples a second, its picture's aspect ratio}.
     std::array<double, 3> getAvInfo();
 
@@ -269,8 +271,10 @@ private:
     std::vector<int16_t> capturedAudio;
     std::vector<int32_t> lastCaptured;
     int32_t captureSeq = 0;
-    static constexpr size_t CAPTURE_MAX_FRAMES = 90;           // 1.5 s waiting to be taken
-    static constexpr size_t CAPTURE_MAX_SAMPLES = 48000 * 2 * 4; // 4 s of stereo
+    // Room enough that nothing's dropped: a replay made into a video waits for
+    // the encoder (captureBacklog), so these are only ever a backstop.
+    static constexpr size_t CAPTURE_MAX_FRAMES = 300;
+    static constexpr size_t CAPTURE_MAX_SAMPLES = 48000 * 2 * 10;
     double avFps = 60;
     double avSampleRate = 48000;
     void captureFrame(const void* data, unsigned width, unsigned height, size_t pitch);

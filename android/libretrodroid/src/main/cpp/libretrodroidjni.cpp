@@ -353,6 +353,13 @@ JNIEXPORT jshortArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_tak
     return result;
 }
 
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_captureBacklog(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().captureBacklog();
+}
+
 JNIEXPORT jdoubleArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getAvInfo(
     JNIEnv* env,
     jclass obj

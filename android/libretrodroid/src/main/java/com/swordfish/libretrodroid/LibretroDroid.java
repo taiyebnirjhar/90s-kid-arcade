@@ -162,6 +162,8 @@ public class LibretroDroid {
     public static native short[] takeCapturedAudio();
     // {frames a second, sound samples a second, aspect ratio} of the game loaded.
     public static native double[] getAvInfo();
+    // Frames captured and not yet taken.
+    public static native int captureBacklog();
     // Recording the match (see LibretroDroid::recStart): from the game as it is now.
     public static native boolean recStart();
     // 0: nothing recorded, 1: recording, 2: ended (a state loaded, a reset, a new seating): take it.
