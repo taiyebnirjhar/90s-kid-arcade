@@ -183,7 +183,7 @@ private fun ReplayCard(row: ReplayRow, onWatch: () -> Unit, onVideo: () -> Unit,
                 )
                 if (!row.playable) Text("Its game isn't on this phone", color = Palette.red, fontSize = 12.sp)
             }
-            if (row.playable) IconSpot("Save video", onVideo) { DownloadIcon(Modifier.size(20.dp), color = Palette.gold) }
+            if (row.playable) IconSpot("Save video", onVideo) { DownloadIcon(Modifier.size(20.dp), color = Palette.muted) }
             IconSpot("Star", onStar) { StarIcon(Modifier.size(20.dp), on = row.starred) }
             IconSpot("Delete", onDelete) { Text("✕", color = Palette.muted, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }

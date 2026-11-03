@@ -380,8 +380,9 @@ decision was made in the conversation. Get the time now with
   path, which works; faster can come later. Leaving while it's made drops it.
 - Small: space shows KB under a megabyte (it said "0.0 MB").
 - Then (owner): "Instead of video button, download icon does make better
-  sense?" Yes: a gold download icon (an arrow into a tray, gold like the
-  app's other download buttons) beside the star; the
+  sense?" Yes: a download icon (an arrow into a tray) beside the star, in
+  the same grey as the star and delete icons (owner: "Not yellow. The
+  gray. But like others"); the
   screen says "Saving the video… N%".
 - Not yet proven on a phone: the owner makes one and shares it.
 
