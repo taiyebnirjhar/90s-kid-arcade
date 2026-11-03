@@ -88,3 +88,7 @@ hook, beats with timings, captions, sounds, payoff, why it works.
   the Facebook cover (1640x624) padded into 16:9 left a dark band. Long
   videos use `marketing/video/banner16x9.html` (1920x1080, rendered with
   Chromium like the cover), with RED VS BLUE over it for the intro.
+- Then (owner): "Doesn't look good the end badge. Keep things in center
+  and clean." The end card is `marketing/video/endcard16x9.html`: the
+  round logo, one line of features, "Free on Android" and the address,
+  centred on the dark background, nothing else.
