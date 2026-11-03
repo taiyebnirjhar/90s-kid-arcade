@@ -40,6 +40,11 @@ import com.kofarcade.core.Game
 import com.kofarcade.core.SeatWatch
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
+import com.kofarcade.core.replay.MatchFile
+import com.kofarcade.core.replay.MatchInfo
+import com.kofarcade.core.replay.REPLAY_LEAD
+import com.kofarcade.core.replay.Recording
+import com.kofarcade.core.replay.ReplayCheck
 import com.kofarcade.core.Move
 import com.kofarcade.core.Pad
 import com.kofarcade.core.Picture
@@ -131,6 +136,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         const val EXTRA_SET = "set"
         /** Multiplayer: play in [Netplay.room] instead of alone. */
         const val EXTRA_NETPLAY = "netplay"
+        /** A saved match to play again (its file in [MatchStore]), instead of playing. */
+        const val EXTRA_REPLAY = "replay"
         private const val MAX_MOVES = 6
         // Who's speaking: checked this often, louder than this.
         private const val SPEAKING_MS = 300L
@@ -280,10 +287,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         set = s
         prefs = Prefs(this)
         mutedPlayers = prefs.mutedPlayers
-        tellFriends()
-        prefs.lastGame = game.id
+        replay = intent.getStringExtra(EXTRA_REPLAY)?.let { name ->
+            val read = runCatching { MatchFile.read(File(MatchStore(this).dir, name).readBytes()) }.getOrNull()
+            if (read == null || read.first.game != game.id) {
+                Toast.makeText(this, "Couldn't open that match", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+            Replay(read.first, read.second)
+        }
+        if (replay == null) {
+            tellFriends()
+            prefs.lastGame = game.id
+        }
         // Games played, for the profile (counted on the phone; synced from home).
-        if (savedInstanceState == null) {
+        if (savedInstanceState == null && replay == null) {
             val account = Online.account(this)
             lifecycleScope.launch(Dispatchers.IO) { account.recordPlay(game.id) }
         }
@@ -302,7 +320,14 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // Before the emulator starts: in a room, frames run from every phone's
         // inputs (rollback netcode, see LibretroDroid::setNetplay). Until the
         // first seating the game runs on its own (watching nobody).
-        LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
+        val r = replay
+        if (r != null) {
+            // A replay runs as a room's watcher does: every seat's inputs handed
+            // in (replayFrame), none of this phone's.
+            LibretroDroid.setNetplay(true, -1, r.rec.ports, MAX_ROLLBACK, (1 shl r.rec.ports) - 1)
+        } else {
+            LibretroDroid.setNetplay(room != null, room?.localPlayer ?: 0, game.players, MAX_ROLLBACK, 0)
+        }
         if (room != null) {
             holdWifi()
             if (room?.overInternet == true) {
@@ -334,7 +359,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             systemDirectory = File(filesDir, "system").apply { mkdirs() }.absolutePath
             // Two-player games start from the host's state, saves included;
             // keep them apart from your own.
-            savesDirectory = File(filesDir, if (room != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
+            // (A replay's own too: playing it again mustn't touch your game's saves.)
+            savesDirectory = File(filesDir, if (replay != null) "replay-saves" else if (room != null) "netplay-saves" else "saves").apply { mkdirs() }.absolutePath
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
             // The cabinet's settings (four players, say): the same on every phone.
@@ -348,6 +374,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         retroView.onFrame = {
             if (room != null) {
                 onNetFrame()
+            } else if (replay != null) {
+                replayFrame()
             } else {
                 padFrame++
                 pad.onFrame()
@@ -409,7 +437,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 when (it) {
                     is GLRetroView.GLRetroEvents.FrameRendered -> {
                         frame++
-                        if (frame == 1L && room == null) resumeWhereLeft()
+                        if (frame == 1L && room == null && replay == null) resumeWhereLeft()
+                        if (frame == 1L) replay?.let(::startReplay)
                         hud.onFrame(frame)
                     }
                     // Once: the surface is made again if the GL context is lost.
@@ -421,16 +450,29 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
         }
         ramMap?.let(::startDetection)
+        startSavingMatches()
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
         }
-        onBackPressedDispatcher.addCallback(this) { if (editing) finishEditing(save = false) else show(GameDialog.Pause) }
+        onBackPressedDispatcher.addCallback(this) {
+            when {
+                replay != null -> finish()
+                editing -> finishEditing(save = false)
+                else -> show(GameDialog.Pause)
+            }
+        }
+        if (replay != null) {
+            hud.visibility = View.GONE
+            netStatus.text = "Replay · ${replay!!.info.title}"
+            netStatus.visibility = View.VISIBLE
+            root.postDelayed({ if (replay?.over == false) netStatus.visibility = View.GONE }, 2500)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         // Back in this game (from another app, say): it's the one played last.
-        prefs.lastGame = game.id
+        if (replay == null) prefs.lastGame = game.id
         // The emulator resumes itself with the activity; keep it paused if a
         // dialog is still open.
         if ((dialog != null && dialog !is GameDialog.Room) || editing) {
@@ -1583,12 +1625,94 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lanLink?.stop()
     }
 
+    // ----- Saving matches (docs/recording-plan.md) -----
+
+    /** A saved match being played again: what it is, and how far it's got. */
+    private class Replay(val info: MatchInfo, val rec: Recording) {
+        val end: Int get() = rec.first + rec.frames
+        val check = ReplayCheck(rec.sums)
+        @Volatile var started = false
+        @Volatile var pushed = rec.first
+        @Volatile var over = false
+        var tail = 0
+    }
+
+    private var replay: Replay? = null
+
+    /** The game as the match began: then replayFrame hands in its inputs. */
+    private fun startReplay(r: Replay) = lifecycleScope.launch {
+        val ok = withContext(Dispatchers.IO) { runCatching { retroView.unserializeState(r.rec.state) }.getOrDefault(false) }
+        if (!ok) {
+            show(GameDialog.Error("This match was saved by a different version of the game and can't be played again.", "Can't play the match"))
+            return@launch
+        }
+        LibretroDroid.netStartAt(r.rec.first)
+        r.started = true
+    }
+
+    // On the emulator's thread, every frame: the next few frames' inputs, and
+    // the game's checksums against the saved ones.
+    private fun replayFrame() {
+        val r = replay ?: return
+        if (!r.started || r.over) return
+        val now = LibretroDroid.getNetFrame()
+        val until = minOf(r.end, now + REPLAY_LEAD)
+        while (r.pushed < until) {
+            for (p in 0 until r.rec.ports) LibretroDroid.pushRemoteInput(p, r.pushed, r.rec.mask(r.pushed, p))
+            r.pushed++
+        }
+        val sum = LibretroDroid.getNetSum()
+        if (sum[0] >= 0) r.check.see(sum[0].toInt(), sum[1])
+        // The end, and a few frames for its last checksum to come in.
+        if (now >= r.end && ++r.tail > 10) {
+            r.over = true
+            runOnUiThread { replayOver(r) }
+        }
+    }
+
+    private fun replayOver(r: Replay) {
+        val wrong = r.check.wrongAt
+        netStatus.text = when {
+            wrong >= 0 -> "Replay over · it went different from the match at %d:%02d".format((wrong - r.rec.first) / 3600, (wrong - r.rec.first) / 60 % 60)
+            r.check.matches -> "Replay over · the same as the match ✓"
+            else -> "Replay over"
+        }
+        netStatus.visibility = View.VISIBLE
+    }
+
+    private var matchTaker: MatchTaker? = null
+
+    /** While saving matches is on: each match recorded as it's played, and kept as it ends. */
+    private fun startSavingMatches() {
+        val taker = MatchTaker(
+            MatchStore(this),
+            enabled = { prefs.saveMatches && replay == null },
+            // A second in, and not while a room seats everyone (the game's about to change).
+            canStart = { !destroyed && !isFinishing && frame >= 60 && (room == null || !seating) },
+            describe = { startedAt, frames ->
+                MatchInfo(
+                    game.id, game.fullTitle, startedAt, frames, room = room != null,
+                    players = room?.let { r -> (0 until game.players).map { r.seats[it]?.name.orEmpty() } }.orEmpty(),
+                )
+            },
+        )
+        matchTaker = taker
+        lifecycleScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(1000)
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) runCatching { taker.tick() }
+            }
+        }
+    }
+
     override fun onPause() {
+        // Leaving the game: the match so far is kept (before the emulator goes).
+        if (isFinishing) matchTaker?.finish()
         // Leaving the app mid-game: the others wait, as for the menu.
         if (room != null && !isWatching && (dialog == null || dialog is GameDialog.Room) && !editing && !isFinishing) show(GameDialog.Pause)
         // Alone: the game is kept as it is, to go on from next time (once it's
         // run a while: a game that never started has nothing to keep).
-        if (room == null && frame - runFrom >= AUTO_STATE_MIN_FRAMES) {
+        if (room == null && replay == null && frame - runFrom >= AUTO_STATE_MIN_FRAMES) {
             // Before the emulator's own pause (the GL thread may already be
             // stopped, so straight from here: the core takes its lock).
             runCatching { retroView.serializeState(useEmulationThread = false) }.getOrNull()?.let(::keepAutoState)

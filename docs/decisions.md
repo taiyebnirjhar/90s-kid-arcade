@@ -319,6 +319,52 @@ decision was made in the conversation. Get the time now with
   they're fetched when rendered, never kept in the repo. Sources in
   `marketing/facebook/` (HTML, rendered to PNG); the text says free and no
   ads, and asks for no money.
+- Then (owner's screenshots): on the phone app the cover was cut on both
+  sides and the profile picture covered it, and it looked blurry. Now the
+  words are centred in the top half, title screens fill both sides in
+  sharp pixels, and it's uploaded as PNG.
+- Then: "This description and post looks ai generated for emojies and its
+  tone… mimic my writing style". Rewritten in his voice: short, plain,
+  first person ("So I built it"), no emojis.
+
+### 2026-11-03 15:58 Dhaka · Recording matches: planned (docs/recording-plan.md)
+- Asked: a video of a real KOF 2002 Magic Plus match to post; then
+  streaming to YouTube ("one click"), then: "I need to record our game play.
+  That's why i asked about streaming", platforms that can't block us first.
+- Decided: record in the app, no platform: a match is saved as its start
+  state plus every input and the 2 s RAM checksums; **Save video** replays
+  it off screen into a 1080p60 MP4 in the gallery. Nothing runs during
+  play, nothing is hosted by us. Off by default (owner: "by default the
+  record needs to be off"), offered in onboarding; when on, the last 20
+  matches are kept, starred ones for good; **Replays** on home.
+- Streaming (YouTube sign-in: Google's review and a 100-tester limit until
+  then; Twitch the easiest) comes later on the same encoder.
+- Phases R1-R5 in the plan, one PR each.
+
+### 2026-11-03 16:11 Dhaka · Recording R1: matches saved (off by default)
+- Asked: go ahead with recording; off by default, offered in onboarding;
+  share to WhatsApp, Messenger and Facebook (added to R3).
+- Done: the emulator records every match's start state, inputs and
+  checksums (native `MatchRecorder`); the app keeps each one 10 s or longer
+  in `filesDir/matches` (`.match`: info, then deflated runs of inputs,
+  sums, state), the newest 20 plus starred. Settings → Save my matches,
+  and onboarding step 4 of 5 ("Save your matches?": yes / not now).
+- Found: online play's RAM checksum starts from 1469598103934665603, not
+  FNV's own 14695981039346656037 (a digit short). Harmless, and changing it
+  would split phones of different versions: kept, and pinned by a test.
+- The proof that a replay is the match moves to R2, where matches can be
+  watched (it needs the watcher's replay path); the plan says so.
+
+### 2026-11-03 16:17 Dhaka · Recording R2: Replays (watch a saved match)
+- Asked: "Yes start R2, tell me when to merge".
+- Done: a **Replays** chip on home (shown once saving is on or a match is
+  saved) opens the list: game, players, length, date; star to keep, delete,
+  the saving switch, space used. Tapping one plays it in the game screen
+  as a room's watcher: the saved state, then every seat's inputs handed in
+  4 frames ahead (`REPLAY_LEAD`; more and a watcher races to catch up).
+  Each 2 s checksum is compared with the saved one (`ReplayCheck`); at the
+  end it says "the same as the match ✓" or when it went different.
+- Not yet proven on a phone: that needs the owner to play and watch one.
 
 ---
 

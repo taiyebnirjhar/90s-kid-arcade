@@ -154,6 +154,13 @@ public class LibretroDroid {
     // Watching from this frame on (after setNetplay and loading its state).
     public static native void netStartAt(int frame);
     public static native long[] getNetSum();
+    // Recording the match (see LibretroDroid::recStart): from the game as it is now.
+    public static native boolean recStart();
+    // 0: nothing recorded, 1: recording, 2: ended (a state loaded, a reset, a new seating): take it.
+    public static native int recStatus();
+    public static native int recFrames();
+    // What's recorded ("90SKREC1" block, see MatchRecorder::take; empty if nothing), and the recorder emptied.
+    public static native byte[] recTake();
     public static native boolean unserializeState(byte[] state);
 
     public static native void setCheat(int index, boolean enable, String code);

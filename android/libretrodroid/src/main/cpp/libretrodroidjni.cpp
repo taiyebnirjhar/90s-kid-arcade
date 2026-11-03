@@ -325,6 +325,37 @@ JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getN
     return result;
 }
 
+JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_recStart(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().recStart();
+}
+
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_recStatus(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().recStatus();
+}
+
+JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_recFrames(
+    JNIEnv* env,
+    jclass obj
+) {
+    return LibretroDroid::getInstance().recFrames();
+}
+
+JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_recTake(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto taken = LibretroDroid::getInstance().recTake();
+    jbyteArray result = env->NewByteArray((jsize) taken.size());
+    if (!taken.empty()) env->SetByteArrayRegion(result, 0, (jsize) taken.size(), (const jbyte*) taken.data());
+    return result;
+}
+
 JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_netStartAt(
     JNIEnv* env,
     jclass obj,

@@ -50,12 +50,16 @@ jobs:
       - name: Test the move engine
         run: ./gradlew -p core test --no-daemon
 
-      - name: Test frame pacing and sound
+      - name: Test frame pacing, sound and match recording
         run: |
           g++ -std=c++17 -O2 -Ilibretrodroid/src/test/cpp/stub -Ilibretrodroid/src/main/cpp \
             libretrodroid/src/test/cpp/playback_test.cpp libretrodroid/src/main/cpp/fpssync.cpp \
             libretrodroid/src/main/cpp/audiopipe.cpp -o "$RUNNER_TEMP/playback_test"
           "$RUNNER_TEMP/playback_test"
+          g++ -std=c++17 -O2 -Ilibretrodroid/src/main/cpp \
+            libretrodroid/src/test/cpp/recorder_test.cpp libretrodroid/src/main/cpp/recorder.cpp \
+            -o "$RUNNER_TEMP/recorder_test"
+          "$RUNNER_TEMP/recorder_test"
 
       - name: Download the FBNeo core
         run: |

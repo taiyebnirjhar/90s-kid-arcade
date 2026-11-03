@@ -28,6 +28,13 @@ decisions, and Step 1's work breakdown (phases 1.0-1.9, one PR each, each
 keeping same-Wi-Fi play and its tests working). Start a phase only when the
 owner says so, and record what's decided and learned in the doc as you go.
 
+## Recording matches: planned in phases
+
+Follow [docs/recording-plan.md](docs/recording-plan.md): off by default,
+offered in onboarding; a match is saved as its start state, inputs and
+checksums; **Save video** replays it into an MP4 in the gallery. Nothing is
+hosted by us. Phases R1-R5, one PR each.
+
 ## Seats in rooms follow the game's own countdown
 
 A watcher's COIN or START takes a free seat, or the seat of a player the game

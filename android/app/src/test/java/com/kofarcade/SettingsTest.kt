@@ -53,6 +53,7 @@ class SettingsTest {
         p.detectInfo = true
         p.problemReports = false
         p.openRooms = false
+        p.saveMatches = true
         p.mutedPlayers = setOf("phone-1", "phone-2")
 
         val again = Prefs(context)
@@ -60,7 +61,13 @@ class SettingsTest {
         assertEquals(true, again.detectInfo)
         assertEquals(false, again.problemReports)
         assertEquals(false, again.openRooms)
+        assertEquals(true, again.saveMatches)
         assertEquals(setOf("phone-1", "phone-2"), again.mutedPlayers)
+    }
+
+    @Test
+    fun savingMatchesIsOffUntilChosen() {
+        assertEquals(false, Prefs(context).saveMatches)
     }
 
     @Test

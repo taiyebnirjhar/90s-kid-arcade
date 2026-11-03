@@ -386,6 +386,8 @@ fun ControlsPanel(
     onDetectInfo: (Boolean) -> Unit,
     problemReports: Boolean = true,
     onProblemReports: (Boolean) -> Unit = {},
+    saveMatches: Boolean = false,
+    onSaveMatches: (Boolean) -> Unit = {},
     onCancel: () -> Unit,
     onSave: () -> Unit,
     startTab: SettingsTab = SettingsTab.SCREEN,
@@ -433,6 +435,7 @@ fun ControlsPanel(
                     SettingsTab.SCREEN -> {
                         PickRow("Picture", ScreenMode.entries, look.screen, { it.short }, sub = look.screen.label) { onLook(look.copy(screen = it)) }
                         if (canDetect) ToggleRow("Detection readout", detectInfo, onDetectInfo, sub = "For checking fighter detection works")
+                        ToggleRow("Save my matches", saveMatches, onSaveMatches, sub = "The last 20 kept on this phone, to watch again and make videos of")
                         ToggleRow("Send problem reports", problemReports, onProblemReports, sub = "A join or room that fails sends its connection log, to fix it")
                         Text("90s Kid Arcade ${BuildConfig.VERSION_NAME}", color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp))
                     }

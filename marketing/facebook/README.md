@@ -9,8 +9,11 @@ pre-installed Chromium:
 
 Sizes: Facebook shows a Page cover at 820 × 312 on computers and 640 × 360
 on phones (the sides cut off). The cover is drawn at twice that, 1640 × 624,
-for sharp screens; an 851 × 315 copy is the common upload size too. Keep the
-cover's words inside the middle 1,100 px: phones show only that.
+for sharp screens. The Facebook app on phones shows only about the middle
+900 px and puts the round profile picture over the bottom middle, so the
+words sit centred in the top half. Upload it as PNG: Facebook blurs text in
+a JPG cover. The old title screens are drawn in sharp pixels
+(`image-rendering: pixelated`), not smoothed.
 The page text (name, bio, details, first post) is in facebook-page.md.
 No money asks anywhere (FBNeo's license): no donations, no paid promotion of
 anything sold.

@@ -147,6 +147,7 @@ void LibretroDroid::setControllerType(unsigned int port, unsigned int type) {
 
 bool LibretroDroid::unserializeState(int8_t *data, size_t size) {
     std::lock_guard<std::mutex> lock(coreLock);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
     // Gone (the screen closed while a room still handed in a game).
     if (!core) return false;
 
@@ -476,6 +477,8 @@ void LibretroDroid::destroy() {
 
     core->retro_unload_game();
     core->retro_deinit();
+    recorder.take();
+    recSync();
 
     video = nullptr;
     core = nullptr;
@@ -518,6 +521,11 @@ void LibretroDroid::step() {
     float screenRate = newScreenRefreshRate.exchange(0);
     if (screenRate > 0 && fpsSync) fpsSync->setScreenRefreshRate(screenRate);
 
+    if (recEndWanted.exchange(false)) {
+        recorder.end();
+        recSync();
+    }
+
     if (frozen) {
         if (video) video->renderFrame();
         // The pace goes on (a frame's time, not run), so it's not behind when it's back.
@@ -550,9 +558,12 @@ void LibretroDroid::step() {
         std::lock_guard<std::mutex> netLock(netMutex);
         netSlowestFrameUs = std::max(netSlowestFrameUs, (int64_t) took);
     } else {
-        for (size_t i = 0; i < frames * frameSpeed; i++)
-            core->retro_run();
+        for (size_t i = 0; i < frames * frameSpeed; i++) {
+            if (recorder.getStatus() == MatchRecorder::RECORDING) recRunFrame();
+            else core->retro_run();
+        }
     }
+    recSync();
 
     if (video && !video->rendersInVideoCallback()) {
         video->renderFrame();
@@ -662,10 +673,77 @@ int16_t LibretroDroid::handleSetInputState(
         if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t) netMask[port];
         return (netMask[port] >> id) & 1;
     }
+    if (recServing && device == RETRO_DEVICE_JOYPAD && port < (unsigned) NET_MAX_PLAYERS) {
+        if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t) recMasks[port];
+        return id < 16 ? (recMasks[port] >> id) & 1 : 0;
+    }
     if (input) {
         return input->getInputState(port, device, index, id);
     }
     return 0;
+}
+
+void LibretroDroid::recRunFrame() {
+    // Every port's buttons, read once: the frame runs with these, and they're what's kept.
+    for (int p = 0; p < NET_MAX_PLAYERS; p++) {
+        uint16_t mask = 0;
+        if (input) {
+            for (unsigned id = 0; id < 16; id++) {
+                if (input->getInputState(p, RETRO_DEVICE_JOYPAD, 0, id)) mask |= (uint16_t) (1u << id);
+            }
+        }
+        recMasks[p] = mask;
+    }
+    int32_t frame = recorder.nextFrame();
+    recServing = true;
+    core->retro_run();
+    recServing = false;
+    recorder.addFrame(frame, recMasks);
+    if ((frame + 1) % REC_SUM_EVERY == 0) recorder.addSum(frame + 1, ramSum());
+}
+
+int64_t LibretroDroid::ramSum() {
+    auto* mem = (uint8_t*) core->retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
+    size_t memSize = core->retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
+    return mem == nullptr ? 0 : (int64_t) ramChecksum(mem, memSize);
+}
+
+void LibretroDroid::recSync() {
+    recStatusNow = (int) recorder.getStatus();
+    recFramesNow = (int32_t) recorder.frames();
+}
+
+bool LibretroDroid::recStart() {
+    // The order step() takes them in.
+    std::lock_guard<std::mutex> coreGuard(coreLock);
+    std::lock_guard<std::mutex> lock(netMutex);
+    if (!core) return false;
+    recEndWanted = false;
+    if (netplay) {
+        // As getNetState: the newest frame every input is in for, and the game then.
+        int32_t frame = std::min(std::min(netRemoteKnown(), netFirstWrong), netFrame);
+        std::vector<uint8_t> state;
+        if (frame == netFrame) {
+            state.resize(core->retro_serialize_size());
+            core->retro_serialize(state.data(), state.size());
+        } else if (frame > netFrame - NET_RING && netStates.size() == NET_RING) {
+            state = netStates[frame % NET_RING];
+        }
+        recorder.start(frame, netPlayers, std::move(state));
+    } else {
+        std::vector<uint8_t> state(core->retro_serialize_size());
+        core->retro_serialize(state.data(), state.size());
+        recorder.start(0, NET_MAX_PLAYERS, std::move(state));
+    }
+    recSync();
+    return recorder.getStatus() == MatchRecorder::RECORDING;
+}
+
+std::vector<uint8_t> LibretroDroid::recTake() {
+    std::lock_guard<std::mutex> coreGuard(coreLock);
+    auto taken = recorder.take();
+    recSync();
+    return taken;
 }
 
 uintptr_t LibretroDroid::handleGetCurrentFrameBuffer() {
@@ -677,6 +755,7 @@ uintptr_t LibretroDroid::handleGetCurrentFrameBuffer() {
 
 void LibretroDroid::reset() {
     std::lock_guard<std::mutex> lock(coreLock);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
 
     core->retro_reset();
 }
@@ -695,12 +774,14 @@ std::pair<int8_t*, size_t> LibretroDroid::serializeState() {
 
 void LibretroDroid::resetCheat() {
     std::lock_guard<std::mutex> lock(coreLock);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
 
     core->retro_cheat_reset();
 }
 
 void LibretroDroid::setCheat(unsigned index, bool enabled, const std::string& code) {
     std::lock_guard<std::mutex> lock(coreLock);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
 
     core->retro_cheat_set(index, enabled, Utils::cloneToCString(code));
 }
@@ -775,6 +856,7 @@ void LibretroDroid::setViewportAlignment(unsigned int viewportAlignment) {
 
 void LibretroDroid::setNetplay(bool enabled, int localPlayer, int players, int maxRollback, int activeMask) {
     std::lock_guard<std::mutex> lock(netMutex);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
     netplay = enabled;
     netPlayers = std::max(2, std::min(players, NET_MAX_PLAYERS));
     // -1: this phone watches; it has no input of its own.
@@ -862,6 +944,7 @@ std::pair<int32_t, std::vector<uint8_t>> LibretroDroid::getNetState() {
 
 void LibretroDroid::netStartAt(int32_t frame) {
     std::lock_guard<std::mutex> lock(netMutex);
+    recEndWanted = true;  // the game changed outside its inputs: a recording ends
     netFrame = frame;
     for (int p = 0; p < NET_MAX_PLAYERS; p++) netKnown[p] = frame;
     netFirstWrong = INT32_MAX;
@@ -943,11 +1026,7 @@ void LibretroDroid::netSimulate(int32_t frame, bool replay) {
         auto* mem = (uint8_t*) core->retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
         size_t memSize = core->retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
         if (mem != nullptr) {
-            uint64_t hash = 1469598103934665603ULL;
-            for (size_t j = 0; j < memSize; j++) {
-                hash ^= mem[j];
-                hash *= 1099511628211ULL;
-            }
+            uint64_t hash = ramChecksum(mem, memSize);
             bool found = false;
             for (auto& p : netPendingSums) {
                 if (p.first == frame + 1) {
@@ -980,8 +1059,26 @@ void LibretroDroid::stepNetplay(unsigned wanted) {
 
     // Frames below netRemoteKnown() have now run with the real inputs.
     int32_t remoteKnown = netRemoteKnown();
+    // A new seating or start frame since the last step: not the same timeline.
+    if (recEndWanted.exchange(false)) recorder.end();
+    if (recorder.getStatus() == MatchRecorder::RECORDING) {
+        // Those are the frames that count: recorded as they ran.
+        int32_t upTo = std::min(remoteKnown, netFrame);
+        for (int32_t f = recorder.nextFrame(); f < upTo; f++) {
+            if (f < netFrame - NET_RING) {
+                // Their inputs are gone (can't happen while frames stay within the
+                // rollback limit): the recording ends rather than keep a gap.
+                recorder.end();
+                break;
+            }
+            uint16_t masks[NET_MAX_PLAYERS] = {};
+            for (int p = 0; p < netPlayers; p++) masks[p] = netUsed[p][f % NET_RING];
+            recorder.addFrame(f, masks);
+        }
+    }
     for (auto it = netPendingSums.begin(); it != netPendingSums.end();) {
         if (it->first - 1 < remoteKnown) {
+            recorder.addSum(it->first, it->second);
             if (it->first > netSum[0]) netSum = {it->first, it->second};
             it = netPendingSums.erase(it);
         } else {

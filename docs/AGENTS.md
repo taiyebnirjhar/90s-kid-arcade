@@ -85,6 +85,9 @@ behind a key) inside the app.
 - **Online play follows `online-plan.md`** (principles, connection order
   nearby → direct → relay, settled decisions). Record new decisions there
   and in `decisions.md`.
+- **Recording matches follows `recording-plan.md`** (off by default, saved
+  on the phone only, videos made by replaying the saved inputs, phases
+  R1-R5). Record new decisions there and in `decisions.md`.
 
 ## 4. Map of the code
 
@@ -92,17 +95,19 @@ behind a key) inside the app.
 | --- | --- |
 | `android/app/src/main/java/com/kofarcade/` | The Android app (Kotlin, Jetpack Compose + `HudView`, a custom View for in-game controls). |
 | `MainActivity.kt` | Home, Library, Online, Profile pages; onboarding gate; friends' news banner; room links. |
-| `GameActivity.kt` | One game: emulator, HUD, rooms (Wi-Fi and online), voice, chat, presence and friends' news in-game. |
+| `GameActivity.kt` | One game: emulator, HUD, rooms (Wi-Fi and online), voice, chat, presence and friends' news in-game; replays (`EXTRA_REPLAY`: a saved match run as a room's watcher). |
 | `GameDialogs.kt`, `GameUi.kt` | Pause menu, settings, room sheet, sheets over the game. |
 | `TwoPlayerDialog.kt` | The Online screen (hub), joining/hosting, quick match, challenges, friend chat page, QR scan. |
 | `FriendsUi.kt`, `Chat.kt`, `RoomUi.kt` | Friends list/chat/banner; room chat, mic/speaker buttons; room sheet. |
 | `LibraryDialog.kt`, `Library.kt`, `LibraryDownloads.kt`, `DownloadService.kt` | My Library: the R2 library client (whole-file downloads, resume), the app-wide download queue, the foreground service. |
-| `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, favourite games). |
+| `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, save matches?, favourite games). |
+| `Replays.kt` | The Replays page (home chip): saved matches, star, delete, watch; the saving switch. |
+| `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
 | `Theme.kt` | Palette, the app-wide UI scale (`uiScale`, `DESIGN_SHORT_DP`), `Breakpoints`, text cap. |
 | `Storage.kt` | `RomStore` (zips, checks), `Prefs` (every setting). |
 | `Online.kt` | Supabase account, rooms, friends, problem reports, room links (`joinLink`, `codeFromLink`, `scannedRoomCode`). |
-| `android/core/` | Plain Kotlin (JVM), tested without a phone: games list and moves (`Games.kt`), ROM checks, rooms and netcode (`core/net`: `Session`, `Room`, `WebRtcTransport`, rollback, chat), online (`core/online`: Supabase client, `OnlineRooms`, `RealtimeSignaling`, friends). |
-| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), FBNeo core host. |
+| `android/core/` | Plain Kotlin (JVM), tested without a phone: games list and moves (`Games.kt`), ROM checks, rooms and netcode (`core/net`: `Session`, `Room`, `WebRtcTransport`, rollback, chat), online (`core/online`: Supabase client, `OnlineRooms`, `RealtimeSignaling`, friends), saved matches (`core/replay/Match.kt`: the emulator's block, the `.match` file format, what's kept). |
+| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), match recording (`recorder`, fed by `step`/`stepNetplay`), FBNeo core host. |
 | `server/supabase/migrations/` | Database: rooms, members, signaling rules (Realtime private channels), profiles, friends, friend chat, reports, problem reports, quotas. Applied to the live project automatically on merge to main. |
 | `server/supabase/tests/*.test.sql` | Server tests on plain Postgres with a Supabase stub. |
 | `server/supabase/functions/turn-credentials/` | Edge function: Cloudflare TURN credentials with the 900/950 GB stops. |
