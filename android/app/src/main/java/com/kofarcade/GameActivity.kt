@@ -187,6 +187,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
          * hiccups (SmoothnessTest), so the game plays through them.
          */
         private const val MAX_ROLLBACK = 12
+        // Frames waiting for the video encoder past which a replay holds its next inputs.
+        private const val VIDEO_BACKLOG = 6
     }
 
     private lateinit var game: Game
@@ -1663,7 +1665,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             // Capture from the first frame on (none runs before netStartAt: no inputs yet).
             val file = File(cacheDir, "videos").apply { mkdirs() }.let { File(it, "making.mp4") }.also { it.delete() }
             r.file = file
-            r.maker = VideoMaker(file).also { it.start() }
+            // As the player sees the game: their Screen setting's shape.
+            r.maker = VideoMaker(file, look.screen.aspect).also { it.start() }
         }
         LibretroDroid.netStartAt(r.rec.first)
         r.started = true
@@ -1682,6 +1685,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun replayFrame() {
         val r = replay ?: return
         if (!r.started || r.over) return
+        // Making a video: the replay waits while the encoder catches up, so no frame or sound is dropped.
+        if (r.maker != null && LibretroDroid.captureBacklog() > VIDEO_BACKLOG) return
         val now = LibretroDroid.getNetFrame()
         val until = minOf(r.end, now + REPLAY_LEAD)
         while (r.pushed < until) {

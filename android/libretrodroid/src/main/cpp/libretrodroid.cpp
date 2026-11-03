@@ -278,6 +278,11 @@ std::vector<int16_t> LibretroDroid::takeCapturedAudio() {
     return out;
 }
 
+int LibretroDroid::captureBacklog() {
+    std::lock_guard<std::mutex> lock(captureLock);
+    return (int) capturedFrames.size();
+}
+
 std::array<double, 3> LibretroDroid::getAvInfo() {
     return {avFps, avSampleRate, (double) getAspectRatio()};
 }

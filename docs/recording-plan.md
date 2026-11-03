@@ -36,8 +36,9 @@ platforms later on top of the same video work.
   match is played, so recording can't make play less smooth.
 - The replay checks itself: each 2 s checksum must match the saved one. If
   one ever doesn't, it says so rather than make a wrong video.
-- The picture is enlarged in whole steps with sharp pixels, fitted into
-  1920 × 1080 (or 1280 × 720) with dark bars.
+- The picture as the game screen shows it: smooth, and the player's Screen
+  shape (16:9 fills the frame; narrower ones get dark bars), in 1920 × 1080
+  (or 1280 × 720).
 - Everything stays on the phone: no server, no storage of ours, no cost.
   Players post the video where they like.
 
@@ -68,8 +69,12 @@ platforms later on top of the same video work.
   not off screen and faster; faster is a later step. Native capture
   (`LibretroDroid::setCapture`: every frame drawn and the sound, kept until
   taken), `VideoMaker.kt` (EGL into the encoder's surface, sharp-bilinear
-  shader, H.264 1080p60 12 Mbps, 720p if the phone can't, AAC 192 kbps,
+  shader, H.264 1080p60 8 Mbps (was 12: 2.5 GB for 26 minutes), 720p at 5 if the phone can't, AAC 192 kbps,
   times by the game's own clock), `Videos.kt` (gallery, share buttons).
+  Then, from the owner's first video: exactly 60 frames a second with the
+  sound fitted (`AudioStretch`), nothing dropped (the replay waits on
+  `captureBacklog`), the picture smooth and the Screen setting's shape,
+  as the game screen shows it.
   Originally planned: off-screen replay to MediaCodec at
   1080p60/720p60, sharp-pixel scaling, game sound, progress, into the
   gallery (MediaStore); then Share: WhatsApp (`com.whatsapp`), Messenger

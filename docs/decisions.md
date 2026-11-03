@@ -386,6 +386,27 @@ decision was made in the conversation. Get the time now with
   screen says "Saving the video… N%".
 - Not yet proven on a phone: the owner makes one and shares it.
 
+### 2026-11-03 20:23 Dhaka · Match videos: as the game looks and runs on the phone
+- Owner (first video, 1.0.256, VLC): "The video and sound didn't match. The
+  frame rates looked odd… it should be exact as when we saw the real app
+  game play. There is a graphical look difference."
+- Found: (1) the video ran at the game's own 59.19 frames a second, while
+  the app shows every game at 60 (rooms by the clock, alone with a 60 Hz
+  screen): played on a phone, a judder about once a second. (2) Frames and
+  sound were dropped whenever the encoder fell behind (the capture queue
+  was capped), so picture and sound came apart. (3) The game screen draws
+  smooth (its default shader is plain bilinear) and as wide as the Screen
+  setting (16:9 by default); the video was 4:3 with bars and hard pixels.
+- Decided: the video at exactly 60, its sound fitted to that as the app
+  plays it (`AudioStretch`, by the game's rate / 60, tested: the right
+  count, no click between blocks); the replay holds its next inputs while
+  more than 6 frames wait for the encoder (`captureBacklog`), so nothing
+  is dropped; the picture smooth and the player's Screen shape.
+- Then: a 26-minute match's video was 2.5 GB ("Damn the file size is 2.5
+  GB"). The bitrate goes from 12 to 8 Mbps at 1080p (5 at 720p): about 60
+  MB a minute, still clean for pixel art. Short clips need the trim (R5),
+  next.
+
 ---
 
 ## Where things stand (update whenever it changes)

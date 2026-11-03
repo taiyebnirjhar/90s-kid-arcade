@@ -12,6 +12,7 @@ import android.opengl.EGLExt
 import android.opengl.EGLSurface
 import android.opengl.GLES20
 import android.view.Surface
+import com.kofarcade.core.replay.AudioStretch
 import com.swordfish.libretrodroid.LibretroDroid
 import java.io.File
 import java.nio.ByteBuffer
@@ -22,12 +23,15 @@ import java.nio.IntBuffer
 /**
  * Makes an MP4 of what the emulator draws and plays (docs/recording-plan.md,
  * R3), on its own thread: frames and sound are taken from the emulator's
- * capture (LibretroDroid.setCapture), the picture enlarged on the GPU with
- * sharp pixels into a 16:9 frame with dark bars, and both encoded by the
- * phone's hardware (H.264 and AAC). Times go by the game's own clock (its
- * frame and sample rates), so picture and sound stay together.
+ * capture (LibretroDroid.setCapture) and encoded by the phone's hardware
+ * (H.264 and AAC). It looks and runs as the game does on the phone: 60
+ * frames a second (the app shows every game at 60, its sound sped up to
+ * match: [AudioStretch]), the picture smoothed as the game screen's is and
+ * as wide as the player's Screen setting ([aspect], null: the whole frame).
+ * Every frame is the next one in time: nothing's dropped (a replay waits
+ * for this: LibretroDroid.captureBacklog), so picture and sound stay together.
  */
-class VideoMaker(private val out: File, private val tall: Int = 1080) {
+class VideoMaker(private val out: File, private val aspect: Float?, private val tall: Int = 1080) {
     @Volatile private var stopping = false
     @Volatile private var cancelled = false
     @Volatile var failed: Throwable? = null
@@ -66,9 +70,9 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
 
     private fun make() {
         val av = LibretroDroid.getAvInfo()
-        val fps = av[0].takeIf { it > 1 } ?: 60.0
+        val fps = av[0].takeIf { it > 1 } ?: VIDEO_FPS
         val rate = av[1].toInt().takeIf { it in 8000..48000 } ?: 48000
-        val aspect = av[2].toFloat().takeIf { it > 0.2f } ?: (4f / 3f)
+        val stretch = AudioStretch(fps / VIDEO_FPS)
 
         val (video, width, height) = videoEncoder(tall) ?: videoEncoder(720) ?: error("No H.264 encoder")
         val audio = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).apply {
@@ -81,20 +85,21 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
         val input = video.createInputSurface()
         video.start()
         audio.start()
-        val gl = Gl(input, width, height, aspect)
+        val gl = Gl(input, width, height, aspect ?: (width.toFloat() / height))
         val mux = Muxer(MediaMuxer(out.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4))
         var samples = 0L
         try {
             while (!cancelled) {
                 val sound = LibretroDroid.takeCapturedAudio()
                 if (sound.isNotEmpty()) {
-                    feedAudio(audio, sound, samples, rate)
-                    samples += sound.size / 2
+                    val fitted = stretch.process(sound)
+                    feedAudio(audio, fitted, samples, rate)
+                    samples += fitted.size / 2
                 }
                 val frame = LibretroDroid.takeCapturedFrame()
                 if (frame.size > 3) {
                     gl.draw(frame)
-                    EGLExt.eglPresentationTimeANDROID(gl.display, gl.surface, (frame[0] * 1_000_000_000.0 / fps).toLong())
+                    EGLExt.eglPresentationTimeANDROID(gl.display, gl.surface, frame[0] * 1_000_000_000L / VIDEO_FPS.toLong())
                     EGL14.eglSwapBuffers(gl.display, gl.surface)
                 } else if (stopping && sound.isEmpty()) {
                     break
@@ -128,8 +133,9 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
         return try {
             val f = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
             f.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            // Pixel art at 60 a second: generous, so the pixels stay sharp.
-            f.setInteger(MediaFormat.KEY_BIT_RATE, if (lines >= 1080) 12_000_000 else 7_000_000)
+            // Pixel art compresses well: 8 Mbps keeps it clean at 1080p60 (about 60 MB a
+            // minute; 12 made a 26-minute match 2.5 GB, too big to share).
+            f.setInteger(MediaFormat.KEY_BIT_RATE, if (lines >= 1080) 8_000_000 else 5_000_000)
             f.setInteger(MediaFormat.KEY_FRAME_RATE, 60)
             f.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             codec.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
@@ -223,8 +229,9 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
 
     /**
      * Drawing into the encoder's surface: the game's picture as a texture,
-     * fitted to its aspect ratio, enlarged with "sharp bilinear" (whole-pixel
-     * steps, blended only at the edges between pixels: no blur, no uneven pixels).
+     * as wide as [aspect] allows (dark bars beside it if narrower than the
+     * frame), smoothed between pixels as the game screen draws it (its
+     * default shader is plain bilinear).
      */
     private class Gl(window: Surface, private val width: Int, private val height: Int, private val aspect: Float) {
         val display: EGLDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
@@ -297,11 +304,6 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
             val pos = GLES20.glGetAttribLocation(program, "pos")
             GLES20.glEnableVertexAttribArray(pos)
             GLES20.glVertexAttribPointer(pos, 2, GLES20.GL_FLOAT, false, 0, quad)
-            GLES20.glUniform2f(GLES20.glGetUniformLocation(program, "texSize"), w.toFloat(), h.toFloat())
-            GLES20.glUniform2f(
-                GLES20.glGetUniformLocation(program, "scale"),
-                maxOf(1, boxW / w).toFloat(), maxOf(1, boxH / h).toFloat(),
-            )
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
         }
 
@@ -341,17 +343,16 @@ class VideoMaker(private val out: File, private val tall: Int = 1080) {
             const val FRAGMENT = """
                 precision highp float;
                 uniform sampler2D tex;
-                uniform vec2 texSize;
-                uniform vec2 scale;
                 varying vec2 uv;
                 void main() {
-                    vec2 texel = uv * texSize;
-                    vec2 inside = fract(texel) - 0.5;
-                    vec2 edge = 0.5 - 0.5 / scale;
-                    vec2 at = floor(texel) + (inside - clamp(inside, -edge, edge)) * scale + 0.5;
-                    gl_FragColor = vec4(texture2D(tex, at / texSize).bgr, 1.0);
+                    gl_FragColor = vec4(texture2D(tex, uv).bgr, 1.0);
                 }
             """
         }
+    }
+
+    private companion object {
+        /** The app shows every game at 60 frames a second: so does its video. */
+        const val VIDEO_FPS = 60.0
     }
 }

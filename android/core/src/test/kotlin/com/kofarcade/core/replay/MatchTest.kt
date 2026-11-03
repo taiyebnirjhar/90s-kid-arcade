@@ -110,4 +110,31 @@ class MatchTest {
         assertTrue(!check.matches)
         assertTrue(!ReplayCheck(emptyList()).matches, "nothing checked proves nothing")
     }
+
+    @Test
+    fun soundIsFittedToSixtyFramesASecondWithoutAGap() {
+        val neoGeo = 59.1856
+        val stretch = AudioStretch(neoGeo / 60.0)
+        // A second of the game's sound (44100 a second at 59.19 frames), in frame-sized blocks: a 10 Hz tone.
+        var total = 0
+        var t = 0
+        var last = Int.MIN_VALUE
+        var biggestJump = 0
+        repeat(60) {
+            val block = ShortArray(745 * 2) { i -> (10000 * kotlin.math.sin(2 * Math.PI * (t + i / 2) / 4410.0)).toInt().toShort() }
+            t += 745
+            val out = stretch.process(block)
+            for (i in out.indices step 2) {
+                val v = out[i].toInt()
+                if (last != Int.MIN_VALUE) biggestJump = maxOf(biggestJump, kotlin.math.abs(v - last))
+                last = v
+            }
+            total += out.size / 2
+        }
+        // 60 x 745 samples in, about 98.6% of them out (the video's second runs 1.4% faster).
+        val expected = 60 * 745 * neoGeo / 60.0
+        assertTrue(kotlin.math.abs(total - expected) < 3, "got $total samples, expected about $expected")
+        // The tone stays smooth across the blocks (a step of 10000 x 2pi / 4410 = 15 at most): no click where they meet.
+        assertTrue(biggestJump <= 16, "a jump of $biggestJump between samples")
+    }
 }
