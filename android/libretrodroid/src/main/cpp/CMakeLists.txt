@@ -56,6 +56,7 @@ add_library(libretrodroid SHARED
         resamplers/sincresampler.cpp
         fpssync.h
         fpssync.cpp
+        recorder.cpp
         environment.h
         environment.cpp
         input.h

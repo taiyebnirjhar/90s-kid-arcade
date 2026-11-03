@@ -341,6 +341,20 @@ decision was made in the conversation. Get the time now with
   then; Twitch the easiest) comes later on the same encoder.
 - Phases R1-R5 in the plan, one PR each.
 
+### 2026-11-03 16:11 Dhaka · Recording R1: matches saved (off by default)
+- Asked: go ahead with recording; off by default, offered in onboarding;
+  share to WhatsApp, Messenger and Facebook (added to R3).
+- Done: the emulator records every match's start state, inputs and
+  checksums (native `MatchRecorder`); the app keeps each one 10 s or longer
+  in `filesDir/matches` (`.match`: info, then deflated runs of inputs,
+  sums, state), the newest 20 plus starred. Settings → Save my matches,
+  and onboarding step 4 of 5 ("Save your matches?": yes / not now).
+- Found: online play's RAM checksum starts from 1469598103934665603, not
+  FNV's own 14695981039346656037 (a digit short). Harmless, and changing it
+  would split phones of different versions: kept, and pinned by a test.
+- The proof that a replay is the match moves to R2, where matches can be
+  watched (it needs the watcher's replay path); the plan says so.
+
 ---
 
 ## Where things stand (update whenever it changes)

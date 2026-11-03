@@ -43,13 +43,21 @@ platforms later on top of the same video work.
 
 ## Phases (one PR each; each keeps play, online play and their tests working)
 
-- **R1 Record and check.** Native: keep the start state and the confirmed
-  inputs and checksums of a match, offline and online; write them to a
-  match file. A replay runs it again and compares the checksums. Tests: the
-  file format, and replay matching in core tests; on a phone, KOF 2002
-  Magic Plus online. Settings switch (off) and the onboarding step.
-- **R2 Replays.** The Replays screen on home: list, watch, star, delete,
-  keep 20, space used.
+- **R1 Record.** Done (2026-11-03 16:11). Native `MatchRecorder` (`recorder.h/.cpp`):
+  alone, each frame's buttons are read once before it runs (it runs with
+  exactly what's kept) and a checksum every 120 frames; in a room, the
+  frames below what every phone has confirmed (`netUsed`, after rollbacks)
+  and the room's own confirmed checksums. A state load, reset, cheat, new
+  seating or start frame ends a recording. App: `MatchTaker` starts one a
+  second into a game (not while a room seats everyone), keeps each that
+  ran 10 s or more as it ends and on leaving, `MatchStore` keeps 20 plus
+  starred. Settings → Save my matches (off) and the onboarding step.
+  Tests: `recorder_test.cpp` (CI), `MatchTest` (file format, keeping).
+- **R2 Replays and the check.** The Replays screen on home: list, watch,
+  star, delete, space used. Watching runs the match as a room watcher does
+  (`setNetplay` watching, the start state, every seat's inputs pushed) and
+  compares each checksum with the saved one: the first proof on a phone
+  (KOF 2002 Magic Plus, alone and online) that a replay is the match.
 - **R3 Save video and share.** Off-screen replay to MediaCodec at
   1080p60/720p60, sharp-pixel scaling, game sound, progress, into the
   gallery (MediaStore); then Share: WhatsApp (`com.whatsapp`), Messenger

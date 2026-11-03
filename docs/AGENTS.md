@@ -100,12 +100,13 @@ behind a key) inside the app.
 | `TwoPlayerDialog.kt` | The Online screen (hub), joining/hosting, quick match, challenges, friend chat page, QR scan. |
 | `FriendsUi.kt`, `Chat.kt`, `RoomUi.kt` | Friends list/chat/banner; room chat, mic/speaker buttons; room sheet. |
 | `LibraryDialog.kt`, `Library.kt`, `LibraryDownloads.kt`, `DownloadService.kt` | My Library: the R2 library client (whole-file downloads, resume), the app-wide download queue, the foreground service. |
-| `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, favourite games). |
+| `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, save matches?, favourite games). |
+| `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
 | `Theme.kt` | Palette, the app-wide UI scale (`uiScale`, `DESIGN_SHORT_DP`), `Breakpoints`, text cap. |
 | `Storage.kt` | `RomStore` (zips, checks), `Prefs` (every setting). |
 | `Online.kt` | Supabase account, rooms, friends, problem reports, room links (`joinLink`, `codeFromLink`, `scannedRoomCode`). |
-| `android/core/` | Plain Kotlin (JVM), tested without a phone: games list and moves (`Games.kt`), ROM checks, rooms and netcode (`core/net`: `Session`, `Room`, `WebRtcTransport`, rollback, chat), online (`core/online`: Supabase client, `OnlineRooms`, `RealtimeSignaling`, friends). |
-| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), FBNeo core host. |
+| `android/core/` | Plain Kotlin (JVM), tested without a phone: games list and moves (`Games.kt`), ROM checks, rooms and netcode (`core/net`: `Session`, `Room`, `WebRtcTransport`, rollback, chat), online (`core/online`: Supabase client, `OnlineRooms`, `RealtimeSignaling`, friends), saved matches (`core/replay/Match.kt`: the emulator's block, the `.match` file format, what's kept). |
+| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), match recording (`recorder`, fed by `step`/`stepNetplay`), FBNeo core host. |
 | `server/supabase/migrations/` | Database: rooms, members, signaling rules (Realtime private channels), profiles, friends, friend chat, reports, problem reports, quotas. Applied to the live project automatically on merge to main. |
 | `server/supabase/tests/*.test.sql` | Server tests on plain Postgres with a Supabase stub. |
 | `server/supabase/functions/turn-credentials/` | Edge function: Cloudflare TURN credentials with the 900/950 GB stops. |

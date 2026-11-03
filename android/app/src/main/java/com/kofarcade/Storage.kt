@@ -211,6 +211,11 @@ class Prefs(context: Context) {
         get() = sp.getInt("updateOffered", 0)
         set(v) = sp.edit().putInt("updateOffered", v).apply()
 
+    /** Keep the last matches played, to watch again and make videos of (docs/recording-plan.md). Off unless chosen. */
+    var saveMatches: Boolean
+        get() = sp.getBoolean("saveMatches", false)
+        set(v) = sp.edit().putBoolean("saveMatches", v).apply()
+
     /** The first-run welcome (onboarding) was seen, or skipped. */
     var onboarded: Boolean
         get() = sp.getBoolean("onboarded", false)

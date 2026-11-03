@@ -70,7 +70,7 @@ import kotlinx.coroutines.withContext
 const val INVITED_BY = "Taiyeb Nirjhor"
 
 /** The first-run welcome's steps, in order. */
-enum class OnboardStep { WELCOME, KEY, BIOS, GAME }
+enum class OnboardStep { WELCOME, KEY, BIOS, RECORD, GAME }
 
 /** The BIOS step: what's happening with neogeo.zip. */
 sealed interface BiosState {
@@ -145,7 +145,7 @@ fun OnboardingFlow(prefs: Prefs, roms: RomStore, onDone: () -> Unit) {
                 prefs.libraryKey = key.trim()
                 entries = list
                 val noBios = list.none { setName(it.name).startsWith("neogeo") }
-                step = if (roms.has(BIOS) || noBios) OnboardStep.GAME else OnboardStep.BIOS
+                step = if (roms.has(BIOS) || noBios) OnboardStep.RECORD else OnboardStep.BIOS
             } catch (e: Library.WrongKey) {
                 keyError = "That key didn't open the library. Check it with $INVITED_BY."
             } catch (e: Exception) {
@@ -196,6 +196,10 @@ fun OnboardingFlow(prefs: Prefs, roms: RomStore, onDone: () -> Unit) {
             finish()
         },
         onSkip = ::finish,
+        onSaveMatches = { on ->
+            prefs.saveMatches = on
+            step = OnboardStep.GAME
+        },
     )
 }
 
@@ -210,6 +214,7 @@ fun OnboardingScreen(
     onPick: (String) -> Unit,
     onFinish: () -> Unit,
     onSkip: () -> Unit,
+    onSaveMatches: (Boolean) -> Unit = {},
 ) {
     val still = LocalInspectionMode.current || LocalStill.current
     BoxWithConstraints(
@@ -263,6 +268,7 @@ fun OnboardingScreen(
                             OnboardStep.WELCOME -> Welcome(short)
                             OnboardStep.KEY -> KeyStep(ui, onKey, onUnlock)
                             OnboardStep.BIOS -> BiosStep(ui.bios)
+                            OnboardStep.RECORD -> RecordStep()
                             OnboardStep.GAME -> GameStep(ui, onPick)
                         }
                     }
@@ -276,9 +282,13 @@ fun OnboardingScreen(
                         OnboardStep.KEY -> GoldButton(if (ui.checking) "Checking…" else "Unlock my library", onUnlock, Modifier.fillMaxWidth(), enabled = ui.key.isNotBlank() && !ui.checking)
                         OnboardStep.BIOS -> when (val b = ui.bios) {
                             is BiosState.Ready -> GoldButton("Get the BIOS", onGetBios, Modifier.fillMaxWidth())
-                            is BiosState.Getting -> GoldButton("Next: pick your game", onNext, Modifier.fillMaxWidth())
-                            BiosState.Done -> GoldButton("Next: pick your game", onNext, Modifier.fillMaxWidth(), play = true)
+                            is BiosState.Getting -> GoldButton("Next", onNext, Modifier.fillMaxWidth())
+                            BiosState.Done -> GoldButton("Next", onNext, Modifier.fillMaxWidth(), play = true)
                             is BiosState.Failed -> GoldButton("Try again", onGetBios, Modifier.fillMaxWidth())
+                        }
+                        OnboardStep.RECORD -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            GoldButton("Yes, save my matches", { onSaveMatches(true) }, Modifier.fillMaxWidth())
+                            GhostButton("Not now", { onSaveMatches(false) }, Modifier.fillMaxWidth())
                         }
                         OnboardStep.GAME -> GoldButton(
                             when (ui.picked.size) {
@@ -292,6 +302,7 @@ fun OnboardingScreen(
                 }
                 val hint = when (ui.step) {
                     OnboardStep.KEY -> "No key? Skip, and add your own game zips later."
+                    OnboardStep.RECORD -> "You can change this any time in Settings."
                     OnboardStep.BIOS -> if (ui.bios is BiosState.Getting) "It keeps downloading while you go on." else null
                     OnboardStep.GAME -> if (ui.picked.isEmpty()) "You can get games any time from My Library." else "They download while you look around."
                     else -> null
@@ -357,7 +368,7 @@ private fun Perk(text: String) {
 // Step 2: the library key he gave.
 @Composable
 private fun KeyStep(ui: OnboardUi, onKey: (String) -> Unit, onUnlock: () -> Unit) {
-    StepHead("Step 2 of 4", "Your library key", "$INVITED_BY gave you a key to his game library. Type it here: it stays on this phone.") {
+    StepHead("Step 2 of 5", "Your library key", "$INVITED_BY gave you a key to his game library. Type it here: it stays on this phone.") {
         LockIcon(Modifier.size(26.dp))
     }
     Spacer(Modifier.height(20.dp))
@@ -376,7 +387,7 @@ private fun KeyStep(ui: OnboardUi, onKey: (String) -> Unit, onUnlock: () -> Unit
 @Composable
 private fun BiosStep(bios: BiosState) {
     StepHead(
-        "Step 3 of 4", "First: the Neo Geo BIOS",
+        "Step 3 of 5", "First: the Neo Geo BIOS",
         "Every Neo Geo game (KOF, Metal Slug, Samurai Shodown, Garou…) needs this one small file to start. Get it first, and they all work.",
     ) { ChipIcon(Modifier.size(30.dp)) }
     Spacer(Modifier.height(20.dp))
@@ -409,10 +420,27 @@ private fun BiosStep(bios: BiosState) {
     }
 }
 
-// Step 4: their favourite games, from the library.
+// Step 4: whether to save their matches (off unless they say so).
+@Composable
+private fun RecordStep() {
+    StepHead(
+        "Step 4 of 5", "Save your matches?",
+        "The app can keep your last 20 matches on this phone. Watch the best ones again, and turn them into videos to share.",
+    ) { RecordIcon(Modifier.size(26.dp)) }
+    Spacer(Modifier.height(20.dp))
+    Panel {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Perk("Only your button presses are saved: almost no space")
+            Perk("Never slows the game: the video is made later")
+            Perk("Stays on your phone; you choose what to share")
+        }
+    }
+}
+
+// Step 5: their favourite games, from the library.
 @Composable
 private fun GameStep(ui: OnboardUi, onPick: (String) -> Unit) {
-    StepHead("Step 4 of 4", "Your favourite game?", "Pick one or more. They download while you look around.", center = false)
+    StepHead("Step 5 of 5", "Your favourite game?", "Pick one or more. They download while you look around.", center = false)
     Spacer(Modifier.height(16.dp))
     if (ui.games.isEmpty()) {
         Text("Nothing more to get: you're all set.", color = Palette.muted, fontSize = 14.sp)

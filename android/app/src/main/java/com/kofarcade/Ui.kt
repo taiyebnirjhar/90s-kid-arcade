@@ -595,6 +595,16 @@ fun PlayIcon(modifier: Modifier = Modifier, color: Color = OnGold) {
 }
 
 /** A drawn tick, for a step that's done. */
+/** Recording: a red dot in a ring, as on a camera. */
+@Composable
+fun RecordIcon(modifier: Modifier = Modifier, ring: Color = Palette.gold) {
+    androidx.compose.foundation.Canvas(modifier) {
+        val r = size.minDimension / 2f
+        drawCircle(ring, r * 0.9f, style = androidx.compose.ui.graphics.drawscope.Stroke(width = r * 0.16f))
+        drawCircle(Palette.red, r * 0.48f)
+    }
+}
+
 @Composable
 fun CheckIcon(modifier: Modifier = Modifier, color: Color = Palette.green) {
     Canvas(modifier) {

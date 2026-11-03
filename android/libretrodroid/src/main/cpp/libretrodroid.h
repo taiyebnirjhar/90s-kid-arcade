@@ -30,6 +30,7 @@
 #include <memory>
 #include <optional>
 #include <deque>
+#include "recorder.h"
 #include <atomic>
 #include <cstdint>
 #include <array>
@@ -114,6 +115,18 @@ public:
     // Watching from [frame] on (after setNetplay and loading that frame's
     // state): the inputs pushed next are that frame's.
     void netStartAt(int32_t frame);
+
+    // Recording the match (90s Kid Arcade, see MatchRecorder): from the game
+    // as it is now (in a room, from the newest frame every input is in for).
+    // Loading a state, a reset, a cheat or a new seating ends a recording;
+    // the app takes it and starts the next. False: no game to record yet.
+    bool recStart();
+    // 0: nothing recorded, 1: recording, 2: ended (waiting to be taken). Any thread.
+    int recStatus() const { return recStatusNow.load(); }
+    // Frames recorded so far (any thread).
+    int32_t recFrames() const { return recFramesNow.load(); }
+    // What's recorded (MatchRecorder::take's block), and the recorder emptied.
+    std::vector<uint8_t> recTake();
 
     // Frozen: no game frames run, but the last one is still drawn, so the
     // picture follows size changes while the game is paused (90s Kid Arcade).
@@ -281,6 +294,20 @@ private:
     int64_t netRollbacks = 0;
     int netWaitFrames = 0;
     void stepNetplay(unsigned wanted);
+
+    MatchRecorder recorder;                        // under coreLock
+    std::atomic<int> recStatusNow{0};
+    std::atomic<int32_t> recFramesNow{0};
+    // Set by whatever changes the game outside its inputs; the next step ends the recording.
+    std::atomic<bool> recEndWanted{false};
+    // Alone (no room): the inputs a recorded frame runs with, read once
+    // before it, so the frame runs with exactly what's recorded.
+    bool recServing = false;
+    uint16_t recMasks[NET_MAX_PLAYERS] = {};
+    static constexpr int REC_SUM_EVERY = 120;      // as in a room: every 2 seconds
+    void recRunFrame();
+    void recSync();
+    int64_t ramSum();
     void netSimulate(int32_t frame, bool replay);
 
     std::unique_ptr<Core> core;

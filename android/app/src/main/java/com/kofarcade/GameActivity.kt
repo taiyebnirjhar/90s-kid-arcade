@@ -40,6 +40,7 @@ import com.kofarcade.core.Game
 import com.kofarcade.core.SeatWatch
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
+import com.kofarcade.core.replay.MatchInfo
 import com.kofarcade.core.Move
 import com.kofarcade.core.Pad
 import com.kofarcade.core.Picture
@@ -421,6 +422,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             }
         }
         ramMap?.let(::startDetection)
+        startSavingMatches()
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
         }
@@ -1583,7 +1585,36 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         lanLink?.stop()
     }
 
+    // ----- Saving matches (docs/recording-plan.md) -----
+
+    private var matchTaker: MatchTaker? = null
+
+    /** While saving matches is on: each match recorded as it's played, and kept as it ends. */
+    private fun startSavingMatches() {
+        val taker = MatchTaker(
+            MatchStore(this),
+            enabled = { prefs.saveMatches },
+            // A second in, and not while a room seats everyone (the game's about to change).
+            canStart = { !destroyed && !isFinishing && frame >= 60 && (room == null || !seating) },
+            describe = { startedAt, frames ->
+                MatchInfo(
+                    game.id, game.fullTitle, startedAt, frames, room = room != null,
+                    players = room?.let { r -> (0 until game.players).map { r.seats[it]?.name.orEmpty() } }.orEmpty(),
+                )
+            },
+        )
+        matchTaker = taker
+        lifecycleScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(1000)
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) runCatching { taker.tick() }
+            }
+        }
+    }
+
     override fun onPause() {
+        // Leaving the game: the match so far is kept (before the emulator goes).
+        if (isFinishing) matchTaker?.finish()
         // Leaving the app mid-game: the others wait, as for the menu.
         if (room != null && !isWatching && (dialog == null || dialog is GameDialog.Room) && !editing && !isFinishing) show(GameDialog.Pause)
         // Alone: the game is kept as it is, to go on from next time (once it's

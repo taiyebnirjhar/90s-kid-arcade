@@ -623,6 +623,7 @@ private fun ControlsSettings(game: GameActivity) {
     var look by remember { mutableStateOf(p.look()) }
     var info by remember { mutableStateOf(p.detectInfo) }
     var reports by remember { mutableStateOf(p.problemReports) }
+    var saving by remember { mutableStateOf(p.saveMatches) }
 
     // Every change shows on the game right away; Save keeps it, Cancel puts
     // back what was saved.
@@ -641,6 +642,8 @@ private fun ControlsSettings(game: GameActivity) {
             detectInfo = info,
             problemReports = reports,
             onProblemReports = { reports = it },
+            saveMatches = saving,
+            onSaveMatches = { saving = it },
             onDetectInfo = { info = it },
             onCancel = ::cancel,
             onSave = {
@@ -664,6 +667,7 @@ private fun ControlsSettings(game: GameActivity) {
                 p.duckGame = look.duckGame
                 p.detectInfo = info
                 p.problemReports = reports
+                p.saveMatches = saving
                 game.applyPrefs()
                 game.close()
             },

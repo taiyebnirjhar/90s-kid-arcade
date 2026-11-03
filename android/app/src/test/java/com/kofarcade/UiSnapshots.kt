@@ -1017,6 +1017,7 @@ class UiSnapshots {
     @Test fun onboardKey() = shot("onboard_key") { onboard(OnboardUi(OnboardStep.KEY, key = "taiyeb", keyError = "That key didn't open the library. Check it with $INVITED_BY."))() }
     @Test fun onboardBios() = shot("onboard_bios") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Getting(0.42f)))() }
     @Test fun onboardBiosDone() = shot("onboard_bios_done") { onboard(OnboardUi(OnboardStep.BIOS, bios = BiosState.Done))() }
+    @Test fun onboardRecord() = shot("onboard_record") { onboard(OnboardUi(OnboardStep.RECORD))() }
     @Test fun onboardGames() = shot("onboard_games") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("kof97.zip", "mslug.zip")))() }
     @Test fun onboardWelcomeSmall() { tiny(); shot("onboard_welcome_tiny") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
     @Test fun onboardWelcomeLandscape() { landscape(); shot("onboard_welcome_landscape") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
