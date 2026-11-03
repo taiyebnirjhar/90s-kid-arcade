@@ -302,10 +302,12 @@ decision was made in the conversation. Get the time now with
   Cloudflare's own anycast TURN (`turn.cloudflare.com`), so each phone
   reaches its nearest Cloudflare site; inputs go on an unordered,
   no-retransmit channel (`AndroidRtc.kt`), and rollback hides the rest.
-- What can still help (candidates, measured before taken): direct
-  connection where privacy allows (locked rooms, challenges already try
-  it), the input delay chosen from the measured ping, and a faster first
-  connect (asking for relay credentials while the room is being made).
+- Already in place: the input delay starts from the measured ping and
+  adapts during play (`Session.delayFor`, `DelayTuner`); relay credentials
+  are cached until near their expiry (`Relay.kt`); locked rooms and
+  challenges try a direct connection before the relay. Next checks each
+  release: real-phone connection logs (rollbacks, stalls, relay or direct)
+  and anything new in WebRTC or Cloudflare's relay that cuts delay.
 
 ---
 
