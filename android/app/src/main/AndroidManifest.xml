@@ -12,7 +12,8 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Keeps Wi-Fi awake during a two-player game (WifiLock). -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Library downloads keep going with the app in the background (DownloadService), with a notification. -->
+    <!-- Every download keeps going with the app in the background (DownloadService for games,
+         UpdateService for the app's update), with a notification. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -85,6 +86,11 @@
 
         <service
             android:name=".DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <!-- The app's own update downloads the same way: on with the app in the background. -->
+        <service
+            android:name=".UpdateService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 

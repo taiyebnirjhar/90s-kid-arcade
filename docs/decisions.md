@@ -407,6 +407,24 @@ decision was made in the conversation. Get the time now with
   MB a minute, still clean for pixel art. Short clips need the trim (R5),
   next.
 
+### 2026-11-03 21:42 Dhaka · The update downloads in the background too
+- Asked: (screenshots: 1.0.259's update stopped at 33%, "The download
+  stopped (Software caused connection abort)") "Download drops if move out
+  of app. We had same issue on game download and fixed it… all download
+  should be support bg. Remember on doc so same issue never appears."
+- Found: the update downloaded on a plain thread of the app; leaving the
+  app let Android cut its connection. Game downloads already ran in
+  `DownloadService` (a foreground service).
+- Decided: `UpdateService`, a foreground service like `DownloadService`
+  (notification with progress, wake and Wi-Fi locks), runs the update's
+  download; a dropped connection is tried again up to 5 times (2-16 s
+  apart), carrying on from the bytes it has (Range; a 416 starts over),
+  and "Try again" carries on too. Done with the app on screen: the
+  installer opens; in the background: a notification "Update ready to
+  install". A hard rule in AGENTS.md: every download runs this way.
+- Note: phones on 1.0.259 or older still have the old download; this fix
+  helps from the next update on (keep the app open for this one).
+
 ---
 
 ## Where things stand (update whenever it changes)

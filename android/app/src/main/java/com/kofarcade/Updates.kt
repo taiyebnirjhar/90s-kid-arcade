@@ -82,7 +82,11 @@ object AppUpdates {
         }, "update-check").apply { isDaemon = true }.start()
     }
 
-    /** Downloads the update (its progress in [state]), then opens the installer. */
+    /**
+     * Downloads the update (its progress in [state]) in [UpdateService], so
+     * it goes on with the app in the background or the screen off; then the
+     * installer opens (or, from the background, a notification offers it).
+     */
     fun download(context: Context) {
         val update = when (val s = _state.value) {
             is UpdateState.Available -> s.update
@@ -92,27 +96,47 @@ object AppUpdates {
             else -> return
         }
         if (busy) return
-        busy = true
-        val app = context.applicationContext
         _state.value = UpdateState.Downloading(update, 0f)
-        Thread({
-            val file = apkFile(app, update)
-            val part = File(file.parentFile, file.name + ".part")
-            try {
-                cleanUp(app, keep = update)
-                fetch(update.apk, part) { got, size ->
-                    if (size > 0) _state.value = UpdateState.Downloading(update, got.toFloat() / size)
+        UpdateService.start(context.applicationContext)
+    }
+
+    /** The update being downloaded, or null. */
+    val downloading: AppUpdate? get() = (_state.value as? UpdateState.Downloading)?.update
+
+    /**
+     * The download itself, on the caller's thread ([UpdateService]'s): a
+     * dropped connection is tried again a few times, carrying on from where
+     * it stopped (a Range request), never from the start. True: it's in.
+     */
+    fun runDownload(app: Context): Boolean {
+        val update = downloading ?: return false
+        if (busy) return false
+        busy = true
+        val file = apkFile(app, update)
+        val part = File(file.parentFile, file.name + ".part")
+        try {
+            cleanUp(app, keep = update)
+            var tries = 0
+            while (true) {
+                try {
+                    fetch(update.apk, part) { got, size ->
+                        if (size > 0) _state.value = UpdateState.Downloading(update, got.toFloat() / size)
+                    }
+                    break
+                } catch (e: IOException) {
+                    if (++tries >= RETRIES) throw e
+                    Thread.sleep(2_000L shl (tries - 1))
                 }
-                if (!part.renameTo(file)) throw IOException("Couldn't keep the download")
-                _state.value = UpdateState.Ready(update, file)
-                android.os.Handler(android.os.Looper.getMainLooper()).post { install(app) }
-            } catch (e: Exception) {
-                part.delete()
-                _state.value = UpdateState.Failed(update, "The download stopped (${e.message ?: "no connection"}). Try again.")
-            } finally {
-                busy = false
             }
-        }, "update-download").apply { isDaemon = true }.start()
+            if (!part.renameTo(file)) throw IOException("Couldn't keep the download")
+            _state.value = UpdateState.Ready(update, file)
+            return true
+        } catch (e: Exception) {
+            _state.value = UpdateState.Failed(update, "The download stopped (${e.message ?: "no connection"}). Try again.")
+            return false
+        } finally {
+            busy = false
+        }
     }
 
     /**
@@ -176,18 +200,29 @@ object AppUpdates {
         }
     }
 
-    // The APK, whole: its length checked against what the site said it is.
+    // The APK, whole: from where [to] got to before (a Range request; the
+    // whole file again if the site won't), its length checked against what
+    // the site said it is.
     private fun fetch(url: String, to: File, progress: (Long, Long) -> Unit) {
+        val have = if (to.isFile) to.length() else 0L
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000
         conn.readTimeout = 30_000
+        if (have > 0) conn.setRequestProperty("Range", "bytes=$have-")
         try {
-            if (conn.responseCode != 200) throw IOException("the site answered ${conn.responseCode}")
-            val size = conn.contentLengthLong
-            var got = 0L
+            val code = conn.responseCode
+            // What was kept doesn't fit what the site has now: from the start next try.
+            if (code == 416) {
+                to.delete()
+                throw IOException("starting over")
+            }
+            val resumed = code == 206 && have > 0
+            if (code != 200 && !resumed) throw IOException("the site answered $code")
+            var got = if (resumed) have else 0L
+            val size = if (conn.contentLengthLong > 0) got + conn.contentLengthLong else -1L
             var shown = -1L
             conn.inputStream.use { input ->
-                to.outputStream().use { out ->
+                java.io.FileOutputStream(to, resumed).use { out ->
                     val buf = ByteArray(64 * 1024)
                     while (true) {
                         val n = input.read(buf)
@@ -207,6 +242,9 @@ object AppUpdates {
             conn.disconnect()
         }
     }
+
+    // A dropped download is tried this many times in all (2, 4, 8, 16 s apart).
+    private const val RETRIES = 5
 }
 
 /**
