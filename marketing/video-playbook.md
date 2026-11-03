@@ -65,3 +65,22 @@ hook, beats with timings, captions, sounds, payoff, why it works.
   meme faces as they "react"; something changes every 1-2 s; no talking,
   the memes carry it. Works because the board is a cast of characters
   and every move is a punchline.
+
+## Made so far
+
+- **Red vs Blue: Boss Supremacy** (2026-11-04 01:56). From a 16-minute recording of
+  KOF 2002 Magic Plus, two players both on Rugal (red and blue palettes),
+  6 matches, red 5-1. Two cuts:
+  - **Reel** (34 s, 1080x1920): "Both of us picked the boss" over the
+    order-select face-off, "Which side are you on? Comment below", a
+    montage of supers with a bass hit per cut and "1-tap super" tags,
+    "16 minutes later…", match point (red 4-0), the final hit in slow
+    motion, Rugal's own win line "Done your packing? Your life's journey
+    is over", "Red wins 5-1", then one banner card (play online, chat +
+    voice, every super in one tap, free, link in bio). The owner's notes:
+    feature clips after the payoff didn't fit (one banner card instead);
+    "Play online", not "Play friends online".
+  - **Full fight** (14:48, 1920x1080, 60 fps) for YouTube and Facebook:
+    every round kept; select screens and "continue" cut; "Match n of 6,
+    red x-y blue" on each face-off; final score; the banner. Sent as two
+    parts (matches 1-3, 4-6; the send limit is 500 MB).
