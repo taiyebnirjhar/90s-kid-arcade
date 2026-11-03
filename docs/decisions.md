@@ -319,6 +319,10 @@ decision was made in the conversation. Get the time now with
   they're fetched when rendered, never kept in the repo. Sources in
   `marketing/facebook/` (HTML, rendered to PNG); the text says free and no
   ads, and asks for no money.
+- Then (owner's screenshots): on the phone app the cover was cut on both
+  sides and the profile picture covered it, and it looked blurry. Now the
+  words are centred in the top half, title screens fill both sides in
+  sharp pixels, and it's uploaded as PNG.
 
 ---
 
