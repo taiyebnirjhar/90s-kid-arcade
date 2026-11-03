@@ -473,7 +473,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         if (replay != null) {
             hud.visibility = View.GONE
-            netStatus.text = if (replay!!.video) "Making the video…" else "Replay · ${replay!!.info.title}"
+            netStatus.text = if (replay!!.video) "Saving the video…" else "Replay · ${replay!!.info.title}"
             netStatus.visibility = View.VISIBLE
             if (!replay!!.video) root.postDelayed({ if (replay?.over == false) netStatus.visibility = View.GONE }, 2500)
         }
@@ -1671,7 +1671,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             netStatus.visibility = View.VISIBLE
             while (isActive && !r.over) {
                 val done = (LibretroDroid.getNetFrame() - r.rec.first).coerceAtLeast(0)
-                netStatus.text = "Making the video… ${(done * 100L / r.rec.frames.coerceAtLeast(1)).coerceAtMost(99)}%"
+                netStatus.text = "Saving the video… ${(done * 100L / r.rec.frames.coerceAtLeast(1)).coerceAtMost(99)}%"
                 delay(500)
             }
         }

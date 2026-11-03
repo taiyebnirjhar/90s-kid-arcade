@@ -369,7 +369,7 @@ decision was made in the conversation. Get the time now with
 ### 2026-11-03 17:26 Dhaka · Recording R3: Save video and share
 - Asked: "How to use this replay? … upload somewhere or share as video with
   friends", then "complete the phase end to end".
-- Done: **Video** on each match in Replays plays it through once while the
+- Done: The **download** icon on each match in Replays plays it through once while the
   phone's encoders make a 1080p60 MP4 (sharp pixels, dark bars, game sound,
   720p if 1080p isn't possible), into the gallery album "90s Kid Arcade"
   (before Android 10: the app's Movies folder). Then **Share it**: WhatsApp,
@@ -379,6 +379,9 @@ decision was made in the conversation. Get the time now with
   progress line), not off screen faster: it reuses the watcher's replay
   path, which works; faster can come later. Leaving while it's made drops it.
 - Small: space shows KB under a megabyte (it said "0.0 MB").
+- Then (owner): "Instead of video button, download icon does make better
+  sense?" Yes: a download icon (an arrow into a tray) beside the star; the
+  screen says "Saving the video… N%".
 - Not yet proven on a phone: the owner makes one and shares it.
 
 ---
