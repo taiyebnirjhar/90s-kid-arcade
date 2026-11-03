@@ -291,6 +291,22 @@ decision was made in the conversation. Get the time now with
 - Decided: `github.ref != 'refs/heads/main' && 'test' || ''`. Main builds
   are `1.0.<run>`, branch builds `1.0.<run>-test`.
 
+### 2026-11-03 14:10 Dhaka · Smoothest online play, looked at every release; DNS doesn't help
+- Asked: "keep looking for smoothest online play experience. On every
+  release. If cloudflare dns or any dns make it faster or smoother … go for it."
+- Decided: a standing rule in AGENTS.md (§2): every release, look for what
+  makes online play smoother and take it, within the free plans.
+- Found on DNS: a name is looked up once, when a room connects (a few ms,
+  then cached); a match's packets go by address, so no DNS (Cloudflare's
+  1.1.1.1 or any other) changes lag or stutter in play. The relay is already
+  Cloudflare's own anycast TURN (`turn.cloudflare.com`), so each phone
+  reaches its nearest Cloudflare site; inputs go on an unordered,
+  no-retransmit channel (`AndroidRtc.kt`), and rollback hides the rest.
+- What can still help (candidates, measured before taken): direct
+  connection where privacy allows (locked rooms, challenges already try
+  it), the input delay chosen from the measured ping, and a faster first
+  connect (asking for relay credentials while the room is being made).
+
 ---
 
 ## Where things stand (update whenever it changes)

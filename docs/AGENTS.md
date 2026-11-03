@@ -53,6 +53,10 @@ behind a key) inside the app.
 - **PR body ends with:** `🤖 Generated with [Claude Code](https://claude.com/claude-code)` and the session link.
 - **The owner wants to be told** when an APK is ready (with its version and
   link) and when to merge. Answer short; he reads on a phone.
+- **Online smoothness, every release:** look for anything that makes online
+  play smoother (netcode delay and rollbacks, relay vs direct, the relay's
+  reach, start-up time) and take what helps, within the free plans.
+  DNS doesn't change in-game smoothness (see decisions.md, 2026-11-03).
 - **Everything committed and pushed** before a turn ends (a hook checks).
 - **Commit messages and docs:** plain words, say why. The codebase's
   comments read as plain English sentences; keep that voice.
