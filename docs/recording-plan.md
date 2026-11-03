@@ -72,7 +72,8 @@ platforms later on top of the same video work.
   shader, H.264 1080p60 8 Mbps (was 12: 2.5 GB for 26 minutes), 720p at 5 if the phone can't, AAC 192 kbps,
   times by the game's own clock), `Videos.kt` (gallery, share buttons).
   Then, from the owner's first video: exactly 60 frames a second with the
-  sound fitted (`AudioStretch`), nothing dropped (the replay waits on
+  sound fitted (each frame's own sound made its 1/60 s: `FrameSound`; the
+  core's reported sound rate can be wrong), nothing dropped (the replay waits on
   `captureBacklog`), the picture smooth and the Screen setting's shape,
   as the game screen shows it.
   Originally planned: off-screen replay to MediaCodec at

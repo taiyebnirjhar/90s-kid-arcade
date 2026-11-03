@@ -12,7 +12,7 @@ import android.opengl.EGLExt
 import android.opengl.EGLSurface
 import android.opengl.GLES20
 import android.view.Surface
-import com.kofarcade.core.replay.AudioStretch
+import com.kofarcade.core.replay.FrameSound
 import com.swordfish.libretrodroid.LibretroDroid
 import java.io.File
 import java.nio.ByteBuffer
@@ -25,11 +25,14 @@ import java.nio.IntBuffer
  * R3), on its own thread: frames and sound are taken from the emulator's
  * capture (LibretroDroid.setCapture) and encoded by the phone's hardware
  * (H.264 and AAC). It looks and runs as the game does on the phone: 60
- * frames a second (the app shows every game at 60, its sound sped up to
- * match: [AudioStretch]), the picture smoothed as the game screen's is and
- * as wide as the player's Screen setting ([aspect], null: the whole frame).
- * Every frame is the next one in time: nothing's dropped (a replay waits
- * for this: LibretroDroid.captureBacklog), so picture and sound stay together.
+ * frames a second (the app shows every game at 60, its sound fitted to
+ * match), the picture smoothed as the game screen's is and as wide as the
+ * player's Screen setting ([aspect], null: the whole frame). Each frame
+ * comes with the sound made with it, which becomes exactly that frame's
+ * 1/60 of a second ([FrameSound]): picture and sound can't come apart,
+ * whatever rate the core's sound really is (KOF 2002 said 44100 and made
+ * 48000: the first videos' sound ran 16 s long over 3 minutes). Nothing's
+ * dropped (a replay waits for this: LibretroDroid.captureBacklog).
  */
 class VideoMaker(private val out: File, private val aspect: Float?, private val tall: Int = 1080) {
     @Volatile private var stopping = false
@@ -69,10 +72,8 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
     }
 
     private fun make() {
-        val av = LibretroDroid.getAvInfo()
-        val fps = av[0].takeIf { it > 1 } ?: VIDEO_FPS
-        val rate = av[1].toInt().takeIf { it in 8000..48000 } ?: 48000
-        val stretch = AudioStretch(fps / VIDEO_FPS)
+        val rate = SOUND_RATE
+        val sound = FrameSound(SOUND_RATE / VIDEO_FPS.toInt())
 
         val (video, width, height) = videoEncoder(tall) ?: videoEncoder(720) ?: error("No H.264 encoder")
         val audio = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).apply {
@@ -90,18 +91,30 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
         var samples = 0L
         try {
             while (!cancelled) {
-                val sound = LibretroDroid.takeCapturedAudio()
-                if (sound.isNotEmpty()) {
-                    val fitted = stretch.process(sound)
+                val frame = LibretroDroid.takeCapturedFrame()
+                if (frame.size > 4) {
+                    val seq = frame[0]
+                    val pixels = frame[1] * frame[2]
+                    // A frame dropped before this one (none should be): its time held with the last sound.
+                    while (samples < seq.toLong() * (rate / VIDEO_FPS.toInt())) {
+                        val held = sound.fit(ShortArray(0))
+                        feedAudio(audio, held, samples, rate)
+                        samples += held.size / 2
+                    }
+                    val pairs = frame[3]
+                    val raw = ShortArray(pairs * 2)
+                    for (i in 0 until pairs) {
+                        val v = frame[4 + pixels + i]
+                        raw[i * 2] = v.toShort()
+                        raw[i * 2 + 1] = (v ushr 16).toShort()
+                    }
+                    val fitted = sound.fit(raw)
                     feedAudio(audio, fitted, samples, rate)
                     samples += fitted.size / 2
-                }
-                val frame = LibretroDroid.takeCapturedFrame()
-                if (frame.size > 3) {
                     gl.draw(frame)
-                    EGLExt.eglPresentationTimeANDROID(gl.display, gl.surface, frame[0] * 1_000_000_000L / VIDEO_FPS.toLong())
+                    EGLExt.eglPresentationTimeANDROID(gl.display, gl.surface, seq * 1_000_000_000L / VIDEO_FPS.toLong())
                     EGL14.eglSwapBuffers(gl.display, gl.surface)
-                } else if (stopping && sound.isEmpty()) {
+                } else if (stopping) {
                     break
                 } else {
                     Thread.sleep(2)
@@ -269,7 +282,7 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
         }
 
-        /** [frame]: {number, width, height, ARGB pixels...} as the emulator captured it. */
+        /** [frame]: {number, width, height, sound pairs, ARGB pixels..., sound...} as the emulator captured it. */
         fun draw(frame: IntArray) {
             val w = frame[1]
             val h = frame[2]
@@ -279,7 +292,7 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
                 staging = ByteBuffer.allocateDirect(w * h * 4).order(ByteOrder.nativeOrder()).asIntBuffer()
             }
             staging.clear()
-            staging.put(frame, 3, w * h)
+            staging.put(frame, 4, w * h)
             staging.position(0)
             val pixels = staging
             if (w != texW || h != texH) {
@@ -354,5 +367,7 @@ class VideoMaker(private val out: File, private val aspect: Float?, private val 
     private companion object {
         /** The app shows every game at 60 frames a second: so does its video. */
         const val VIDEO_FPS = 60.0
+        /** The video's sound: 800 samples a frame. */
+        const val SOUND_RATE = 48_000
     }
 }

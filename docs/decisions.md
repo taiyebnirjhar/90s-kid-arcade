@@ -425,6 +425,18 @@ decision was made in the conversation. Get the time now with
 - Note: phones on 1.0.259 or older still have the old download; this fix
   helps from the next update on (keep the app open for this one).
 
+### 2026-11-03 21:56 Dhaka · Match videos: each frame carries its own sound
+- The owner sent 1.0.259's video (Drive). Measured (ffprobe): picture
+  1920x1080, exactly 60 fps, 10,780 frames, 179.7 s, no gap between frames;
+  the look right (16:9, smooth). The sound: 195.6 s, 8.9% long, exactly
+  48000/44100: KOF 2002 Magic Plus says its sound is 44100 a second and
+  makes 48000, so the sound fell 16 s behind the picture by the end.
+- Decided: never trust the reported rate. The emulator hands over each
+  frame with the sound made with it; `FrameSound` makes each frame's sound
+  exactly its 1/60 of a second (800 samples at 48000; tested: 812 or 800
+  in, 800 out, no click). Picture and sound can't come apart, for any game.
+  `AudioStretch` (by the reported rate) is gone.
+
 ---
 
 ## Where things stand (update whenever it changes)

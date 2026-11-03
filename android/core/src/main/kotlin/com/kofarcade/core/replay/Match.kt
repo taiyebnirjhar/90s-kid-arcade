@@ -249,46 +249,44 @@ class ReplayCheck(sums: List<Pair<Int, Long>>) {
 const val REPLAY_LEAD = 4
 
 /**
- * The game's sound fitted to 60 frames a second, as the app plays it: a
- * Neo Geo game runs at 59.19 frames a second, but the app shows it at 60
- * (rooms by the clock, alone with a 60 Hz screen), its sound sped up to
- * match. A video at 60 needs the same: [ratio] (the game's rate / 60) of
- * the samples, by linear interpolation, carried smoothly from one call to
- * the next. Stereo 16-bit, interleaved.
+ * A video's sound, a frame at a time: each game frame's own sound (whatever
+ * its length: 735, 745, 800 samples… the core's real rate, whatever it
+ * reports) becomes exactly [perFrame] samples, the frame's 1/60 of a second
+ * at the video's rate. Picture and sound can't come apart: every frame's
+ * sound is that frame's. Stretched by linear interpolation, carried on from
+ * the last frame's last sample so no click where frames meet. Stereo
+ * 16-bit, interleaved.
  */
-class AudioStretch(private val ratio: Double) {
-    private val step = 1.0 / ratio
-    // Where the next output sample falls, counted from the first input sample still held.
-    private var pos = 0.0
+class FrameSound(private val perFrame: Int) {
     private var lastL = 0
     private var lastR = 0
-    private var started = false
 
-    fun process(input: ShortArray): ShortArray {
-        val frames = input.size / 2
-        if (frames == 0) return ShortArray(0)
-        // The input as one run: the last sample of the previous call, then these.
-        fun l(i: Int) = if (i < 0) lastL else input[i * 2].toInt()
-        fun r(i: Int) = if (i < 0) lastR else input[i * 2 + 1].toInt()
-        if (!started) {
-            started = true
-            lastL = input[0].toInt()
-            lastR = input[1].toInt()
+    fun fit(input: ShortArray): ShortArray {
+        val n = input.size / 2
+        val out = ShortArray(perFrame * 2)
+        if (n == 0) {
+            // A frame without sound: the last sample held (silence if there was none).
+            for (i in 0 until perFrame) {
+                out[i * 2] = lastL.toShort()
+                out[i * 2 + 1] = lastR.toShort()
+            }
+            return out
         }
-        val out = ShortArray(((frames - pos) / step + 2).toInt().coerceAtLeast(0) * 2)
-        var n = 0
-        // pos counts from the previous call's last sample (index -1).
-        // Up to (not at) this block's last sample: one exactly there is the next call's first, from lastL/lastR.
-        while (pos < frames) {
-            val i = kotlin.math.floor(pos).toInt() - 1
-            val f = pos - kotlin.math.floor(pos)
-            out[n++] = (l(i) + (l(i + 1) - l(i)) * f).toInt().toShort()
-            out[n++] = (r(i) + (r(i + 1) - r(i)) * f).toInt().toShort()
-            pos += step
+        // Index -1 is the previous frame's last sample.
+        fun l(i: Int) = if (i < 0) lastL else input[minOf(i, n - 1) * 2].toInt()
+        fun r(i: Int) = if (i < 0) lastR else input[minOf(i, n - 1) * 2 + 1].toInt()
+        val step = n.toDouble() / perFrame
+        for (j in 0 until perFrame) {
+            // Output j sits at this point of the frame's input: from just after the
+            // previous frame's last sample (-1) to this frame's last (n - 1).
+            val pos = (j + 1) * step - 1
+            val i = kotlin.math.floor(pos).toInt()
+            val f = pos - i
+            out[j * 2] = (l(i) + (l(i + 1) - l(i)) * f).toInt().toShort()
+            out[j * 2 + 1] = (r(i) + (r(i + 1) - r(i)) * f).toInt().toShort()
         }
-        pos -= frames
-        lastL = input[(frames - 1) * 2].toInt()
-        lastR = input[(frames - 1) * 2 + 1].toInt()
-        return out.copyOf(n)
+        lastL = input[(n - 1) * 2].toInt()
+        lastR = input[(n - 1) * 2 + 1].toInt()
+        return out
     }
 }

@@ -112,18 +112,19 @@ class MatchTest {
     }
 
     @Test
-    fun soundIsFittedToSixtyFramesASecondWithoutAGap() {
-        val neoGeo = 59.1856
-        val stretch = AudioStretch(neoGeo / 60.0)
-        // A second of the game's sound (44100 a second at 59.19 frames), in frame-sized blocks: a 10 Hz tone.
-        var total = 0
+    fun everyFramesSoundBecomesExactlyItsSixtiethOfASecond() {
+        // The core's sound at 48000 though it says 44100 (as KOF 2002 did): 800 or 812 a frame.
+        val sound = FrameSound(800)
         var t = 0
+        var total = 0
         var last = Int.MIN_VALUE
         var biggestJump = 0
-        repeat(60) {
-            val block = ShortArray(745 * 2) { i -> (10000 * kotlin.math.sin(2 * Math.PI * (t + i / 2) / 4410.0)).toInt().toShort() }
-            t += 745
-            val out = stretch.process(block)
+        repeat(600) { k ->
+            val n = if (k % 3 == 0) 812 else 800
+            val block = ShortArray(n * 2) { i -> (10000 * kotlin.math.sin(2 * Math.PI * (t + i / 2) / 4800.0)).toInt().toShort() }
+            t += n
+            val out = sound.fit(block)
+            assertEquals(1600, out.size, "every frame: exactly 800 pairs")
             for (i in out.indices step 2) {
                 val v = out[i].toInt()
                 if (last != Int.MIN_VALUE) biggestJump = maxOf(biggestJump, kotlin.math.abs(v - last))
@@ -131,10 +132,10 @@ class MatchTest {
             }
             total += out.size / 2
         }
-        // 60 x 745 samples in, about 98.6% of them out (the video's second runs 1.4% faster).
-        val expected = 60 * 745 * neoGeo / 60.0
-        assertTrue(kotlin.math.abs(total - expected) < 3, "got $total samples, expected about $expected")
-        // The tone stays smooth across the blocks (a step of 10000 x 2pi / 4410 = 15 at most): no click where they meet.
+        // 10 seconds of frames, 10 seconds of sound: nothing to drift.
+        assertEquals(600 * 800, total)
         assertTrue(biggestJump <= 16, "a jump of $biggestJump between samples")
+        // A frame without sound holds the last sample: no click.
+        assertEquals(last.toShort(), sound.fit(ShortArray(0))[0])
     }
 }
