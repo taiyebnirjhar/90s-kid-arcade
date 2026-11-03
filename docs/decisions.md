@@ -437,6 +437,16 @@ decision was made in the conversation. Get the time now with
   in, 800 out, no click). Picture and sound can't come apart, for any game.
   `AudioStretch` (by the reported rate) is gone.
 
+### 2026-11-03 23:27 Dhaka · Gameplay videos: story first (marketing/video-playbook.md)
+- Owner on draft 1 (a "one more round" edit of a 3-minute match): "it has
+  no point. No story, nothing… research first for viral game play style /
+  game play video plots… analysis each to understand what works."
+- Decided: a playbook in `marketing/video-playbook.md`: rules (one story
+  said in the first second, an open loop with a late payoff, under 25 s,
+  relatable arcade in-jokes), seven story formats to try, and a section of
+  breakdowns of viral examples the owner sends (TikTok/Reels pages can't be
+  read from here; downloaded files can be analysed frame by frame).
+
 ---
 
 ## Where things stand (update whenever it changes)
