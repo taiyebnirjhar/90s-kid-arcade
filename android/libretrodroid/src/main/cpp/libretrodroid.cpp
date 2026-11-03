@@ -242,7 +242,9 @@ void LibretroDroid::setCapture(bool on) {
     capturing = on;
     capturedFrames.clear();
     capturedAudio.clear();
+    pendingAudio.clear();
     lastCaptured.clear();
+    lastPicture.clear();
     captureSeq = 0;
 }
 
@@ -250,16 +252,29 @@ void LibretroDroid::captureFrame(const void* data, unsigned width, unsigned heig
     std::lock_guard<std::mutex> lock(captureLock);
     if (!capturing) return;
     if (data != nullptr && data != RETRO_HW_FRAME_BUFFER_VALID) {
-        lastCaptured.resize(3 + (size_t) width * height);
-        lastCaptured[1] = (int32_t) width;
-        lastCaptured[2] = (int32_t) height;
-        toArgb(data, width, height, pitch, lastCaptured.data() + 3);
+        lastPicture.resize((size_t) width * height);
+        lastWidth = (int32_t) width;
+        lastHeight = (int32_t) height;
+        toArgb(data, width, height, pitch, lastPicture.data());
     }
     // A frame the core didn't redraw (the same as the last) still takes its place in time.
-    if (!lastCaptured.empty() && capturedFrames.size() < CAPTURE_MAX_FRAMES) {
-        lastCaptured[0] = captureSeq;
-        capturedFrames.push_back(lastCaptured);
+    if (!lastPicture.empty() && capturedFrames.size() < CAPTURE_MAX_FRAMES) {
+        // {number, width, height, sound samples (stereo pairs), the picture, then
+        // the sound made since the last frame, a pair per int (left low, right high)}.
+        size_t pairs = pendingAudio.size() / 2;
+        std::vector<int32_t> frame(4 + lastPicture.size() + pairs);
+        frame[0] = captureSeq;
+        frame[1] = lastWidth;
+        frame[2] = lastHeight;
+        frame[3] = (int32_t) pairs;
+        std::copy(lastPicture.begin(), lastPicture.end(), frame.begin() + 4);
+        for (size_t i = 0; i < pairs; i++) {
+            frame[4 + lastPicture.size() + i] =
+                (int32_t) (((uint32_t) (uint16_t) pendingAudio[i * 2]) | ((uint32_t) (uint16_t) pendingAudio[i * 2 + 1] << 16));
+        }
+        capturedFrames.push_back(std::move(frame));
     }
+    pendingAudio.clear();
     captureSeq++;
 }
 
@@ -714,9 +729,9 @@ void LibretroDroid::handleVideoRefresh(
 size_t LibretroDroid::handleAudioCallback(const int16_t *data, size_t frames) {
     if (capturing) {
         std::lock_guard<std::mutex> lock(captureLock);
-        // Stereo samples, kept until taken (up to a few seconds' worth).
-        if (capturing && capturedAudio.size() + frames * 2 <= CAPTURE_MAX_SAMPLES) {
-            capturedAudio.insert(capturedAudio.end(), data, data + frames * 2);
+        // The frame's sound: it goes with the frame's picture (captureFrame).
+        if (capturing && pendingAudio.size() + frames * 2 <= CAPTURE_MAX_SAMPLES) {
+            pendingAudio.insert(pendingAudio.end(), data, data + frames * 2);
         }
     }
     if (audio && audioEnabled) {

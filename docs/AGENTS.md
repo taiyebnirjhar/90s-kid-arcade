@@ -85,6 +85,14 @@ behind a key) inside the app.
 - **Online play follows `online-plan.md`** (principles, connection order
   nearby → direct → relay, settled decisions). Record new decisions there
   and in `decisions.md`.
+- **Every download keeps going in the background.** Any file the app
+  downloads (games, the app's update, anything added later) runs in a
+  foreground service (`dataSync`, with a notification, wake and Wi-Fi
+  locks: `DownloadService` for games, `UpdateService` for the update),
+  never in a screen's thread, and carries on from where it stopped after a
+  dropped connection (a Range request, a few tries) rather than failing or
+  starting over. A download tied to a screen stops when the player leaves
+  the app (the update did, 2026-11-03: "Software caused connection abort").
 - **Recording matches follows `recording-plan.md`** (off by default, saved
   on the phone only, videos made by replaying the saved inputs, phases
   R1-R5). Record new decisions there and in `decisions.md`.
@@ -104,6 +112,7 @@ behind a key) inside the app.
 | `Replays.kt` | The Replays page (home chip): saved matches, star, delete, watch; the saving switch. |
 | `VideoMaker.kt`, `Videos.kt` | A match's video: the emulator's capture encoded to MP4 (H.264 + AAC, sharp pixels); into the gallery and the share buttons (WhatsApp, Messenger, Facebook, More). |
 | `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
+| `Updates.kt`, `UpdateService.kt` | Updates inside the app: `version.json` checked, the APK downloaded in a foreground service (resumes after a drop), Android's installer. |
 | `Theme.kt` | Palette, the app-wide UI scale (`uiScale`, `DESIGN_SHORT_DP`), `Breakpoints`, text cap. |
 | `Storage.kt` | `RomStore` (zips, checks), `Prefs` (every setting). |
 | `Online.kt` | Supabase account, rooms, friends, problem reports, room links (`joinLink`, `codeFromLink`, `scannedRoomCode`). |

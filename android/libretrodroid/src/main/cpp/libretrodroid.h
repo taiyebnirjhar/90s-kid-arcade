@@ -91,11 +91,14 @@ public:
     // Capturing for a video (90s Kid Arcade): every frame drawn, and the
     // sound, kept until taken (turning it on or off empties what's kept).
     void setCapture(bool on);
-    // The oldest captured frame: {its number, width, height, then ARGB
-    // pixels}; empty if none. Numbers count every frame drawn since capture
-    // began: a gap is a frame dropped for want of room.
+    // The oldest captured frame: {its number, width, height, sound pairs,
+    // then ARGB pixels, then the sound made with it (a stereo pair per int,
+    // left in the low half)}; empty if none. Each frame carries its own
+    // sound, so picture and sound can't come apart, whatever rate the core's
+    // sound really is. Numbers count every frame drawn since capture began:
+    // a gap is a frame dropped for want of room.
     std::vector<int32_t> takeCapturedFrame();
-    // The sound since last taken: stereo 16-bit samples, at getAvInfo's rate.
+    // (Unused since frames carry their sound: always empty.)
     std::vector<int16_t> takeCapturedAudio();
     // Frames captured and not yet taken: a replay made into a video waits while there are many.
     int captureBacklog();
@@ -270,6 +273,10 @@ private:
     std::deque<std::vector<int32_t>> capturedFrames;
     std::vector<int16_t> capturedAudio;
     std::vector<int32_t> lastCaptured;
+    std::vector<int32_t> lastPicture;
+    int32_t lastWidth = 0;
+    int32_t lastHeight = 0;
+    std::vector<int16_t> pendingAudio;
     int32_t captureSeq = 0;
     // Room enough that nothing's dropped: a replay made into a video waits for
     // the encoder (captureBacklog), so these are only ever a backstop.
