@@ -85,6 +85,9 @@ behind a key) inside the app.
 - **Online play follows `online-plan.md`** (principles, connection order
   nearby → direct → relay, settled decisions). Record new decisions there
   and in `decisions.md`.
+- **Recording matches follows `recording-plan.md`** (off by default, saved
+  on the phone only, videos made by replaying the saved inputs, phases
+  R1-R5). Record new decisions there and in `decisions.md`.
 
 ## 4. Map of the code
 

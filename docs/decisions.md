@@ -327,6 +327,20 @@ decision was made in the conversation. Get the time now with
   tone… mimic my writing style". Rewritten in his voice: short, plain,
   first person ("So I built it"), no emojis.
 
+### 2026-11-03 15:58 Dhaka · Recording matches: planned (docs/recording-plan.md)
+- Asked: a video of a real KOF 2002 Magic Plus match to post; then
+  streaming to YouTube ("one click"), then: "I need to record our game play.
+  That's why i asked about streaming", platforms that can't block us first.
+- Decided: record in the app, no platform: a match is saved as its start
+  state plus every input and the 2 s RAM checksums; **Save video** replays
+  it off screen into a 1080p60 MP4 in the gallery. Nothing runs during
+  play, nothing is hosted by us. Off by default (owner: "by default the
+  record needs to be off"), offered in onboarding; when on, the last 20
+  matches are kept, starred ones for good; **Replays** on home.
+- Streaming (YouTube sign-in: Google's review and a 100-tester limit until
+  then; Twitch the easiest) comes later on the same encoder.
+- Phases R1-R5 in the plan, one PR each.
+
 ---
 
 ## Where things stand (update whenever it changes)
