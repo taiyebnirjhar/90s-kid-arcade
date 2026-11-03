@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:1640px;height:624px;overflow:hidden;background:#0B0B12}
+body{position:relative;font-family:Roboto,sans-serif;color:#F1F0F7}
+.glow{position:absolute;inset:0;background:radial-gradient(40% 70% at 50% 50%,rgba(232,178,26,.20),transparent 70%)}
+.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 3px,transparent 3px 6px)}
+.ghost{position:absolute;left:0;right:0;top:40px;text-align:center;font:italic 900 300px/1 'Barlow Condensed';text-transform:uppercase;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.05);white-space:nowrap}
+.grid{position:absolute;left:-10%;right:-10%;bottom:-40px;height:230px;background:
+ repeating-linear-gradient(90deg,rgba(232,178,26,.22) 0 2px,transparent 2px 80px),
+ repeating-linear-gradient(0deg,rgba(232,178,26,.22) 0 2px,transparent 2px 40px);
+ transform:perspective(400px) rotateX(60deg);transform-origin:bottom;-webkit-mask:linear-gradient(transparent,#000 70%)}
+.c{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.logo{font:italic 900 52px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:1px}.logo b{color:#E8B21A}
+.big{margin-top:10px;font:italic 900 124px/.9 'Barlow Condensed';text-transform:uppercase;
+ background:linear-gradient(#FFE07A,#E8B21A 55%,#B8860B);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 8px 0 #5a4206)}
+.tag{margin-top:22px;font-size:30px;font-weight:500}.tag em{font-style:normal;color:#E8B21A;font-weight:700}
+.chips{margin-top:24px;display:flex;gap:12px}
+.chip{padding:10px 18px;border-radius:99px;border:1px solid #2C2C40;background:#171724;font:700 17px Roboto;letter-spacing:1.5px;text-transform:uppercase}
+.chip.g{border-color:#E8B21A;color:#E8B21A;background:rgba(232,178,26,.1)}
+.side{position:absolute;top:130px;width:200px;opacity:.9}
+.side.l{left:70px;transform:rotate(-10deg)}.side.r{right:70px;transform:rotate(10deg) scaleX(-1)}
+.btns{position:absolute;top:400px;display:flex;gap:16px}.btns i{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 -6px 0 rgba(0,0,0,.35)}
+.btns.l{left:60px}.btns.r{right:60px}
+.coin{position:absolute;left:0;right:0;bottom:26px;text-align:center;font:700 18px Roboto;letter-spacing:8px;color:#9A98B0}
+</style></head><body>
+<div class="glow"></div><div class="grid"></div><div class="scan"></div><div class="ghost">Insert coin</div>
+<img class="side l" src="stick.svg"><img class="side r" src="stick.svg">
+<div class="btns l"><i style="background:#E8B21A"></i><i style="background:#E5484D"></i><i style="background:#3A8DDE"></i></div>
+<div class="btns r"><i style="background:#2FA866"></i><i style="background:#E8B21A"></i><i style="background:#E5484D"></i></div>
+<div class="c">
+ <div class="logo">90s Kid <b>Arcade</b></div>
+ <div class="big">Play with friends</div>
+ <div class="tag">Arcade classics on Android. <em>Online from anywhere</em>, or nearby with no internet.</div>
+ <div class="chips"><span class="chip g">Free · No ads</span><span class="chip">Online rooms</span><span class="chip">Chat &amp; voice</span></div>
+</div>
+<div class="coin">ARCADE.TAIYEBNIRJHOR.COM</div>
+</body></html>

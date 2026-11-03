@@ -309,6 +309,14 @@ decision was made in the conversation. Get the time now with
   release: real-phone connection logs (rollbacks, stalls, relay or direct)
   and anything new in WebRTC or Cloudflare's relay that cuts delay.
 
+### 2026-11-03 14:19 Dhaka · Facebook page: logo, cover and text
+- Asked: market the app, first a Facebook page: banner, profile picture,
+  description.
+- Decided: our own artwork only (a pixel arcade stick, the site's gold and
+  Barlow Condensed lettering), no game pictures, so the page can't be taken
+  down over SNK or Capcom art. Sources in `marketing/facebook/` (HTML,
+  rendered to PNG); the text says free and no ads, and asks for no money.
+
 ---
 
 ## Where things stand (update whenever it changes)
