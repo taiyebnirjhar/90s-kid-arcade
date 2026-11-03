@@ -321,15 +321,14 @@ decision was made in the conversation. Get the time now with
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-03 03:36 Dhaka:
+As of 2026-11-03 14:19 Dhaka:
 
-- **Open:** the "-test" label fix PR (see the last entry). #71 and #72
-  (download count, from 100+ in hundreds) merged.
-- **Merged before it:** #68 (download count, in-app updates), #69 and #70
-  (server deploy fixes; the count's server side is live). #68's APK,
-  v1.0.245, is the first with in-app updates.
-- **Latest release:** v1.0.246 (through #72), the first with updates inside
-  the app. The website serves it.
+- **Open:** the Facebook page assets PR (`marketing/facebook/`).
+- **Merged:** #68-#70 (in-app updates; download count server side), #71,
+  #72 and #74 (download count on the site: exact, 1.2M+ past a million),
+  #73 (main builds no longer say "-test").
+- **Latest release:** v1.0.248 (#73). The website serves it. The owner's
+  phone took the in-app update path from 1.0.246.
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
