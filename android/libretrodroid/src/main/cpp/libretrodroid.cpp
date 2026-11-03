@@ -200,16 +200,12 @@ std::vector<int32_t> LibretroDroid::grabFrame() {
     return result;
 }
 
-void LibretroDroid::grab(const void* data, unsigned width, unsigned height, size_t pitch) {
-    std::lock_guard<std::mutex> lock(grabLock);
-    grabWanted = false;
-    grabbed.resize(2 + (size_t) width * height);
-    grabbed[0] = (int32_t) width;
-    grabbed[1] = (int32_t) height;
+// The core's picture as ARGB (whatever pixel format it draws in).
+static void toArgb(const void* data, unsigned width, unsigned height, size_t pitch, int32_t* outPixels) {
     int format = Environment::getInstance().getPixelFormat();
     for (unsigned y = 0; y < height; y++) {
         auto* row = (const uint8_t*) data + y * pitch;
-        int32_t* out = grabbed.data() + 2 + (size_t) y * width;
+        int32_t* out = outPixels + (size_t) y * width;
         for (unsigned x = 0; x < width; x++) {
             uint32_t r, g, b;
             if (format == RETRO_PIXEL_FORMAT_XRGB8888) {
@@ -230,6 +226,60 @@ void LibretroDroid::grab(const void* data, unsigned width, unsigned height, size
             out[x] = (int32_t) (0xFF000000u | (r << 16) | (g << 8) | b);
         }
     }
+}
+
+void LibretroDroid::grab(const void* data, unsigned width, unsigned height, size_t pitch) {
+    std::lock_guard<std::mutex> lock(grabLock);
+    grabWanted = false;
+    grabbed.resize(2 + (size_t) width * height);
+    grabbed[0] = (int32_t) width;
+    grabbed[1] = (int32_t) height;
+    toArgb(data, width, height, pitch, grabbed.data() + 2);
+}
+
+void LibretroDroid::setCapture(bool on) {
+    std::lock_guard<std::mutex> lock(captureLock);
+    capturing = on;
+    capturedFrames.clear();
+    capturedAudio.clear();
+    lastCaptured.clear();
+    captureSeq = 0;
+}
+
+void LibretroDroid::captureFrame(const void* data, unsigned width, unsigned height, size_t pitch) {
+    std::lock_guard<std::mutex> lock(captureLock);
+    if (!capturing) return;
+    if (data != nullptr && data != RETRO_HW_FRAME_BUFFER_VALID) {
+        lastCaptured.resize(3 + (size_t) width * height);
+        lastCaptured[1] = (int32_t) width;
+        lastCaptured[2] = (int32_t) height;
+        toArgb(data, width, height, pitch, lastCaptured.data() + 3);
+    }
+    // A frame the core didn't redraw (the same as the last) still takes its place in time.
+    if (!lastCaptured.empty() && capturedFrames.size() < CAPTURE_MAX_FRAMES) {
+        lastCaptured[0] = captureSeq;
+        capturedFrames.push_back(lastCaptured);
+    }
+    captureSeq++;
+}
+
+std::vector<int32_t> LibretroDroid::takeCapturedFrame() {
+    std::lock_guard<std::mutex> lock(captureLock);
+    if (capturedFrames.empty()) return {};
+    auto frame = std::move(capturedFrames.front());
+    capturedFrames.pop_front();
+    return frame;
+}
+
+std::vector<int16_t> LibretroDroid::takeCapturedAudio() {
+    std::lock_guard<std::mutex> lock(captureLock);
+    std::vector<int16_t> out;
+    out.swap(capturedAudio);
+    return out;
+}
+
+std::array<double, 3> LibretroDroid::getAvInfo() {
+    return {avFps, avSampleRate, (double) getAspectRatio()};
 }
 
 std::pair<int8_t*, size_t> LibretroDroid::serializeSRAM() {
@@ -646,6 +696,7 @@ void LibretroDroid::handleVideoRefresh(
     if (grabWanted && data != nullptr && data != RETRO_HW_FRAME_BUFFER_VALID) {
         grab(data, width, height, pitch);
     }
+    if (capturing) captureFrame(data, width, height, pitch);
     if (video) {
         video->onNewFrame(data, width, height, pitch);
 
@@ -656,6 +707,13 @@ void LibretroDroid::handleVideoRefresh(
 }
 
 size_t LibretroDroid::handleAudioCallback(const int16_t *data, size_t frames) {
+    if (capturing) {
+        std::lock_guard<std::mutex> lock(captureLock);
+        // Stereo samples, kept until taken (up to a few seconds' worth).
+        if (capturing && capturedAudio.size() + frames * 2 <= CAPTURE_MAX_SAMPLES) {
+            capturedAudio.insert(capturedAudio.end(), data, data + frames * 2);
+        }
+    }
     if (audio && audioEnabled) {
         audio->write(data, frames);
     }
@@ -821,6 +879,8 @@ void LibretroDroid::afterGameLoad() {
     updateAudioSampleRateMultiplier();
 
     defaultAspectRatio = findDefaultAspectRatio(system_av_info);
+    avFps = system_av_info.timing.fps;
+    avSampleRate = system_av_info.timing.sample_rate;
 }
 
 float LibretroDroid::findDefaultAspectRatio(const retro_system_av_info& system_av_info) {

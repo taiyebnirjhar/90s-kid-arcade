@@ -325,6 +325,44 @@ JNIEXPORT jbyteArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getN
     return result;
 }
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setCapture(
+    JNIEnv* env,
+    jclass obj,
+    jboolean on
+) {
+    LibretroDroid::getInstance().setCapture(on);
+}
+
+JNIEXPORT jintArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_takeCapturedFrame(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto frame = LibretroDroid::getInstance().takeCapturedFrame();
+    jintArray result = env->NewIntArray((jsize) frame.size());
+    if (!frame.empty()) env->SetIntArrayRegion(result, 0, (jsize) frame.size(), frame.data());
+    return result;
+}
+
+JNIEXPORT jshortArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_takeCapturedAudio(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto samples = LibretroDroid::getInstance().takeCapturedAudio();
+    jshortArray result = env->NewShortArray((jsize) samples.size());
+    if (!samples.empty()) env->SetShortArrayRegion(result, 0, (jsize) samples.size(), samples.data());
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_getAvInfo(
+    JNIEnv* env,
+    jclass obj
+) {
+    auto info = LibretroDroid::getInstance().getAvInfo();
+    jdoubleArray result = env->NewDoubleArray(3);
+    env->SetDoubleArrayRegion(result, 0, 3, info.data());
+    return result;
+}
+
 JNIEXPORT jboolean JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_recStart(
     JNIEnv* env,
     jclass obj

@@ -88,6 +88,18 @@ public:
     // polling costs one copy per call.
     std::vector<int32_t> grabFrame();
 
+    // Capturing for a video (90s Kid Arcade): every frame drawn, and the
+    // sound, kept until taken (turning it on or off empties what's kept).
+    void setCapture(bool on);
+    // The oldest captured frame: {its number, width, height, then ARGB
+    // pixels}; empty if none. Numbers count every frame drawn since capture
+    // began: a gap is a frame dropped for want of room.
+    std::vector<int32_t> takeCapturedFrame();
+    // The sound since last taken: stereo 16-bit samples, at getAvInfo's rate.
+    std::vector<int16_t> takeCapturedAudio();
+    // {the game's frames a second, its sound's samples a second, its picture's aspect ratio}.
+    std::array<double, 3> getAvInfo();
+
     // Multiplayer (90s Kid Arcade), rollback netcode: each frame runs with
     // this phone's input and every partner's, each predicted (their last one)
     // when it hasn't arrived yet. When one arrives and differs, the game goes
@@ -251,6 +263,17 @@ private:
     std::mutex coreLock;
     std::mutex grabLock;
     std::atomic<bool> grabWanted = false;
+    std::mutex captureLock;
+    std::atomic<bool> capturing{false};
+    std::deque<std::vector<int32_t>> capturedFrames;
+    std::vector<int16_t> capturedAudio;
+    std::vector<int32_t> lastCaptured;
+    int32_t captureSeq = 0;
+    static constexpr size_t CAPTURE_MAX_FRAMES = 90;           // 1.5 s waiting to be taken
+    static constexpr size_t CAPTURE_MAX_SAMPLES = 48000 * 2 * 4; // 4 s of stereo
+    double avFps = 60;
+    double avSampleRate = 48000;
+    void captureFrame(const void* data, unsigned width, unsigned height, size_t pitch);
     std::vector<int32_t> grabbed;
     void grab(const void* data, unsigned width, unsigned height, size_t pitch);
 

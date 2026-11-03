@@ -366,6 +366,21 @@ decision was made in the conversation. Get the time now with
   end it says "the same as the match ✓" or when it went different.
 - Not yet proven on a phone: that needs the owner to play and watch one.
 
+### 2026-11-03 17:26 Dhaka · Recording R3: Save video and share
+- Asked: "How to use this replay? … upload somewhere or share as video with
+  friends", then "complete the phase end to end".
+- Done: **Video** on each match in Replays plays it through once while the
+  phone's encoders make a 1080p60 MP4 (sharp pixels, dark bars, game sound,
+  720p if 1080p isn't possible), into the gallery album "90s Kid Arcade"
+  (before Android 10: the app's Movies folder). Then **Share it**: WhatsApp,
+  Messenger, Facebook (the ones installed; `<queries>` in the manifest),
+  More… (Android's list). Each opens that app with the video attached.
+- Decided: made in real time on screen (the replay at its own speed, a
+  progress line), not off screen faster: it reuses the watcher's replay
+  path, which works; faster can come later. Leaving while it's made drops it.
+- Small: space shows KB under a megabyte (it said "0.0 MB").
+- Not yet proven on a phone: the owner makes one and shares it.
+
 ---
 
 ## Where things stand (update whenever it changes)

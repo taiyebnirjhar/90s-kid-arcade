@@ -154,6 +154,14 @@ public class LibretroDroid {
     // Watching from this frame on (after setNetplay and loading its state).
     public static native void netStartAt(int frame);
     public static native long[] getNetSum();
+    // Capturing for a video (see LibretroDroid::setCapture): every frame drawn and the sound.
+    public static native void setCapture(boolean on);
+    // The oldest captured frame: {its number, width, height, ARGB pixels...}; empty if none.
+    public static native int[] takeCapturedFrame();
+    // The sound since last taken: stereo 16-bit samples.
+    public static native short[] takeCapturedAudio();
+    // {frames a second, sound samples a second, aspect ratio} of the game loaded.
+    public static native double[] getAvInfo();
     // Recording the match (see LibretroDroid::recStart): from the game as it is now.
     public static native boolean recStart();
     // 0: nothing recorded, 1: recording, 2: ended (a state loaded, a reset, a new seating): take it.

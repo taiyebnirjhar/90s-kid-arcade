@@ -99,6 +99,9 @@ sealed interface GameDialog {
 
     /** Multiplayer: load this phone's saved state for everyone? */
     data object LoadForEveryone : GameDialog
+
+    /** A match's video made and in the gallery: share it. [checked]: what the replay's check found. */
+    data class VideoReady(val uri: android.net.Uri, val checked: String) : GameDialog
 }
 
 /** How the game screen looks and plays: saved in [Prefs], or previewed while Controls is open. */
@@ -138,6 +141,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         const val EXTRA_NETPLAY = "netplay"
         /** A saved match to play again (its file in [MatchStore]), instead of playing. */
         const val EXTRA_REPLAY = "replay"
+        /** With [EXTRA_REPLAY]: make a video of it as it plays. */
+        const val EXTRA_VIDEO = "video"
         private const val MAX_MOVES = 6
         // Who's speaking: checked this often, louder than this.
         private const val SPEAKING_MS = 300L
@@ -294,7 +299,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 finish()
                 return
             }
-            Replay(read.first, read.second)
+            Replay(read.first, read.second, video = intent.getBooleanExtra(EXTRA_VIDEO, false))
         }
         if (replay == null) {
             tellFriends()
@@ -456,16 +461,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         onBackPressedDispatcher.addCallback(this) {
             when {
-                replay != null -> finish()
+                replay != null -> {
+                    // Leaving while a video's being made: it's dropped.
+                    replay?.maker?.let { m -> Thread { m.cancel() }.start() }
+                    replay?.maker = null
+                    finish()
+                }
                 editing -> finishEditing(save = false)
                 else -> show(GameDialog.Pause)
             }
         }
         if (replay != null) {
             hud.visibility = View.GONE
-            netStatus.text = "Replay · ${replay!!.info.title}"
+            netStatus.text = if (replay!!.video) "Making the video…" else "Replay · ${replay!!.info.title}"
             netStatus.visibility = View.VISIBLE
-            root.postDelayed({ if (replay?.over == false) netStatus.visibility = View.GONE }, 2500)
+            if (!replay!!.video) root.postDelayed({ if (replay?.over == false) netStatus.visibility = View.GONE }, 2500)
         }
     }
 
@@ -1606,6 +1616,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onDestroy() {
         destroyed = true
+        replay?.maker?.let { m -> Thread { m.cancel() }.start() }
         root.removeCallbacks(heldCheck)
         // The room first: its threads may still ask the emulator for its
         // state, which the emulator can't answer once it's gone.
@@ -1628,7 +1639,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // ----- Saving matches (docs/recording-plan.md) -----
 
     /** A saved match being played again: what it is, and how far it's got. */
-    private class Replay(val info: MatchInfo, val rec: Recording) {
+    private class Replay(val info: MatchInfo, val rec: Recording, val video: Boolean = false) {
+        var maker: VideoMaker? = null
+        var file: File? = null
         val end: Int get() = rec.first + rec.frames
         val check = ReplayCheck(rec.sums)
         @Volatile var started = false
@@ -1646,8 +1659,22 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             show(GameDialog.Error("This match was saved by a different version of the game and can't be played again.", "Can't play the match"))
             return@launch
         }
+        if (r.video) {
+            // Capture from the first frame on (none runs before netStartAt: no inputs yet).
+            val file = File(cacheDir, "videos").apply { mkdirs() }.let { File(it, "making.mp4") }.also { it.delete() }
+            r.file = file
+            r.maker = VideoMaker(file).also { it.start() }
+        }
         LibretroDroid.netStartAt(r.rec.first)
         r.started = true
+        if (r.video) {
+            netStatus.visibility = View.VISIBLE
+            while (isActive && !r.over) {
+                val done = (LibretroDroid.getNetFrame() - r.rec.first).coerceAtLeast(0)
+                netStatus.text = "Making the video… ${(done * 100L / r.rec.frames.coerceAtLeast(1)).coerceAtMost(99)}%"
+                delay(500)
+            }
+        }
     }
 
     // On the emulator's thread, every frame: the next few frames' inputs, and
@@ -1672,12 +1699,32 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     private fun replayOver(r: Replay) {
         val wrong = r.check.wrongAt
-        netStatus.text = when {
-            wrong >= 0 -> "Replay over · it went different from the match at %d:%02d".format((wrong - r.rec.first) / 3600, (wrong - r.rec.first) / 60 % 60)
-            r.check.matches -> "Replay over · the same as the match ✓"
-            else -> "Replay over"
+        val checked = when {
+            wrong >= 0 -> "It went different from the match at %d:%02d".format((wrong - r.rec.first) / 3600, (wrong - r.rec.first) / 60 % 60)
+            r.check.matches -> "The same as the match ✓"
+            else -> ""
         }
+        val maker = r.maker
+        if (maker == null) {
+            netStatus.text = if (checked.isEmpty()) "Replay over" else "Replay over · ${checked.replaceFirstChar { it.lowercase() }}"
+            netStatus.visibility = View.VISIBLE
+            return
+        }
+        netStatus.text = "Finishing the video…"
         netStatus.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val uri = withContext(Dispatchers.IO) {
+                runCatching {
+                    check(maker.finish()) { maker.failed?.message ?: "nothing was made" }
+                    val stamp = java.text.SimpleDateFormat("d MMM yyyy HH-mm", java.util.Locale.getDefault()).format(java.util.Date(r.info.startedAt))
+                    Videos.keep(this@GameActivity, r.file!!, "90s Kid Arcade - ${r.info.title} - $stamp.mp4")
+                }
+            }
+            netStatus.visibility = View.GONE
+            r.maker = null
+            uri.onSuccess { show(GameDialog.VideoReady(it, checked)) }
+                .onFailure { show(GameDialog.Error("The video couldn't be made on this phone (${it.message}).", "No video")) }
+        }
     }
 
     private var matchTaker: MatchTaker? = null
