@@ -84,3 +84,7 @@ hook, beats with timings, captions, sounds, payoff, why it works.
     every round kept; select screens and "continue" cut; "Match n of 6,
     red x-y blue" on each face-off; final score; the banner. Sent as two
     parts (matches 1-3, 4-6; the send limit is 500 MB).
+- Owner's note on the full fight's end card ("why this huge empty space"):
+  the Facebook cover (1640x624) padded into 16:9 left a dark band. Long
+  videos use `marketing/video/banner16x9.html` (1920x1080, rendered with
+  Chromium like the cover), with RED VS BLUE over it for the intro.
