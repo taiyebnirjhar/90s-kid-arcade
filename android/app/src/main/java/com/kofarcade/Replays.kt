@@ -61,7 +61,7 @@ data class ReplayRow(
 
 /** The saved matches (docs/recording-plan.md): watch one, star it to keep it, or delete it. */
 @Composable
-fun ReplaysDialog(prefs: Prefs, roms: RomStore, onWatch: (ReplayRow) -> Unit, onClose: () -> Unit) {
+fun ReplaysDialog(prefs: Prefs, roms: RomStore, onWatch: (ReplayRow, video: Boolean) -> Unit, onClose: () -> Unit) {
     val context = LocalContext.current
     val store = remember { MatchStore(context) }
     var version by remember { mutableIntStateOf(0) }
@@ -83,7 +83,8 @@ fun ReplaysDialog(prefs: Prefs, roms: RomStore, onWatch: (ReplayRow) -> Unit, on
     ReplaysScreen(
         ReplaysUi(rows, saving, space),
         onBack = onClose,
-        onWatch = onWatch,
+        onWatch = { onWatch(it, false) },
+        onVideo = { onWatch(it, true) },
         onStar = { row ->
             store.star(row.file, !row.starred)
             version++
@@ -113,6 +114,7 @@ fun ReplaysScreen(
     ui: ReplaysUi,
     onBack: () -> Unit,
     onWatch: (ReplayRow) -> Unit,
+    onVideo: (ReplayRow) -> Unit = {},
     onStar: (ReplayRow) -> Unit,
     onDelete: (ReplayRow) -> Unit,
     onSaving: (Boolean) -> Unit,
@@ -133,9 +135,9 @@ fun ReplaysScreen(
                     icon = { RecordIcon(Modifier.size(32.dp)) },
                 )
                 else -> {
-                    rows.forEach { row -> ReplayCard(row, onWatch = { onWatch(row) }, onStar = { onStar(row) }, onDelete = { asking = row }) }
+                    rows.forEach { row -> ReplayCard(row, onWatch = { onWatch(row) }, onVideo = { onVideo(row) }, onStar = { onStar(row) }, onDelete = { asking = row }) }
                     Text(
-                        "${rows.size} saved · ${"%.1f".format(ui.bytes / 1_048_576.0)} MB on this phone",
+                        "${rows.size} saved · ${space(ui.bytes)} on this phone · Download makes a video, into your gallery",
                         color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp),
                     )
                 }
@@ -158,7 +160,7 @@ fun ReplaysScreen(
 }
 
 @Composable
-private fun ReplayCard(row: ReplayRow, onWatch: () -> Unit, onStar: () -> Unit, onDelete: () -> Unit) {
+private fun ReplayCard(row: ReplayRow, onWatch: () -> Unit, onVideo: () -> Unit, onStar: () -> Unit, onDelete: () -> Unit) {
     val info = row.info
     Panel(onClick = if (row.playable) onWatch else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -181,6 +183,7 @@ private fun ReplayCard(row: ReplayRow, onWatch: () -> Unit, onStar: () -> Unit, 
                 )
                 if (!row.playable) Text("Its game isn't on this phone", color = Palette.red, fontSize = 12.sp)
             }
+            if (row.playable) IconSpot("Save video", onVideo) { DownloadIcon(Modifier.size(20.dp), color = Palette.muted) }
             IconSpot("Star", onStar) { StarIcon(Modifier.size(20.dp), on = row.starred) }
             IconSpot("Delete", onDelete) { Text("✕", color = Palette.muted, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }
@@ -194,6 +197,27 @@ private fun IconSpot(label: String, onClick: () -> Unit, content: @Composable ()
         modifier = Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClick)
             .semantics { contentDescription = label; role = Role.Button },
     ) { content() }
+}
+
+/** Download: an arrow down into a tray. */
+@Composable
+fun DownloadIcon(modifier: Modifier = Modifier, color: Color = Palette.text) {
+    androidx.compose.foundation.Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = w * 0.11f
+        val cap = androidx.compose.ui.graphics.StrokeCap.Round
+        drawLine(color, androidx.compose.ui.geometry.Offset(w / 2, h * 0.08f), androidx.compose.ui.geometry.Offset(w / 2, h * 0.62f), stroke, cap)
+        drawLine(color, androidx.compose.ui.geometry.Offset(w * 0.27f, h * 0.4f), androidx.compose.ui.geometry.Offset(w / 2, h * 0.64f), stroke, cap)
+        drawLine(color, androidx.compose.ui.geometry.Offset(w * 0.73f, h * 0.4f), androidx.compose.ui.geometry.Offset(w / 2, h * 0.64f), stroke, cap)
+        val tray = Path().apply {
+            moveTo(w * 0.1f, h * 0.66f)
+            lineTo(w * 0.1f, h * 0.9f)
+            lineTo(w * 0.9f, h * 0.9f)
+            lineTo(w * 0.9f, h * 0.66f)
+        }
+        drawPath(tray, color, style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke, cap = cap, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+    }
 }
 
 /** A five-pointed star, filled gold when [on]. */
@@ -214,6 +238,9 @@ fun StarIcon(modifier: Modifier = Modifier, on: Boolean) {
         else drawPath(path, Palette.muted, style = androidx.compose.ui.graphics.drawscope.Stroke(width = c * 0.14f))
     }
 }
+
+private fun space(bytes: Long): String =
+    if (bytes < 1_048_576) "${(bytes + 1023) / 1024} KB" else "%.1f MB".format(bytes / 1_048_576.0)
 
 private fun length(seconds: Int): String = "%d:%02d".format(seconds / 60, seconds % 60)
 

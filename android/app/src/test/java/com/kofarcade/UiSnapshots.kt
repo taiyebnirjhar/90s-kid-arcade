@@ -1024,8 +1024,8 @@ class UiSnapshots {
         ReplayRow("2.match", com.kofarcade.core.replay.MatchInfo("mslug", "Metal Slug", 1_793_600_000_000, 9 * 60 * 60), starred = false, playable = true),
         ReplayRow("3.match", com.kofarcade.core.replay.MatchInfo("garou", "Garou", 1_793_500_000_000, 95 * 60), starred = false, playable = false),
     )
-    @Test fun replays() = shot("replays") { ReplaysScreen(ReplaysUi(replayRows, saving = true, bytes = 1_400_000), {}, {}, {}, {}, {}) }
-    @Test fun replaysEmpty() = shot("replays_empty") { ReplaysScreen(ReplaysUi(emptyList(), saving = false), {}, {}, {}, {}, {}) }
+    @Test fun replays() = shot("replays") { ReplaysScreen(ReplaysUi(replayRows, saving = true, bytes = 1_400_000), onBack = {}, onWatch = {}, onStar = {}, onDelete = {}, onSaving = {}) }
+    @Test fun replaysEmpty() = shot("replays_empty") { ReplaysScreen(ReplaysUi(emptyList(), saving = false), onBack = {}, onWatch = {}, onStar = {}, onDelete = {}, onSaving = {}) }
     @Test fun onboardGames() = shot("onboard_games") { onboard(OnboardUi(OnboardStep.GAME, games = onboardGames, picked = setOf("kof97.zip", "mslug.zip")))() }
     @Test fun onboardWelcomeSmall() { tiny(); shot("onboard_welcome_tiny") { onboard(OnboardUi(OnboardStep.WELCOME))() } }
     @Test fun onboardWelcomeLandscape() { landscape(); shot("onboard_welcome_landscape") { onboard(OnboardUi(OnboardStep.WELCOME))() } }

@@ -109,6 +109,24 @@ fun GameDialogs(game: GameActivity) {
         is GameDialog.Roster -> RosterPicker(game, d.slot)
         is GameDialog.Editor -> MoveEditor(game, d.character)
         GameDialog.Controls -> ControlsSettings(game)
+        is GameDialog.VideoReady -> Sheet(onDismiss = { game.finish() }) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val targets = remember { Videos.targets(context) }
+            Title("Your video is ready")
+            Text(
+                "It's in your gallery, in the 90s Kid Arcade album." + if (d.checked.isNotEmpty()) " ${d.checked}" else "",
+                color = Palette.muted,
+            )
+            Spacer(Modifier.size(16.dp))
+            Text("Share it", color = Palette.text, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Spacer(Modifier.size(8.dp))
+            targets.forEachIndexed { i, t ->
+                if (i == 0) GoldButton(t.label, { Videos.share(context, d.uri, t) }, Modifier.fillMaxWidth())
+                else GhostButton(t.label, { Videos.share(context, d.uri, t) }, Modifier.fillMaxWidth())
+                Spacer(Modifier.size(8.dp))
+            }
+            GhostButton("Done", { game.finish() }, Modifier.fillMaxWidth())
+        }
         is GameDialog.Error -> Sheet(onDismiss = { game.finish() }) {
             Title(d.title)
             Text(d.message, color = Palette.muted)

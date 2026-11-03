@@ -119,14 +119,15 @@ class MainActivity : ComponentActivity() {
     }
 
     /** A saved match, played again (docs/recording-plan.md). */
-    private fun watch(row: ReplayRow) {
+    private fun watch(row: ReplayRow, video: Boolean) {
         val game = com.kofarcade.core.gameById(row.info.game) ?: return
         val set = roms.setFor(game) ?: return
         startActivity(
             Intent(this, GameActivity::class.java)
                 .putExtra(GameActivity.EXTRA_GAME, game.id)
                 .putExtra(GameActivity.EXTRA_SET, set)
-                .putExtra(GameActivity.EXTRA_REPLAY, row.file),
+                .putExtra(GameActivity.EXTRA_REPLAY, row.file)
+                .putExtra(GameActivity.EXTRA_VIDEO, video),
         )
     }
 

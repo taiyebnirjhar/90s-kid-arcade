@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What the app shares with other apps: only a downloaded update, for Android's installer. -->
+<!-- What the app shares with other apps: a downloaded update, for Android's installer;
+     match videos on phones before Android 10 (later ones go to the gallery). -->
 <paths>
     <cache-path name="updates" path="updates/" />
+    <external-files-path name="videos" path="Movies/" />
 </paths>

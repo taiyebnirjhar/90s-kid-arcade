@@ -62,7 +62,15 @@ platforms later on top of the same video work.
   (KOF 2002 Magic Plus, alone and online) that a replay is the match.
   A replay uses its own saves folder (`replay-saves`), never records itself,
   and doesn't count as a game played.
-- **R3 Save video and share.** Off-screen replay to MediaCodec at
+- **R3 Save video and share.** Built (2026-11-03 17:26), as below with one change:
+  the video is made while the replay plays on screen at its own speed (a
+  3-minute match takes about 3 minutes, shown as "Making the video… N%"),
+  not off screen and faster; faster is a later step. Native capture
+  (`LibretroDroid::setCapture`: every frame drawn and the sound, kept until
+  taken), `VideoMaker.kt` (EGL into the encoder's surface, sharp-bilinear
+  shader, H.264 1080p60 12 Mbps, 720p if the phone can't, AAC 192 kbps,
+  times by the game's own clock), `Videos.kt` (gallery, share buttons).
+  Originally planned: off-screen replay to MediaCodec at
   1080p60/720p60, sharp-pixel scaling, game sound, progress, into the
   gallery (MediaStore); then Share: WhatsApp (`com.whatsapp`), Messenger
   (`com.facebook.orca`), Facebook (`com.facebook.katana`) when installed,

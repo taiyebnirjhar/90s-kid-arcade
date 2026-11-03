@@ -102,12 +102,13 @@ behind a key) inside the app.
 | `LibraryDialog.kt`, `Library.kt`, `LibraryDownloads.kt`, `DownloadService.kt` | My Library: the R2 library client (whole-file downloads, resume), the app-wide download queue, the foreground service. |
 | `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, save matches?, favourite games). |
 | `Replays.kt` | The Replays page (home chip): saved matches, star, delete, watch; the saving switch. |
+| `VideoMaker.kt`, `Videos.kt` | A match's video: the emulator's capture encoded to MP4 (H.264 + AAC, sharp pixels); into the gallery and the share buttons (WhatsApp, Messenger, Facebook, More). |
 | `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
 | `Theme.kt` | Palette, the app-wide UI scale (`uiScale`, `DESIGN_SHORT_DP`), `Breakpoints`, text cap. |
 | `Storage.kt` | `RomStore` (zips, checks), `Prefs` (every setting). |
 | `Online.kt` | Supabase account, rooms, friends, problem reports, room links (`joinLink`, `codeFromLink`, `scannedRoomCode`). |
 | `android/core/` | Plain Kotlin (JVM), tested without a phone: games list and moves (`Games.kt`), ROM checks, rooms and netcode (`core/net`: `Session`, `Room`, `WebRtcTransport`, rollback, chat), online (`core/online`: Supabase client, `OnlineRooms`, `RealtimeSignaling`, friends), saved matches (`core/replay/Match.kt`: the emulator's block, the `.match` file format, what's kept). |
-| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), match recording (`recorder`, fed by `step`/`stepNetplay`), FBNeo core host. |
+| `android/libretrodroid/` | Fork of LibretroDroid (native C++): frame pacing (`fpssync`), sound (`audiopipe`, adaptive target), match recording (`recorder`, fed by `step`/`stepNetplay`), video capture (`setCapture`), FBNeo core host. |
 | `server/supabase/migrations/` | Database: rooms, members, signaling rules (Realtime private channels), profiles, friends, friend chat, reports, problem reports, quotas. Applied to the live project automatically on merge to main. |
 | `server/supabase/tests/*.test.sql` | Server tests on plain Postgres with a Supabase stub. |
 | `server/supabase/functions/turn-credentials/` | Edge function: Cloudflare TURN credentials with the 900/950 GB stops. |
