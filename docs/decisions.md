@@ -312,10 +312,13 @@ decision was made in the conversation. Get the time now with
 ### 2026-11-03 14:19 Dhaka · Facebook page: logo, cover and text
 - Asked: market the app, first a Facebook page: banner, profile picture,
   description.
-- Decided: our own artwork only (a pixel arcade stick, the site's gold and
-  Barlow Condensed lettering), no game pictures, so the page can't be taken
-  down over SNK or Capcom art. Sources in `marketing/facebook/` (HTML,
-  rendered to PNG); the text says free and no ads, and asks for no money.
+- First made with our own artwork only (a pixel arcade stick). The owner
+  then chose the link card's look for the banner ("I like this as banner
+  image better": game title screens beside "Game on") and the logo as
+  lettering only, no controller. Game pictures on the page are his call;
+  they're fetched when rendered, never kept in the repo. Sources in
+  `marketing/facebook/` (HTML, rendered to PNG); the text says free and no
+  ads, and asks for no money.
 
 ---
 

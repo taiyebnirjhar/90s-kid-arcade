@@ -35,5 +35,5 @@ Download: https://arcade.taiyebnirjhor.com
 Tag the friend who always picked the same character. 👇
 
 ## Images
-- Profile picture: logo.png (1080×1080; the circle crop keeps the ring)
+- Profile picture: logo.png (1080×1080, lettering only; the circle crop keeps the ring)
 - Cover: cover.png (1640×624; the middle part shows on phones too)

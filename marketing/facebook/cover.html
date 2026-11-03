@@ -1,38 +1,57 @@
-<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+<!doctype html>
+<!-- The Facebook page cover, 1640 x 624, in the link card's style. Phones show only
+     the middle ~1,100 px, so the words sit there; the game pictures come from
+     libretro's thumbnails when it is rendered (none kept in the repo). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>90s Kid Arcade · Facebook cover</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,900&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
 <style>
-html,body{margin:0;width:1640px;height:624px;overflow:hidden;background:#0B0B12}
-body{position:relative;font-family:Roboto,sans-serif;color:#F1F0F7}
-.glow{position:absolute;inset:0;background:radial-gradient(40% 70% at 50% 50%,rgba(232,178,26,.20),transparent 70%)}
-.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 3px,transparent 3px 6px)}
-.ghost{position:absolute;left:0;right:0;top:40px;text-align:center;font:italic 900 300px/1 'Barlow Condensed';text-transform:uppercase;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.05);white-space:nowrap}
-.grid{position:absolute;left:-10%;right:-10%;bottom:-40px;height:230px;background:
- repeating-linear-gradient(90deg,rgba(232,178,26,.22) 0 2px,transparent 2px 80px),
- repeating-linear-gradient(0deg,rgba(232,178,26,.22) 0 2px,transparent 2px 40px);
- transform:perspective(400px) rotateX(60deg);transform-origin:bottom;-webkit-mask:linear-gradient(transparent,#000 70%)}
-.c{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.logo{font:italic 900 52px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:1px}.logo b{color:#E8B21A}
-.big{margin-top:10px;font:italic 900 124px/.9 'Barlow Condensed';text-transform:uppercase;
- background:linear-gradient(#FFE07A,#E8B21A 55%,#B8860B);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 8px 0 #5a4206)}
-.tag{margin-top:22px;font-size:30px;font-weight:500}.tag em{font-style:normal;color:#E8B21A;font-weight:700}
-.chips{margin-top:24px;display:flex;gap:12px}
-.chip{padding:10px 18px;border-radius:99px;border:1px solid #2C2C40;background:#171724;font:700 17px Roboto;letter-spacing:1.5px;text-transform:uppercase}
-.chip.g{border-color:#E8B21A;color:#E8B21A;background:rgba(232,178,26,.1)}
-.side{position:absolute;top:130px;width:200px;opacity:.9}
-.side.l{left:70px;transform:rotate(-10deg)}.side.r{right:70px;transform:rotate(10deg) scaleX(-1)}
-.btns{position:absolute;top:400px;display:flex;gap:16px}.btns i{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 -6px 0 rgba(0,0,0,.35)}
-.btns.l{left:60px}.btns.r{right:60px}
-.coin{position:absolute;left:0;right:0;bottom:26px;text-align:center;font:700 18px Roboto;letter-spacing:8px;color:#9A98B0}
-</style></head><body>
-<div class="glow"></div><div class="grid"></div><div class="scan"></div><div class="ghost">Insert coin</div>
-<img class="side l" src="stick.svg"><img class="side r" src="stick.svg">
-<div class="btns l"><i style="background:#E8B21A"></i><i style="background:#E5484D"></i><i style="background:#3A8DDE"></i></div>
-<div class="btns r"><i style="background:#2FA866"></i><i style="background:#E8B21A"></i><i style="background:#E5484D"></i></div>
-<div class="c">
- <div class="logo">90s Kid <b>Arcade</b></div>
- <div class="big">Play with friends</div>
- <div class="tag">Arcade classics on Android. <em>Online from anywhere</em>, or nearby with no internet.</div>
- <div class="chips"><span class="chip g">Free · No ads</span><span class="chip">Online rooms</span><span class="chip">Chat &amp; voice</span></div>
-</div>
-<div class="coin">ARCADE.TAIYEBNIRJHOR.COM</div>
-</body></html>
+  :root { --bg: #0B0B12; --panel: #171724; --line: #2C2C40; --text: #F1F0F7; --muted: #9A98B0; --gold: #E8B21A; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1640px; height: 624px; overflow: hidden; background: var(--bg); }
+  body { position: relative; font-family: Roboto, Arial, sans-serif; color: var(--text); }
+  .glow { position: absolute; inset: 0; background: radial-gradient(45% 80% at 30% 50%, rgba(232,178,26,.16), transparent 70%); }
+  .ghost { position: absolute; left: 200px; top: 40px; font: italic 900 210px/0.9 'Barlow Condensed', sans-serif; color: transparent;
+    -webkit-text-stroke: 2px rgba(255,255,255,.05); white-space: nowrap; text-transform: uppercase; }
+  .left { position: absolute; left: 300px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; }
+  .logo { font: italic 900 46px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .5px; }
+  .logo b { color: var(--gold); }
+  .gameon { margin-top: 14px; font: italic 900 150px/0.86 'Barlow Condensed', sans-serif; text-transform: uppercase;
+    background: linear-gradient(#FFD45A, var(--gold) 55%, #B8860B); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tag { margin-top: 22px; font-size: 27px; line-height: 1.3; font-weight: 500; color: var(--text); }
+  .tag em { font-style: normal; color: var(--gold); font-weight: 700; }
+  .chips { margin-top: 26px; display: flex; gap: 10px; }
+  .chip { padding: 9px 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); font: 700 16px Roboto, sans-serif;
+    letter-spacing: 1.5px; text-transform: uppercase; }
+  .chip.gold { border-color: var(--gold); color: var(--gold); background: rgba(232,178,26,.1); }
+  .grid { position: absolute; right: 40px; top: -60px; width: 760px; height: 760px; transform: rotate(-8deg);
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-content: center; }
+  .card { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 4 / 3; box-shadow: 0 18px 40px rgba(0,0,0,.6); }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card:nth-child(odd) { transform: translateY(40px); }
+  .fade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 46%, rgba(11,11,18,.35) 60%, rgba(11,11,18,0) 72%); }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="grid">
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%20%2797%20%28NGM-2320%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%20X%20-%20Super%20Vehicle-001%20%28NGM-2500%20~%20NGH-2500%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/The%20King%20of%20Fighters%202002%20%28NGM-2650%20~%20NGH-2650%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Cadillacs%20and%20Dinosaurs%20%28World%20930201%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Marvel%20Vs.%20Capcom_%20Clash%20of%20Super%20Heroes%20%28Europe%20980123%29.png" alt=""></div>
+    <div class="card"><img src="https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/Named_Titles/Metal%20Slug%203%20%28NGM-2560%29.png" alt=""></div>
+  </div>
+  <div class="fade"></div>
+  <div class="ghost">Insert coin</div>
+  <div class="left">
+    <div class="logo">90s Kid <b>Arcade</b></div>
+    <div class="gameon">Game on</div>
+    <div class="tag">Arcade classics on Android.<br><em>Play friends online</em> or nearby.</div>
+    <div class="chips"><span class="chip gold">Online</span><span class="chip">Chat &amp; voice</span><span class="chip">27 games</span></div>
+  </div>
+</body>
+</html>
