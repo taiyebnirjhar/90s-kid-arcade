@@ -5,6 +5,15 @@ a 3-minute match): "it has no point. No story, nothing." A video needs a
 story first; footage second. This file collects what works, and grows as
 the owner sends viral examples to break down.
 
+## Where they go: Reels (Facebook), YouTube Shorts, TikTok
+
+One edit for all three (the owner: "Reels mostly. On yt, tiktok, fb"):
+vertical 1080 x 1920, 30 or 60 fps, H.264 + AAC MP4, 15-30 s.
+Keep captions and the game in the middle: each app lays its buttons
+over the right edge and the bottom fifth (name, caption, music), and
+TikTok's top bar over the top tenth. Post the same file to all three;
+the first second decides whether it's watched on every one of them.
+
 ## The rules every video follows
 
 1. **One story, said in the first second.** The top caption sets up a
