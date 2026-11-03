@@ -360,9 +360,9 @@
         <a class="btn" href="#install">How to install</a>
       </div>
       <ul class="stats">
-        <!-- Downloads, in hundreds (100+, 200+ ...): 100 from before counting began (the
+        <!-- Downloads, the exact number (1.2M+ from a million on): 100 from before counting began (the
              owner's estimate), plus this site's Download taps and GitHub's release downloads. -->
-        <li id="live-downloads" data-base="100" data-github="0"><b>100+</b> downloads</li>
+        <li id="live-downloads" data-base="100" data-github="0"><b>100</b> downloads</li>
         <li><b>27</b> arcade classics</li>
         <li><b>8</b> phones per room</li>
         <li><i></i> works offline</li>
@@ -618,9 +618,22 @@
         headers: { apikey: KEY, "Content-Type": "application/json" }, body: "{}"
       });
     }
+    // The exact count (1,234), shortened only from a million on (1.2M+) so it fits.
+    function show(el, n) {
+      el.setAttribute("data-total", n);
+      el.querySelector("b").textContent = n >= 1e6
+        ? (Math.floor(n / 1e5) / 10).toLocaleString("en") + "M+"
+        : n.toLocaleString("en");
+    }
     // Every Download button counts one (it still downloads if this can't go).
     document.querySelectorAll('a[href="90s-Kid-Arcade.apk"]').forEach(function (a) {
-      a.addEventListener("click", function () { try { rpc("note_download", true); } catch (e) {} });
+      a.addEventListener("click", function () {
+        try { rpc("note_download", true); } catch (e) {}
+        // The number goes up on screen too, right away.
+        var el = document.getElementById("live-downloads");
+        var now = el && Number(el.getAttribute("data-total"));
+        if (now) show(el, now + 1);
+      });
     });
     var site = rpc("download_count").then(function (r) { return r.ok ? r.json() : 0; }).catch(function () { return 0; });
     var github = fetch("https://api.github.com/repos/taiyebnirjhar/90s-kid-arcade/releases?per_page=100")
@@ -637,8 +650,7 @@
       var gh = got[1] >= 0 ? got[1] : Number(el.getAttribute("data-github")) || 0;
       var n = (Number(el.getAttribute("data-base")) || 0) + (Number(got[0]) || 0) + gh;
       if (!(n > 0)) return;
-      // Shown in hundreds: 100+, 200+, 300+ ...
-      el.querySelector("b").textContent = (Math.floor(n / 100) * 100).toLocaleString("en") + "+";
+      show(el, n);
       el.hidden = false;
     });
   })();

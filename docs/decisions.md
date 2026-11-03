@@ -267,8 +267,10 @@ decision was made in the conversation. Get the time now with
   counted from #70 on. The owner downloaded it ~50 times and friends many more.
 - Decided: 100 from before counting began (the owner's estimate,
   `data-base="100"` in `site/index.html`), plus site taps and GitHub's
-  release downloads, shown in hundreds ("100+", "200+" ...; the owner:
-  "No need to show every single count").
+  release downloads. First shown in hundreds ("100+"); then the owner:
+  "Keep the download count visible it shows transparency": now the exact
+  number (1,234), shortened only from a million on (1.2M+) so the row
+  fits, and a tap on Download adds one on screen.
 
 ### 2026-11-03 04:17 Dhaka · Releases: Actions needs "Read and write" permissions
 - Found: #68's APK (v1.0.245) built and passed its tests, but publishing its
@@ -288,6 +290,22 @@ decision was made in the conversation. Get the time now with
   else reads the label, and updates compare `versionCode` only.
 - Decided: `github.ref != 'refs/heads/main' && 'test' || ''`. Main builds
   are `1.0.<run>`, branch builds `1.0.<run>-test`.
+
+### 2026-11-03 14:10 Dhaka · Smoothest online play, looked at every release; DNS doesn't help
+- Asked: "keep looking for smoothest online play experience. On every
+  release. If cloudflare dns or any dns make it faster or smoother … go for it."
+- Decided: a standing rule in AGENTS.md (§2): every release, look for what
+  makes online play smoother and take it, within the free plans.
+- Found on DNS: a name is looked up once, when a room connects (a few ms,
+  then cached); a match's packets go by address, so no DNS (Cloudflare's
+  1.1.1.1 or any other) changes lag or stutter in play. The relay is already
+  Cloudflare's own anycast TURN (`turn.cloudflare.com`), so each phone
+  reaches its nearest Cloudflare site; inputs go on an unordered,
+  no-retransmit channel (`AndroidRtc.kt`), and rollback hides the rest.
+- What can still help (candidates, measured before taken): direct
+  connection where privacy allows (locked rooms, challenges already try
+  it), the input delay chosen from the measured ping, and a faster first
+  connect (asking for relay credentials while the room is being made).
 
 ---
 
