@@ -17,6 +17,10 @@ platforms later on top of the same video work.
 - **Save video** makes an MP4 (1080p60, or 720p60) into the gallery, album
   "90s Kid Arcade", with a progress bar. Game sound always; the player's mic
   and the room's voice only if asked.
+- After a video is made: **Share** buttons for **WhatsApp**, **Messenger**
+  and a **Facebook post** (shown for the apps the phone has), and **More…**
+  (Android's share sheet: YouTube, TikTok, anything). Each opens that app
+  with the video attached; the player posts from there.
 - Settings shows the space saved matches use, with **Clear**.
 
 ## How it works
@@ -46,12 +50,17 @@ platforms later on top of the same video work.
   Magic Plus online. Settings switch (off) and the onboarding step.
 - **R2 Replays.** The Replays screen on home: list, watch, star, delete,
   keep 20, space used.
-- **R3 Save video.** Off-screen replay to MediaCodec at 1080p60/720p60,
-  sharp-pixel scaling, game sound, progress, into the gallery (MediaStore).
+- **R3 Save video and share.** Off-screen replay to MediaCodec at
+  1080p60/720p60, sharp-pixel scaling, game sound, progress, into the
+  gallery (MediaStore); then Share: WhatsApp (`com.whatsapp`), Messenger
+  (`com.facebook.orca`), Facebook (`com.facebook.katana`) when installed,
+  each an ACTION_SEND of the video's MediaStore URI to that app, and More…
+  (the share sheet). WhatsApp and Messenger shrink or limit long videos
+  on their side; R5's trim keeps a clip short.
 - **R4 Voices.** Mic and room voice into the video, if chosen (needs them
   recorded with the match, with consent from everyone in the room).
-- **R5 Polish.** Share button, a trim (from/to) before saving, real-phone
-  tests on slow phones.
+- **R5 Polish.** A trim (from/to) before saving, real-phone tests on slow
+  phones.
 
 Later: live streaming (YouTube with sign-in; Twitch), using R3's encoder.
 
