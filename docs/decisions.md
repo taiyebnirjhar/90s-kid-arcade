@@ -327,8 +327,8 @@ As of 2026-11-03 14:19 Dhaka:
 - **Merged:** #68-#70 (in-app updates; download count server side), #71,
   #72 and #74 (download count on the site: exact, 1.2M+ past a million),
   #73 (main builds no longer say "-test").
-- **Latest release:** v1.0.248 (#73). The website serves it. The owner's
-  phone took the in-app update path from 1.0.246.
+- **Latest release:** v1.0.248 (#73). The website serves it. Phones on
+  1.0.246 should be offered it in the app (not yet confirmed by the owner).
 - **Waiting on the owner:**
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
