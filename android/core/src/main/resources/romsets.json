@@ -1,5 +1,5 @@
 {
- "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp, konami/d_mystwarr.cpp, konami/d_tmnt.cpp, pst90s/d_hyperpac.cpp, pst90s/d_seta.cpp, konami/d_moo.cpp",
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp, konami/d_mystwarr.cpp, konami/d_tmnt.cpp, pst90s/d_hyperpac.cpp, pst90s/d_seta.cpp, konami/d_moo.cpp, pst90s/d_artmagic.cpp, irem/d_m92.cpp",
  "bios": [
   {
    "name": "sp-s3.sp1",
@@ -4246,6 +4246,408 @@
    ]
   },
   {
+   "name": "inthunt",
+   "parent": null,
+   "base": "inthunt",
+   "title": "In The Hunt (World)",
+   "files": [
+    {
+     "name": "ith_-h0-d.ic28",
+     "size": 262144,
+     "crc": "52f8e7a6",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-d.ic39",
+     "size": 262144,
+     "crc": "5db79eb7",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-b.ic38",
+     "size": 131072,
+     "crc": "fc2899df",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-b.ic27",
+     "size": 131072,
+     "crc": "955a605a",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0-.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0-.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "inthuntk",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "In The Hunt (Korea?)",
+   "files": [
+    {
+     "name": "ic28",
+     "size": 262144,
+     "crc": "90f82ea3",
+     "optional": false
+    },
+    {
+     "name": "ic39",
+     "size": 262144,
+     "crc": "4bf419c0",
+     "optional": false
+    },
+    {
+     "name": "ic38",
+     "size": 131072,
+     "crc": "fc2899df",
+     "optional": false
+    },
+    {
+     "name": "ic27",
+     "size": 131072,
+     "crc": "955a605a",
+     "optional": false
+    },
+    {
+     "name": "ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "inthuntu",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "In The Hunt (US)",
+   "files": [
+    {
+     "name": "ith_-h0-c.ic28",
+     "size": 262144,
+     "crc": "563dcec0",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-c.ic39",
+     "size": 262144,
+     "crc": "1638c705",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-a.ic38",
+     "size": 131072,
+     "crc": "0253065f",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-a.ic27",
+     "size": 131072,
+     "crc": "a57d688d",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0-.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0-.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
    "name": "jjsquawk",
    "parent": null,
    "base": "jjsquawk",
@@ -4773,6 +5175,140 @@
      "name": "8_atf16v8.u134g",
      "size": 279,
      "crc": "11f38ab7",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "kaiteids",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "Kaitei Daisensou (Japan)",
+   "files": [
+    {
+     "name": "ith_-h0-.ic28",
+     "size": 262144,
+     "crc": "dc1dec36",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-.ic39",
+     "size": 262144,
+     "crc": "8835d704",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-.ic38",
+     "size": 131072,
+     "crc": "5a7b212d",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-.ic27",
+     "size": 131072,
+     "crc": "4c084494",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
      "optional": true
     }
    ]
@@ -26648,6 +27184,92 @@
    ]
   },
   {
+   "name": "spinmast",
+   "parent": null,
+   "base": "spinmast",
+   "title": "Spin Master / Miracle Adventure",
+   "files": [
+    {
+     "name": "062-p1.p1",
+     "size": 1048576,
+     "crc": "37aba1aa",
+     "optional": false
+    },
+    {
+     "name": "062-p2.sp2",
+     "size": 1048576,
+     "crc": "f025ab77",
+     "optional": false
+    },
+    {
+     "name": "062-s1.s1",
+     "size": 131072,
+     "crc": "289e2bbe",
+     "optional": false
+    },
+    {
+     "name": "062-c1.c1",
+     "size": 1048576,
+     "crc": "a9375aa2",
+     "optional": false
+    },
+    {
+     "name": "062-c2.c2",
+     "size": 1048576,
+     "crc": "0e73b758",
+     "optional": false
+    },
+    {
+     "name": "062-c3.c3",
+     "size": 1048576,
+     "crc": "df51e465",
+     "optional": false
+    },
+    {
+     "name": "062-c4.c4",
+     "size": 1048576,
+     "crc": "38517e90",
+     "optional": false
+    },
+    {
+     "name": "062-c5.c5",
+     "size": 1048576,
+     "crc": "7babd692",
+     "optional": false
+    },
+    {
+     "name": "062-c6.c6",
+     "size": 1048576,
+     "crc": "cde5ade5",
+     "optional": false
+    },
+    {
+     "name": "062-c7.c7",
+     "size": 1048576,
+     "crc": "bb2fd7c0",
+     "optional": false
+    },
+    {
+     "name": "062-c8.c8",
+     "size": 1048576,
+     "crc": "8d7be933",
+     "optional": false
+    },
+    {
+     "name": "062-m1.m1",
+     "size": 131072,
+     "crc": "76108b2f",
+     "optional": false
+    },
+    {
+     "name": "062-v1.v1",
+     "size": 1048576,
+     "crc": "cc281aef",
+     "optional": false
+    }
+   ]
+  },
+  {
    "name": "ssho2emb",
    "parent": "samsho2",
    "base": "samsho2",
@@ -27736,6 +28358,120 @@
      "size": 128,
      "crc": "148c6d64",
      "optional": true
+    }
+   ]
+  },
+  {
+   "name": "stonebal",
+   "parent": null,
+   "base": "stonebal",
+   "title": "Stone Ball (4 Players, v1-20 13/12/1994)",
+   "files": [
+    {
+     "name": "u102",
+     "size": 262144,
+     "crc": "712feda1",
+     "optional": false
+    },
+    {
+     "name": "u101",
+     "size": 262144,
+     "crc": "4f1656a9",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "stonebal2",
+   "parent": "stonebal",
+   "base": "stonebal",
+   "title": "Stone Ball (2 Players, v1-20 7/11/1994)",
+   "files": [
+    {
+     "name": "u102.bin",
+     "size": 262144,
+     "crc": "b3c4f64f",
+     "optional": false
+    },
+    {
+     "name": "u101.bin",
+     "size": 262144,
+     "crc": "fe373f74",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "stonebal2o",
+   "parent": "stonebal",
+   "base": "stonebal",
+   "title": "Stone Ball (2 Players, v1-20 21/10/1994)",
+   "files": [
+    {
+     "name": "sb_o_2p_24-10.u102",
+     "size": 262144,
+     "crc": "ab58c6b2",
+     "optional": false
+    },
+    {
+     "name": "sb_e_2p_24-10.u101",
+     "size": 262144,
+     "crc": "ea967835",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
     }
    ]
   },

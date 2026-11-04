@@ -8,6 +8,7 @@ Named_Snaps/Garou - Mark of the Wolves (NGM-2530).png
 Named_Snaps/Garou - Mark of the Wolves (bootleg).png
 Named_Snaps/Garou - Mark of the Wolves (prototype).png
 Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
+Named_Snaps/In The Hunt (World).png
 Named_Snaps/J. J. Squawkers (older).png
 Named_Snaps/J. J. Squawkers.png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
@@ -48,6 +49,8 @@ Named_Snaps/Snow Bros. - Nick _ Tom (set 1).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 2).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 3).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 4).png
+Named_Snaps/Spin Master _ Miracle Adventure.png
+Named_Snaps/Stone Ball (4 Players, v1-20 13_12_1994).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
@@ -96,6 +99,7 @@ Named_Titles/Garou - Mark of the Wolves (NGM-2530).png
 Named_Titles/Garou - Mark of the Wolves (bootleg).png
 Named_Titles/Garou - Mark of the Wolves (prototype).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
+Named_Titles/In The Hunt (World).png
 Named_Titles/J. J. Squawkers (older).png
 Named_Titles/J. J. Squawkers.png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
@@ -136,6 +140,8 @@ Named_Titles/Snow Bros. - Nick _ Tom (set 1).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 2).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 3).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 4).png
+Named_Titles/Spin Master _ Miracle Adventure.png
+Named_Titles/Stone Ball (4 Players, v1-20 13_12_1994).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png

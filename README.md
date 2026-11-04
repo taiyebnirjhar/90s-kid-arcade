@@ -3,7 +3,8 @@
 An Android app for a handful of famous arcade games (Neo Geo, Capcom's
 Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, Konami's
 Mystic Warriors, Sunset Riders and Wild West C.O.W.-Boys of Moo Mesa, Toaplan's Snow Bros., Athena's J.J.
-Squawkers and Subsino's Penguin Brothers), with
+Squawkers, Subsino's Penguin Brothers, Irem's In the Hunt and Art & Magic's
+Stone Ball), with
 touch controls built for each one: one-tap specials and supers for every
 fighter in KOF, Garou, The Last Blade 1 and 2, Samurai Shodown II, Double
 Dragon, Street Fighter III and Marvel vs Capcom, big
@@ -34,6 +35,9 @@ the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 | Snow Bros. - Nick & Tom (Toaplan, 1990) | `snowbros` (or `snowbrosa`... `snowbrosj`) |
 | J.J. Squawkers (Athena, 1993) | `jjsquawk` (or `jjsquawko`) |
 | Wild West C.O.W.-Boys of Moo Mesa (Konami, 1992) | `moomesa` (or `moomesaaab`, `moomesauab`, `moomesauac`) |
+| Spin Master (Data East, Neo Geo, 1993) | `spinmast` |
+| In the Hunt (Irem, 1993) | `inthunt` (the World version) |
+| Stone Ball (Art & Magic, 1994), the 4-player version | `stonebal` |
 
 The Neo Geo games also need the Neo Geo BIOS, `neogeo.zip`; the others
 don't. No ROMs or BIOS are included: use dumps
@@ -172,6 +176,16 @@ Shoot to keep shooting), a coin slot each.
 **J.J. Squawkers:** Attack and Jump, for one or two, with rapid fire on
 Attack.
 
+**Spin Master:** Attack, Jump and Bomb, for one or two, with rapid fire on
+Attack.
+
+**In the Hunt:** Torpedo (ahead) and Missile (up, with charges down), for one
+or two, with rapid fire on Torpedo.
+
+**Stone Ball:** Pass, Shoot and Spin, two against two: up to four players,
+and the computer plays any seat nobody took. After START the game gives the
+others 15 seconds to join.
+
 Pause → **Settings**, in four tabs: **Screen** (picture width, detection
 readout), **Controls** (stick style: floating, fixed or
 hidden; button size; opacity; buttons on the left; vibration; rapid fire),
@@ -213,7 +227,7 @@ how the game runs (frames a second, late frames made up, sound gaps), with
 ## Online and nearby play
 
 One phone per player, as many as the game takes: 2 for most games, 3 for
-Cadillacs and Dinosaurs, 4 for Mystic Warriors, Sunset Riders and Moo Mesa; up to 8
+Cadillacs and Dinosaurs, 4 for Mystic Warriors, Sunset Riders, Moo Mesa and Stone Ball; up to 8
 phones in a room, the rest watching. Every phone needs the same game zip
 (and the BIOS for Neo Geo games; the library has them). Everything is on
 Home → **Online**.

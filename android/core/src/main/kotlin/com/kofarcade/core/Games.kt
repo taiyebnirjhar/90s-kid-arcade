@@ -86,6 +86,12 @@ class SeatStatus(
      */
     val game: Int? = null,
     private val inGame: Set<Int> = emptySet(),
+    /**
+     * For a game that keeps one byte of flags for all its players (Stone
+     * Ball): those bytes. [offsets] then holds each seat's bit, not an
+     * offset, and a player is in while their bit is set in any of them.
+     */
+    val flagBytes: List<Int> = emptyList(),
 ) {
     fun isFree(value: Int): Boolean = value in free
 
@@ -95,6 +101,11 @@ class SeatStatus(
         if (game != null) {
             val on = read(game) ?: return null
             if (on !in inGame) return true
+        }
+        if (flagBytes.isNotEmpty()) {
+            var flags = 0
+            for (at in flagBytes) flags = flags or (read(at) ?: return null)
+            return flags and offset == 0
         }
         return read(offset)?.let(::isFree)
     }
@@ -381,6 +392,48 @@ val GAMES: List<Game> = listOf(
     // the "continue?" countdown, 0 once GAME OVER shows. The attract demo
     // leaves them alone.
     seats = SeatStatus(listOf(0x905, 0x985, 0xA05, 0xA85), setOf(0)),
+) + Game(
+    // Art & Magic, 1994: caveman ball, two against two. No BIOS. The
+    // 4-player cabinet: after START a 15 s "Welcome to challengers" screen
+    // lets the others join, and the computer plays any seat nobody took.
+    // Checked in FBNeo: with the ball A passes (a short hit), B swings hard
+    // (a shot), C spins round. The 2-player versions (stonebal2, stonebal2o)
+    // aren't listed: they'd leave two of the four seats empty.
+    id = "stonebal", series = "Stone Ball", title = "Stone Ball", sets = listOf("stonebal"),
+    layout = Layout.BRAWLER, art = "Stone Ball (4 Players, v1-20 13_12_1994)",
+    labels = mapOf('A' to "Pass", 'B' to "Shoot", 'C' to "Spin"),
+    neoGeo = false,
+    players = 4,
+    // Who's playing: one byte of flags, a bit a player (1, 2, 4, 8). Raw
+    // 0x1C3F holds it on the join screen, 0x1C6B from kick-off on, and
+    // 0x1C6B keeps the last game's after it ends, so raw 0x17041 says
+    // whether a game is on: 239 from the join screen to the end of the
+    // "Insert coin to continue" countdown.
+    seats = SeatStatus(listOf(1, 2, 4, 8), emptySet(), game = 0x17041, inGame = setOf(239), flagBytes = listOf(0x1C3F, 0x1C6B)),
+) + Game(
+    // Irem, 1993 (M92 board): submarines, for two at once. No BIOS. Checked
+    // in FBNeo: A fires a torpedo ahead (a held A fires once, so it has
+    // rapid fire), B fires missiles up and drops charges down; there's no C.
+    // The other versions (US, Japan, Korea) aren't checked: not listed.
+    id = "inthunt", series = "In the Hunt", title = "In the Hunt", sets = listOf("inthunt"),
+    layout = Layout.SHOOTER, art = "In The Hunt (World)",
+    labels = mapOf('A' to "Torpedo", 'B' to "Missile"),
+    rapid = Key.A,
+    neoGeo = false,
+    // Each player's corner of the score line (raw 0x3E50 for P1, 0x3EB0 for
+    // P2): 0 while their score shows, 32 during their "continue?"
+    // countdown, 84 ('T' of INSERT COIN) once out or never in. The attract
+    // screens clear it too, so raw 0x11284 says a game is on (1).
+    seats = SeatStatus(listOf(0x3E50, 0x3EB0), setOf(84), game = 0x11284, inGame = setOf(1)),
+) + Game(
+    // Data East, 1993 (Neo Geo): two yo-yo heroes at once. Checked in
+    // FBNeo: A attacks (a held A attacks once, so it has rapid fire), B
+    // jumps, C throws a bomb. Seats: the Neo Geo BIOS bytes (went 1, 2 for
+    // the countdown, then 0).
+    id = "spinmast", series = "Spin Master", title = "Spin Master", subtitle = "Miracle Adventure", sets = listOf("spinmast"),
+    layout = Layout.SHOOTER, art = "Spin Master _ Miracle Adventure",
+    labels = mapOf('A' to "Attack", 'B' to "Jump", 'C' to "Bomb"),
+    rapid = Key.A,
 ) + Game(
     // Neo Geo, 1995: one fighter each. A-D are one attack at four strengths;
     // a full gauge (CHARGE) turns a special into its Charge Move with two
