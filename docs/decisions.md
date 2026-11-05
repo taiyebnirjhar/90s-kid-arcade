@@ -515,17 +515,34 @@ decision was made in the conversation. Get the time now with
   stays arcade (FBNeo) only; the PSP plan is removed. If it comes back, the
   findings above are the starting point.
 
+### 2026-11-06 02:37 Dhaka · PSP back, for three games: God of War and Assassin's Creed
+- Owner: "Lets add gow and assassin creed. Make a plan … the game should
+  never lags and hangs -- we will try our best to manage and adjust". Asked
+  after the more-consoles idea was dropped; the arcade games stay as they
+  are.
+- Decided: God of War: Chains of Olympus, Ghost of Sparta and Assassin's
+  Creed: Bloodlines through PPSSPP's libretro core, offline. A game ships
+  only if it meets "never lags, never hangs" on his Galaxy M14 4G (full
+  speed in 99% of seconds over 30 minutes at 1x, no sound gaps, no freeze
+  over a second, a save every minute); otherwise it's dropped, never
+  shipped slow. First, P0: he measures each in the official PPSSPP app.
+- The three fit in the existing library (about 2.5 GB as CSO), so no second
+  Cloudflare account. Plan: `docs/psp-plan.md`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 00:49 Dhaka:
+As of 2026-11-06 02:37 Dhaka:
 
-- **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Open:** the PSP plan for God of War and Assassin's Creed.
+- **Merged:** #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.267.
 - **Waiting on the owner:**
+  - PSP P0: each game 15 minutes in the PPSSPP app, and the three uploaded
+    as `.cso`.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
