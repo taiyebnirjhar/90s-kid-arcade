@@ -503,19 +503,32 @@ decision was made in the conversation. Get the time now with
   written down (`docs/adding-a-game.md`, "Button layouts"), and adding a
   game includes looking at its layout pictures beside a game like it.
 
+### 2026-11-06 00:09 Dhaka · PSP games: planned
+- Owner (6 GB phone, 128 GB): bored of the arcade games' graphics, wants
+  good-looking games of 1 GB to a few GB, "Only me playing games. So keep
+  the headache of licences to me." Not all need to play online.
+- Answered which consoles can run inside the app (as libretro cores):
+  PSP, PS1, Dreamcast, Naomi, N64 on most phones; GameCube, Wii, 3DS on a
+  strong chip; Saturn slowly. Not possible: PS2 and later Sony, Xbox, Wii
+  U, Switch (no libretro core).
+- Decided: PSP first ("Lets prep for psp"), with PPSSPP's libretro core,
+  offline first. Plan in `docs/psp-plan.md`, phases P1-P5.
+- R2: the library holds 0.96 GB of the free 10 GB; CSO/CHD to fit more;
+  files over 300 MB go up with rclone, not the dashboard.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-05 21:52 Dhaka:
+As of 2026-11-06 00:09 Dhaka:
 
-- **Open:** the button layout fixes (Stone Ball, lone system moves) and
-  the written layout rules.
-- **Merged:** #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Open:** the PSP plan (`docs/psp-plan.md`).
+- **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.265.
+- **Latest release:** v1.0.267.
 - **Waiting on the owner:**
+  - A few PSP games in the library (CSO/CHD), and his go on PSP P1.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
