@@ -28476,6 +28476,1078 @@
    ]
   },
   {
+   "name": "vsav",
+   "parent": null,
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Europe 970519)",
+   "files": [
+    {
+     "name": "vm3e.03d",
+     "size": 524288,
+     "crc": "f5962a8c",
+     "optional": false
+    },
+    {
+     "name": "vm3e.04d",
+     "size": 524288,
+     "crc": "21b40ea2",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsav.key",
+     "size": 20,
+     "crc": "a6e3b164",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsava",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Asia 970519)",
+   "files": [
+    {
+     "name": "vm3a.03d",
+     "size": 524288,
+     "crc": "44c1198f",
+     "optional": false
+    },
+    {
+     "name": "vm3a.04d",
+     "size": 524288,
+     "crc": "2218b781",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsava.key",
+     "size": 20,
+     "crc": "8a3520f4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavb",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Brazil 970519)",
+   "files": [
+    {
+     "name": "vm3b.03d",
+     "size": 524288,
+     "crc": "22ffba4b",
+     "optional": false
+    },
+    {
+     "name": "vm3b.04d",
+     "size": 524288,
+     "crc": "88624909",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavb.key",
+     "size": 20,
+     "crc": "5274e635",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavd",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Europe 970519 Phoenix Edition) (bootleg)",
+   "files": [
+    {
+     "name": "vm3ed.03d",
+     "size": 524288,
+     "crc": "97d805e3",
+     "optional": false
+    },
+    {
+     "name": "vm3ed.04d",
+     "size": 524288,
+     "crc": "5e07fdce",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "phoenix.key",
+     "size": 20,
+     "crc": "2cf772b0",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavh",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Hispanic 970519)",
+   "files": [
+    {
+     "name": "vm3h.03a",
+     "size": 524288,
+     "crc": "7cc62df8",
+     "optional": false
+    },
+    {
+     "name": "vm3h.04d",
+     "size": 524288,
+     "crc": "d716f3b5",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavh.key",
+     "size": 20,
+     "crc": "a7dd6409",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavj",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Japan 970519)",
+   "files": [
+    {
+     "name": "vm3j.03d",
+     "size": 524288,
+     "crc": "2a2e74a4",
+     "optional": false
+    },
+    {
+     "name": "vm3j.04d",
+     "size": 524288,
+     "crc": "1c2427bc",
+     "optional": false
+    },
+    {
+     "name": "vm3j.05a",
+     "size": 524288,
+     "crc": "95ce88d5",
+     "optional": false
+    },
+    {
+     "name": "vm3j.06b",
+     "size": 524288,
+     "crc": "2c4297e0",
+     "optional": false
+    },
+    {
+     "name": "vm3j.07b",
+     "size": 524288,
+     "crc": "a38aaae7",
+     "optional": false
+    },
+    {
+     "name": "vm3j.08a",
+     "size": 524288,
+     "crc": "5773e5c9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.09b",
+     "size": 524288,
+     "crc": "d064f8b9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.10b",
+     "size": 524288,
+     "crc": "434518e9",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavj.key",
+     "size": 20,
+     "crc": "36d28ab8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavre",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Hack, English Restoration RC2)",
+   "files": [
+    {
+     "name": "vm3re.03d",
+     "size": 524288,
+     "crc": "87184d16",
+     "optional": false
+    },
+    {
+     "name": "vm3re.04d",
+     "size": 524288,
+     "crc": "c623f797",
+     "optional": false
+    },
+    {
+     "name": "vm3j.05a",
+     "size": 524288,
+     "crc": "95ce88d5",
+     "optional": false
+    },
+    {
+     "name": "vm3j.06b",
+     "size": 524288,
+     "crc": "2c4297e0",
+     "optional": false
+    },
+    {
+     "name": "vm3re.07b",
+     "size": 524288,
+     "crc": "b3cbf9a8",
+     "optional": false
+    },
+    {
+     "name": "vm3j.08a",
+     "size": 524288,
+     "crc": "5773e5c9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.09b",
+     "size": 524288,
+     "crc": "d064f8b9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.10b",
+     "size": 524288,
+     "crc": "434518e9",
+     "optional": false
+    },
+    {
+     "name": "vm3re.13m",
+     "size": 4194304,
+     "crc": "25b89bee",
+     "optional": false
+    },
+    {
+     "name": "vm3re.15m",
+     "size": 4194304,
+     "crc": "7c4ed97c",
+     "optional": false
+    },
+    {
+     "name": "vm3re.17m",
+     "size": 4194304,
+     "crc": "05295327",
+     "optional": false
+    },
+    {
+     "name": "vm3re.19m",
+     "size": 4194304,
+     "crc": "e90b3fee",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavj.key",
+     "size": 20,
+     "crc": "36d28ab8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavu",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (USA 970519)",
+   "files": [
+    {
+     "name": "vm3u.03d",
+     "size": 524288,
+     "crc": "1f295274",
+     "optional": false
+    },
+    {
+     "name": "vm3u.04d",
+     "size": 524288,
+     "crc": "c46adf81",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavu.key",
+     "size": 20,
+     "crc": "ff21b9d7",
+     "optional": false
+    }
+   ]
+  },
+  {
    "name": "wintbob",
    "parent": "snowbros",
    "base": "snowbros",

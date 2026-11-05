@@ -475,6 +475,24 @@ val GAMES: List<Game> = listOf(
     // 6, 8, 12, 0 while the winner stayed at 6.
     seats = SeatStatus(listOf(0x32B1, 0x36B1), setOf(0, 10, 12)),
 ) + Game(
+    // Capcom CPS-2, 1997: no BIOS, each version's zip carries its .key. One
+    // fighter each, six buttons as in Marvel vs Capcom. A punch and kick of
+    // one strength is the Dark Force; EX moves take a level of the gauge.
+    // Moves, detection and seats checked in vsav (tools/vsav_roster.py).
+    id = "vsav", series = "Darkstalkers", title = "Vampire Savior", subtitle = "The Lord of Vampire",
+    sets = listOf("vsav", "vsavu", "vsavj", "vsava", "vsavb", "vsavh"),
+    art = "Vampire Savior: The Lord of Vampire (Europe 970519)",
+    layout = Layout.FIGHTER, roster = "vsav", team = 1, block = true,
+    labels = mapOf('A' to "LP", 'B' to "MP", 'C' to "HP", 'D' to "LK", 'E' to "MK", 'F' to "HK"),
+    system = listOf(Move("Dark Force", "AD")),
+    neoGeo = false,
+    pad = PadMap.CAPCOM_6,
+    // Each player's state, +0x384 of their fighter block (68000 RAM
+    // 0xFF8784, 0xFF8B84): 0 out, 6 from the select screen through the
+    // "continue?" countdown, 10 when it ran out, then 0. Checked alone
+    // against the computer (P1 and P2) and in versus.
+    seats = SeatStatus(listOf(0x8785, 0x8B85), setOf(0, 10)),
+) + Game(
     // SNK, 1999 (Neo Geo): one fighter each. A and C punch, B and D kick
     // (light, heavy). Moves, detection and the system moves checked in FBNeo
     // (tools/garou_roster.py): all 137 moves of the 14 fighters, Grant and

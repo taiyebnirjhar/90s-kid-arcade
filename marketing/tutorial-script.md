@@ -25,7 +25,7 @@ Two cuts from the same recordings:
 | # | Time | Record (real screen) | Caption on screen | Voice-over |
 |---|---|---|---|---|
 | 1 | 0-3 s | **HOOK.** In a KOF fight, your thumb taps one button and Rugal's super comes out, full screen. | **KOF on your phone. Supers in one tap.** | "This is KOF on your phone. One tap, super move." |
-| 2 | 3-7 s | Home screen: slow scroll through the game rows (KOF, Metal Slug, Capcom). | **30 arcade classics** | "All the arcade games we grew up with. Free." |
+| 2 | 3-7 s | Home screen: slow scroll through the game rows (KOF, Metal Slug, Capcom). | **31 arcade classics** | "All the arcade games we grew up with. Free." |
 | 3 | 7-15 s | **INSTALL.** The website on the phone → **Download** → open the file → **Install** (allow once if Android asks). | **Download free:** arcade.taiyebnirjhor.com | "Download from our site, open it, install. Takes a minute." |
 | 4 | 15-22 s | The welcome screens: **"Taiyeb Nirjhor invited you"** → the BIOS step → "Save your matches?" | **First time? It walks you through.** | "First time, the app shows you everything step by step." |
 | 5 | 22-30 s | **GAMES.** Home → **Library** → a game downloading (progress bar) → it shows **Play**. | **Add your games, tap Play** | "Add your games, and tap play." |

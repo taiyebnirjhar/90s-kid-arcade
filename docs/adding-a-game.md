@@ -64,6 +64,7 @@ Known so far:
 | Cadillacs and Dinosaurs | `0xB317`, `0xB497`, `0xB617` (68000 0xFFB316, +0x180 a player) | 0 out, 4 choosing, 6 playing, 8 continue. Free: 0 |
 | Penguin Brothers | `0x35B2`, `0x362E` | 0 out, 2 playing, 4 continue, 6 game over. Free: 0, 6 |
 | Marvel vs. Capcom | `0x32B1`, `0x36B1` | 0 out, 6 playing, 8 continue, 10 or 12 game over. Free: 0, 10, 12 |
+| Vampire Savior | `0x8785`, `0x8B85` (68000 0xFF8784, +0x400 a player) | 0 out, 6 playing and through the countdown, 10 when it ran out. Free: 0, 10 |
 | Street Fighter III 3rd Strike | `0x156E1` (P1), `0x156E0` (P2): the in-fight flag | 1 in the fight, 0 out. Free: 0 for 18 s (`outForMs`) |
 | Mystic Warriors | `0x20D`, `0x24D`, `0x28D`, `0x2CD` | 0 out, 2 choosing a ninja, 4 playing and counting down. Free: 0 |
 | Sunset Riders (4 players) | `0x211`, `0x251`, `0x291`, `0x2D1`; game byte `0x0` | 129 playing, 1 countdown, 0 out. Free: 0, or no game on (`0x0` not 2) |

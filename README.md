@@ -1,13 +1,13 @@
 # 90s Kid Arcade
 
 An Android app for a handful of famous arcade games (Neo Geo, Capcom's
-Cadillacs and Dinosaurs, Marvel vs Capcom and Street Fighter III, Konami's
+Cadillacs and Dinosaurs, Marvel vs Capcom, Vampire Savior and Street Fighter III, Konami's
 Mystic Warriors, Sunset Riders and Wild West C.O.W.-Boys of Moo Mesa, Toaplan's Snow Bros., Athena's J.J.
 Squawkers, Subsino's Penguin Brothers, Irem's In the Hunt and Art & Magic's
 Stone Ball), with
 touch controls built for each one: one-tap specials and supers for every
 fighter in KOF, Garou, The Last Blade 1 and 2, Samurai Shodown II, Double
-Dragon, Street Fighter III and Marvel vs Capcom, big
+Dragon, Street Fighter III, Marvel vs Capcom and Vampire Savior, big
 Shoot / Jump / Bomb buttons with rapid fire for Metal Slug and Nightmare in
 the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 
@@ -29,6 +29,7 @@ the Dark, and multiplayer with one phone per player over Wi-Fi or a hotspot.
 | The Last Blade 2 | `lastbld2` |
 | Samurai Shodown II | `samsho2` (or `samsho2k`, `samsho2ka`...) |
 | Marvel vs Capcom (Capcom CPS-2) | `mvsc` (or `mvscu`, `mvscur1`, `mvscj`, `mvsca`...): the zip must include its `.key` file |
+| Vampire Savior: The Lord of Vampire (Capcom CPS-2) | `vsav` (or `vsavu`, `vsavj`, `vsava`...): the zip must include its `.key` file |
 | Street Fighter III 3rd Strike (Capcom CPS-3) | `sfiii3n` (or `sfiii3nr1`, `sfiii3`, `sfiii3r1`) |
 | Mystic Warriors (Konami, 1993) | `mystwarr` (or `mystwarru`, `mystwarrj`, `mystwarra`, `mystwarraa`) |
 | Sunset Riders (Konami, 1991), the 4-player version | `ssriders` (or `ssridersuda`, `ssridersjad`... any "4 Players" one) |
@@ -144,6 +145,11 @@ fire; switch it off in Pause → Settings → Controls). Slug Attack on 4 and 5,
 whichever of your two characters is on screen, through tags, and shows
 their Hyper Combos and specials. Zips made before current FBNeo lack the
 `.key` file the game's code is decrypted with, and won't start.
+
+**Vampire Savior:** six buttons, one fighter each. **Dark Force** is a punch
+and a kick of one strength (LP+LK on the button). The ring shows each
+fighter's EX moves (a level of the gauge each) and specials; every special
+also has an ES version with two punches or two kicks.
 
 **Nightmare in the Dark:** Fire and Jump; hold Fire to keep throwing
 flames (the same rapid fire switch as Metal Slug).
@@ -467,6 +473,10 @@ profile's name.
   were checked the same way: every Double Dragon special and Charge Move,
   every 3rd Strike special and all three Super Arts of each fighter, and
   every Marvel vs Capcom Hyper Combo and special of all 21 characters.
+- **Vampire Savior** comes from `command.dat`, checked the same way: every
+  listed EX move and special of all 15 fighters (`tools/vsav_roster.py`).
+  Moves that only come out as a reversal and the 360 grabs (the stick
+  jumps on the way round) are left out.
 - **Garou, The Last Blade 1 and 2 and Samurai Shodown II** come from
   `command.dat` and the FBNeo cheat files, checked the same way: every
   listed move of every fighter (137, 123, 166 and 99), supers in each

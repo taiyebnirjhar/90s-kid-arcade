@@ -219,6 +219,33 @@ private val MVSC = DetectSpec(
     pointBase = { ram, base -> if (ram.byte(base) == 1) base else base + 0x800 },
 )
 
+// Vampire Savior (CPS-2, 68000 RAM from 0xFF0000): P1's fighter block at
+// 0xFF8400, P2's 0x400 later. The character is the byte at +0x382, X the
+// word at +0x10, facing right while +0x0B is 1, and the word at +0x38 is 0 on
+// the floor. 0xFF8200 is 1 while the fighters are on the stage; the attract
+// demo sets it too, so a player's state (+0x384: 6 playing) must be in.
+// Checked in vsav (tools/emu.py): every fighter picked, facing flipping when
+// they cross, a jump.
+private val VSAV_IDS = listOf(
+    "bbhood", "demitri", "gallon", "victor", "zabel", "morrigan", "anakaris", "felicia",
+    "bishamon", "aulbath", "sasquatch", null, "qbee", "leilei", "lilith", "jedah",
+)
+
+private val VSAV = DetectSpec(
+    memoryBase = 0xFF0000,
+    windows = listOf(0xFF8200 to 0x2, 0xFF8400 to 0x800),
+    player = 0xFF8400,
+    playerStride = 0x400,
+    character = 0x382,
+    x = 0x10,
+    grounded = 0x38,
+    facing = { ram, base -> ram.byte(base + 0x0B) == 0 },
+    team = listOf(0xFF8782),
+    teamStride = 0x400,
+    inRound = { it.byte(0xFF8200) == 1 && (it.byte(0xFF8784) == 6 || it.byte(0xFF8B84) == 6) },
+    ids = VSAV_IDS,
+)
+
 // Garou: Mark of the Wolves (Neo Geo): P1's fighter block at 0x100400, P2's
 // 0x100 later, with the character in the byte at +0x11, X at +0x20, the
 // height at +0x28 (0 on the floor) and facing left in bit 7 of +0x58. The
@@ -350,6 +377,7 @@ fun detectSpec(roster: String?): DetectSpec? = when (roster) {
     "doubledr" -> DOUBLE_DRAGON
     "sfiii3" -> SF3
     "mvsc" -> MVSC
+    "vsav" -> VSAV
     "garou" -> GAROU
     "lastblad" -> LAST_BLADE
     "lastbld2" -> LAST_BLADE_2

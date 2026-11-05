@@ -85,6 +85,12 @@ Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt bo
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
 Named_Snaps/The Last Soldier (Korean release of The Last Blade).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Asia 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Brazil 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Europe 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Hispanic 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Japan 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (USA 970519).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
@@ -176,6 +182,12 @@ Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt b
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
 Named_Titles/The Last Soldier (Korean release of The Last Blade).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Asia 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Brazil 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Europe 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Hispanic 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Japan 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (USA 970519).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png

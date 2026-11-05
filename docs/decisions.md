@@ -468,13 +468,32 @@ decision was made in the conversation. Get the time now with
   its graphics files are other dumps. Vampire Savior (`vsav`, `vsavu`)
   works and can be added next as a six-button fighter.
 
+### 2026-11-05 09:51 Dhaka · Vampire Savior
+- Owner: "Add vampire saviour. And tell me which files to upload on r2".
+  Upload `vsav.zip` and `vsavu.zip` (`qsound_hle.zip` isn't used by FBNeo).
+- Decided: add it as a six-button fighter like Marvel vs Capcom: one
+  fighter each, the move ring and detection, and Dark Force (LP+LK) as the
+  system move. Versions listed: the six 970519 ones (Europe, USA, Japan,
+  Asia, Brazil, Hispanic); not the bootleg or the 2026 hack.
+- Found in the game (tools/emu.py): fighter blocks at 0xFF8400 and 0xFF8800;
+  character +0x382 (15 fighters, IDs 0-15 without 11), X +0x10, facing
+  +0x0B, 0 on the floor at +0x38, gauge level +0x109; 0xFF8200 is 1 on the
+  stage (the attract demo too); each player's state at +0x384 (0 out, 6
+  playing and through the countdown, 10 when it ran out), which is also
+  the seat byte.
+- Moves from command.dat, every one tried in the game
+  (tools/vsav_roster.py, tools/movetest.py). Left out: moves that only come
+  out as a reversal, and the 360 grabs: the stick passes up on the way
+  round, so the fighter jumps first (the app's input does the same).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-05 02:04 Dhaka:
+As of 2026-11-05 09:51 Dhaka:
 
-- **Open:** the PR adding Spin Master, In the Hunt and Stone Ball (30 games).
+- **Open:** PR #80: Spin Master, In the Hunt, Stone Ball and Vampire Savior
+  (31 games).
 - **Merged:** #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.262.
@@ -483,7 +502,6 @@ As of 2026-11-05 02:04 Dhaka:
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
     `avsp.zip` for Alien vs Predator.
-  - Whether to add Vampire Savior next.
   - `pbobbl2n.zip` (arcade Bust-A-Move 2), to add it.
   - Real-phone feedback on voice ducking (if the game "pumps" with an open
     mic, raise `MIC_SPEAKING_LEVEL` in `GameActivity`).

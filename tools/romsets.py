@@ -22,7 +22,7 @@ BASE = ["kof97", "kof2002", "kf2k5uni", "kof10th", "kf10thep",
         "dino", "doubledr", "mvsc", "sfiii3", "nitd", "penbros",
         "mystwarr", "ssriders", "snowbros", "jjsquawk",
         "garou", "lastblad", "lastbld2", "samsho2", "moomesa",
-        "spinmast", "stonebal", "inthunt"]
+        "spinmast", "stonebal", "inthunt", "vsav"]
 
 src = "\n".join(open(p, encoding="latin-1").read() for p in sys.argv[1:])
 
