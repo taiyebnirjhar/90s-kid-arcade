@@ -515,12 +515,17 @@ decision was made in the conversation. Get the time now with
   offline first. Plan in `docs/psp-plan.md`, phases P1-P5.
 - R2: the library holds 0.96 GB of the free 10 GB; CSO/CHD to fit more;
   files over 300 MB go up with rclone, not the dashboard.
+- Then: "i create another cloudflare account for psp games. There will be
+  two different library than". Decided: a second library (its own R2,
+  Worker and key) for PSP games, with its own free 10 GB; the app's Library
+  shows both. Told the owner a second free account is his call with
+  Cloudflare, like the licences.
 
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 00:09 Dhaka:
+As of 2026-11-06 00:19 Dhaka:
 
 - **Open:** the PSP plan (`docs/psp-plan.md`).
 - **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
@@ -528,7 +533,8 @@ As of 2026-11-06 00:09 Dhaka:
   sound, updates downloading in the background).
 - **Latest release:** v1.0.267.
 - **Waiting on the owner:**
-  - A few PSP games in the library (CSO/CHD), and his go on PSP P1.
+  - The PSP library (second Cloudflare account) with the starter games,
+    and his go on PSP P1.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

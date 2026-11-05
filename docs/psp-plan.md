@@ -25,8 +25,13 @@ their tests working.
   frame for rollback like the arcade games. Playing with friends comes
   later, if at all (PPSSPP's own ad-hoc network play, or delay-based
   lockstep), decided after P4.
-- **Free plans only:** the library stays on R2's free tier (10 GB stored a
-  month, downloads free). The Cloudflare dashboard uploads files up to
+- **A library of their own:** PSP games live in a second Cloudflare
+  account's R2 (the owner's choice, 2026-11-05), so they get its free 10 GB
+  and the arcade library keeps its own. Same `server/worker.js` there, with
+  its own key. The app's Library shows both, Arcade and PSP, each with its
+  address and key entered once.
+- **Free plans only:** each library stays under its account's free 10 GB
+  (downloads are free). The Cloudflare dashboard uploads files up to
   300 MB; bigger ones go up with `rclone` (S3 API, multipart).
 
 ## Phases
@@ -36,7 +41,7 @@ their tests working.
   game picked from the phone's files starts. Internal resolution (1x-3x)
   in the screen settings.
 - **P2. PSP games in the app.** Import and Library take `.iso`, `.cso` and
-  `.chd`; a PSP row on Home with each game's picture and title. Downloads
+  `.chd`; the Library reads from both libraries (Arcade and PSP); a PSP row on Home with each game's picture and title. Downloads
   of a few GB from the library, resuming after drops (foreground service,
   as every download).
 - **P3. PSP controls.** A layout for the PSP: analog stick, D-pad,
@@ -55,6 +60,9 @@ the owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
-- 2026-11-05: plan written. The library holds 0.96 GB of the free 10 GB.
-  Waiting for the owner to upload a few PSP games (CSO/CHD), and for his go
-  on P1.
+- 2026-11-05: plan written. The arcade library holds 0.96 GB of its free
+  10 GB. The owner is making a second Cloudflare account for PSP games.
+  Starter games chosen: God of War: Ghost of Sparta, Spider-Man 3, Naruto
+  Shippuden: Ultimate Ninja Impact, Tekken 6, GTA: Vice City Stories,
+  Assassin's Creed: Bloodlines, Dragon Ball Z: Shin Budokai 2 (under 300 MB,
+  the first test). Waiting for them and for his go on P1.
