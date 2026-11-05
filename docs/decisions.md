@@ -76,6 +76,10 @@ decision was made in the conversation. Get the time now with
   arcade one; needs `pbobbl2n.zip`.
 
 ### 2026-10-31 19:05 Dhaka · Button layouts with room to press (#59)
+- Decided: every game's controls placed by its kind and button count, no
+  two controls closer than 4 dp, checked on three screens, three sizes and
+  left-handed (`HudLayoutTest`). The rules: `docs/adding-a-game.md`,
+  "Button layouts".
 
 ## Social and polish (2026-10-31 to 2026-11-02)
 
@@ -486,17 +490,31 @@ decision was made in the conversation. Get the time now with
   out as a reversal, and the 360 grabs: the stick passes up on the way
   round, so the fighter jumps first (the app's input does the same).
 
+### 2026-11-05 21:52 Dhaka · Every game's button layout checked
+- Owner: "Check every single games layout. I checked the recent one, those
+  layout was not aligned properly. We supposed to have doc for this
+  decision of prev."
+- Found, looking at all 31 games' layout pictures: Stone Ball's three
+  buttons sat as a square with a corner missing (C over A, nothing over B),
+  and a fighter's lone system move (Vampire Savior's Dark Force, The Last
+  Blade's Low repel) sat to one side. The #59 entry had no rules written.
+- Decided: three big buttons make a triangle, C centred over A and B; a
+  lone system move is centred over the buttons. The layout rules are now
+  written down (`docs/adding-a-game.md`, "Button layouts"), and adding a
+  game includes looking at its layout pictures beside a game like it.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-05 09:51 Dhaka:
+As of 2026-11-05 21:52 Dhaka:
 
-- **Open:** PR #80: Spin Master, In the Hunt, Stone Ball and Vampire Savior
-  (31 games).
-- **Merged:** #71-#79 (recording matches R1-R3, match videos with their own
+- **Open:** the button layout fixes (Stone Ball, lone system moves) and
+  the written layout rules.
+- **Merged:** #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+  games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.262.
+- **Latest release:** v1.0.265.
 - **Waiting on the owner:**
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
