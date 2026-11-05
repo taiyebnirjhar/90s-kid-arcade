@@ -115,6 +115,7 @@ fun HomeScreen(
     onProfile: () -> Unit = {},
     onUpdate: () -> Unit = {},
     onReplays: () -> Unit = {},
+    onPsp: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -128,6 +129,7 @@ fun HomeScreen(
             HeaderChip("Online", gold = true, badge = ui.onlineBadge, onClick = onTwoPlayer)
             HeaderChip("Library", onClick = onLibrary)
             if (ui.replays) HeaderChip("Replays", onClick = onReplays)
+            HeaderChip("PSP", onClick = onPsp)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }

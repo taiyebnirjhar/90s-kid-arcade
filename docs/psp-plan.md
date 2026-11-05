@@ -76,6 +76,14 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
+  first check and stable ghost of Sparta"). Home → PSP → Add a game takes
+  his `.7z` download (unpacked on the phone) or a plain image; the game
+  screen runs PPSSPP with the fast settings, touch controls (stick, D-pad,
+  the four action buttons, L/R, SELECT/START) or a gamepad, and a speed
+  counter (fps, % of seconds at full speed, slow seconds, longest stall).
+  The menu switches frame skip (Off, 1, Auto) and restarts the count.
+  Waiting for his report from the phone.
 - 2026-11-05: plan written. The owner won't use the PPSSPP app ("It felt
   complecated. And the ui is mess. Thats why we are adding on our app"), so
   measuring moved into our app (P1). Next: his go on P1; the three games on

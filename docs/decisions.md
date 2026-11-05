@@ -531,19 +531,31 @@ decision was made in the conversation. Get the time now with
 - The three fit in the existing library (about 2.5 GB as CSO), so no second
   Cloudflare account. Plan: `docs/psp-plan.md`.
 
+### 2026-11-06 03:14 Dhaka · PSP P1: Ghost of Sparta first
+- Owner: "We will first check and stable ghost of Sparta. So go accordingly"
+  (his download: a 950 MB `.7z`, USA).
+- Built: a PSP section of its own (Home → PSP), apart from the arcade game
+  screen. "Add a game" unpacks a `.7z`/`.zip` download on the phone (or takes
+  an `.iso`/`.cso`/`.chd`); the game runs with PPSSPP's fast settings for his
+  Snapdragon 680; a speed counter on screen measures the plan's rule; frame
+  skip (Off, 1, Auto) from the menu. The PPSSPP core and its fonts/shaders
+  come from the libretro buildbot in CI, like FBNeo.
+- Can't be measured here (the sandbox has no GPU): his report from the
+  phone decides what P2 tunes.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 02:44 Dhaka:
+As of 2026-11-06 03:14 Dhaka:
 
-- **Open:** the PSP plan for God of War and Assassin's Creed.
+- **Open:** PSP P1 (Ghost of Sparta in the app, with a speed counter).
 - **Merged:** #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.267.
 - **Waiting on the owner:**
-  - His go on PSP P1, and the three games on his phone as `.cso`.
+  - PSP P1: Ghost of Sparta played 15 minutes; what the speed counter says.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

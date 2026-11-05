@@ -314,6 +314,7 @@ class MainActivity : ComponentActivity() {
                         onProfile = { profilePage = true },
                         onUpdate = { showUpdate = true },
                         onReplays = { replays = true },
+                        onPsp = { startActivity(android.content.Intent(this@MainActivity, PspActivity::class.java)) },
                     )
                 }
             }
