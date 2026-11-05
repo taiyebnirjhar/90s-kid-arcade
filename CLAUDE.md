@@ -35,12 +35,6 @@ offered in onboarding; a match is saved as its start state, inputs and
 checksums; **Save video** replays it into an MP4 in the gallery. Nothing is
 hosted by us. Phases R1-R5, one PR each.
 
-## PSP games: planned in phases
-
-Follow [docs/psp-plan.md](docs/psp-plan.md): PPSSPP's libretro core, the
-owner's own `.iso`/`.cso`/`.chd` games, offline first. Phases P1-P5, one PR
-each; start a phase only when the owner says so.
-
 ## Seats in rooms follow the game's own countdown
 
 A watcher's COIN or START takes a free seat, or the seat of a player the game

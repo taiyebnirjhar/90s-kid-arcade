@@ -503,38 +503,29 @@ decision was made in the conversation. Get the time now with
   written down (`docs/adding-a-game.md`, "Button layouts"), and adding a
   game includes looking at its layout pictures beside a game like it.
 
-### 2026-11-06 00:09 Dhaka · PSP games: planned
-- Owner (6 GB phone, 128 GB): bored of the arcade games' graphics, wants
-  good-looking games of 1 GB to a few GB, "Only me playing games. So keep
-  the headache of licences to me." Not all need to play online.
-- Answered which consoles can run inside the app (as libretro cores):
+### 2026-11-06 00:49 Dhaka · More consoles (PSP, PS1, Dreamcast): looked at, dropped
+- Owner wanted better-looking games than the arcade's, for himself only.
+  Looked at which consoles could run inside the app (as libretro cores):
   PSP, PS1, Dreamcast, Naomi, N64 on most phones; GameCube, Wii, 3DS on a
-  strong chip; Saturn slowly. Not possible: PS2 and later Sony, Xbox, Wii
-  U, Switch (no libretro core).
-- Decided: PSP first ("Lets prep for psp"), with PPSSPP's libretro core,
-  offline first. Plan in `docs/psp-plan.md`, phases P1-P5.
-- R2: the library holds 0.96 GB of the free 10 GB; CSO/CHD to fit more;
-  files over 300 MB go up with rclone, not the dashboard.
-- Then: "i create another cloudflare account for psp games. There will be
-  two different library than". Decided: a second library (its own R2,
-  Worker and key) for PSP games, with its own free 10 GB; the app's Library
-  shows both. Told the owner a second free account is his call with
-  Cloudflare, like the licences.
+  strong chip; not PS2 and later, Xbox, Wii U, Switch. His phone, a Galaxy
+  M14 4G (Snapdragon 680), runs PS1 well, most PSP games at 1x, Dreamcast
+  with slowdowns, GameCube not at all. A PSP plan (PPSSPP core, a second
+  Cloudflare account as its own library) was written.
+- Owner, after watching gameplay videos: "Drop the idea". Decided: the app
+  stays arcade (FBNeo) only; the PSP plan is removed. If it comes back, the
+  findings above are the starting point.
 
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 00:19 Dhaka:
+As of 2026-11-06 00:49 Dhaka:
 
-- **Open:** the PSP plan (`docs/psp-plan.md`).
 - **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.267.
 - **Waiting on the owner:**
-  - The PSP library (second Cloudflare account) with the starter games,
-    and his go on PSP P1.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
