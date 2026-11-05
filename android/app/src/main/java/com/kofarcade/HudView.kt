@@ -442,6 +442,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             st.layout == Layout.SHOOTER -> mapOf(
                 'A' to (-0.98f to 0.35f), 'B' to (0.71f to 0.38f), 'C' to (0.63f to -1.3f), 'D' to (-1.15f to -0.95f),
             )
+            // Three big buttons (Stone Ball): A and B as below, C centred over them.
+            st.layout == Layout.BRAWLER && st.faceButtons.size == 3 -> mapOf(
+                'A' to (-0.85f to 0.19f), 'B' to (0.87f to 0.4f), 'C' to (0.01f to -1.2f),
+            )
             // Sengoku 3, Cadillacs and Dinosaurs: big buttons, spread out.
             st.layout == Layout.BRAWLER -> mapOf(
                 'A' to (-0.85f to 0.19f), 'B' to (0.87f to 0.4f), 'C' to (-0.92f to -1.17f), 'D' to (0.84f to -1.27f),
@@ -522,7 +526,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
         // System chips (MAX, Roll, Tag...): above the buttons, the third to the left.
         val sysR = 22 * d * sc
-        val sysSpots = if (six) {
+        val sysSpots = if (st.system.size == 1) {
+            // A lone one (Dark Force, Low repel): centred over the buttons.
+            listOf(if (six) Pt(-0.19f * s, -1.6f * s) else Pt(0.17f * s, -1.72f * s))
+        } else if (six) {
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
             // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row.

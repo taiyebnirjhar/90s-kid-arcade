@@ -30,11 +30,16 @@ committed or placed in the repo; keep them in a scratch folder.
 4. **Moves**, if it has a move list: every move tried in the game
    (`tools/movetest.py`). Judge supers by their **animation**, not by power
    spent: some hacks keep the gauge full.
-5. **Pictures:** regenerate `app/art.txt` (`KOF_WRITE_ART_LIST=1` with the
+5. **Button layout:** run `HudLayoutTest` and look at the new game's
+   pictures (`app/build/reports/paparazzi`) beside a game with the same
+   buttons, on the phone, small phone and tablet, at 85%, 100% and 140% and
+   left-handed. It must follow [the layout rules](#button-layouts); the test
+   only checks that nothing touches.
+6. **Pictures:** regenerate `app/art.txt` (`KOF_WRITE_ART_LIST=1` with the
    core tests).
-6. **Savestates replay exactly** (rollback needs it): load a state, play the
+7. **Savestates replay exactly** (rollback needs it): load a state, play the
    same inputs twice, and compare.
-7. **README and site:** the game list, its controls, and the game count.
+8. **README and site:** the game list, its controls, and the game count.
 
 ## The seat rule: seats follow the game's own countdown
 
@@ -116,3 +121,30 @@ START" coming back) and round up.
 aren't found yet, `seats` is null, and a player who pressed nothing for 10
 seconds can be replaced. Don't add a game that way: the test requires
 `seats`.
+
+## Button layouts
+
+Decided in #59 (2026-10-31) and completed on 2026-11-05 after the owner
+found Stone Ball's and Vampire Savior's buttons out of line. `HudView`
+places every control from the game's kind (`Game.layout`) and how many face
+buttons it has, never by hand for one game:
+
+- **Fighter, four buttons** (KOF, Garou, Last Blade, Samurai Shodown,
+  Double Dragon): A B C D in a square, C D on top. System moves over C and
+  D, a third beside A; **a lone one is centred over C and D**.
+- **Fighter, six buttons** (Street Fighter III, Marvel vs Capcom, Vampire
+  Savior): punches over kicks in straight columns. System moves over the
+  punches; **a lone one is centred over MP**.
+- **Moves** go on the outer ring, specials and supers in list order, up to
+  six; a sequence shows its inputs as text.
+- **Shooter** (Metal Slug, Snow Bros., In the Hunt, Spin Master): big word
+  buttons; the first two low, side by side; a third over the second (Bomb
+  over Jump).
+- **Brawler** (Sengoku 3, Cadillacs and Dinosaurs, Mystic Warriors, Stone
+  Ball): big lettered buttons with their names. Two: A and B side by side;
+  **three: a triangle, C centred over A and B**; four: two rows, C D on top.
+- Every control at least 4 dp from the next and on screen
+  (`HudLayoutTest`), on all three screens, all sizes and left-handed.
+
+A game with a new number of buttons for its kind gets its own rule here and
+in `HudView` before it ships.
