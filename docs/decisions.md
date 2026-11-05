@@ -503,18 +503,28 @@ decision was made in the conversation. Get the time now with
   written down (`docs/adding-a-game.md`, "Button layouts"), and adding a
   game includes looking at its layout pictures beside a game like it.
 
+### 2026-11-06 00:49 Dhaka · More consoles (PSP, PS1, Dreamcast): looked at, dropped
+- Owner wanted better-looking games than the arcade's, for himself only.
+  Looked at which consoles could run inside the app (as libretro cores):
+  PSP, PS1, Dreamcast, Naomi, N64 on most phones; GameCube, Wii, 3DS on a
+  strong chip; not PS2 and later, Xbox, Wii U, Switch. His phone, a Galaxy
+  M14 4G (Snapdragon 680), runs PS1 well, most PSP games at 1x, Dreamcast
+  with slowdowns, GameCube not at all. A PSP plan (PPSSPP core, a second
+  Cloudflare account as its own library) was written.
+- Owner, after watching gameplay videos: "Drop the idea". Decided: the app
+  stays arcade (FBNeo) only; the PSP plan is removed. If it comes back, the
+  findings above are the starting point.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-05 21:52 Dhaka:
+As of 2026-11-06 00:49 Dhaka:
 
-- **Open:** the button layout fixes (Stone Ball, lone system moves) and
-  the written layout rules.
-- **Merged:** #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.265.
+- **Latest release:** v1.0.267.
 - **Waiting on the owner:**
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
