@@ -68,6 +68,21 @@ class GamesTest {
     }
 
     @Test
+    fun aGameWithOneByteOfFlagsSaysEachSeatByItsBit() {
+        // Stone Ball: P1 and P4 joined on the join screen (0x1C3F); later the
+        // byte moves to 0x1C6B and stays after the game, when 0x17041 drops.
+        val status = SeatStatus(listOf(1, 2, 4, 8), emptySet(), game = 0x17041, inGame = setOf(239), flagBytes = listOf(0x1C3F, 0x1C6B))
+        val join = mapOf(0x17041 to 239, 0x1C3F to 9, 0x1C6B to 0)
+        val match = mapOf(0x17041 to 239, 0x1C3F to 0, 0x1C6B to 9)
+        val over = mapOf(0x17041 to 0, 0x1C3F to 0, 0x1C6B to 9)
+        for (bytes in listOf(join, match)) {
+            assertEquals(listOf(false, true, true, false), (0..3).map { status.isOut(it, bytes::get) })
+        }
+        assertEquals(listOf(true, true, true, true), (0..3).map { status.isOut(it, over::get) })
+        assertNull(status.isOut(0, mapOf(0x17041 to 239, 0x1C3F to 1)::get), "can't read one: can't say")
+    }
+
+    @Test
     fun whileNoGameIsOnEverySeatIsOut() {
         // Snow Bros.: the attract demo's players set the seats' bytes too.
         val status = SeatStatus(listOf(0x40, 0x4A), setOf(0), game = 0x2D, inGame = setOf(128))

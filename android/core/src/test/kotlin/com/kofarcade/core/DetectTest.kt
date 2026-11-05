@@ -37,7 +37,7 @@ class DetectTest {
 
     @Test
     fun everyDetectedIdIsInItsRoster() {
-        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3", "mvsc")) {
+        for (name in listOf("kof97", "kof97plus", "kof2002", "kof2005", "kof2002mp", "doubledr", "sfiii3", "mvsc", "vsav")) {
             val roster = loadRoster(name)!!
             val spec = detectSpec(name)!!
             val ids = spec.ids.filterNotNull() + spec.alternates.values
@@ -173,6 +173,28 @@ class DetectTest {
         assertEquals(1, d.activeSlot)
         assertTrue(d.inRound)
         assertFalse(d.facingLeft)
+    }
+
+    @Test
+    fun vampireSaviorReadsTheFighterAndWaitsForARealGame() {
+        val spec = detectSpec("vsav")!!
+        val windows = spec.windows.map { (start, length) -> start to ByteArray(length) }
+        fun set(addr: Int, v: Int) {
+            val (start, buf) = windows.first { (start, buf) -> addr - start in buf.indices }
+            buf[(addr - start) xor 1] = v.toByte()
+        }
+        set(0xFF8782, 0x05) // P1 Morrigan
+        set(0xFF8B82, 0x01) // P2 Demitri
+        set(0xFF840B, 0) // P1 facing left
+        set(0xFF8200, 1) // on the stage
+        val ram = Ram(windows)
+        assertFalse(detect(spec, ram).inRound, "the attract demo: nobody's playing")
+        set(0xFF8784, 6) // P1 playing
+        val d = detect(spec, ram)
+        assertEquals(listOf("morrigan"), d.team)
+        assertEquals("morrigan", d.active)
+        assertTrue(d.inRound)
+        assertTrue(d.facingLeft)
     }
 
     @Test

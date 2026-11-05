@@ -1,0 +1,648 @@
+{
+ "game": "vsav",
+ "sources": [
+  "https://raw.githubusercontent.com/AntoPISA/MAME_SupportFiles/main/command.dat/command.dat",
+  "Checked in FBNeo with tools/movetest.py"
+ ],
+ "characters": [
+  {
+   "id": "demitri",
+   "name": "Demitri",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Midnight Bliss",
+     "cmd": "263+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Demon Billion",
+     "cmd": "263+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Chaos Flare",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Demon Cradle",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Bat Spin",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Midnight Pleasure",
+     "cmd": "A,B,6,E,E",
+     "type": "dm",
+     "note": "two levels"
+    }
+   ]
+  },
+  {
+   "id": "morrigan",
+   "name": "Morrigan",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Valkyrie Turn",
+     "cmd": "63214+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Darkness Illusion",
+     "cmd": "A,A,6,D,C",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Finishing Shower",
+     "cmd": "B,A,4,D,E",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Soul Fist",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shadow Blade",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Vector Drain",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "victor",
+   "name": "Victor",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Thunder Break",
+     "cmd": "[2]8+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Gyro Crush",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Giga Burn",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mega Forrid",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mega Stake",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mega Shock",
+     "cmd": "236+D",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "zabel",
+   "name": "Lord Raptor",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Death Voltage",
+     "cmd": "63214+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Evil Scream",
+     "cmd": "64+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Hell Dunk",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Death Hurricane",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Skull Sting",
+     "cmd": "28+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Hell's Gate",
+     "cmd": "41236+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "felicia",
+   "name": "Felicia",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Dancing Flash",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Please Help Me!",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Rolling Buckler",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cat Spike",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Delta Kick",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hell Cat",
+     "cmd": "63214+E",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "gallon",
+   "name": "Jon Talbain",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Dragon Cannon",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Moment Slice",
+     "cmd": "A,B,6,D,E",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Beast Cannon",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Rising Beast Cannon",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Million Flicker",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Climb Razor",
+     "cmd": "28+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "anakaris",
+   "name": "Anakaris",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Naraku no Ana",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Pharaoh Magic",
+     "cmd": "E,A,2,D,B",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Miira Drop",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cobra Blow",
+     "cmd": "46+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Hitsugi no Mai",
+     "cmd": "22+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Kotodama Gaeshi",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "sasquatch",
+   "name": "Sasquatch",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Big Freeze",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Big Ice Burn",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Big Breath",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Big Blow",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Big Typhoon",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Big Towers",
+     "cmd": "22+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "bbhood",
+   "name": "B.B. Hood",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Cool Hunting",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Beautiful Memory",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Apple For You",
+     "cmd": "63214+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Smile & Missile",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Happy & Missile",
+     "cmd": "[2]8+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Cheer & Fire",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "lilith",
+   "name": "Lilith",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Splendor Love",
+     "cmd": "623+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Luminous Illusion",
+     "cmd": "A,A,6,D,C",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "Gloomy Puppet Show",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": "two levels"
+    },
+    {
+     "name": "Soul Flash",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Shining Blade",
+     "cmd": "623+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Merry Turn",
+     "cmd": "214+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "bishamon",
+   "name": "Bishamon",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Enma Ishi",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Oni Kubi Hineri",
+     "cmd": "63214+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Karame Dama",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Iai Giri",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Iai Giri Gedan",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Mukuro Fuuji",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "in air"
+    }
+   ]
+  },
+  {
+   "id": "aulbath",
+   "name": "Rikuo",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Aqua Spread",
+     "cmd": "632+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Water Jail",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Sea Rage",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Sonic Wave",
+     "cmd": "[4]6+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Poison Breath",
+     "cmd": "[4]6+D",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Trick Fish",
+     "cmd": "623+D",
+     "type": "special",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "id": "leilei",
+   "name": "Hsien-Ko",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Chireitou",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Chuuka Dan",
+     "cmd": "41236+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Tenrai Ha",
+     "cmd": "D,F,B,B,8",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Anki Hou",
+     "cmd": "236+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Senpuu Bu",
+     "cmd": "623+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Henkyou Ki",
+     "cmd": "214+A",
+     "type": "special",
+     "note": "also in air"
+    }
+   ]
+  },
+  {
+   "id": "qbee",
+   "name": "Q-Bee",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Qj",
+     "cmd": "623+AB",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "+B",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": "also in air"
+    },
+    {
+     "name": "C.R",
+     "cmd": "41236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Delta A",
+     "cmd": "214+D",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "O.M.",
+     "cmd": "63214+B",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  },
+  {
+   "id": "jedah",
+   "name": "Jedah",
+   "team": "Darkstalkers",
+   "moves": [
+    {
+     "name": "Prova di Servo",
+     "cmd": "41236+DE",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Finale Rosso",
+     "cmd": "22+AB",
+     "type": "dm",
+     "note": ""
+    },
+    {
+     "name": "Dio Sega",
+     "cmd": "236+A",
+     "type": "special",
+     "note": "also in air"
+    },
+    {
+     "name": "Nero Fatica",
+     "cmd": "214+A",
+     "type": "special",
+     "note": ""
+    },
+    {
+     "name": "Ira Spinta",
+     "cmd": "63214+D",
+     "type": "special",
+     "note": "in air"
+    },
+    {
+     "name": "San Passare",
+     "cmd": "63214+E",
+     "type": "special",
+     "note": "close"
+    }
+   ]
+  }
+ ]
+}

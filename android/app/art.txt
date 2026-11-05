@@ -8,6 +8,7 @@ Named_Snaps/Garou - Mark of the Wolves (NGM-2530).png
 Named_Snaps/Garou - Mark of the Wolves (bootleg).png
 Named_Snaps/Garou - Mark of the Wolves (prototype).png
 Named_Snaps/Hong Tian Lei (A-Blast) (Japan).png
+Named_Snaps/In The Hunt (World).png
 Named_Snaps/J. J. Squawkers (older).png
 Named_Snaps/J. J. Squawkers.png
 Named_Snaps/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
@@ -48,6 +49,8 @@ Named_Snaps/Snow Bros. - Nick _ Tom (set 1).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 2).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 3).png
 Named_Snaps/Snow Bros. - Nick _ Tom (set 4).png
+Named_Snaps/Spin Master _ Miracle Adventure.png
+Named_Snaps/Stone Ball (4 Players, v1-20 13_12_1994).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Snaps/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
@@ -82,6 +85,12 @@ Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt bo
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
 Named_Snaps/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
 Named_Snaps/The Last Soldier (Korean release of The Last Blade).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Asia 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Brazil 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Europe 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Hispanic 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (Japan 970519).png
+Named_Snaps/Vampire Savior_ The Lord of Vampire (USA 970519).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Snaps/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png
@@ -96,6 +105,7 @@ Named_Titles/Garou - Mark of the Wolves (NGM-2530).png
 Named_Titles/Garou - Mark of the Wolves (bootleg).png
 Named_Titles/Garou - Mark of the Wolves (prototype).png
 Named_Titles/Hong Tian Lei (A-Blast) (Japan).png
+Named_Titles/In The Hunt (World).png
 Named_Titles/J. J. Squawkers (older).png
 Named_Titles/J. J. Squawkers.png
 Named_Titles/Marvel Vs. Capcom_ Clash of Super Heroes (Asia 980112).png
@@ -136,6 +146,8 @@ Named_Titles/Snow Bros. - Nick _ Tom (set 1).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 2).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 3).png
 Named_Titles/Snow Bros. - Nick _ Tom (set 4).png
+Named_Titles/Spin Master _ Miracle Adventure.png
+Named_Titles/Stone Ball (4 Players, v1-20 13_12_1994).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990512).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Europe 990608).png
 Named_Titles/Street Fighter III 3rd Strike_ Fight for the Future (Japan 990512, NO CD).png
@@ -170,6 +182,12 @@ Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340, alt b
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Plus, Hack).png
 Named_Titles/The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (Special 2017 v2.5 FINAL, Hack).png
 Named_Titles/The Last Soldier (Korean release of The Last Blade).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Asia 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Brazil 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Europe 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Hispanic 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (Japan 970519).png
+Named_Titles/Vampire Savior_ The Lord of Vampire (USA 970519).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver AAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver EAB).png
 Named_Titles/Wild West C.O.W.-Boys of Moo Mesa (ver UAB).png

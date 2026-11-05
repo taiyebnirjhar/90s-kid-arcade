@@ -64,11 +64,14 @@ Known so far:
 | Cadillacs and Dinosaurs | `0xB317`, `0xB497`, `0xB617` (68000 0xFFB316, +0x180 a player) | 0 out, 4 choosing, 6 playing, 8 continue. Free: 0 |
 | Penguin Brothers | `0x35B2`, `0x362E` | 0 out, 2 playing, 4 continue, 6 game over. Free: 0, 6 |
 | Marvel vs. Capcom | `0x32B1`, `0x36B1` | 0 out, 6 playing, 8 continue, 10 or 12 game over. Free: 0, 10, 12 |
+| Vampire Savior | `0x8785`, `0x8B85` (68000 0xFF8784, +0x400 a player) | 0 out, 6 playing and through the countdown, 10 when it ran out. Free: 0, 10 |
 | Street Fighter III 3rd Strike | `0x156E1` (P1), `0x156E0` (P2): the in-fight flag | 1 in the fight, 0 out. Free: 0 for 18 s (`outForMs`) |
 | Mystic Warriors | `0x20D`, `0x24D`, `0x28D`, `0x2CD` | 0 out, 2 choosing a ninja, 4 playing and counting down. Free: 0 |
 | Sunset Riders (4 players) | `0x211`, `0x251`, `0x291`, `0x2D1`; game byte `0x0` | 129 playing, 1 countdown, 0 out. Free: 0, or no game on (`0x0` not 2) |
 | J.J. Squawkers | `0x561D`, `0x561C` | 127 out (126 a moment in attract), 0 or 1 playing, 255 countdown. Free: 126, 127 |
 | Wild West C.O.W.-Boys of Moo Mesa | `0x905`, `0x985`, `0xA05`, `0xA85` | 255 from START through the countdown, 0 at game over. Free: 0 |
+| In the Hunt | `0x3E50`, `0x3EB0` (each player's corner of the score line); game byte `0x11284` | 0 playing, 32 countdown, 84 out. Free: 84, or no game on (`0x11284` not 1) |
+| Stone Ball (4 players) | one byte of flags: `0x1C3F` on the join screen, then `0x1C6B` (`flagBytes`); game byte `0x17041` | Bits 1, 2, 4, 8 for P1-P4, set while in; `0x1C6B` keeps the last game's, so out unless `0x17041` is 239 |
 | Snow Bros. | `0x40`, `0x4A`; game byte `0x2D` | Not 0 while in, 0 out. Free: 0 (or no game on: `0x2D` not 128) for 17 s (`outForMs`) |
 
 **Neo Geo games get this automatically** (`seats` defaults to the BIOS bytes
@@ -79,6 +82,10 @@ Riders), find a byte that says whether a real game is on, and give it as
 `game` with the values it has then (`inGame`); while it has any other,
 every seat counts as out. Compare the attract demo's stretches with a real
 game's.
+
+**When a game keeps one byte of flags for all its players** (Stone Ball), give
+those bytes as `flagBytes` and each seat's bit in `offsets`: a seat is in while
+its bit is set in any of them.
 
 **When a game has no countdown byte** (Street Fighter III: its flag drops
 when the countdown *starts*), set `outForMs` to the countdown's measured

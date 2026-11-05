@@ -437,26 +437,77 @@ decision was made in the conversation. Get the time now with
   in, 800 out, no click). Picture and sound can't come apart, for any game.
   `AudioStretch` (by the reported rate) is gone.
 
+### 2026-11-03 23:27 Dhaka · Gameplay videos: story first (marketing/video-playbook.md)
+- Owner on draft 1 (a "one more round" edit of a 3-minute match): "it has
+  no point. No story, nothing… research first for viral game play style /
+  game play video plots… analysis each to understand what works."
+- Decided: a playbook in `marketing/video-playbook.md`: rules (one story
+  said in the first second, an open loop with a late payoff, under 25 s,
+  relatable arcade in-jokes), seven story formats to try, and a section of
+  breakdowns of viral examples the owner sends (TikTok/Reels pages can't be
+  read from here; downloaded files can be analysed frame by frame).
+
+### 2026-11-05 02:04 Dhaka · Spin Master, In the Hunt and Stone Ball
+- Owner sent twelve zips: "I want to add these games… Yes go ahead with
+  Stone Ball and Spin Master", then "Check these as well".
+- Decided: add the three that boot and play in FBNeo: Spin Master (Neo
+  Geo), In the Hunt (Irem M92) and Stone Ball (Art & Magic, 4 players).
+  Only the versions checked are listed: `inthunt` (World) and `stonebal`
+  (4 players); the 2-player Stone Balls would leave two seats empty.
+- Seats: Spin Master uses the Neo Geo BIOS bytes (checked: 1, 2, then 0).
+  In the Hunt shows each player's state in their corner of the score line
+  (raw 0x3E50, 0x3EB0: 0 playing, 32 countdown, 84 out), with raw 0x11284
+  saying a game is on. Stone Ball keeps one byte of flags for all four
+  players (raw 0x1C3F on the join screen, then 0x1C6B), so `SeatStatus` got
+  `flagBytes`: each seat's bit instead of an offset; raw 0x17041 is 239
+  while a game is on. All three replay a savestate exactly.
+- Not added, and why: Knights of Valour, KOV 2 Plus and The Gladiator need
+  the newer PGM BIOS (`pgm.zip` with `ddp3_bios.u37` and `bios.u42`; the
+  one sent is older); KOV2 106 also lacks `pgm_a1201.u4` and
+  `pgm_a1204.u10`; Alien vs Predator (`avspu`) lacks `avspu.key` and four of
+  its graphics files are other dumps. Vampire Savior (`vsav`, `vsavu`)
+  works and can be added next as a six-button fighter.
+
+### 2026-11-05 09:51 Dhaka · Vampire Savior
+- Owner: "Add vampire saviour. And tell me which files to upload on r2".
+  Upload `vsav.zip` and `vsavu.zip` (`qsound_hle.zip` isn't used by FBNeo).
+- Decided: add it as a six-button fighter like Marvel vs Capcom: one
+  fighter each, the move ring and detection, and Dark Force (LP+LK) as the
+  system move. Versions listed: the six 970519 ones (Europe, USA, Japan,
+  Asia, Brazil, Hispanic); not the bootleg or the 2026 hack.
+- Found in the game (tools/emu.py): fighter blocks at 0xFF8400 and 0xFF8800;
+  character +0x382 (15 fighters, IDs 0-15 without 11), X +0x10, facing
+  +0x0B, 0 on the floor at +0x38, gauge level +0x109; 0xFF8200 is 1 on the
+  stage (the attract demo too); each player's state at +0x384 (0 out, 6
+  playing and through the countdown, 10 when it ran out), which is also
+  the seat byte.
+- Moves from command.dat, every one tried in the game
+  (tools/vsav_roster.py, tools/movetest.py). Left out: moves that only come
+  out as a reversal, and the 360 grabs: the stick passes up on the way
+  round, so the fighter jumps first (the app's input does the same).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-03 14:19 Dhaka:
+As of 2026-11-05 09:51 Dhaka:
 
-- **Open:** the Facebook page assets PR (`marketing/facebook/`).
-- **Merged:** #68-#70 (in-app updates; download count server side), #71,
-  #72 and #74 (download count on the site: exact, 1.2M+ past a million),
-  #73 (main builds no longer say "-test").
-- **Latest release:** v1.0.248 (#73). The website serves it. Phones on
-  1.0.246 should be offered it in the app (not yet confirmed by the owner).
+- **Open:** PR #80: Spin Master, In the Hunt, Stone Ball and Vampire Savior
+  (31 games).
+- **Merged:** #71-#79 (recording matches R1-R3, match videos with their own
+  sound, updates downloading in the background).
+- **Latest release:** v1.0.262.
 - **Waiting on the owner:**
-  - Redeploy `server/worker.js` in Cloudflare to get download resume
-    (optional; the app works without it).
+  - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
+  - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
+    of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
+    `avsp.zip` for Alien vs Predator.
+  - `pbobbl2n.zip` (arcade Bust-A-Move 2), to add it.
   - Real-phone feedback on voice ducking (if the game "pumps" with an open
     mic, raise `MIC_SPEAKING_LEVEL` in `GameActivity`).
+  - Redeploy `server/worker.js` in Cloudflare to get download resume
+    (optional; the app works without it).
   - A Firebase project, if he wants notifications with the app closed.
-  - `pbobbl2n.zip` (arcade Bust-A-Move 2), to add it.
-- **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3),
-  making Tailwind-like breakpoints cover any remaining hard-coded sizes.
+- **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3).
 - **Watch:** problem reports (reader account) after the owner's friends
-  play online; the last report (2026-11-03, M14) led to the rejoin fix.
+  play online.

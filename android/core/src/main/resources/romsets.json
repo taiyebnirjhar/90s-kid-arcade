@@ -1,5 +1,5 @@
 {
- "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp, konami/d_mystwarr.cpp, konami/d_tmnt.cpp, pst90s/d_hyperpac.cpp, pst90s/d_seta.cpp, konami/d_moo.cpp",
+ "source": "FBNeo src/burn/drv/neogeo/d_neogeo.cpp, capcom/d_cps1.cpp, capcom/d_cps2.cpp, cps3/d_cps3.cpp, pst90s/d_seta2.cpp, konami/d_mystwarr.cpp, konami/d_tmnt.cpp, pst90s/d_hyperpac.cpp, pst90s/d_seta.cpp, konami/d_moo.cpp, pst90s/d_artmagic.cpp, irem/d_m92.cpp",
  "bios": [
   {
    "name": "sp-s3.sp1",
@@ -4246,6 +4246,408 @@
    ]
   },
   {
+   "name": "inthunt",
+   "parent": null,
+   "base": "inthunt",
+   "title": "In The Hunt (World)",
+   "files": [
+    {
+     "name": "ith_-h0-d.ic28",
+     "size": 262144,
+     "crc": "52f8e7a6",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-d.ic39",
+     "size": 262144,
+     "crc": "5db79eb7",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-b.ic38",
+     "size": 131072,
+     "crc": "fc2899df",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-b.ic27",
+     "size": 131072,
+     "crc": "955a605a",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0-.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0-.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "inthuntk",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "In The Hunt (Korea?)",
+   "files": [
+    {
+     "name": "ic28",
+     "size": 262144,
+     "crc": "90f82ea3",
+     "optional": false
+    },
+    {
+     "name": "ic39",
+     "size": 262144,
+     "crc": "4bf419c0",
+     "optional": false
+    },
+    {
+     "name": "ic38",
+     "size": 131072,
+     "crc": "fc2899df",
+     "optional": false
+    },
+    {
+     "name": "ic27",
+     "size": 131072,
+     "crc": "955a605a",
+     "optional": false
+    },
+    {
+     "name": "ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "inthuntu",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "In The Hunt (US)",
+   "files": [
+    {
+     "name": "ith_-h0-c.ic28",
+     "size": 262144,
+     "crc": "563dcec0",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-c.ic39",
+     "size": 262144,
+     "crc": "1638c705",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-a.ic38",
+     "size": 131072,
+     "crc": "0253065f",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-a.ic27",
+     "size": 131072,
+     "crc": "a57d688d",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0-.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0-.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
+     "optional": true
+    }
+   ]
+  },
+  {
    "name": "jjsquawk",
    "parent": null,
    "base": "jjsquawk",
@@ -4773,6 +5175,140 @@
      "name": "8_atf16v8.u134g",
      "size": 279,
      "crc": "11f38ab7",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "name": "kaiteids",
+   "parent": "inthunt",
+   "base": "inthunt",
+   "title": "Kaitei Daisensou (Japan)",
+   "files": [
+    {
+     "name": "ith_-h0-.ic28",
+     "size": 262144,
+     "crc": "dc1dec36",
+     "optional": false
+    },
+    {
+     "name": "ith_-l0-.ic39",
+     "size": 262144,
+     "crc": "8835d704",
+     "optional": false
+    },
+    {
+     "name": "ith_-h1-.ic38",
+     "size": 131072,
+     "crc": "5a7b212d",
+     "optional": false
+    },
+    {
+     "name": "ith_-l1-.ic27",
+     "size": 131072,
+     "crc": "4c084494",
+     "optional": false
+    },
+    {
+     "name": "ith_-sh0.ic30",
+     "size": 65536,
+     "crc": "209c8b7f",
+     "optional": false
+    },
+    {
+     "name": "ith_-sl0.ic31",
+     "size": 65536,
+     "crc": "18472d65",
+     "optional": false
+    },
+    {
+     "name": "ith_-c0-.ic26",
+     "size": 524288,
+     "crc": "4c1818cf",
+     "optional": false
+    },
+    {
+     "name": "ith_-c1-.ic25",
+     "size": 524288,
+     "crc": "91145bae",
+     "optional": false
+    },
+    {
+     "name": "ith_-c2-.ic24",
+     "size": 524288,
+     "crc": "fc03fe3b",
+     "optional": false
+    },
+    {
+     "name": "ith_-c3-.ic23",
+     "size": 524288,
+     "crc": "ee156a0a",
+     "optional": false
+    },
+    {
+     "name": "ith_-000-.ic34",
+     "size": 1048576,
+     "crc": "a019766e",
+     "optional": false
+    },
+    {
+     "name": "ith_-010-.ic35",
+     "size": 1048576,
+     "crc": "3fca3073",
+     "optional": false
+    },
+    {
+     "name": "ith_-020-.ic36",
+     "size": 1048576,
+     "crc": "20d1b28b",
+     "optional": false
+    },
+    {
+     "name": "ith_-030-.ic37",
+     "size": 1048576,
+     "crc": "90b6fd4b",
+     "optional": false
+    },
+    {
+     "name": "ith_-da-.ic9",
+     "size": 524288,
+     "crc": "318ee71a",
+     "optional": false
+    },
+    {
+     "name": "m92_a-3m-.ic11",
+     "size": 279,
+     "crc": "fc718efe",
+     "optional": true
+    },
+    {
+     "name": "m92_a-7j-.ic41",
+     "size": 279,
+     "crc": "5730b25a",
+     "optional": true
+    },
+    {
+     "name": "m92_a-9j-.ic51",
+     "size": 279,
+     "crc": "92d477cf",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3k-.ic20",
+     "size": 279,
+     "crc": "52ecf083",
+     "optional": true
+    },
+    {
+     "name": "m92_e-3p-.ic21",
+     "size": 279,
+     "crc": "67a4cc04",
+     "optional": true
+    },
+    {
+     "name": "m92_e-4k-.ic29",
+     "size": 279,
+     "crc": "506a0e20",
      "optional": true
     }
    ]
@@ -26648,6 +27184,92 @@
    ]
   },
   {
+   "name": "spinmast",
+   "parent": null,
+   "base": "spinmast",
+   "title": "Spin Master / Miracle Adventure",
+   "files": [
+    {
+     "name": "062-p1.p1",
+     "size": 1048576,
+     "crc": "37aba1aa",
+     "optional": false
+    },
+    {
+     "name": "062-p2.sp2",
+     "size": 1048576,
+     "crc": "f025ab77",
+     "optional": false
+    },
+    {
+     "name": "062-s1.s1",
+     "size": 131072,
+     "crc": "289e2bbe",
+     "optional": false
+    },
+    {
+     "name": "062-c1.c1",
+     "size": 1048576,
+     "crc": "a9375aa2",
+     "optional": false
+    },
+    {
+     "name": "062-c2.c2",
+     "size": 1048576,
+     "crc": "0e73b758",
+     "optional": false
+    },
+    {
+     "name": "062-c3.c3",
+     "size": 1048576,
+     "crc": "df51e465",
+     "optional": false
+    },
+    {
+     "name": "062-c4.c4",
+     "size": 1048576,
+     "crc": "38517e90",
+     "optional": false
+    },
+    {
+     "name": "062-c5.c5",
+     "size": 1048576,
+     "crc": "7babd692",
+     "optional": false
+    },
+    {
+     "name": "062-c6.c6",
+     "size": 1048576,
+     "crc": "cde5ade5",
+     "optional": false
+    },
+    {
+     "name": "062-c7.c7",
+     "size": 1048576,
+     "crc": "bb2fd7c0",
+     "optional": false
+    },
+    {
+     "name": "062-c8.c8",
+     "size": 1048576,
+     "crc": "8d7be933",
+     "optional": false
+    },
+    {
+     "name": "062-m1.m1",
+     "size": 131072,
+     "crc": "76108b2f",
+     "optional": false
+    },
+    {
+     "name": "062-v1.v1",
+     "size": 1048576,
+     "crc": "cc281aef",
+     "optional": false
+    }
+   ]
+  },
+  {
    "name": "ssho2emb",
    "parent": "samsho2",
    "base": "samsho2",
@@ -27736,6 +28358,1192 @@
      "size": 128,
      "crc": "148c6d64",
      "optional": true
+    }
+   ]
+  },
+  {
+   "name": "stonebal",
+   "parent": null,
+   "base": "stonebal",
+   "title": "Stone Ball (4 Players, v1-20 13/12/1994)",
+   "files": [
+    {
+     "name": "u102",
+     "size": 262144,
+     "crc": "712feda1",
+     "optional": false
+    },
+    {
+     "name": "u101",
+     "size": 262144,
+     "crc": "4f1656a9",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "stonebal2",
+   "parent": "stonebal",
+   "base": "stonebal",
+   "title": "Stone Ball (2 Players, v1-20 7/11/1994)",
+   "files": [
+    {
+     "name": "u102.bin",
+     "size": 262144,
+     "crc": "b3c4f64f",
+     "optional": false
+    },
+    {
+     "name": "u101.bin",
+     "size": 262144,
+     "crc": "fe373f74",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "stonebal2o",
+   "parent": "stonebal",
+   "base": "stonebal",
+   "title": "Stone Ball (2 Players, v1-20 21/10/1994)",
+   "files": [
+    {
+     "name": "sb_o_2p_24-10.u102",
+     "size": 262144,
+     "crc": "ab58c6b2",
+     "optional": false
+    },
+    {
+     "name": "sb_e_2p_24-10.u101",
+     "size": 262144,
+     "crc": "ea967835",
+     "optional": false
+    },
+    {
+     "name": "u1600.bin",
+     "size": 2097152,
+     "crc": "d2ffe9ff",
+     "optional": false
+    },
+    {
+     "name": "u1601.bin",
+     "size": 2097152,
+     "crc": "dbe893f0",
+     "optional": false
+    },
+    {
+     "name": "sb_snd_9-9-94.u1801",
+     "size": 524288,
+     "crc": "d98f7378",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsav",
+   "parent": null,
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Europe 970519)",
+   "files": [
+    {
+     "name": "vm3e.03d",
+     "size": 524288,
+     "crc": "f5962a8c",
+     "optional": false
+    },
+    {
+     "name": "vm3e.04d",
+     "size": 524288,
+     "crc": "21b40ea2",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsav.key",
+     "size": 20,
+     "crc": "a6e3b164",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsava",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Asia 970519)",
+   "files": [
+    {
+     "name": "vm3a.03d",
+     "size": 524288,
+     "crc": "44c1198f",
+     "optional": false
+    },
+    {
+     "name": "vm3a.04d",
+     "size": 524288,
+     "crc": "2218b781",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsava.key",
+     "size": 20,
+     "crc": "8a3520f4",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavb",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Brazil 970519)",
+   "files": [
+    {
+     "name": "vm3b.03d",
+     "size": 524288,
+     "crc": "22ffba4b",
+     "optional": false
+    },
+    {
+     "name": "vm3b.04d",
+     "size": 524288,
+     "crc": "88624909",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavb.key",
+     "size": 20,
+     "crc": "5274e635",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavd",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Europe 970519 Phoenix Edition) (bootleg)",
+   "files": [
+    {
+     "name": "vm3ed.03d",
+     "size": 524288,
+     "crc": "97d805e3",
+     "optional": false
+    },
+    {
+     "name": "vm3ed.04d",
+     "size": 524288,
+     "crc": "5e07fdce",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "phoenix.key",
+     "size": 20,
+     "crc": "2cf772b0",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavh",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Hispanic 970519)",
+   "files": [
+    {
+     "name": "vm3h.03a",
+     "size": 524288,
+     "crc": "7cc62df8",
+     "optional": false
+    },
+    {
+     "name": "vm3h.04d",
+     "size": 524288,
+     "crc": "d716f3b5",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavh.key",
+     "size": 20,
+     "crc": "a7dd6409",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavj",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Japan 970519)",
+   "files": [
+    {
+     "name": "vm3j.03d",
+     "size": 524288,
+     "crc": "2a2e74a4",
+     "optional": false
+    },
+    {
+     "name": "vm3j.04d",
+     "size": 524288,
+     "crc": "1c2427bc",
+     "optional": false
+    },
+    {
+     "name": "vm3j.05a",
+     "size": 524288,
+     "crc": "95ce88d5",
+     "optional": false
+    },
+    {
+     "name": "vm3j.06b",
+     "size": 524288,
+     "crc": "2c4297e0",
+     "optional": false
+    },
+    {
+     "name": "vm3j.07b",
+     "size": 524288,
+     "crc": "a38aaae7",
+     "optional": false
+    },
+    {
+     "name": "vm3j.08a",
+     "size": 524288,
+     "crc": "5773e5c9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.09b",
+     "size": 524288,
+     "crc": "d064f8b9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.10b",
+     "size": 524288,
+     "crc": "434518e9",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavj.key",
+     "size": 20,
+     "crc": "36d28ab8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavre",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (Hack, English Restoration RC2)",
+   "files": [
+    {
+     "name": "vm3re.03d",
+     "size": 524288,
+     "crc": "87184d16",
+     "optional": false
+    },
+    {
+     "name": "vm3re.04d",
+     "size": 524288,
+     "crc": "c623f797",
+     "optional": false
+    },
+    {
+     "name": "vm3j.05a",
+     "size": 524288,
+     "crc": "95ce88d5",
+     "optional": false
+    },
+    {
+     "name": "vm3j.06b",
+     "size": 524288,
+     "crc": "2c4297e0",
+     "optional": false
+    },
+    {
+     "name": "vm3re.07b",
+     "size": 524288,
+     "crc": "b3cbf9a8",
+     "optional": false
+    },
+    {
+     "name": "vm3j.08a",
+     "size": 524288,
+     "crc": "5773e5c9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.09b",
+     "size": 524288,
+     "crc": "d064f8b9",
+     "optional": false
+    },
+    {
+     "name": "vm3j.10b",
+     "size": 524288,
+     "crc": "434518e9",
+     "optional": false
+    },
+    {
+     "name": "vm3re.13m",
+     "size": 4194304,
+     "crc": "25b89bee",
+     "optional": false
+    },
+    {
+     "name": "vm3re.15m",
+     "size": 4194304,
+     "crc": "7c4ed97c",
+     "optional": false
+    },
+    {
+     "name": "vm3re.17m",
+     "size": 4194304,
+     "crc": "05295327",
+     "optional": false
+    },
+    {
+     "name": "vm3re.19m",
+     "size": 4194304,
+     "crc": "e90b3fee",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavj.key",
+     "size": 20,
+     "crc": "36d28ab8",
+     "optional": false
+    }
+   ]
+  },
+  {
+   "name": "vsavu",
+   "parent": "vsav",
+   "base": "vsav",
+   "title": "Vampire Savior: The Lord of Vampire (USA 970519)",
+   "files": [
+    {
+     "name": "vm3u.03d",
+     "size": 524288,
+     "crc": "1f295274",
+     "optional": false
+    },
+    {
+     "name": "vm3u.04d",
+     "size": 524288,
+     "crc": "c46adf81",
+     "optional": false
+    },
+    {
+     "name": "vm3.05a",
+     "size": 524288,
+     "crc": "4118e00f",
+     "optional": false
+    },
+    {
+     "name": "vm3.06a",
+     "size": 524288,
+     "crc": "2f4fd3a9",
+     "optional": false
+    },
+    {
+     "name": "vm3.07b",
+     "size": 524288,
+     "crc": "cbda91b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.08a",
+     "size": 524288,
+     "crc": "6ca47259",
+     "optional": false
+    },
+    {
+     "name": "vm3.09b",
+     "size": 524288,
+     "crc": "f4a339e3",
+     "optional": false
+    },
+    {
+     "name": "vm3.10b",
+     "size": 524288,
+     "crc": "fffbb5b8",
+     "optional": false
+    },
+    {
+     "name": "vm3.13m",
+     "size": 4194304,
+     "crc": "fd8a11eb",
+     "optional": false
+    },
+    {
+     "name": "vm3.15m",
+     "size": 4194304,
+     "crc": "dd1e7d4e",
+     "optional": false
+    },
+    {
+     "name": "vm3.17m",
+     "size": 4194304,
+     "crc": "6b89445e",
+     "optional": false
+    },
+    {
+     "name": "vm3.19m",
+     "size": 4194304,
+     "crc": "3830fdc7",
+     "optional": false
+    },
+    {
+     "name": "vm3.14m",
+     "size": 4194304,
+     "crc": "c1a28e6c",
+     "optional": false
+    },
+    {
+     "name": "vm3.16m",
+     "size": 4194304,
+     "crc": "194a7304",
+     "optional": false
+    },
+    {
+     "name": "vm3.18m",
+     "size": 4194304,
+     "crc": "df9a9f47",
+     "optional": false
+    },
+    {
+     "name": "vm3.20m",
+     "size": 4194304,
+     "crc": "c22fc3d9",
+     "optional": false
+    },
+    {
+     "name": "vm3.01",
+     "size": 131072,
+     "crc": "f778769b",
+     "optional": false
+    },
+    {
+     "name": "vm3.02",
+     "size": 131072,
+     "crc": "cc09faa1",
+     "optional": false
+    },
+    {
+     "name": "vm3.11m",
+     "size": 4194304,
+     "crc": "e80e956e",
+     "optional": false
+    },
+    {
+     "name": "vm3.12m",
+     "size": 4194304,
+     "crc": "9cd71557",
+     "optional": false
+    },
+    {
+     "name": "vsavu.key",
+     "size": 20,
+     "crc": "ff21b9d7",
+     "optional": false
     }
    ]
   },
