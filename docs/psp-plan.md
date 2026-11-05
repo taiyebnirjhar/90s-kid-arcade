@@ -26,8 +26,8 @@ What it takes, in order, until the rule holds: the fastest settings at 1x
 the game never slows); then dropping that game. No game ships slow.
 
 A Snapdragon 680 is at the edge for God of War: it will need the fast
-settings, and Ghost of Sparta (the heavier one) may not pass. That's what
-P0 finds out before anything is built.
+settings, and Ghost of Sparta (the heavier one) may not pass. P1's speed
+readout, in our own app on his phone, finds that out first.
 
 ## Settled
 
@@ -40,7 +40,7 @@ P0 finds out before anything is built.
   library's free 10 GB (0.96 GB used); no second Cloudflare account needed.
   Files over 300 MB go up with `rclone`, not the dashboard.
 - **Offline only.** All three are single-player.
-- **Fast settings for this phone,** the starting point P0 checks: 1x
+- **Fast settings for this phone,** the starting point P1 measures: 1x
   resolution, no texture scaling or filtering, fast memory, lazy texture
   caching, GPU readbacks skipped, low spline quality, threaded file loading,
   auto frame skipping off until needed. Per game, kept in the app.
@@ -50,14 +50,12 @@ P0 finds out before anything is built.
 
 ## Phases (one PR each, the arcade games and their tests kept working)
 
-- **P0. Measure first** (no code). The owner plays each game 15 minutes in
-  the official PPSSPP app with the fast settings and its speed counter on,
-  and reports: smooth, small dips, or slow. Games that fail at 1x even with
-  frame skipping are dropped before any work.
-- **P1. A PSP game runs.** CI puts the PPSSPP core and assets in the APK; the
-  game screen runs a GPU-drawn core; a game picked from the phone's files
-  starts with its fast settings. A speed readout (frames, emulation %)
-  for checking.
+- **P1. A PSP game runs, and its speed is measured.** CI puts the PPSSPP
+  core and assets in the APK; the game screen runs a GPU-drawn core; a game
+  picked from the phone's files (no upload needed yet) starts with its fast
+  settings. A speed readout (frames, emulation %) shows on screen, and the
+  owner plays each game 15 minutes and reports it. Games that fail even
+  with frame skipping are dropped here, before more work.
 - **P2. Never lags, never hangs.** Measured on the phone against the rule
   above: frame pacing with the screen (as the arcade's), sound through the
   same gap-free path, the CPU kept fast (performance hints), frame skip as
@@ -78,5 +76,7 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
-- 2026-11-05: plan written. Next: P0 on the owner's phone, and the three
-  games uploaded as `.cso`.
+- 2026-11-05: plan written. The owner won't use the PPSSPP app ("It felt
+  complecated. And the ui is mess. Thats why we are adding on our app"), so
+  measuring moved into our app (P1). Next: his go on P1; the three games on
+  his phone as `.cso` (the library upload can wait until P3).

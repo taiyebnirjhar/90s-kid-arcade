@@ -39,7 +39,7 @@ hosted by us. Phases R1-R5, one PR each.
 
 Follow [docs/psp-plan.md](docs/psp-plan.md): three PSP games for the owner,
 offline, and a game ships only if it never lags or hangs on his phone
-(the rule in the plan). Phases P0-P4, one PR each; start a phase only when
+(the rule in the plan). Phases P1-P4, one PR each; start a phase only when
 the owner says so. The arcade games stay as they are.
 
 ## Seats in rooms follow the game's own countdown
