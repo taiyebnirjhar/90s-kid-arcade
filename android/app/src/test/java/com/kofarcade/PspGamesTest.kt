@@ -185,4 +185,10 @@ class PspGamesTest {
             last = a
         }
     }
+
+    @Test
+    fun storyVideosPlayAtTheGamesOwnSpeed() {
+        // Without it, a frame ran on to the game's next picture: story videos 1.5x fast.
+        assertEquals("enabled", PspSpeed.options(PspSettings())["ppsspp_frame_duplication"])
+    }
 }

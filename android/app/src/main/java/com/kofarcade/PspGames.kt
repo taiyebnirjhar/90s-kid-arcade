@@ -137,6 +137,12 @@ object PspSpeed {
         "ppsspp_frameskip" to settings.frameSkip.value,
         "ppsspp_frameskiptype" to "Number of frames",
         "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
+        // A frame for every one of the screen's, even when the game shows a
+        // new picture less often (its story videos): without it each frame we
+        // ask for ran on to the game's next picture, and Ghost of Sparta's
+        // story played about 1.5x fast (checked in the game: 67,000 sound
+        // samples a second instead of 44,100; with it, 44,100).
+        "ppsspp_frame_duplication" to "enabled",
     )
 }
 

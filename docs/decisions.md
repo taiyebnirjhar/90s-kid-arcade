@@ -685,6 +685,24 @@ decision was made in the conversation. Get the time now with
 - Decided: the app asks every 15 minutes at most (opening or coming back
   to it); a failed website deploy after a build gets re-run (AGENTS.md).
 
+### 2026-11-06 23:55 Dhaka · Ghost of Sparta played here: the story's speed fixed
+- The owner sent the game (a Google Drive link), so it runs here now
+  (`tools/pspemu.py`: PPSSPP with the app's settings, Xvfb + Mesa).
+- Found: story videos ran about 1.5x fast. During them the core gave 67,000
+  sound samples per second of frames instead of 44,100: each frame the app
+  asked for ran on to the game's next picture (the video shows ~30 a
+  second). PPSSPP's `ppsspp_frame_duplication` ("Render Duplicate Frames to
+  60 Hz") keeps one game frame per screen frame: with it, 44,100 and the
+  video's own 30 pictures a second. The app never set it, and the core
+  took it as off. Decided: always on. Gameplay and menus measure the same
+  either way (44,100; story videos cost ~1.6 ms a frame here, gameplay ~17).
+- Also checked in the game: the title menu answers only the D-pad, not the
+  stick (the D-PAD switch was right); every other option the app sets is a
+  real option and value of this core.
+- Skip story: the opening story can't be skipped by any button, tapped or
+  held (START, SELECT, ✕, ○, △): the game doesn't allow it there. Later
+  scenes to be tried as the game goes on.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -700,7 +718,6 @@ As of 2026-11-06 16:13 Dhaka:
   - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
   - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
-  - Ghost of Sparta uploaded (R2), to check every input, the story scenes' speed and the skip input here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

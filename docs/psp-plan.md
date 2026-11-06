@@ -82,6 +82,9 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: Ghost of Sparta runs in the sandbox (`tools/pspemu.py`). Story
+  videos ran ~1.5x fast: `ppsspp_frame_duplication` is now always on. The
+  opening story can't be skipped in the game itself.
 - 2026-11-06: the top bar's D-PAD switch makes the stick work the D-pad
   (the menus answer only the D-pad); Opacity now reaches faint.
 - 2026-11-06: every game (arcade too, alone and online) has the game log now,
