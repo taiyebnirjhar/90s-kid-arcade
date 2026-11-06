@@ -697,6 +697,7 @@ As of 2026-11-06 16:13 Dhaka:
   sound, updates downloading in the background).
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
+  - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
   - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
   - Ghost of Sparta uploaded (R2), to check every input, the story scenes' speed and the skip input here.
