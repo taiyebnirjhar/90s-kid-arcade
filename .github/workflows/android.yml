@@ -74,6 +74,20 @@ jobs:
           done
           ls -la app/src/main/jniLibs/*
 
+      - name: Download the PPSSPP core and its assets (PSP games)
+        run: |
+          for abi in arm64-v8a armeabi-v7a; do
+            dir=app/src/main/jniLibs/$abi
+            curl -fsSL --retry 3 -o /tmp/ppsspp.zip \
+              "https://buildbot.libretro.com/nightly/android/latest/$abi/ppsspp_libretro_android.so.zip"
+            unzip -o -j /tmp/ppsspp.zip -d "$dir"
+            mv "$dir/ppsspp_libretro_android.so" "$dir/libppsspp_libretro_android.so"
+          done
+          # PPSSPP's fonts and shaders, unpacked into the system folder on the phone.
+          mkdir -p app/src/main/assets
+          curl -fsSL --retry 3 -o app/src/main/assets/PPSSPP.zip "https://buildbot.libretro.com/assets/system/PPSSPP.zip"
+          ls -la app/src/main/jniLibs/* app/src/main/assets/PPSSPP.zip
+
       - name: Build the APK
         env:
           # The version: 1.0.<run number> on main, 1.0.<run number>-test on a branch.

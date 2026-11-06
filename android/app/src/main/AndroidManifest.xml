@@ -99,5 +99,14 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|fontScale|density|locale|layoutDirection"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.Kof.Game" />
+        <!-- PSP games (docs/psp-plan.md): the list, and one game playing. -->
+        <activity
+            android:name=".PspActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|fontScale|density|locale|layoutDirection" />
+        <activity
+            android:name=".PspGameActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|fontScale|density|locale|layoutDirection"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Kof.Game" />
     </application>
 </manifest>

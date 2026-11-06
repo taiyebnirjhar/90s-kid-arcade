@@ -74,7 +74,7 @@ android {
             // libretro cores are loaded with dlopen from the native library
             // directory, so they must be extracted, and stripping can break them.
             useLegacyPackaging = true
-            keepDebugSymbols += setOf("**/libfbneo_libretro_android.so")
+            keepDebugSymbols += setOf("**/libfbneo_libretro_android.so", "**/libppsspp_libretro_android.so")
         }
     }
 }
@@ -92,6 +92,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // Core's online signaling uses it (Supabase Realtime's WebSocket).
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // PSP games come as .7z downloads: unpacked on the phone (LZMA2 needs xz).
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("org.tukaani:xz:1.10")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")

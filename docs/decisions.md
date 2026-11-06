@@ -515,17 +515,47 @@ decision was made in the conversation. Get the time now with
   stays arcade (FBNeo) only; the PSP plan is removed. If it comes back, the
   findings above are the starting point.
 
+### 2026-11-06 02:37 Dhaka · PSP back, for three games: God of War and Assassin's Creed
+- Owner: "Lets add gow and assassin creed. Make a plan … the game should
+  never lags and hangs -- we will try our best to manage and adjust". Asked
+  after the more-consoles idea was dropped; the arcade games stay as they
+  are.
+- Decided: God of War: Chains of Olympus, Ghost of Sparta and Assassin's
+  Creed: Bloodlines through PPSSPP's libretro core, offline. A game ships
+  only if it meets "never lags, never hangs" on his Galaxy M14 4G (full
+  speed in 99% of seconds over 30 minutes at 1x, no sound gaps, no freeze
+  over a second, a save every minute); otherwise it's dropped, never
+  shipped slow. Measured in our own app (P1's speed readout): he won't use
+  the PPSSPP app ("It felt complecated. And the ui is mess. Thats why we
+  are adding on our app at the first place").
+- The three fit in the existing library (about 2.5 GB as CSO), so no second
+  Cloudflare account. Plan: `docs/psp-plan.md`.
+
+### 2026-11-06 03:14 Dhaka · PSP P1: Ghost of Sparta first
+- Owner: "We will first check and stable ghost of Sparta. So go accordingly"
+  (his download: a 950 MB `.7z`, USA).
+- Built: a PSP section of its own (Home → PSP), apart from the arcade game
+  screen. "Add a game" unpacks a `.7z`/`.zip` download on the phone (or takes
+  an `.iso`/`.cso`/`.chd`); the game runs with PPSSPP's fast settings for his
+  Snapdragon 680; a speed counter on screen measures the plan's rule; frame
+  skip (Off, 1, Auto) from the menu. The PPSSPP core and its fonts/shaders
+  come from the libretro buildbot in CI, like FBNeo.
+- Can't be measured here (the sandbox has no GPU): his report from the
+  phone decides what P2 tunes.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 00:49 Dhaka:
+As of 2026-11-06 03:14 Dhaka:
 
-- **Merged:** #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Open:** PSP P1 (Ghost of Sparta in the app, with a speed counter).
+- **Merged:** #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.267.
 - **Waiting on the owner:**
+  - PSP P1: Ghost of Sparta played 15 minutes; what the speed counter says.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
