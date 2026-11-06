@@ -39,9 +39,24 @@ class SpeedMeter(val slowBelow: Int = SLOW_BELOW) {
     private var framesThisSecond = 0
     private var lastFrame = -1L
 
+    /**
+     * Paused (a menu, the app in the background): frames aren't counted, and
+     * the wait isn't a stall; counting starts afresh from the next frame.
+     */
+    @Synchronized
+    fun hold(on: Boolean) {
+        held = on
+        lastFrame = -1
+        secondStart = -1
+        framesThisSecond = 0
+    }
+
+    private var held = false
+
     /** A frame came out at [nowMs]. */
     @Synchronized
     fun frame(nowMs: Long) {
+        if (held) return
         if (lastFrame >= 0) {
             val gap = nowMs - lastFrame
             longestStallMs = maxOf(longestStallMs, gap)
@@ -170,12 +185,16 @@ object GameLogs {
         Toast.makeText(context, "Game log copied: paste it in the chat", Toast.LENGTH_SHORT).show()
     }
 
-    fun send(context: Context, text: String) {
-        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade game log")
-            .putExtra(Intent.EXTRA_TEXT, text)
-        runCatching { context.startActivity(Intent.createChooser(send, "Send the game log")) }
+    /** Sends [text] to our server, where the owner reads it ("Send to us"). */
+    fun send(context: Context, game: String, text: String) {
+        Toast.makeText(context, "Sending the game log…", Toast.LENGTH_SHORT).show()
+        Online.sendGameLog(context, game, text) { error ->
+            Toast.makeText(context, error?.let { "Couldn't send it: $it" } ?: "Game log sent: we'll read it", Toast.LENGTH_LONG).show()
+        }
     }
+
+    /** A session with a freeze this long (ms) sends its log by itself on leaving (problem reports on). */
+    const val BAD_FREEZE_MS = 2_000L
 
     /** The app and the phone: the log's first lines. */
     fun phone(context: Context, screenHz: Int): List<String> {

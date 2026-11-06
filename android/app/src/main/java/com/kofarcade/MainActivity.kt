@@ -197,6 +197,10 @@ class MainActivity : ComponentActivity() {
         val sets = remember(refresh) { GAMES.associate { it.id to roms.setFor(it) } }
         val last = remember(refresh) { prefs.lastGame?.let(::gameById) }
         val profile = remember(refresh, profilePage) { Online.account(this).profile() }
+        val psp = remember(refresh) {
+            val games = PspGames.list(java.io.File(filesDir, "psp/games"))
+            PspTitle.ALL.map { it to it.copyIn(games)?.absolutePath }
+        }
         val hasReplays = remember(refresh, replays) { prefs.saveMatches || MatchStore(this).list().isNotEmpty() }
 
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -267,6 +271,7 @@ class MainActivity : ComponentActivity() {
                 ?: (updateState as? UpdateState.NeedsPermission)?.update?.name
                 ?: (updateState as? UpdateState.Failed)?.update?.name,
             replays = hasReplays,
+            psp = psp,
         )
 
         // Pages fade into each other instead of cutting.
@@ -315,6 +320,12 @@ class MainActivity : ComponentActivity() {
                         onUpdate = { showUpdate = true },
                         onReplays = { replays = true },
                         onPsp = { startActivity(android.content.Intent(this@MainActivity, PspActivity::class.java)) },
+                        onPspGame = { _, path ->
+                            startActivity(
+                                if (path != null) android.content.Intent(this@MainActivity, PspGameActivity::class.java).putExtra(PspGameActivity.EXTRA_PATH, path)
+                                else android.content.Intent(this@MainActivity, PspActivity::class.java),
+                            )
+                        },
                     )
                 }
             }

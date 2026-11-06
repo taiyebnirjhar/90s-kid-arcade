@@ -685,6 +685,122 @@ decision was made in the conversation. Get the time now with
 - Decided: the app asks every 15 minutes at most (opening or coming back
   to it); a failed website deploy after a build gets re-run (AGENTS.md).
 
+### 2026-11-06 23:55 Dhaka · Ghost of Sparta played here: the story's speed fixed
+- The owner sent the game (a Google Drive link), so it runs here now
+  (`tools/pspemu.py`: PPSSPP with the app's settings, Xvfb + Mesa).
+- Found: story videos ran about 1.5x fast. During them the core gave 67,000
+  sound samples per second of frames instead of 44,100: each frame the app
+  asked for ran on to the game's next picture (the video shows ~30 a
+  second). PPSSPP's `ppsspp_frame_duplication` ("Render Duplicate Frames to
+  60 Hz") keeps one game frame per screen frame: with it, 44,100 and the
+  video's own 30 pictures a second. The app never set it, and the core
+  took it as off. Decided: always on. Gameplay and menus measure the same
+  either way (44,100; story videos cost ~1.6 ms a frame here, gameplay ~17).
+- Also checked in the game: the title menu answers only the D-pad, not the
+  stick (the D-PAD switch was right); every other option the app sets is a
+  real option and value of this core.
+- Skip story: the opening story can't be skipped by any button, tapped or
+  held (START, SELECT, ✕, ○, △): the game doesn't allow it there. Later
+  scenes to be tried as the game goes on.
+
+### 2026-11-06 23:57 Dhaka · God of War, first party: the plan
+- Owner: "Our save state didnt worked on gow. Not all L + O available. Not
+  all combination is here also not all combination worked. We need to make
+  the gow game and controller first party native support … improve layout,
+  combos, buttons, max ux, graphics and butter smooth game play … Also add
+  gow card on app like other app … can we use google drive as our library?"
+- Checked here: quick save and load work in the core (a load shows a few
+  frames later). A PSP game doesn't yet go on from where it was left, as
+  the arcade games do: that's G1.
+- Decided: the plan G1-G6 in docs/psp-plan.md (saves, every move checked in
+  the game, a God of War layout, smoothness, the Home card, the library).
+  Google Drive can be the library behind the Worker; R2 stays first choice.
+
+### 2026-11-07 00:17 Dhaka · God of War: saves, smoother sound, a true speed count, Mash
+- Owner: sent an hour's game log (1.0.284) and "Do all step phase by phase.
+  I will merge a single pr".
+- The log: (1) story videos dropping ~43,000 sound samples a second: the
+  1.5x story speed, fixed by frame duplication; (2) minutes away from the
+  app counted as stalls (1,488 s) and slow seconds, so "34% full speed" was
+  wrong; (3) hundreds to 2,000 sound samples dropped a second in play
+  (crackles); (4) no save or load in that session.
+- Decided and done:
+  - G1: the game is kept whenever it pauses (a menu, leaving the app) and
+    opening it goes on from there ("Back where you left off"); Start over
+    drops it. Quick save and load as before (a load shows a few frames on).
+  - G4: the speed count holds while the game is paused or in the
+    background, for PSP and arcade (`SpeedMeter.hold`). PSP sound uses the
+    12-frame buffer: PPSSPP hands sound over unevenly (0 to ~2,000 samples
+    a frame, backlogs of ~2,000, measured in the game), which overflowed
+    the 6-frame one.
+  - G2 begun: a **Mash** pill alternates L and R twelve times (the game's
+    "alternate L and R quickly"); checked in the game, it escapes the
+    boat's first grab. On the bottom row past the ring (the layout test
+    found every spot nearer the buttons taken).
+- Next (G2): every move tried in the game, close up; L + each face button.
+
+### 2026-11-07 00:33 Dhaka · God of War: moves checked in the game, a card on Home
+- Owner: "Except adding it to library. U can add card".
+- Moves, checked in the game (one fresh run per move from the same moment,
+  two seconds after a load, compared with doing nothing): □, △, ○ attack;
+  **Hyperion Charge is L held, then ○** (both at once is just ○: the old
+  ring button did a plain grab). With L held, □ △ ✕ do nothing until Kratos
+  has magic, so the magic casts now press L first too (to check once the
+  game gives magic). New step form "E>D" (first held, then both).
+- Home: a "PlayStation Portable" row with a God of War card, the same frame
+  as the arcade's, its picture from libretro's PSP thumbnails (packed at
+  build time: `app/psp-art.txt`, never committed). On the phone: Play;
+  not yet: "Add your copy" opens the PSP games to add it. The library
+  stays for later.
+
+### 2026-11-07 00:59 Dhaka · God of War: no D-PAD button, the stick follows the game
+- Owner: "i want to remove d pad button. It should auto detect and active /
+  deactive. Check if it possible".
+- Found in the game's RAM (tools/pspemu.py, 7 menu screens and 5 moments of
+  play compared): 0x08C5D8D1 is 4 while Kratos is played (fights, grabs,
+  prompts) and 0 on the title, difficulty, pause (SELECT), Power Up (START)
+  and "You are dead" screens and in story videos; 2-3 for a moment between.
+  It follows a pause and an unpause within a tenth of a second.
+- Decided: for God of War the app reads it ten times a second and the stick
+  works the analog stick while it's 4, the D-pad otherwise; the D-PAD
+  button is gone (`PspProfile.inPlay`). A direction held carries over. A
+  game without such a byte keeps the switch. Each change is in the game log.
+
+### 2026-11-07 01:01 Dhaka · The D-PAD switch stays, as a fallback
+- Owner: "Have we adjust the controlles for all combos? Dont remove the D
+  pad button. Keep it. But make sure it auto turn on and off. Keep d pad
+  button as fallback use".
+- Decided: the D-PAD switch is back on the top bar. For God of War the
+  stick still switches by itself, but only when the game goes between play
+  and a menu; a tap on the switch holds until the next such change.
+- Combos checked in the game: Spirit of Hercules (□ □ △) and Cyclone of
+  Chaos (□ held) each come out as their own combo; Roll (L+R with the
+  stick) rolls; with Hyperion Charge (L, then ○), Light, Heavy, Grab and
+  Mash before. Not yet: the three magic casts and Weapon (Kratos has no
+  magic or second weapon this early).
+
+### 2026-11-07 01:30 Dhaka · Game logs straight to our server; frame skip Off for PSP
+- Owner: "By send, cant we save it directly on our server, to check log
+  our self directly?" … "Yes go ahead".
+- Decided: Game log's **Send to us** uploads the log to problem_reports as
+  kind 'game' (migration 20261107000000_game_logs.sql); it's read with
+  read_problem_reports (the reader account), like the connection reports.
+  A session that had a freeze of 2 s or more sends its log by itself on
+  quitting, when "Send problem reports" is on. Copy stays.
+- Within the free plan (D8): a game log is at most 200 KB, 20 a day per
+  player (apart from the connection reports' 20), nothing more kept once
+  200 MB of logs are stored (of the free 500 MB), and all older than 30
+  days deleted nightly. Server test: game_logs.test.sql.
+- The owner's latest log (1.0.284): with frame skip Off, sound drops fell
+  from thousands a second to almost none and play held 58-60 fps. Decided:
+  PSP frame skip is Off by default; Auto stays a choice.
+- Then: "Make sure it works for all game". Checked: only two screens run
+  games, the arcade's (all 31, alone, online and replays) and the PSP's;
+  both have Game log → Send to us and send by themselves after a bad
+  freeze. The Settings tab row now scrolls to the open tab, so Game log
+  (last of six on the arcade's) shows when opened from the pause menu.
+  Snapshot: controls_game_log.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -697,9 +813,9 @@ As of 2026-11-06 16:13 Dhaka:
   sound, updates downloading in the background).
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
+  - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
   - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
-  - Ghost of Sparta uploaded (R2), to check every input, the story scenes' speed and the skip input here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

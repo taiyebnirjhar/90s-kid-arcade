@@ -116,19 +116,25 @@ dependencies {
 // failure fails the build, so no APK ships without them.
 val fetchGameArt by tasks.registering {
     val list = file("art.txt")
+    // The PSP games' pictures (their own collection: "Repo::Folder/Name.png").
+    val pspList = file("psp-art.txt")
     val out = layout.buildDirectory.dir("generated/gameArt/art")
     inputs.file(list)
+    inputs.file(pspList)
     outputs.dir(out)
     doLast {
         val dir = out.get().asFile
         val base = "https://raw.githubusercontent.com/libretro-thumbnails/FBNeo_-_Arcade_Games/master/"
         val failed = ArrayList<String>()
-        for (path in list.readLines().map { it.trim() }.filter { it.isNotEmpty() }) {
+        for (line in (list.readLines() + pspList.readLines()).map { it.trim() }.filter { it.isNotEmpty() }) {
+            // "Repo::Folder/Name.png": from another of libretro's collections (a PSP game's).
+            val (repo, path) = if ("::" in line) line.split("::", limit = 2).let { it[0] to it[1] } else null to line
             val target = File(dir, path)
             if (target.isFile && target.length() > 0) continue
             target.parentFile.mkdirs()
             val (folder, name) = path.split('/', limit = 2)
-            val url = base + folder + "/" + URLEncoder.encode(name, "UTF-8").replace("+", "%20")
+            val root = if (repo != null) "https://raw.githubusercontent.com/libretro-thumbnails/$repo/master/" else base
+            val url = root + folder + "/" + URLEncoder.encode(name, "UTF-8").replace("+", "%20")
             try {
                 val conn = URI(url).toURL().openConnection() as HttpURLConnection
                 conn.connectTimeout = 15_000

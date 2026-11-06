@@ -97,14 +97,16 @@ class PspGamesTest {
         assertTrue("Block holds L", p.blockHoldsL)
         assertTrue("SELECT opens its pause menu", p.select)
         assertEquals(6, p.moves.size)
-        assertEquals("pad:6,BE", p.moves.first { it.name == "Atlas Spark" }.cmd)
+        assertEquals("pad:6,E>B", p.moves.first { it.name == "Atlas Spark" }.cmd)
+        // Checked in the game: L first, then ○ with it (both at once is just ○).
+        assertEquals("E>D", p.moves.first { it.name == "Hyperion Charge" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
         assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
-        assertEquals(listOf("L", "R", "Roll", "Weapon"), p.system.map { it.name })
+        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash"), p.system.map { it.name })
         // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
@@ -114,9 +116,11 @@ class PspGamesTest {
     }
 
     @Test
-    fun theDefaultsSkipOnlyWhenBehindAndCountStalls() {
+    fun theDefaultsNeverSkipAndCountStalls() {
+        // Off by default: steadier on the owner's phone than Auto (his log, 2026-11-07).
         val o = PspSpeed.options(PspSettings())
-        assertEquals("enabled", o["ppsspp_auto_frameskip"])
+        assertEquals("disabled", o["ppsspp_auto_frameskip"])
+        assertEquals("disabled", o["ppsspp_frameskip"])
         assertEquals("480x272", o["ppsspp_internal_resolution"])
         assertEquals("960x544", PspSpeed.options(PspSettings(resolution = 2))["ppsspp_internal_resolution"])
         val m = SpeedMeter()
@@ -130,7 +134,7 @@ class PspGamesTest {
 
     @Test
     fun pspStepsPickAMagicThenCastIt() {
-        val f = PspSteps.frames("pad:6,BE")
+        val f = PspSteps.frames("pad:6,E>B")
         assertEquals(setOf(android.view.KeyEvent.KEYCODE_DPAD_RIGHT), f.first())
         assertTrue(f.any { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_B, android.view.KeyEvent.KEYCODE_BUTTON_L1) })
         assertEquals(emptySet<Int>(), f.last())
@@ -138,6 +142,12 @@ class PspGamesTest {
         assertEquals(PspSteps.HOLD, hold.count { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_Y) })
         assertTrue(PspSteps.isSteps("hold:A"))
         assertFalse(PspSteps.isSteps("A,A,C"))
+        // L held alone first, then L with ○.
+        val l = android.view.KeyEvent.KEYCODE_BUTTON_L1
+        val charge = PspSteps.frames("E>D")
+        assertEquals(setOf(l), charge.first())
+        assertTrue(charge.indexOfFirst { it == setOf(l, android.view.KeyEvent.KEYCODE_BUTTON_A) } >= PspSteps.TAP)
+        assertTrue(PspSteps.isSteps("E>D"))
     }
 
     @Test
@@ -184,5 +194,46 @@ class PspGamesTest {
             assertTrue("$i%: $a", a > last)
             last = a
         }
+    }
+
+    @Test
+    fun storyVideosPlayAtTheGamesOwnSpeed() {
+        // Without it, a frame ran on to the game's next picture: story videos 1.5x fast.
+        assertEquals("enabled", PspSpeed.options(PspSettings())["ppsspp_frame_duplication"])
+    }
+
+    @Test
+    fun timeAwayFromTheGameIsNeitherSlowNorAStall() {
+        val m = SpeedMeter()
+        var t = 0L
+        repeat(120) { m.frame(t); t += 16 }
+        m.hold(true)
+        repeat(100) { m.frame(t); t += 16 } // a menu's redraws: not counted
+        t += 600_000 // ten minutes in the background
+        m.hold(false)
+        repeat(120) { m.frame(t); t += 16 }
+        assertEquals(0, m.slowSeconds)
+        assertTrue(m.stalls.isEmpty())
+        assertTrue(m.longestStallMs < 100)
+    }
+
+    @Test
+    fun mashAlternatesLAndRAsTheGameAsks() {
+        // Checked in Ghost of Sparta: L and R, 4 frames held and 3 apart, twelve times, escapes the boat's first grab.
+        val frames = PspSteps.frames(PspProfile.MASH_LR)
+        val l = PspProfile.keyCode(com.kofarcade.core.Key.E)!!
+        val r = PspProfile.keyCode(com.kofarcade.core.Key.F)!!
+        val pressed = frames.filter { it.isNotEmpty() }.map { it.single() }
+        val presses = pressed.zipWithNext().count { (a, b) -> a != b } + 1
+        assertTrue("$presses presses", presses >= 24)
+        assertEquals(setOf(l, r), pressed.toSet())
+    }
+
+    @Test
+    fun godOfWarSaysWhenItsPlayedSoTheStickSwitchesByItself() {
+        // Found in the game: 4 while Kratos is played, 0 in menus and story.
+        assertEquals(0xC5D8D1 to 4, PspProfile.GOD_OF_WAR.inPlay)
+        // A game without one keeps the D-PAD switch.
+        assertEquals(null, PspProfile().inPlay)
     }
 }

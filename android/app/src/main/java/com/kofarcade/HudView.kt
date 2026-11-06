@@ -549,8 +549,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
             // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row;
-            // a fourth (a PSP game's) beside C, on the top row.
-            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s))
+            // a fourth (a PSP game's) beside C, on the top row; a fifth on the bottom row past the ring.
+            listOf(
+                Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s),
+                // A fifth (a PSP game's Mash): on the bottom row, past the ring.
+                Pt(-5.25f * s, 0.6f * s),
+            )
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
         st.system.indices.forEach { i ->
@@ -1078,12 +1082,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // (shrunk to fit when drawn). A very long one (Garou's Deadly Rave) shows
     // how it starts: all of it wouldn't be readable in a button.
     /** A PSP game's own steps ("pad:6,BE", "hold:A"), shown as text: they aren't arcade commands. */
-    private fun isPspSteps(cmd: String) = ':' in cmd
+    private fun isPspSteps(cmd: String) = ':' in cmd || '>' in cmd
 
     private fun pspStepsText(cmd: String): String = cmd.split(',').joinToString(" ") { step ->
         when {
             step.startsWith("pad:") -> "✚" + toArrows(step.removePrefix("pad:"))
             step.startsWith("hold:") -> "hold " + step.removePrefix("hold:").map(::buttonName).joinToString("")
+            // "E>D": the first held, then the second: "L›○".
+            '>' in step -> step.split('>').joinToString("›") { part -> part.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+") }
             else -> step.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+")
         }
     }

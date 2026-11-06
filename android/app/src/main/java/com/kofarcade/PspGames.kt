@@ -14,6 +14,24 @@ import java.util.zip.ZipInputStream
  * images, as PPSSPP reads them. A download packed as .7z or .zip is
  * unpacked on the way in, so a game is always one ready file.
  */
+/**
+ * A PSP game the app knows by name: a card of its own on Home, with its
+ * picture (packed at build time from libretro's PSP collection, psp-art.txt).
+ * The owner's copy, once added, is the file whose name says [match].
+ */
+data class PspTitle(val id: String, val title: String, val subtitle: String, val match: String, val art: String) {
+    fun copyIn(games: List<File>): File? = games.firstOrNull { PspGames.title(it).lowercase().contains(match) }
+
+    companion object {
+        val ALL = listOf(
+            PspTitle(
+                "gos", "God of War", "Ghost of Sparta", "ghost of sparta",
+                "Named_Titles/God of War - Ghost of Sparta (USA) (En,Fr,Es).png",
+            ),
+        )
+    }
+}
+
 object PspGames {
     /** A PSP game's last session log ([GameLogs]). */
     fun logFile(filesDir: File, game: String) = GameLogs.file(filesDir, "psp-$game")
@@ -95,7 +113,9 @@ object PspGames {
  * behind (the game never slows; a frame's picture is skipped instead).
  */
 data class PspSettings(
-    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.AUTO,
+    // Off: the owner's log (2026-11-07) ran steadier with it off than on Auto (sound drops
+    // from thousands a second to almost none, 58-60 fps); Auto stays a choice.
+    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.OFF,
     /** 1 = the PSP's own 480x272, 2 = twice as sharp (costs the graphics chip). */
     val resolution: Int = 1,
     /** Skips some full-screen effects (glows, blur) for speed. */
@@ -137,6 +157,12 @@ object PspSpeed {
         "ppsspp_frameskip" to settings.frameSkip.value,
         "ppsspp_frameskiptype" to "Number of frames",
         "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
+        // A frame for every one of the screen's, even when the game shows a
+        // new picture less often (its story videos): without it each frame we
+        // ask for ran on to the game's next picture, and Ghost of Sparta's
+        // story played about 1.5x fast (checked in the game: 67,000 sound
+        // samples a second instead of 44,100; with it, 44,100).
+        "ppsspp_frame_duplication" to "enabled",
     )
 }
 
@@ -162,6 +188,13 @@ data class PspProfile(
     val blockHoldsL: Boolean = false,
     /** One-tap moves on the ring, like a fighter's specials. */
     val moves: List<Move> = emptyList(),
+    /**
+     * Where the game says the player has control (a byte of its RAM, from the
+     * start of the PSP's main memory) and the value meaning yes: the stick
+     * works the analog stick then, and the D-pad in menus and story. Null:
+     * a D-PAD switch on the top bar instead.
+     */
+    val inPlay: Pair<Int, Int>? = null,
 ) {
     companion object {
         /**
@@ -173,19 +206,31 @@ data class PspProfile(
          * Hyperion Charge; L+✕ casts the magic picked with the D-pad (→ Eye of
          * Atlantis, ← Scourge of Erinys, ↑ Horn of Boreas); D-pad ↓ swaps
          * weapons.
+         *
+         * Checked in the game (tools/pspemu.py, the boat's first fight): □, △
+         * and ○ attack; L, then ○ while L is held, is Hyperion Charge (both at
+         * once is just ○); with L held, □ △ ✕ do nothing before Kratos has
+         * magic; □ □ △ (Spirit of Hercules) and □ held (Cyclone of Chaos)
+         * each come out as their own combo; L+R with the stick rolls; the Mash
+         * pill escapes the first grab.
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2")),
+            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
+            // Found in the game (tools/pspemu.py): 4 while Kratos is played
+            // (fights, grabs, prompts); 0 on the title, difficulty, pause,
+            // Power Up and "You are dead" screens and in story videos; 2-3 for
+            // a moment between them. Its neighbour at +8 reads the same.
+            inPlay = 0xC5D8D1 to 4,
             moves = listOf(
-                Move("Hyperion Charge", "DE"),
+                Move("Hyperion Charge", "E>D"),
                 Move("Spirit of Hercules", "A,A,C"),
                 Move("Cyclone of Chaos", "hold:A", "dm"),
-                Move("Atlas Spark", "pad:6,BE", "dm"),
-                Move("Erinys Void", "pad:4,BE", "dm"),
-                Move("Boreas Freeze", "pad:8,BE", "dm"),
+                Move("Atlas Spark", "pad:6,E>B", "dm"),
+                Move("Erinys Void", "pad:4,E>B", "dm"),
+                Move("Boreas Freeze", "pad:8,E>B", "dm"),
             ),
         )
 
@@ -195,6 +240,13 @@ data class PspProfile(
         /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
         const val HOLD_L = "held:E"
         const val HOLD_R = "held:F"
+
+        /**
+         * The game's "alternate L and R quickly" prompts (a grab to escape, a
+         * door to push): L, R, L, R… twelve times, about two seconds. Checked
+         * in Ghost of Sparta: it escapes the first grab on the boat.
+         */
+        val MASH_LR: String get() = List(12) { "E,F" }.joinToString(",")
 
         /** The profile for a game, from its title. */
         fun forTitle(title: String): PspProfile = when {
@@ -229,11 +281,20 @@ object PspSteps {
     const val GAP = 3
     const val HOLD = 45
 
-    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") }
+    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") || '>' in it }
 
     /** The key codes held on each frame, in order (an empty set lets everything go). */
     fun frames(cmd: String): List<Set<Int>> = buildList {
         for (step in cmd.split(',')) {
+            // "E>D": E held first, then D with it (God of War: L, then ○ while L is
+            // held, is Hyperion Charge; both at once is just ○, checked in the game).
+            if ('>' in step) {
+                val (first, then) = step.split('>', limit = 2)
+                repeat(TAP * 2) { add(keys(first)) }
+                repeat(TAP + 2) { add(keys(first) + keys(then)) }
+                repeat(GAP) { add(emptySet()) }
+                continue
+            }
             val (keys, frames) = when {
                 step.startsWith("pad:") -> setOfNotNull(dpad(step.removePrefix("pad:").toIntOrNull())) to TAP + 2
                 step.startsWith("hold:") -> keys(step.removePrefix("hold:")) to HOLD

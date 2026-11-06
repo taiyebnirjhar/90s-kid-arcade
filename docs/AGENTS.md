@@ -110,7 +110,7 @@ behind a key) inside the app.
 | `LibraryDialog.kt`, `Library.kt`, `LibraryDownloads.kt`, `DownloadService.kt` | My Library: the R2 library client (whole-file downloads, resume), the app-wide download queue, the foreground service. |
 | `Onboarding.kt` | First-run welcome (photo with pixel shades, key, BIOS, save matches?, favourite games). |
 | `GameLog.kt` | Every game's session log (Settings → Game log tab, pause menu → Game log): `SpeedMeter` (frames per second, stalls), `GameLog` (header, speed timeline, stalls, events, a room's `NetLog`), `GameLogs` (saved per game in `logs/`, copy, send). |
-| `PspActivity.kt`, `PspGameActivity.kt`, `PspGames.kt` | PSP games (docs/psp-plan.md): the list and "Add a game" (a .7z/.zip download unpacked, or .iso/.cso/.chd), the game screen running PPSSPP with the fast settings, the arcade controls (`HudView`, KOF 2002 layout) with each game's `PspProfile` on top (names, pills, Block, ring moves; A-D = □ ✕ △ ○, E/F = L/R, COIN = SELECT) and gamepad, the arcade's pause menu, Settings and layout editor (shared settings; layouts per game and hand), Graphics & speed per game (`PspStore`), the speed counter (off by default) and the game log (pause menu or Settings → Game log; a Log button per game in the list). Kept apart from `GameActivity`: the arcade games are untouched. |
+| `PspActivity.kt`, `PspGameActivity.kt`, `PspGames.kt` | PSP games (docs/psp-plan.md): the list and "Add a game" (a .7z/.zip download unpacked, or .iso/.cso/.chd), the game screen running PPSSPP with the fast settings, the arcade controls (`HudView`, KOF 2002 layout) with each game's `PspProfile` on top (names, pills, Block, ring moves; A-D = □ ✕ △ ○, E/F = L/R, COIN = SELECT) and gamepad, the arcade's pause menu, Settings and layout editor (shared settings; layouts per game and hand), Graphics & speed per game (`PspStore`), the speed counter (off by default) and the game log (pause menu or Settings → Game log; a Log button per game in the list). Kept apart from `GameActivity`: the arcade games are untouched. | Home's PSP row: `PspTitle` (PspGames.kt) and `PspCard` (Home.kt); pictures listed in `app/psp-art.txt`.
 | `Replays.kt` | The Replays page (home chip): saved matches, star, delete, watch; the saving switch. |
 | `VideoMaker.kt`, `Videos.kt` | A match's video: the emulator's capture encoded to MP4 (H.264 + AAC, sharp pixels); into the gallery and the share buttons (WhatsApp, Messenger, Facebook, More). |
 | `Matches.kt` | Saving matches: `MatchStore` (files in `filesDir/matches`, newest 20 + starred), `MatchTaker` (starts and keeps recordings while a game runs; see recording-plan.md). |
@@ -142,6 +142,7 @@ All from `android/` unless said.
 | Native pacing/sound tests | `g++ -std=c++17 -O2 -Ilibretrodroid/src/test/cpp/stub -Ilibretrodroid/src/main/cpp libretrodroid/src/test/cpp/playback_test.cpp libretrodroid/src/main/cpp/fpssync.cpp libretrodroid/src/main/cpp/audiopipe.cpp -o /tmp/pb && /tmp/pb` | CI runs the same. |
 | Server tests | from the repo root: `PGURL="postgresql://postgres@localhost:5433/postgres" server/test.sh` | Needs Postgres 16. In the cloud sandbox: `su postgres -c "/usr/lib/postgresql/16/bin/pg_ctl -D /var/tmp/pg/data -o '-p 5433 -k /tmp' -l /var/tmp/pg/log start"` (create with `initdb` if missing). |
 | Live online end to end | `LIVE_SUPABASE_URL=https://ysbskjtvccdbhnfuccso.supabase.co LIVE_SUPABASE_KEY=sb_publishable_ZdWmdg-2_f5_rvnzhiviYQ_VSUnZPIE ./gradlew -q -p core test --tests 'com.kofarcade.core.net.LiveOnlineTest' --rerun-tasks -i` | Two phones in one process on the real server and real WebRTC (locked room: play, chat, voice, friends). The open-room case needs `LIVE_OPEN=1` and a network with UDP to the relay (not the sandbox). |
+| Run a PSP game here | `Xvfb :99 &` then `DISPLAY=:99 python3` with `tools/pspemu.py` (`from pspemu import Psp`) | PPSSPP with the app's settings on a hidden OpenGL window (Mesa llvmpipe); frames, the app's buttons and stick, screenshots, save states, sound samples (a game running fast shows as more than 44,100 a second). Core, assets and the game in `emu/psp/` (never committed). |
 | Website preview | Playwright (preinstalled) on `site/index.html`; the share card: Chrome `--headless=new --screenshot --window-size=1200,630 file://…/site/share-card.html` | |
 
 **Release** (automatic): every merge to main → `android.yml` builds the
@@ -166,7 +167,9 @@ with a sleeping foreground command.
   Worker `arcade-roms.taiyebnirjhor.workers.dev`, DNS for
   `taiyebnirjhor.com` (`arcade` CNAME → GitHub Pages).
 - **Problem reports:** phones send their connection log when a join/room
-  fails (`Online.reportProblem`; players can turn it off). A reader account
+  fails (`Online.reportProblem`; players can turn it off), and game logs
+  (kind `game`: Game log → Send to us, or by itself after a freeze of 2 s
+  or more; `Online.sendGameLog`). A reader account
   (in table `problem_readers`) reads them with `read_problem_reports`; its
   login is with the owner, never in the repo. Read them over the REST API
   from the sandbox when asked; never print them in public CI logs.
