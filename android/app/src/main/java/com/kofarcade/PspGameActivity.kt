@@ -100,7 +100,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     @Volatile private var steps: List<Set<Int>> = emptyList()
     private var stepsHeld: Set<Int> = emptySet()
     private val meter = SpeedMeter()
-    private val log = PspLog(SystemClock::elapsedRealtime)
+    private val log = GameLog(SystemClock::elapsedRealtime)
     private var paused = false
 
     var title by mutableStateOf("")
@@ -263,7 +263,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         prefs.pressFrames = l.pressFrames
         prefs.soundOn = l.sound
         prefs.volume = l.volume
-        log.event("Settings saved: ${lookLine(l)}")
+        log.event("Settings saved: ${GameLogs.look(l)}")
         applyLook(prefs.look())
     }
 
@@ -378,51 +378,25 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     /** The whole game log, to paste into a chat. */
     fun logText(): String = log.text(logHeader(), meter)
 
-    fun copyLog() {
-        val cm = getSystemService(android.content.ClipboardManager::class.java)
-        cm.setPrimaryClip(android.content.ClipData.newPlainText("PSP game log", logText()))
-        Toast.makeText(this, "Game log copied: paste it in the chat", Toast.LENGTH_SHORT).show()
-    }
+    fun copyLog(text: String) = GameLogs.copy(this, text)
 
-    fun sendLog() {
-        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade PSP game log")
-            .putExtra(Intent.EXTRA_TEXT, logText())
-        startActivity(Intent.createChooser(send, "Send the game log"))
-    }
+    fun sendLog(text: String) = GameLogs.send(this, text)
 
     /** Kept on the phone after quitting (the PSP games list copies it): the last session per game. */
-    private fun saveLog() {
-        val text = logText()
-        val file = PspGames.logFile(filesDir, gameFile.name)
-        Thread { runCatching { file.parentFile?.mkdirs(); file.writeText(text) } }.start()
-    }
+    private fun saveLog() = GameLogs.save(PspGames.logFile(filesDir, gameFile.name), logText())
 
     /** The phone, the app, the game and its settings: the log's first lines. */
     private fun logHeader(): List<String> {
-        val soc = if (android.os.Build.VERSION.SDK_INT >= 31) "${android.os.Build.SOC_MANUFACTURER} ${android.os.Build.SOC_MODEL}" else android.os.Build.HARDWARE
-        val ram = runCatching {
-            val mi = android.app.ActivityManager.MemoryInfo()
-            getSystemService(android.app.ActivityManager::class.java).getMemoryInfo(mi)
-            "${mi.totalMem / 1_000_000_000.0}".take(3) + " GB RAM, ${mi.availMem / 1_000_000} MB free"
-        }.getOrDefault("RAM unknown")
-        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
         val hz = runCatching { display?.refreshRate?.toInt() }.getOrNull() ?: 0
-        return listOf(
-            "90s Kid Arcade $version · PSP game log",
-            "Phone: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, $soc, Android ${android.os.Build.VERSION.RELEASE}, $ram, screen $hz Hz",
-            "Game: $title (${gameFile.name}, ${gameFile.length() / 1_000_000} MB)",
+        return GameLogs.phone(this, hz) + listOf(
+            "PSP game: $title (${gameFile.name}, ${gameFile.length() / 1_000_000} MB)",
             "Graphics & speed: ${settingsLine(graphics)}",
-            "Controls: ${lookLine(look)}",
+            "Controls: ${GameLogs.look(look)}",
         )
     }
 
     private fun settingsLine(s: PspSettings) =
         "frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, faster effects ${if (s.fasterEffects) "on" else "off"}"
-
-    private fun lookLine(l: Look) =
-        "stick ${l.stick.name.lowercase()}, size ${(l.size * 100).toInt()}%, see-through ${(l.opacity * 100).toInt()}%, " +
-            "${if (l.leftHanded) "left" else "right"}-handed, sound ${if (l.sound) "${(l.volume * 100).toInt()}%" else "off"}"
 
     fun restartCount() {
         log.event("Speed count restarted")
@@ -621,7 +595,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                     fighter = null,
                     netplay = false,
                     playback = speedLine.ifEmpty { null },
-                    onReport = ::sendLog,
+                    onReport = { sendLog(logText()) },
                     soundOn = look.sound,
                     onSound = ::toggleSound,
                     onResume = ::close,
@@ -639,8 +613,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 )
             }
             Sheet.SETTINGS -> PspSettingsSheet(this)
+            Sheet.LOG -> PspSettingsSheet(this, SettingsTab.LOG)
             Sheet.GRAPHICS -> Overlay(onDismiss = ::close, scrim = false) { PspGraphicsPanel(this) }
-            Sheet.LOG -> Overlay(onDismiss = ::close) { PspLogSheet(this) }
             null -> Unit
         }
     }
@@ -663,7 +637,7 @@ private fun SpeedLine(text: String) {
 
 /** Settings: the arcade's own panel (stick, size, see-through, side, vibration, sound, move timing), shared with every game. */
 @Composable
-private fun PspSettingsSheet(game: PspGameActivity) {
+private fun PspSettingsSheet(game: PspGameActivity, startTab: SettingsTab = SettingsTab.SCREEN) {
     var look by remember { mutableStateOf(game.look) }
     Overlay(onDismiss = game::close, scrim = false) {
         ControlsPanel(
@@ -680,6 +654,10 @@ private fun PspSettingsSheet(game: PspGameActivity) {
                 game.saveLook(look)
                 game.close()
             },
+            startTab = startTab,
+            gameLog = game::logText,
+            onCopyLog = game::copyLog,
+            onSendLog = game::sendLog,
         )
     }
 }
@@ -717,31 +695,6 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
                 Spacer(Modifier.padding(4.dp))
                 GoldButton("Done", { game.close() }, compact = true)
             }
-        }
-    }
-}
-
-/** The game log: everything the session went through, to copy into the chat (or send). */
-@Composable
-private fun PspLogSheet(game: PspGameActivity) {
-    val text = remember { game.logText() }
-    SheetFrame(
-        width = 520,
-        footer = {
-            Row {
-                GhostButton("Close", { game.close() }, compact = true)
-                Spacer(Modifier.padding(4.dp))
-                GhostButton("Send", { game.sendLog() }, compact = true)
-                Spacer(Modifier.padding(4.dp))
-                GoldButton("Copy", { game.copyLog() }, compact = true)
-            }
-        },
-    ) {
-        Text("GAME LOG", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-        Text("Copy it and paste it in the chat: it shows what happened, second by second.", color = Palette.muted, fontSize = 11.sp)
-        Spacer(Modifier.height(8.dp))
-        Box(Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(8.dp)).background(Palette.bg).padding(8.dp)) {
-            Text(text, color = Palette.text, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.verticalScroll(rememberScrollState()))
         }
     }
 }

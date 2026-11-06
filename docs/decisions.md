@@ -623,11 +623,26 @@ decision was made in the conversation. Get the time now with
   shares it. It is saved on pause and quit (`psp/logs/<game>.txt`), and the
   PSP list has a **Log** button per game to copy the last one (`PspLog`).
 
+### 2026-11-06 16:13 Dhaka · A game log for every game, alone and online
+- Owner: "Make for all games. So i can just copy and give u logs for both
+  online and offline plays".
+- Decided: every game's Settings has a **Game log** tab (and the pause menu
+  a "Game log" item that opens it), arcade and PSP, alone, in a room or
+  watching: phone and app, the game and how it's played (alone, nearby or
+  online room, host or player), the room's status and ping, controls,
+  speed second by second (frames counted on the emulator's thread; under
+  52 fps is slow for an arcade board, under 57 for the PSP), stalls, late
+  frames and sound gaps, what was done, and the room's connection log
+  (`NetLog`). **Copy** and **Send**. The last session per game is saved
+  (`logs/<game>.txt`) on leaving the app, quitting, an error or a room
+  ending. One shared piece: `GameLog`, `SpeedMeter`, `GameLogs`
+  (`GameLog.kt`) and the tab in `ControlsPanel`.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 16:08 Dhaka:
+As of 2026-11-06 16:13 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
@@ -636,6 +651,7 @@ As of 2026-11-06 16:08 Dhaka:
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
+  - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
   - Ghost of Sparta as a Google Drive link, to check every input in the game here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights

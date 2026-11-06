@@ -15,6 +15,9 @@ import java.util.zip.ZipInputStream
  * unpacked on the way in, so a game is always one ready file.
  */
 object PspGames {
+    /** A PSP game's last session log ([GameLogs]). */
+    fun logFile(filesDir: File, game: String) = GameLogs.file(filesDir, "psp-$game")
+
     /** What PPSSPP plays: disc images (plain, CSO, CHD) and PSN eboots. */
     val GAME_TYPES = setOf("iso", "cso", "chd", "pbp")
 
@@ -25,7 +28,6 @@ object PspGames {
         dir.listFiles { f -> f.isFile && isGame(f.name) }.orEmpty().sortedBy { it.name.lowercase() }
 
     /** Where a game's last session log is kept. */
-    fun logFile(filesDir: File, game: String) = File(filesDir, "psp/logs/$game.txt")
 
     /** "God of War - Ghost of Sparta (USA)" from its file name. */
     fun title(file: File): String = file.nameWithoutExtension.replace('_', ' ').trim()
@@ -136,76 +138,6 @@ object PspSpeed {
         "ppsspp_frameskiptype" to "Number of frames",
         "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
     )
-}
-
-/**
- * How fast the game runs, second by second, for the plan's rule: full speed in
- * 99% of seconds, no stall over a second. The PSP draws 59.94 frames a
- * second; a second with fewer than [SLOW_BELOW] counts as slow.
- */
-class SpeedMeter {
-    /** Stalls of a quarter second or more: when (seconds into the count) and how long (ms). */
-    private val stallList = ArrayList<Pair<Int, Long>>()
-    val stalls: List<Pair<Int, Long>> @Synchronized get() = stallList.toList()
-
-    /** Every second's frame count, in order, for the game log's timeline. */
-    private val history = ArrayList<Int>()
-    val perSecond: List<Int> @Synchronized get() = history.toList()
-
-    var seconds = 0
-        private set
-    var slowSeconds = 0
-        private set
-    var lastFps = 0
-        private set
-    /** The longest gap between two frames so far (ms). */
-    var longestStallMs = 0L
-        private set
-
-    private var secondStart = -1L
-    private var framesThisSecond = 0
-    private var lastFrame = -1L
-
-    /** A frame came out at [nowMs]. */
-    @Synchronized
-    fun frame(nowMs: Long) {
-        if (lastFrame >= 0) {
-            val gap = nowMs - lastFrame
-            longestStallMs = maxOf(longestStallMs, gap)
-            if (gap >= STALL_MS) stallList += seconds to gap
-        }
-        lastFrame = nowMs
-        if (secondStart < 0) secondStart = nowMs
-        framesThisSecond++
-        while (nowMs - secondStart >= 1000) close()
-    }
-
-    private fun close() {
-        lastFps = framesThisSecond
-        history += framesThisSecond
-        seconds++
-        if (framesThisSecond < SLOW_BELOW) slowSeconds++
-        framesThisSecond = 0
-        secondStart += 1000
-    }
-
-    /** Percent of seconds at full speed (100 before the first second). */
-    val fullSpeedPercent: Int get() = if (seconds == 0) 100 else ((seconds - slowSeconds) * 100) / seconds
-
-    @Synchronized
-    fun reset() {
-        stallList.clear()
-        history.clear()
-        seconds = 0; slowSeconds = 0; lastFps = 0; longestStallMs = 0
-        secondStart = -1; framesThisSecond = 0; lastFrame = -1
-    }
-
-    companion object {
-        /** 95% of 59.94: a second under this the eye sees as slow. */
-        const val SLOW_BELOW = 57
-        /** A gap this long between frames counts as a stall. */
-        const val STALL_MS = 250L
-    }
 }
 
 /**
@@ -321,60 +253,5 @@ object PspSteps {
         4 -> android.view.KeyEvent.KEYCODE_DPAD_LEFT
         6 -> android.view.KeyEvent.KEYCODE_DPAD_RIGHT
         else -> null
-    }
-}
-
-/**
- * A PSP game session's log, for the owner to copy into a chat: what the
- * phone is, the game and its settings, a second-by-second speed timeline
- * (full-speed stretches in one line, every slow second with its frame
- * count), every stall, and what was done (pause, save, settings…), each at
- * its time into the session.
- */
-class PspLog(private val now: () -> Long) {
-    private val start = now()
-    private val events = ArrayList<Pair<Long, String>>()
-
-    @Synchronized
-    fun event(text: String) {
-        events += (now() - start) to text
-        if (events.size > 2000) events.removeAt(0)
-    }
-
-    /** The whole log: [header] lines first (phone, app, game, settings), then [meter]'s timeline and stalls, then the events. */
-    @Synchronized
-    fun text(header: List<String>, meter: SpeedMeter): String = buildString {
-        header.forEach { appendLine(it) }
-        appendLine("Session: ${clock((now() - start) / 1000)}")
-        appendLine("Full speed: ${meter.fullSpeedPercent}% of ${meter.seconds} s (slow ${meter.slowSeconds}), longest stall ${meter.longestStallMs} ms")
-        appendLine()
-        appendLine("Speed, second by second (counted since the last restart of the count):")
-        timeline(meter.perSecond).forEach { appendLine("  $it") }
-        appendLine()
-        val stalls = meter.stalls
-        appendLine("Stalls over ${SpeedMeter.STALL_MS} ms: ${if (stalls.isEmpty()) "none" else stalls.size}")
-        stalls.forEach { (sec, ms) -> appendLine("  at ${clock(sec.toLong())}: $ms ms") }
-        appendLine()
-        appendLine("What happened:")
-        events.forEach { (ms, t) -> appendLine("  ${clock(ms / 1000)} $t") }
-    }
-
-    companion object {
-        fun clock(seconds: Long) = "${seconds / 60}:${"%02d".format(seconds % 60)}"
-
-        /** Full-speed stretches as one line ("0:00-2:14 full speed"), slow seconds grouped with their frame counts. */
-        fun timeline(perSecond: List<Int>): List<String> {
-            val out = ArrayList<String>()
-            var i = 0
-            while (i < perSecond.size) {
-                val slow = perSecond[i] < SpeedMeter.SLOW_BELOW
-                var j = i
-                while (j + 1 < perSecond.size && (perSecond[j + 1] < SpeedMeter.SLOW_BELOW) == slow) j++
-                val range = if (i == j) clock(i.toLong()) else "${clock(i.toLong())}-${clock(j.toLong())}"
-                out += if (slow) "$range slow: ${perSecond.subList(i, j + 1).joinToString(", ")} fps" else "$range full speed"
-                i = j + 1
-            }
-            return out
-        }
     }
 }

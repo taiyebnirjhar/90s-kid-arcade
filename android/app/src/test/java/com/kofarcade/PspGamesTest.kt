@@ -143,7 +143,7 @@ class PspGamesTest {
     @Test
     fun theGameLogShowsTheTimelineStallsAndEvents() {
         var t = 0L
-        val log = PspLog { t }
+        val log = GameLog { t }
         val m = SpeedMeter()
         // 3 seconds at full speed, 2 slow, then full speed again with a stall.
         repeat(180) { m.frame(t); t += 16 + (it % 3).coerceAtMost(1) }
@@ -157,6 +157,17 @@ class PspGamesTest {
         assertTrue(text, text.contains("slow: "))
         assertTrue(text, text.contains("Stalls over 250 ms: 1"))
         assertTrue(text, text.contains("Paused (pause)"))
-        assertEquals(listOf("0:00-0:01 full speed", "0:02 slow: 40 fps", "0:03-0:04 full speed"), PspLog.timeline(listOf(60, 60, 40, 60, 59)))
+        assertEquals(listOf("0:00-0:01 full speed", "0:02 slow: 40 fps", "0:03-0:04 full speed"), GameLog.timeline(listOf(60, 60, 40, 60, 59)))
+    }
+
+    @Test
+    fun anArcadeGamesLogCountsSlowByItsOwnRateAndAddsTheRoomsLog() {
+        // A 54 fps board is full speed for an arcade game, slow for a PSP one.
+        assertEquals(listOf("0:00-0:01 full speed"), GameLog.timeline(listOf(54, 55), SpeedMeter.ARCADE_SLOW_BELOW))
+        assertEquals(listOf("0:00-0:01 slow: 54, 55 fps"), GameLog.timeline(listOf(54, 55)))
+        val log = GameLog { 0L }
+        val text = log.text(listOf("Game: KOF"), SpeedMeter(SpeedMeter.ARCADE_SLOW_BELOW), listOf("Connection log:" to "12:00:01.000  Joined", "Empty:" to ""))
+        assertTrue(text, text.contains("Connection log:\n12:00:01.000  Joined"))
+        assertFalse(text, text.contains("Empty:"))
     }
 }

@@ -76,6 +76,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: every game (arcade too, alone and online) has the game log now,
+  as a Game log tab in Settings.
 - 2026-11-06: the game log. Nothing on screen during play (the speed
   counter is off unless switched on); pause menu → Game log shows the
   whole session (phone, settings, speed second by second, stalls, what
