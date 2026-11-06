@@ -716,6 +716,29 @@ decision was made in the conversation. Get the time now with
   the game, a God of War layout, smoothness, the Home card, the library).
   Google Drive can be the library behind the Worker; R2 stays first choice.
 
+### 2026-11-07 00:17 Dhaka · God of War: saves, smoother sound, a true speed count, Mash
+- Owner: sent an hour's game log (1.0.284) and "Do all step phase by phase.
+  I will merge a single pr".
+- The log: (1) story videos dropping ~43,000 sound samples a second: the
+  1.5x story speed, fixed by frame duplication; (2) minutes away from the
+  app counted as stalls (1,488 s) and slow seconds, so "34% full speed" was
+  wrong; (3) hundreds to 2,000 sound samples dropped a second in play
+  (crackles); (4) no save or load in that session.
+- Decided and done:
+  - G1: the game is kept whenever it pauses (a menu, leaving the app) and
+    opening it goes on from there ("Back where you left off"); Start over
+    drops it. Quick save and load as before (a load shows a few frames on).
+  - G4: the speed count holds while the game is paused or in the
+    background, for PSP and arcade (`SpeedMeter.hold`). PSP sound uses the
+    12-frame buffer: PPSSPP hands sound over unevenly (0 to ~2,000 samples
+    a frame, backlogs of ~2,000, measured in the game), which overflowed
+    the 6-frame one.
+  - G2 begun: a **Mash** pill alternates L and R twelve times (the game's
+    "alternate L and R quickly"); checked in the game, it escapes the
+    boat's first grab. On the bottom row past the ring (the layout test
+    found every spot nearer the buttons taken).
+- Next (G2): every move tried in the game, close up; L + each face button.
+
 ---
 
 ## Where things stand (update whenever it changes)

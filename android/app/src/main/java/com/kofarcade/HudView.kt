@@ -549,8 +549,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
             // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row;
-            // a fourth (a PSP game's) beside C, on the top row.
-            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s))
+            // a fourth (a PSP game's) beside C, on the top row; a fifth on the bottom row past the ring.
+            listOf(
+                Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s),
+                // A fifth (a PSP game's Mash): on the bottom row, past the ring.
+                Pt(-5.25f * s, 0.6f * s),
+            )
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
         st.system.indices.forEach { i ->

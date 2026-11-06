@@ -39,9 +39,24 @@ class SpeedMeter(val slowBelow: Int = SLOW_BELOW) {
     private var framesThisSecond = 0
     private var lastFrame = -1L
 
+    /**
+     * Paused (a menu, the app in the background): frames aren't counted, and
+     * the wait isn't a stall; counting starts afresh from the next frame.
+     */
+    @Synchronized
+    fun hold(on: Boolean) {
+        held = on
+        lastFrame = -1
+        secondStart = -1
+        framesThisSecond = 0
+    }
+
+    private var held = false
+
     /** A frame came out at [nowMs]. */
     @Synchronized
     fun frame(nowMs: Long) {
+        if (held) return
         if (lastFrame >= 0) {
             val gap = nowMs - lastFrame
             longestStallMs = maxOf(longestStallMs, gap)

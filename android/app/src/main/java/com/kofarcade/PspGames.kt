@@ -182,7 +182,7 @@ data class PspProfile(
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2")),
+            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             moves = listOf(
@@ -201,6 +201,13 @@ data class PspProfile(
         /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
         const val HOLD_L = "held:E"
         const val HOLD_R = "held:F"
+
+        /**
+         * The game's "alternate L and R quickly" prompts (a grab to escape, a
+         * door to push): L, R, L, R… twelve times, about two seconds. Checked
+         * in Ghost of Sparta: it escapes the first grab on the boat.
+         */
+        val MASH_LR: String get() = List(12) { "E,F" }.joinToString(",")
 
         /** The profile for a game, from its title. */
         fun forTitle(title: String): PspProfile = when {

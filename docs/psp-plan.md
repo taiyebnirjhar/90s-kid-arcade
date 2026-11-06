@@ -127,6 +127,9 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-07: G1 done (goes on from where it was left); G4: speed count
+  holds while paused, PSP sound buffer 12 frames; G2 begun: Mash (L/R),
+  checked in the game. Next: every move tried close up.
 - 2026-11-06: Ghost of Sparta runs in the sandbox (`tools/pspemu.py`). Story
   videos ran ~1.5x fast: `ppsspp_frame_duplication` is now always on. The
   opening story can't be skipped in the game itself.

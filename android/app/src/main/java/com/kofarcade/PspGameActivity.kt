@@ -80,6 +80,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val CORE = "libppsspp_libretro_android.so"
         /** Bump when the bundled PPSSPP assets change, so they're unpacked again. */
         private const val ASSETS_VERSION = 1
+        /** Kept only once the game has run this long (10 s): before, there's nothing to keep. */
+        private const val KEEP_AFTER_FRAMES = 600L
+        /** Goes on from where it was left once the core has booted (1 s in). */
+        private const val RESUME_AT_FRAME = 60L
     }
 
     /** What's open over the game. */
@@ -159,7 +163,11 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             gameFilePath = gameFile.absolutePath
             systemDirectory = system.absolutePath
             savesDirectory = File(filesDir, "psp/saves").apply { mkdirs() }.absolutePath
-            preferLowLatencyAudio = true
+            // PPSSPP hands its sound over unevenly (0 to ~2,000 samples a frame,
+            // backlogs of ~2,000 in Ghost of Sparta's play, measured in the game):
+            // the low-latency buffer (6 frames) overflowed and dropped sound
+            // (crackles, the owner's log). The regular one holds 12 frames.
+            preferLowLatencyAudio = false
             rumbleEventsEnabled = false
             shader = shaderFor(graphics.picture)
             variables = variables(graphics)
@@ -195,7 +203,12 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         GameLogs.watchPlayback(this, log, meter)
 
         lifecycleScope.launch {
-            retroView.getGLRetroEvents().collect { if (it is GLRetroView.GLRetroEvents.FrameRendered) hud.onFrame(++frame) }
+            retroView.getGLRetroEvents().collect {
+                if (it is GLRetroView.GLRetroEvents.FrameRendered) {
+                    hud.onFrame(++frame)
+                    if (frame == RESUME_AT_FRAME) goOnWhereLeft()
+                }
+            }
         }
         lifecycleScope.launch {
             while (true) {
@@ -320,6 +333,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
     private fun sysHint(cmd: String): String = when {
+        cmd == PspProfile.MASH_LR -> "L R L R"
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
         else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
@@ -327,9 +341,57 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     // ----- Pause, sheets, save states -----
 
     fun open(s: Sheet) {
-        if (sheet == null && !paused) log.event("Paused (${s.name.lowercase()})")
+        if (sheet == null && !paused) {
+            log.event("Paused (${s.name.lowercase()})")
+            keepPlace()
+        }
         sheet = s
         pauseGame()
+    }
+
+    // ----- Where you left off -----
+
+    /** The game as it was when last paused or left: opening it goes on from there. */
+    private val placeFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.auto.state")
+
+    /**
+     * The game's paused (a menu, or the app left): kept, so the next time it
+     * opens it goes on from here, as the arcade games do. Not in the first
+     * seconds (nothing to keep yet), and written whole or not at all.
+     */
+    private fun keepPlace() {
+        if (frame < KEEP_AFTER_FRAMES) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                val bytes = retroView.serializeState()
+                if (bytes.isEmpty()) return@runCatching
+                val tmp = File(placeFile.path + ".part")
+                tmp.writeBytes(bytes)
+                if (!tmp.renameTo(placeFile)) tmp.delete()
+            }.onFailure { log.event("Couldn't keep the place: ${it.message}") }
+        }
+    }
+
+    /**
+     * Goes on from where the game was left, once it's running (the core
+     * loads a state only after it has booted; it shows a few frames later).
+     */
+    private fun goOnWhereLeft() {
+        val file = placeFile
+        if (!file.isFile) return
+        lifecycleScope.launch {
+            val bytes = withContext(Dispatchers.IO) { runCatching { file.readBytes() }.getOrNull() } ?: return@launch
+            repeat(5) {
+                val ok = withContext(Dispatchers.IO) { runCatching { retroView.unserializeState(bytes) }.getOrDefault(false) }
+                if (ok) {
+                    log.event("Went on from where it was left")
+                    Toast.makeText(this@PspGameActivity, "Back where you left off", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                delay(500)
+            }
+            log.event("Couldn't go on from where it was left: started afresh")
+        }
     }
 
     fun close() {
@@ -342,6 +404,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun pauseGame() {
         if (paused) return
         paused = true
+        meter.hold(true)
         hud.releaseAll()
         pad.cancel()
         // Frozen rather than stopped, so the picture still redraws behind the menu.
@@ -352,6 +415,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun resumeGame() {
         if (!paused) return
         paused = false
+        meter.hold(false)
         LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
     }
@@ -382,6 +446,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     fun startOver() {
         log.event("Started over")
+        placeFile.delete()
         close()
         retroView.reset()
         meter.reset()

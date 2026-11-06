@@ -504,6 +504,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onResume() {
         super.onResume()
+        if (dialog == null || room != null) meter.hold(false)
         // Back in this game (from another app, say): it's the one played last.
         if (replay == null) prefs.lastGame = game.id
         // The emulator resumes itself with the activity; keep it paused if a
@@ -1813,6 +1814,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     override fun onPause() {
         log.event(if (isFinishing) "Quit" else "Left the app")
+        meter.hold(true)
         saveLog()
         // Leaving the game: the match so far is kept (before the emulator goes).
         if (isFinishing) matchTaker?.finish()
@@ -2168,6 +2170,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     fun show(d: GameDialog) {
         if (dialog == null) log.event("Opened ${dialogName(d)}")
+        // Alone the game stops under a dialog: that wait isn't play.
+        if (room == null && d !is GameDialog.Room) meter.hold(true)
         dialog = d
         // The room sheet sits over the game without stopping it (for anyone).
         if (d !is GameDialog.Room) pauseEmulation()
@@ -2238,6 +2242,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun close(after: (suspend () -> Unit)? = null) {
         if (dialog != null) log.event("Back to the game")
         dialog = null
+        meter.hold(false)
         resumeEmulation()
         if (after != null) {
             lifecycleScope.launch {

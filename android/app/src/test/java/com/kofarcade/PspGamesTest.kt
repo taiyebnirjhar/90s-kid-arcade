@@ -104,7 +104,7 @@ class PspGamesTest {
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
         assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
-        assertEquals(listOf("L", "R", "Roll", "Weapon"), p.system.map { it.name })
+        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash"), p.system.map { it.name })
         // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
@@ -190,5 +190,32 @@ class PspGamesTest {
     fun storyVideosPlayAtTheGamesOwnSpeed() {
         // Without it, a frame ran on to the game's next picture: story videos 1.5x fast.
         assertEquals("enabled", PspSpeed.options(PspSettings())["ppsspp_frame_duplication"])
+    }
+
+    @Test
+    fun timeAwayFromTheGameIsNeitherSlowNorAStall() {
+        val m = SpeedMeter()
+        var t = 0L
+        repeat(120) { m.frame(t); t += 16 }
+        m.hold(true)
+        repeat(100) { m.frame(t); t += 16 } // a menu's redraws: not counted
+        t += 600_000 // ten minutes in the background
+        m.hold(false)
+        repeat(120) { m.frame(t); t += 16 }
+        assertEquals(0, m.slowSeconds)
+        assertTrue(m.stalls.isEmpty())
+        assertTrue(m.longestStallMs < 100)
+    }
+
+    @Test
+    fun mashAlternatesLAndRAsTheGameAsks() {
+        // Checked in Ghost of Sparta: L and R, 4 frames held and 3 apart, twelve times, escapes the boat's first grab.
+        val frames = PspSteps.frames(PspProfile.MASH_LR)
+        val l = PspProfile.keyCode(com.kofarcade.core.Key.E)!!
+        val r = PspProfile.keyCode(com.kofarcade.core.Key.F)!!
+        val pressed = frames.filter { it.isNotEmpty() }.map { it.single() }
+        val presses = pressed.zipWithNext().count { (a, b) -> a != b } + 1
+        assertTrue("$presses presses", presses >= 24)
+        assertEquals(setOf(l, r), pressed.toSet())
     }
 }
