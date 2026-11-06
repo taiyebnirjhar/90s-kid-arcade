@@ -56,6 +56,8 @@ import com.kofarcade.core.Timing
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.LibretroDroid
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.swordfish.libretrodroid.ShaderConfig
 import com.swordfish.libretrodroid.Variable
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +86,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val KEEP_AFTER_FRAMES = 600L
         /** Goes on from where it was left once the core has booted (1 s in). */
         private const val RESUME_AT_FRAME = 60L
+        /** RETRO_MEMORY_SYSTEM_RAM: the PSP's main memory, from 0x08000000. */
+        private const val SYSTEM_RAM = 2
     }
 
     /** What's open over the game. */
@@ -201,6 +205,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
         GameLogs.watchPlayback(this, log, meter)
+        followTheGame()
 
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect {
@@ -316,8 +321,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 }
             },
             block = profile.blockHoldsL,
-            // The menus only answer the D-pad: the stick switches to it here.
-            facingButton = true,
+            // The menus only answer the D-pad: the stick switches to it here,
+            // by itself for a game that says when it's played (God of War).
+            facingButton = profile.inPlay == null,
             switchLabel = "D-PAD",
             switchOn = stickIsDpad,
             size = look.size,
@@ -580,13 +586,38 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
     override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)
     /** The D-PAD switch: the stick moves between the analog stick and the D-pad (nothing stays held across). */
-    override fun onFlip() {
+    override fun onFlip() = setStickDpad(!stickIsDpad, "")
+
+    /** The stick to the D-pad or the analog stick; a direction held goes on in the new one. */
+    private fun setStickDpad(on: Boolean, why: String) {
         synchronized(dirs) {
-            for (k in dirs.toList()) sendKey(k, false)
-            stickIsDpad = !stickIsDpad
+            if (on == stickIsDpad) return
+            val held = dirs.toList()
+            for (k in held) sendKey(k, false)
+            stickIsDpad = on
+            for (k in held) sendKey(k, true)
         }
-        log.event(if (stickIsDpad) "Stick: D-pad" else "Stick: analog")
-        updateHud()
+        log.event((if (on) "Stick: D-pad" else "Stick: analog") + why)
+        runOnUiThread { updateHud() }
+    }
+
+    /**
+     * A game that says when it's played (its [PspProfile.inPlay] byte): the
+     * stick follows it, ten times a second, off the main thread (a read waits
+     * for the emulator's frame). No button to press.
+     */
+    private fun followTheGame() {
+        val (offset, value) = profile.inPlay ?: return
+        lifecycleScope.launch(Dispatchers.Default) {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(100)
+                    if (paused) continue
+                    val b = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF) ?: continue
+                    setStickDpad(b != value, if (b != value) " (a menu)" else " (playing)")
+                }
+            }
+        }
     }
 
     private fun dpadCode(key: Key): Int? = when (key) {

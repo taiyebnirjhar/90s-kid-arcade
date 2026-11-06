@@ -753,6 +753,19 @@ decision was made in the conversation. Get the time now with
   not yet: "Add your copy" opens the PSP games to add it. The library
   stays for later.
 
+### 2026-11-07 00:59 Dhaka · God of War: no D-PAD button, the stick follows the game
+- Owner: "i want to remove d pad button. It should auto detect and active /
+  deactive. Check if it possible".
+- Found in the game's RAM (tools/pspemu.py, 7 menu screens and 5 moments of
+  play compared): 0x08C5D8D1 is 4 while Kratos is played (fights, grabs,
+  prompts) and 0 on the title, difficulty, pause (SELECT), Power Up (START)
+  and "You are dead" screens and in story videos; 2-3 for a moment between.
+  It follows a pause and an unpause within a tenth of a second.
+- Decided: for God of War the app reads it ten times a second and the stick
+  works the analog stick while it's 4, the D-pad otherwise; the D-PAD
+  button is gone (`PspProfile.inPlay`). A direction held carries over. A
+  game without such a byte keeps the switch. Each change is in the game log.
+
 ---
 
 ## Where things stand (update whenever it changes)

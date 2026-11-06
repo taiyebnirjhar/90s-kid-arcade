@@ -226,4 +226,12 @@ class PspGamesTest {
         assertTrue("$presses presses", presses >= 24)
         assertEquals(setOf(l, r), pressed.toSet())
     }
+
+    @Test
+    fun godOfWarSaysWhenItsPlayedSoTheStickSwitchesByItself() {
+        // Found in the game: 4 while Kratos is played, 0 in menus and story.
+        assertEquals(0xC5D8D1 to 4, PspProfile.GOD_OF_WAR.inPlay)
+        // A game without one keeps the D-PAD switch.
+        assertEquals(null, PspProfile().inPlay)
+    }
 }
