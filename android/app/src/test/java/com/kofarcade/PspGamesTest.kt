@@ -103,6 +103,8 @@ class PspGamesTest {
         val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
+        assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
+        assertEquals(listOf("L", "R", "Roll", "Weapon"), p.system.map { it.name })
         // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))

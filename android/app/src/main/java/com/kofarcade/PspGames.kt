@@ -215,8 +215,10 @@ data class PspProfile(
     val labels: Map<Char, String> = emptyMap(),
     /** SELECT on the top bar; off for a game that never uses it. */
     val select: Boolean = true,
-    /** Pills over the buttons: one tap plays its keys (L, R, L+R...). */
-    val system: List<Move> = listOf(Move("L", "E"), Move("R", "F")),
+    /** Pills over the buttons: one tap plays its keys (L+R...), or [HOLD_L]/[HOLD_R] held while pressed. */
+    val system: List<Move> = listOf(Move("L", HOLD_L), Move("R", HOLD_R)),
+    /** What L and R do in this game, under their names ("Block"). */
+    val shoulderHints: Pair<String, String> = "" to "",
     /** A Block button above the stick that holds L while pressed (God of War blocks with L). */
     val blockHoldsL: Boolean = false,
     /** One-tap moves on the ring, like a fighter's specials. */
@@ -235,8 +237,9 @@ data class PspProfile(
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Fire / Aim", HOLD_R)),
+            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2")),
             blockHoldsL = true,
+            shoulderHints = "Block" to "Fire / Aim",
             moves = listOf(
                 Move("Hyperion Charge", "DE"),
                 Move("Spirit of Hercules", "A,A,C"),
@@ -250,7 +253,8 @@ data class PspProfile(
         /** The PSP's names for the arcade keys: symbols on the face buttons, L and R for E and F. */
         val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○", 'E' to "L", 'F' to "R")
 
-        /** A pill's command for "held while pressed" (R): the game screen holds R for as long as the finger stays. */
+        /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
+        const val HOLD_L = "held:E"
         const val HOLD_R = "held:F"
 
         /** The profile for a game, from its title. */

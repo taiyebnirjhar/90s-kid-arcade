@@ -199,8 +199,11 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             labels = profile.labels,
             moves = profile.moves,
             system = profile.system.map { m ->
-                if (m.cmd == PspProfile.HOLD_R) HudView.SysButton(m.name, "hold R", null, hold = true)
-                else HudView.SysButton(m.name, sysHint(m.cmd), m.cmd)
+                when (m.cmd) {
+                    PspProfile.HOLD_L -> HudView.SysButton(m.name, profile.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
+                    PspProfile.HOLD_R -> HudView.SysButton(m.name, profile.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
+                    else -> HudView.SysButton(m.name, sysHint(m.cmd), m.cmd)
+                }
             },
             block = profile.blockHoldsL,
             facingButton = false,
@@ -261,8 +264,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         // God of War blocks with L held (a tap parries).
         if (profile.blockHoldsL) pad.press(Key.E, relDir != null)
     }
-    /** A held pill ("Fire": R held for Thera's Bane). */
-    override fun onRun(on: Boolean) = pad.press(Key.F, on)
+    override fun onRun(on: Boolean) = Unit
 
     private fun startEditing() {
         hud.editing = true

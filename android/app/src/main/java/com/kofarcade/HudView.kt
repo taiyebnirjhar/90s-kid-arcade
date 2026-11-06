@@ -83,6 +83,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val on: Boolean = false,
         /** Works while held (Run) instead of on a tap. */
         val hold: Boolean = false,
+        /** Holds this key for as long as the finger stays (a PSP game's L or R). */
+        val holdKey: Key? = null,
     )
 
     data class Slot(val name: String?, val active: Boolean)
@@ -538,8 +540,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         } else if (six) {
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
-            // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row.
-            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s))
+            // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row;
+            // a fourth (a PSP game's) beside C, on the top row.
+            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s))
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
         st.system.indices.forEach { i ->
@@ -1228,7 +1231,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             Kind.SKILL -> fire(id, el, el.move!!.cmd)
             Kind.SYS -> {
                 val cmd = el.sys!!.cmd
-                if (el.sys.hold) {
+                val holdKey = el.sys.holdKey
+                if (holdKey != null) {
+                    pointerEl[id] = el
+                    pressed += el
+                    listener.onKey(holdKey, true)
+                    haptic()
+                } else if (el.sys.hold) {
                     pointerEl[id] = el
                     pressed += el
                     holdRuns++
@@ -1319,6 +1328,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (el.key != null && pointerEl.values.any { it.key == el.key }) return
         pressed -= el
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
+        el.sys?.holdKey?.let { k ->
+            // Another finger on a pill holding the same key keeps it held.
+            if (pointerEl.values.none { it.sys?.holdKey == k }) listener.onKey(k, false)
+        }
         if (el.kind == Kind.SYS && el.sys?.hold == true) {
             holdRuns--
             if (holdRuns == 0 && !stickRun) listener.onRun(false)

@@ -6,6 +6,7 @@ import com.android.resources.ScreenOrientation
 import com.kofarcade.core.Key
 import com.kofarcade.core.Layout
 import com.kofarcade.core.Move
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -33,11 +34,28 @@ class PspHudTest {
         val hud = HudView(paparazzi.context, listener)
         hud.state = HudView.State(
             layout = Layout.FIGHTER, faceButtons = listOf('A', 'B', 'C', 'D'), labels = p.labels, moves = p.moves,
-            system = p.system.map { HudView.SysButton(it.name, if (it.cmd == PspProfile.HOLD_R) "hold R" else it.cmd.replace("pad:2", "✚↓").replace("F", "R"), it.cmd.takeIf { c -> c != PspProfile.HOLD_R }, hold = it.cmd == PspProfile.HOLD_R) }, block = p.blockHoldsL,
+            system = p.system.map {
+                when (it.cmd) {
+                    PspProfile.HOLD_L -> HudView.SysButton(it.name, p.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
+                    PspProfile.HOLD_R -> HudView.SysButton(it.name, p.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
+                    else -> HudView.SysButton(it.name, it.cmd.replace("pad:2", "✚↓").replace("EF", "L+R"), it.cmd)
+                }
+            }, block = p.blockHoldsL,
             facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES,
         )
         hud.opacity = PspSettings().controlsOpacity
         paparazzi.snapshot(hud, name)
+        // No two controls on top of each other (the arcade layout's rule: 4 dp apart).
+        val d = hud.resources.displayMetrics.density
+        val spots = hud.controlSpots()
+        for (i in spots.indices) for (j in i + 1 until spots.size) {
+            val (a, ra) = spots[i]
+            val (b, rb) = spots[j]
+            if (a == b) continue
+            val gap = maxOf(rb.left - ra.right, ra.left - rb.right, rb.top - ra.bottom, ra.top - rb.bottom)
+            assertTrue("$name: $a and $b overlap", gap > -0.5f * d || !android.graphics.RectF.intersects(ra, rb) ||
+                kotlin.math.hypot(ra.centerX() - rb.centerX(), ra.centerY() - rb.centerY()) >= (ra.width() + rb.width()) / 2 + 4 * d)
+        }
     }
 
     @Test

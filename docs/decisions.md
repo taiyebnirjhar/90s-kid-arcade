@@ -589,12 +589,17 @@ decision was made in the conversation. Get the time now with
 - Then the owner's corrected list (against the game's manual): Roll is
   L+R with the stick; R held is Thera's Bane, or aims the spear with the
   Arms of Sparta. Roll's pill now presses L+R; Fire is "Fire / Aim".
+- Then: "I dont see L+R. Or sepetate L and R if needed". Decided: every PSP
+  game has L and R pills that stay pressed while held (`SysButton.holdKey`),
+  named for what they do (God of War: L Block, R Fire / Aim), beside Roll
+  (L+R) and Weapon. The fighter layout gets a fourth pill spot (beside C);
+  `PspHudTest` fails if any PSP controls overlap.
 
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:23 Dhaka:
+As of 2026-11-06 15:37 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
