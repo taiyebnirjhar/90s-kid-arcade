@@ -82,37 +82,56 @@ object PspGames {
 }
 
 /**
- * The PPSSPP settings that keep the game at full speed on a modest phone
- * (Snapdragon 680 class): the PSP's own resolution, nothing that costs the
- * graphics chip extra. Frame skipping is the safety net, off unless chosen.
+ * A game's settings, kept per game: how it's drawn and the safety net.
+ * The defaults keep it at full speed on a modest phone (Snapdragon 680
+ * class): the PSP's own resolution, frame skipping only when it falls
+ * behind (the game never slows; a frame's picture is skipped instead).
  */
+data class PspSettings(
+    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.AUTO,
+    /** 1 = the PSP's own 480x272, 2 = twice as sharp (costs the graphics chip). */
+    val resolution: Int = 1,
+    /** Skips some full-screen effects (glows, blur) for speed. */
+    val fasterEffects: Boolean = false,
+    val picture: Picture = Picture.SHARP,
+    val controlsScale: Float = 1f,
+    val controlsOpacity: Float = 0.45f,
+) {
+    /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
+    enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
+}
+
+/** The PPSSPP options for [settings]. */
 object PspSpeed {
     enum class FrameSkip(val label: String, val value: String, val auto: Boolean) {
         OFF("Off", "disabled", false),
         ONE("1", "1", false),
-        AUTO("Auto", "1", true),
+        AUTO("Auto (only when behind)", "1", true),
     }
 
-    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = mapOf(
+    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = options(PspSettings(frameSkip = skip))
+
+    fun options(settings: PspSettings): Map<String, String> = mapOf(
         "ppsspp_cpu_core" to "JIT",
         "ppsspp_fast_memory" to "enabled",
         "ppsspp_io_timing_method" to "Fast",
         "ppsspp_backend" to "opengl",
-        "ppsspp_internal_resolution" to "480x272",
+        "ppsspp_internal_resolution" to if (settings.resolution >= 2) "960x544" else "480x272",
         "ppsspp_mulitsample_level" to "Disabled",
         "ppsspp_texture_scaling_level" to "disabled",
         "ppsspp_texture_anisotropic_filtering" to "disabled",
         "ppsspp_texture_filtering" to "Auto",
         "ppsspp_lower_resolution_for_effects" to "disabled",
+        "ppsspp_skip_buffer_effects" to if (settings.fasterEffects) "enabled" else "disabled",
         "ppsspp_skip_gpu_readbacks" to "enabled",
         "ppsspp_inflight_frames" to "Up to 2",
         // The whole disc in memory would take 1-2 GB: read it as needed.
         "ppsspp_cache_iso" to "disabled",
         "ppsspp_button_preference" to "Cross",
         "ppsspp_language" to "English",
-        "ppsspp_frameskip" to skip.value,
+        "ppsspp_frameskip" to settings.frameSkip.value,
         "ppsspp_frameskiptype" to "Number of frames",
-        "ppsspp_auto_frameskip" to if (skip.auto) "enabled" else "disabled",
+        "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
     )
 }
 
@@ -122,6 +141,10 @@ object PspSpeed {
  * second; a second with fewer than [SLOW_BELOW] counts as slow.
  */
 class SpeedMeter {
+    /** Stalls of a quarter second or more: when (seconds into the count) and how long (ms). */
+    private val stallList = ArrayList<Pair<Int, Long>>()
+    val stalls: List<Pair<Int, Long>> @Synchronized get() = stallList.toList()
+
     var seconds = 0
         private set
     var slowSeconds = 0
@@ -137,8 +160,13 @@ class SpeedMeter {
     private var lastFrame = -1L
 
     /** A frame came out at [nowMs]. */
+    @Synchronized
     fun frame(nowMs: Long) {
-        if (lastFrame >= 0) longestStallMs = maxOf(longestStallMs, nowMs - lastFrame)
+        if (lastFrame >= 0) {
+            val gap = nowMs - lastFrame
+            longestStallMs = maxOf(longestStallMs, gap)
+            if (gap >= STALL_MS) stallList += seconds to gap
+        }
         lastFrame = nowMs
         if (secondStart < 0) secondStart = nowMs
         framesThisSecond++
@@ -156,7 +184,9 @@ class SpeedMeter {
     /** Percent of seconds at full speed (100 before the first second). */
     val fullSpeedPercent: Int get() = if (seconds == 0) 100 else ((seconds - slowSeconds) * 100) / seconds
 
+    @Synchronized
     fun reset() {
+        stallList.clear()
         seconds = 0; slowSeconds = 0; lastFps = 0; longestStallMs = 0
         secondStart = -1; framesThisSecond = 0; lastFrame = -1
     }
@@ -164,5 +194,7 @@ class SpeedMeter {
     companion object {
         /** 95% of 59.94: a second under this the eye sees as slow. */
         const val SLOW_BELOW = 57
+        /** A gap this long between frames counts as a stall. */
+        const val STALL_MS = 250L
     }
 }

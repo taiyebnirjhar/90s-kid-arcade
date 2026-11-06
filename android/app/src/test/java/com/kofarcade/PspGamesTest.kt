@@ -88,4 +88,29 @@ class PspGamesTest {
         assertEquals("disabled", o["ppsspp_cache_iso"])
         assertEquals("enabled", PspSpeed.options(PspSpeed.FrameSkip.AUTO)["ppsspp_auto_frameskip"])
     }
+
+    @Test
+    fun godOfWarGetsItsOwnControls() {
+        val p = PspProfile.forTitle("God of War - Ghost of Sparta (USA)")
+        assertEquals("Light", p.labels["squ"])
+        assertEquals("Block", p.labels["r"])
+        assertEquals(listOf(android.view.KeyEvent.KEYCODE_BUTTON_L1, android.view.KeyEvent.KEYCODE_BUTTON_R1), p.combos.single().keyCodes)
+        assertTrue("sel" in p.hidden)
+        assertEquals(PspProfile(), PspProfile.forTitle("Assassin's Creed Bloodlines"))
+    }
+
+    @Test
+    fun theDefaultsSkipOnlyWhenBehindAndCountStalls() {
+        val o = PspSpeed.options(PspSettings())
+        assertEquals("enabled", o["ppsspp_auto_frameskip"])
+        assertEquals("480x272", o["ppsspp_internal_resolution"])
+        assertEquals("960x544", PspSpeed.options(PspSettings(resolution = 2))["ppsspp_internal_resolution"])
+        val m = SpeedMeter()
+        var t = 0L
+        repeat(60) { m.frame(t); t += 16 }
+        t += 400
+        m.frame(t)
+        assertEquals(1, m.stalls.size)
+        assertTrue(m.stalls.single().second >= 400)
+    }
 }

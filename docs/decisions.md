@@ -543,19 +543,33 @@ decision was made in the conversation. Get the time now with
 - Can't be measured here (the sandbox has no GPU): his report from the
   phone decides what P2 tunes.
 
+### 2026-11-06 15:05 Dhaka · PSP: Ghost of Sparta's first run, and P2 begun
+- Owner's screenshot: 60 fps, full speed 96%, 19 slow seconds of 478,
+  longest stall 921 ms (frame skip off). Asked: improve the layout per game
+  ("combination of buttons, quick combo… keep control as far possible from
+  the screen"), settings, graphics, and optimise as much as possible.
+- Decided: frame skip Auto by default (a skipped picture, never a slower
+  game); the counter on the emulator's thread with a stall list; per-game
+  settings (sharpness 1x/2x, picture Sharp/Smooth/Enhanced edges, faster
+  effects, controls size and see-through), saved per game; controls at the
+  edges, movable, with God of War's labels, a Roll (L+R) combo, SELECT
+  hidden. 2x sharpness stays a choice: on a Snapdragon 680 it likely costs
+  full speed, so the phone decides.
+- R2: not needed yet (games are picked from the phone until P3).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 03:14 Dhaka:
+As of 2026-11-06 15:05 Dhaka:
 
-- **Open:** PSP P1 (Ghost of Sparta in the app, with a speed counter).
-- **Merged:** #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
+- **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.267.
+- **Latest release:** v1.0.269.
 - **Waiting on the owner:**
-  - PSP P1: Ghost of Sparta played 15 minutes; what the speed counter says.
+  - PSP P2: Ghost of Sparta played again with frame skip Auto; the speed report.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

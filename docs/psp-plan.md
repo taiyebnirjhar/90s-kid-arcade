@@ -76,6 +76,18 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: first report from the phone (Ghost of Sparta, 8 minutes, frame
+  skip off): 60 fps, full speed 96% (19 slow seconds of 478), longest stall
+  921 ms. Close, not yet the rule. P2 started with: the counter timed on the
+  emulator's thread (the main thread's own pauses had counted as stalls),
+  frame skip Auto by default (skips a picture only when behind, so the game
+  never slows), a stall list with when each happened (a loading screen or
+  gameplay), Android's sustained-performance mode, and per-game settings:
+  frame skip, sharpness 1x/2x, picture (Sharp, Smooth, Enhanced edges), faster
+  effects. Controls (P4 begun, the owner's ask): kept to the screen's edges,
+  movable, size and see-through settings, and God of War's own labels (□
+  Light, △ Heavy, ○ Grab, ✕ Jump, R Block), a Roll button (L+R, steered with
+  the stick), SELECT hidden.
 - 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
   first check and stable ghost of Sparta"). Home → PSP → Add a game takes
   his `.7z` download (unpacked on the phone) or a plain image; the game
