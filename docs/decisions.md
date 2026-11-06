@@ -610,11 +610,24 @@ decision was made in the conversation. Get the time now with
   pause menu. `Overlay`, `PickRow`, `StepRow` and `ToggleRow` are shared
   (internal) for this.
 
+### 2026-11-06 16:08 Dhaka · The PSP game log, off the game screen
+- Owner: "Where hv u set the logs. It should not visible on game play. But
+  under setting keep a section where i just copy and paste complete log of
+  game play so u understand and can improve based on it".
+- Decided: the speed counter is off during play by default (Graphics &
+  speed can switch it on). The pause menu's **Game log** (also a button in
+  Graphics & speed) shows the whole session: phone, app version, game,
+  settings and controls; full-speed summary; speed second by second; every
+  stall and when; and what happened (paused, saved, settings changed, left
+  the app, errors). **Copy** puts it on the clipboard for the chat; **Send**
+  shares it. It is saved on pause and quit (`psp/logs/<game>.txt`), and the
+  PSP list has a **Log** button per game to copy the last one (`PspLog`).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:48 Dhaka:
+As of 2026-11-06 16:08 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
@@ -622,7 +635,7 @@ As of 2026-11-06 15:48 Dhaka:
   sound, updates downloading in the background).
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
-  - PSP P2: Ghost of Sparta played again with frame skip Auto; the speed report.
+  - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
   - Ghost of Sparta as a Google Drive link, to check every input in the game here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights

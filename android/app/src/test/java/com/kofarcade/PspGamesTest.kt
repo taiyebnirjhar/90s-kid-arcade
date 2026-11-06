@@ -139,4 +139,24 @@ class PspGamesTest {
         assertTrue(PspSteps.isSteps("hold:A"))
         assertFalse(PspSteps.isSteps("A,A,C"))
     }
+
+    @Test
+    fun theGameLogShowsTheTimelineStallsAndEvents() {
+        var t = 0L
+        val log = PspLog { t }
+        val m = SpeedMeter()
+        // 3 seconds at full speed, 2 slow, then full speed again with a stall.
+        repeat(180) { m.frame(t); t += 16 + (it % 3).coerceAtMost(1) }
+        repeat(80) { m.frame(t); t += 25 }
+        t += 400
+        repeat(120) { m.frame(t); t += 16 + (it % 3).coerceAtMost(1) }
+        log.event("Paused (pause)")
+        val text = log.text(listOf("Phone: test"), m)
+        assertTrue(text.startsWith("Phone: test"))
+        assertTrue(text, text.contains("full speed"))
+        assertTrue(text, text.contains("slow: "))
+        assertTrue(text, text.contains("Stalls over 250 ms: 1"))
+        assertTrue(text, text.contains("Paused (pause)"))
+        assertEquals(listOf("0:00-0:01 full speed", "0:02 slow: 40 fps", "0:03-0:04 full speed"), PspLog.timeline(listOf(60, 60, 40, 60, 59)))
+    }
 }

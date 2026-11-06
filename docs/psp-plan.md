@@ -76,6 +76,11 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: the game log. Nothing on screen during play (the speed
+  counter is off unless switched on); pause menu → Game log shows the
+  whole session (phone, settings, speed second by second, stalls, what
+  happened) with Copy and Send, saved on quit, and a Log button per game
+  in the PSP list. The owner pastes it in the chat after playing.
 - 2026-11-06: first report from the phone (Ghost of Sparta, 8 minutes, frame
   skip off): 60 fps, full speed 96% (19 slow seconds of 478), longest stall
   921 ms. Close, not yet the rule. P2 started with: the counter timed on the

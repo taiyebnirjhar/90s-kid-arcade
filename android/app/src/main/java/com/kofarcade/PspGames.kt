@@ -24,6 +24,9 @@ object PspGames {
     fun list(dir: File): List<File> =
         dir.listFiles { f -> f.isFile && isGame(f.name) }.orEmpty().sortedBy { it.name.lowercase() }
 
+    /** Where a game's last session log is kept. */
+    fun logFile(filesDir: File, game: String) = File(filesDir, "psp/logs/$game.txt")
+
     /** "God of War - Ghost of Sparta (USA)" from its file name. */
     fun title(file: File): String = file.nameWithoutExtension.replace('_', ' ').trim()
 
@@ -145,6 +148,10 @@ class SpeedMeter {
     private val stallList = ArrayList<Pair<Int, Long>>()
     val stalls: List<Pair<Int, Long>> @Synchronized get() = stallList.toList()
 
+    /** Every second's frame count, in order, for the game log's timeline. */
+    private val history = ArrayList<Int>()
+    val perSecond: List<Int> @Synchronized get() = history.toList()
+
     var seconds = 0
         private set
     var slowSeconds = 0
@@ -175,6 +182,7 @@ class SpeedMeter {
 
     private fun close() {
         lastFps = framesThisSecond
+        history += framesThisSecond
         seconds++
         if (framesThisSecond < SLOW_BELOW) slowSeconds++
         framesThisSecond = 0
@@ -187,6 +195,7 @@ class SpeedMeter {
     @Synchronized
     fun reset() {
         stallList.clear()
+        history.clear()
         seconds = 0; slowSeconds = 0; lastFps = 0; longestStallMs = 0
         secondStart = -1; framesThisSecond = 0; lastFrame = -1
     }
@@ -312,5 +321,60 @@ object PspSteps {
         4 -> android.view.KeyEvent.KEYCODE_DPAD_LEFT
         6 -> android.view.KeyEvent.KEYCODE_DPAD_RIGHT
         else -> null
+    }
+}
+
+/**
+ * A PSP game session's log, for the owner to copy into a chat: what the
+ * phone is, the game and its settings, a second-by-second speed timeline
+ * (full-speed stretches in one line, every slow second with its frame
+ * count), every stall, and what was done (pause, save, settings…), each at
+ * its time into the session.
+ */
+class PspLog(private val now: () -> Long) {
+    private val start = now()
+    private val events = ArrayList<Pair<Long, String>>()
+
+    @Synchronized
+    fun event(text: String) {
+        events += (now() - start) to text
+        if (events.size > 2000) events.removeAt(0)
+    }
+
+    /** The whole log: [header] lines first (phone, app, game, settings), then [meter]'s timeline and stalls, then the events. */
+    @Synchronized
+    fun text(header: List<String>, meter: SpeedMeter): String = buildString {
+        header.forEach { appendLine(it) }
+        appendLine("Session: ${clock((now() - start) / 1000)}")
+        appendLine("Full speed: ${meter.fullSpeedPercent}% of ${meter.seconds} s (slow ${meter.slowSeconds}), longest stall ${meter.longestStallMs} ms")
+        appendLine()
+        appendLine("Speed, second by second (counted since the last restart of the count):")
+        timeline(meter.perSecond).forEach { appendLine("  $it") }
+        appendLine()
+        val stalls = meter.stalls
+        appendLine("Stalls over ${SpeedMeter.STALL_MS} ms: ${if (stalls.isEmpty()) "none" else stalls.size}")
+        stalls.forEach { (sec, ms) -> appendLine("  at ${clock(sec.toLong())}: $ms ms") }
+        appendLine()
+        appendLine("What happened:")
+        events.forEach { (ms, t) -> appendLine("  ${clock(ms / 1000)} $t") }
+    }
+
+    companion object {
+        fun clock(seconds: Long) = "${seconds / 60}:${"%02d".format(seconds % 60)}"
+
+        /** Full-speed stretches as one line ("0:00-2:14 full speed"), slow seconds grouped with their frame counts. */
+        fun timeline(perSecond: List<Int>): List<String> {
+            val out = ArrayList<String>()
+            var i = 0
+            while (i < perSecond.size) {
+                val slow = perSecond[i] < SpeedMeter.SLOW_BELOW
+                var j = i
+                while (j + 1 < perSecond.size && (perSecond[j + 1] < SpeedMeter.SLOW_BELOW) == slow) j++
+                val range = if (i == j) clock(i.toLong()) else "${clock(i.toLong())}-${clock(j.toLong())}"
+                out += if (slow) "$range slow: ${perSecond.subList(i, j + 1).joinToString(", ")} fps" else "$range full speed"
+                i = j + 1
+            }
+            return out
+        }
     }
 }

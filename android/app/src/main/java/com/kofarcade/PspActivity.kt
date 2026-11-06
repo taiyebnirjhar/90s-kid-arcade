@@ -101,6 +101,18 @@ class PspActivity : ComponentActivity() {
             if (c.moveToFirst()) c.getString(0) else null
         }
 
+    /** The game's last session log, copied for the chat. */
+    private fun copyLog(game: File) {
+        val f = PspGames.logFile(filesDir, game.name)
+        if (!f.exists()) {
+            android.widget.Toast.makeText(this, "No log yet: play the game first", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val cm = getSystemService(android.content.ClipboardManager::class.java)
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("PSP game log", f.readText()))
+        android.widget.Toast.makeText(this, "Game log copied: paste it in the chat", android.widget.Toast.LENGTH_SHORT).show()
+    }
+
     private fun play(game: File) {
         startActivity(Intent(this, PspGameActivity::class.java).putExtra(PspGameActivity.EXTRA_PATH, game.absolutePath))
     }
@@ -145,6 +157,8 @@ class PspActivity : ComponentActivity() {
                 Text(PspGames.title(game), color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text("${game.extension.uppercase()} · ${game.length() / 1_000_000} MB", color = Palette.muted, fontSize = 12.sp)
             }
+            GhostButton("Log", { copyLog(game) }, compact = true)
+            Spacer(Modifier.padding(4.dp))
             GhostButton("Remove", {
                 game.delete()
                 games = PspGames.list(dir)
