@@ -840,6 +840,7 @@ As of 2026-11-06 16:13 Dhaka:
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.269.
+- **The PSP games for testing:** in the owner's Google Drive folder (shared by link; the link is with the owner and in the chat, never in the repo): Ghost of Sparta, Chains of Olympus, Assassin's Creed: Bloodlines, Need for Speed: Most Wanted 5-1-0.
 - **Waiting on the owner:**
   - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
