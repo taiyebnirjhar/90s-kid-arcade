@@ -189,10 +189,10 @@ data class PspProfile(
     /** One-tap moves on the ring, like a fighter's specials. */
     val moves: List<Move> = emptyList(),
     /**
-     * Where the game says the player has control (a byte of its RAM, from the
-     * start of the PSP's main memory) and the value meaning yes: the stick
-     * works the analog stick then, and the D-pad in menus and story. Null:
-     * a D-PAD switch on the top bar instead.
+     * Where the game says whether it's in a menu (a byte of its RAM, from the
+     * start of the PSP's main memory) and the value meaning a menu: the stick
+     * works the D-pad then, and the analog stick otherwise. Null: only the
+     * D-PAD switch on the top bar.
      */
     val inPlay: Pair<Int, Int>? = null,
 ) {
@@ -219,11 +219,12 @@ data class PspProfile(
             system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
-            // Found in the game (tools/pspemu.py): 4 while Kratos is played
-            // (fights, grabs, prompts); 0 on the title, difficulty, pause,
-            // Power Up and "You are dead" screens and in story videos; 2-3 for
-            // a moment between them. Its neighbour at +8 reads the same.
-            inPlay = 0xC5D8D1 to 4,
+            // Found in the game (tools/pspemu.py): 0 on the title, difficulty,
+            // pause, Power Up and "You are dead" screens and in story videos;
+            // 4 while Kratos is played on the boat (fights, grabs, prompts),
+            // 2-3 for a moment between. The owner's phone showed the D-pad
+            // left on in a later area: so any value but 0 is play.
+            inPlay = 0xC5D8D1 to 0,
             moves = listOf(
                 Move("Hyperion Charge", "E>D"),
                 Move("Spirit of Hercules", "A,A,C"),

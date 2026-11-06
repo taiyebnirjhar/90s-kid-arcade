@@ -609,7 +609,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
      * for the emulator's frame). No button to press.
      */
     private fun followTheGame() {
-        val (offset, value) = profile.inPlay ?: return
+        val (offset, menuValue) = profile.inPlay ?: return
         lifecycleScope.launch(Dispatchers.Default) {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 // Only a change of the game's state moves the stick, so a tap
@@ -619,10 +619,12 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                     delay(100)
                     if (paused) continue
                     val b = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF) ?: continue
-                    val played = b == value
+                    // Only the menu value is a menu: play read 4 on the boat, and
+                    // might read otherwise elsewhere in the game.
+                    val played = b != menuValue
                     if (played != wasPlayed) {
                         wasPlayed = played
-                        setStickDpad(!played, if (played) " (playing)" else " (a menu)")
+                        setStickDpad(!played, (if (played) " (playing" else " (a menu") + ", game byte $b)")
                     }
                 }
             }

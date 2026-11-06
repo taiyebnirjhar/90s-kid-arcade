@@ -801,6 +801,14 @@ decision was made in the conversation. Get the time now with
   (last of six on the arcade's) shows when opened from the pause menu.
   Snapshot: controls_game_log.
 
+### 2026-11-07 03:51 Dhaka · The D-pad stayed on in play
+- Owner (1.0.292, a screenshot in a later area, Kratos walking): "D pad didnt
+  auto turned off. It should auto turn on and off".
+- The byte was 4 in play on the boat (where it was found); elsewhere it may
+  read otherwise. Menus and story always read 0. Decided: any value but 0
+  is play. Every switch now logs the byte's value ("game byte 5"), so a log
+  from a place where it's still wrong shows what the game said there.
+
 ---
 
 ## Where things stand (update whenever it changes)
