@@ -52,8 +52,10 @@ sealed interface UpdateState {
  */
 object AppUpdates {
     private const val VERSION_URL = "https://arcade.taiyebnirjhor.com/version.json"
-    // Asked at most this often (opening the app); a found update is kept meanwhile.
-    private const val CHECK_EVERY_MS = 3 * 60 * 60 * 1000L
+    // Asked at most this often (opening or coming back to the app); a found
+    // update is kept meanwhile. Every 3 h missed a build out within the hour
+    // while the app sat in the background.
+    private const val CHECK_EVERY_MS = 15 * 60 * 1000L
 
     private val _state = MutableStateFlow<UpdateState>(UpdateState.None)
     val state: StateFlow<UpdateState> = _state.asStateFlow()

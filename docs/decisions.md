@@ -676,6 +676,15 @@ decision was made in the conversation. Get the time now with
 - The skip button waits for the game file: the game's own skip input is
   checked in the game first, not guessed.
 
+### 2026-11-06 21:54 Dhaka · The update that didn't show
+- Owner: "I dont see update option app. Havent it released? Please check"
+  (1.0.279 on the phone, 1.0.282 released).
+- Found: the website's deploy after the 1.0.282 build timed out at GitHub
+  Pages, so `version.json` still said 1.0.279; re-run. And the app asked
+  at most every 3 hours while it stayed open in the background.
+- Decided: the app asks every 15 minutes at most (opening or coming back
+  to it); a failed website deploy after a build gets re-run (AGENTS.md).
+
 ---
 
 ## Where things stand (update whenever it changes)
