@@ -646,6 +646,21 @@ decision was made in the conversation. Get the time now with
   games also run on weaker phones, with minimal graphics where needed.
   He gives the game file first; starts when he says so.
 
+### 2026-11-06 20:23 Dhaka · Opacity that shows, and the D-pad on PSP
+- Owner (1.0.279, Ghost of Sparta): "i tried to reduce opacity. Didnt
+  worked. Check the complete settings, control and all other things" and
+  "we removed up down left right button. Now i cant go down and check
+  Control on the page".
+- Found: Opacity's lowest (30%) still drew the controls at 69% against 76%
+  by default, so lowering it hardly showed (every game). The game's menus
+  answer only the D-pad, and the stick works the analog stick.
+- Decided: Opacity goes from 10% (faint) to 100% (solid); the default
+  looks as before (`viewAlpha`). A PSP game's top bar has a **D-PAD**
+  switch (where a fighter's FACING sits): on, the stick works the D-pad
+  (menus, a game's D-pad picks); off, the analog stick. PSP Settings shows
+  only what applies (Controls, Moves, Sound, Game log; the picture is in
+  Graphics & speed), and Cancel puts back what's saved.
+
 ---
 
 ## Where things stand (update whenever it changes)

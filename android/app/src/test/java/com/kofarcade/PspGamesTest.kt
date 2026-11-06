@@ -170,4 +170,17 @@ class PspGamesTest {
         assertTrue(text, text.contains("Connection log:\n12:00:01.000  Joined"))
         assertFalse(text, text.contains("Empty:"))
     }
+
+    @Test
+    fun opacityGoesFromFaintToSolidAndTheDefaultLooksAsBefore() {
+        assertEquals(0.55f + 0.45f * DEFAULT_OPACITY, viewAlpha(DEFAULT_OPACITY), 0.001f)
+        assertEquals(0.15f, viewAlpha(0.1f), 0.001f)
+        assertEquals(1f, viewAlpha(1f), 0.001f)
+        var last = 0f
+        for (i in 10..100 step 5) {
+            val a = viewAlpha(i / 100f)
+            assertTrue("$i%: $a", a > last)
+            last = a
+        }
+    }
 }

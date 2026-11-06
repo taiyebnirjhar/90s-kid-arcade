@@ -398,6 +398,8 @@ fun ControlsPanel(
     gameLog: (() -> String)? = null,
     onCopyLog: (String) -> Unit = {},
     onSendLog: (String) -> Unit = {},
+    /** The tabs this kind of game has (a PSP game: no Screen or Chat; its picture is in Graphics & speed). */
+    tabs: List<SettingsTab> = SettingsTab.entries,
 ) {
     var tab by remember { mutableStateOf(startTab) }
     val shown = slideIn()
@@ -418,7 +420,7 @@ fun ControlsPanel(
             }
             // Scrolls sideways if the tabs don't all fit (small phones).
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                for (t in SettingsTab.entries) {
+                for (t in tabs) {
                     if (t == SettingsTab.LOG && gameLog == null) continue
                     val on = t == tab
                     // A 48 dp target round a smaller chip.
@@ -450,7 +452,7 @@ fun ControlsPanel(
                     SettingsTab.CONTROLS -> {
                         PickRow("Stick", StickMode.entries, look.stick, { it.short }, sub = look.stick.label) { onLook(look.copy(stick = it)) }
                         StepRow("Button size", look.size, 0.7f..1.4f, 0.05f) { onLook(look.copy(size = it)) }
-                        StepRow("Opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
+                        StepRow("Opacity", look.opacity, 0.1f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
                         ToggleRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
                         ToggleRow("Vibrate on press", look.haptics, { onLook(look.copy(haptics = it)) })
                         if (canRapid) ToggleRow("Rapid fire", look.rapidFire, { onLook(look.copy(rapidFire = it)) }, sub = "Hold Shoot or Fire to keep firing")
@@ -733,7 +735,7 @@ fun EditAllSheet(look: Look, onLook: (Look) -> Unit, fromLeft: Boolean, onClose:
                 PickRow("Stick", StickMode.entries, look.stick, { it.short }, sub = look.stick.label) { onLook(look.copy(stick = it)) }
                 ToggleRow("Buttons on the left", look.leftHanded, { onLook(look.copy(leftHanded = it)) }, sub = "For left-handed play")
                 StepRow("Button size", look.size, 0.7f..1.4f, 0.05f) { onLook(look.copy(size = it)) }
-                StepRow("Opacity", look.opacity, 0.3f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
+                StepRow("Opacity", look.opacity, 0.1f..1f, 0.05f, sub = "How solid the controls are") { onLook(look.copy(opacity = it)) }
             }
             GoldButton("Done", onClose, Modifier.fillMaxWidth().padding(top = 10.dp))
         }
