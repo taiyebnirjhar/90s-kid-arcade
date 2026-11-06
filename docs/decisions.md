@@ -801,6 +801,34 @@ decision was made in the conversation. Get the time now with
   (last of six on the arcade's) shows when opened from the pause menu.
   Snapshot: controls_game_log.
 
+### 2026-11-07 03:51 Dhaka · The D-pad stayed on in play
+- Owner (1.0.292, a screenshot in a later area, Kratos walking): "D pad didnt
+  auto turned off. It should auto turn on and off".
+- The byte was 4 in play on the boat (where it was found); elsewhere it may
+  read otherwise. Menus and story always read 0. Decided: any value but 0
+  is play. Every switch now logs the byte's value ("game byte 5"), so a log
+  from a place where it's still wrong shows what the game said there.
+
+### 2026-11-07 03:58 Dhaka · The D-PAD switch is manual again
+- Owner (1.0.292 log): "D pad s auto is not working expectedly. In game it
+  turned off and auto unexpectedly … Dpad only needed when we pause inside
+  game. If this cant be solved. Make dpad manual like before".
+- The log: the byte dropped to 0 in the middle of play again and again
+  (6:14, 6:19, 7:00, 7:39, 7:49, 7:53), so "0 = a menu" isn't true past the
+  boat. Decided: no automatic switch for God of War; the D-PAD switch on
+  the top bar is the only way, as before. (`PspProfile.inPlay` stays for a
+  game whose byte holds up.)
+
+### 2026-11-07 04:00 Dhaka · Updates show without reopening the app
+- Owner: "Why do i close and open again. Cant i get trigger via socket to
+  show update state" … (asked whether to check on coming back and every 2
+  minutes instead) "Yes".
+- Decided: no socket (every open app holding a Supabase Realtime
+  connection would eat the free plan's 200, shared with online play).
+  Instead version.json (a few hundred bytes on GitHub Pages) is asked on
+  every return to the app, at most once a minute, and every 2 minutes
+  while it's open; the Update button then shows within about 2 minutes.
+
 ---
 
 ## Where things stand (update whenever it changes)

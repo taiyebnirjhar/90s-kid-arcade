@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.kofarcade.core.BIOS
 import com.kofarcade.core.GAMES
 import com.kofarcade.core.Game
@@ -56,6 +57,15 @@ class MainActivity : ComponentActivity() {
         prefs = Prefs(this)
         // A link is taken once: not again when the activity is rebuilt (rotation, back from a game).
         if (savedInstanceState == null) linkCode = takeLink(intent)
+        // While the app's open: a new version shows on its own (no reopening).
+        lifecycleScope.launch {
+            repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                while (true) {
+                    kotlinx.coroutines.delay(AppUpdates.CHECK_OPEN_MS)
+                    AppUpdates.check(this@MainActivity, force = true)
+                }
+            }
+        }
         setContent {
             KofTheme {
                 // A fresh install: the welcome first (once), then home.
@@ -97,7 +107,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumed = true
         refresh++
-        // A newer version on the website (asked every 15 minutes at most), and back from allowing installs.
+        // A newer version on the website (asked on coming back, at most once a minute), and back from allowing installs.
         AppUpdates.check(this)
         AppUpdates.resumed(this)
         // Games played since: sent quietly, only for a phone that signed in

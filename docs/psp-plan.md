@@ -127,6 +127,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-07: the D-PAD switch is manual again for God of War: its "menu"
+  byte also read 0 in play later in the game (the owner's log).
 - 2026-11-07: the D-PAD button is gone for God of War: the stick follows
   the game's own "being played" byte (0x08C5D8D1 = 4).
 - 2026-11-07: G2: moves checked in the game (Hyperion Charge is L, then ○);
