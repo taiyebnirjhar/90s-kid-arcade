@@ -766,6 +766,19 @@ decision was made in the conversation. Get the time now with
   button is gone (`PspProfile.inPlay`). A direction held carries over. A
   game without such a byte keeps the switch. Each change is in the game log.
 
+### 2026-11-07 01:01 Dhaka · The D-PAD switch stays, as a fallback
+- Owner: "Have we adjust the controlles for all combos? Dont remove the D
+  pad button. Keep it. But make sure it auto turn on and off. Keep d pad
+  button as fallback use".
+- Decided: the D-PAD switch is back on the top bar. For God of War the
+  stick still switches by itself, but only when the game goes between play
+  and a menu; a tap on the switch holds until the next such change.
+- Combos checked in the game: Spirit of Hercules (□ □ △) and Cyclone of
+  Chaos (□ held) each come out as their own combo; Roll (L+R with the
+  stick) rolls; with Hyperion Charge (L, then ○), Light, Heavy, Grab and
+  Mash before. Not yet: the three magic casts and Weapon (Kratos has no
+  magic or second weapon this early).
+
 ---
 
 ## Where things stand (update whenever it changes)

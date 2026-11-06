@@ -208,7 +208,9 @@ data class PspProfile(
          * Checked in the game (tools/pspemu.py, the boat's first fight): □, △
          * and ○ attack; L, then ○ while L is held, is Hyperion Charge (both at
          * once is just ○); with L held, □ △ ✕ do nothing before Kratos has
-         * magic; the Mash pill escapes the first grab.
+         * magic; □ □ △ (Spirit of Hercules) and □ held (Cyclone of Chaos)
+         * each come out as their own combo; L+R with the stick rolls; the Mash
+         * pill escapes the first grab.
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),

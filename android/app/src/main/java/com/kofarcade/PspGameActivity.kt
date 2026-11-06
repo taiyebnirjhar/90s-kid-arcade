@@ -321,9 +321,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 }
             },
             block = profile.blockHoldsL,
-            // The menus only answer the D-pad: the stick switches to it here,
-            // by itself for a game that says when it's played (God of War).
-            facingButton = profile.inPlay == null,
+            // The menus only answer the D-pad: the stick switches to it by
+            // itself for a game that says when it's played (God of War), and
+            // this switch stays as a fallback.
+            facingButton = true,
             switchLabel = "D-PAD",
             switchOn = stickIsDpad,
             size = look.size,
@@ -586,7 +587,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
     override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)
     /** The D-PAD switch: the stick moves between the analog stick and the D-pad (nothing stays held across). */
-    override fun onFlip() = setStickDpad(!stickIsDpad, "")
+    /** A tap on the D-PAD switch: holds until the game next goes between play and a menu. */
+    override fun onFlip() = setStickDpad(!stickIsDpad, " (the D-PAD switch)")
 
     /** The stick to the D-pad or the analog stick; a direction held goes on in the new one. */
     private fun setStickDpad(on: Boolean, why: String) {
@@ -610,11 +612,18 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         val (offset, value) = profile.inPlay ?: return
         lifecycleScope.launch(Dispatchers.Default) {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                // Only a change of the game's state moves the stick, so a tap
+                // on the D-PAD switch (the fallback) holds until the next one.
+                var wasPlayed: Boolean? = null
                 while (true) {
                     delay(100)
                     if (paused) continue
                     val b = LibretroDroid.readMemory(SYSTEM_RAM, offset, 1)?.firstOrNull()?.toInt()?.and(0xFF) ?: continue
-                    setStickDpad(b != value, if (b != value) " (a menu)" else " (playing)")
+                    val played = b == value
+                    if (played != wasPlayed) {
+                        wasPlayed = played
+                        setStickDpad(!played, if (played) " (playing)" else " (a menu)")
+                    }
                 }
             }
         }
