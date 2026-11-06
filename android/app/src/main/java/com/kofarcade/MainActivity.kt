@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumed = true
         refresh++
-        // A newer version on the website (asked every few hours), and back from allowing installs.
+        // A newer version on the website (asked every 15 minutes at most), and back from allowing installs.
         AppUpdates.check(this)
         AppUpdates.resumed(this)
         // Games played since: sent quietly, only for a phone that signed in

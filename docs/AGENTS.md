@@ -203,7 +203,10 @@ with a sleeping foreground command.
 - **In-app updates:** the website's `version.json` (written by `pages.yml`
   from the newest `v1.0.*` release) is compared with `BuildConfig.VERSION_CODE`;
   `AppUpdates` downloads the APK to `cache/updates` and opens the installer
-  through the FileProvider (`${applicationId}.files`).
+  through the FileProvider (`${applicationId}.files`). Asked on opening or
+  coming back to the app, at most every 15 minutes. If `pages.yml` fails
+  after a build (GitHub Pages can time out), the app never hears of the
+  build: re-run it.
 - **Deep links:** `https://arcade.taiyebnirjhor.com/join.html?code=XXXXXX`
   (verified App Link via `assetlinks.json`, signed by the fixed debug key in
   `android/app/debug.keystore`), `kidarcade://join?code=…`, and the in-app
