@@ -829,6 +829,25 @@ decision was made in the conversation. Get the time now with
   every return to the app, at most once a minute, and every 2 minutes
   while it's open; the Update button then shows within about 2 minutes.
 
+### 2026-11-07 05:53 Dhaka · Assassin's Creed: Bloodlines, set up end to end
+- Owner: "I want to add assassin cred next. Do a complete setup end to
+  end..i will check om the morning".
+- Played here from the owner's Drive copy (tools/pspemu.py): it boots, the
+  first questions (install data, a save) want the D-pad (the D-PAD switch;
+  answer Yes to both on the phone), then the title and the tutorial.
+- Controls, from the game's own tutorial and button panel: the stick
+  walks; R held High Profile (the stick runs; ✕ then sprints, ○ tackles);
+  L held turns the camera with the four buttons, a tap centres it; △
+  Target, □ Attack, ✕ held Blend. Profile `ASSASSINS_CREED`: those names
+  under □ ✕ △ ○, L "Camera", R "High Profile", a **Sprint** pill holding R
+  and ✕ together for one thumb (`SysButton.alsoHold`), Tackle (R, then ○)
+  on the ring. Checked: run, sprint (unlike walking), camera, blend.
+- Speed: lighter than Ghost of Sparta here (8 ms a frame, 17 for GoS); it
+  draws 30 pictures a second; story and play sound at 44,100 a second with
+  frame duplication on.
+- Home: an Assassin's Creed card beside God of War (libretro's picture).
+- The D-PAD switch stays manual (God of War's lesson).
+
 ---
 
 ## Where things stand (update whenever it changes)

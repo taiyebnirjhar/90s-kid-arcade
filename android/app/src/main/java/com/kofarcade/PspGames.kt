@@ -28,6 +28,10 @@ data class PspTitle(val id: String, val title: String, val subtitle: String, val
                 "gos", "God of War", "Ghost of Sparta", "ghost of sparta",
                 "Named_Titles/God of War - Ghost of Sparta (USA) (En,Fr,Es).png",
             ),
+            PspTitle(
+                "acb", "Assassin's Creed", "Bloodlines", "bloodlines",
+                "Named_Titles/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).png",
+            ),
         )
     }
 }
@@ -249,8 +253,31 @@ data class PspProfile(
         val MASH_LR: String get() = List(12) { "E,F" }.joinToString(",")
 
         /** The profile for a game, from its title. */
+        /**
+         * Assassin's Creed: Bloodlines, from the game's own tutorial and its
+         * button panel (top right), read in the game (tools/pspemu.py):
+         * the stick walks; R held is High Profile (the stick runs; ✕ then
+         * sprints and climbs, ○ tackles); L held turns the camera with the
+         * four buttons (a tap centres it); △ targets, □ attacks, ✕ held
+         * blends (Low Profile). The game's first questions (install, save)
+         * want the D-pad: the D-PAD switch.
+         */
+        val ASSASSINS_CREED = PspProfile(
+            labels = mapOf('A' to "Attack", 'B' to "Blend", 'C' to "Target", 'D' to "Grab"),
+            system = listOf(
+                Move("L", HOLD_L), Move("R", HOLD_R),
+                // R and ✕ together, for one thumb: the stick steers.
+                Move("Sprint", "held:FB"),
+            ),
+            shoulderHints = "Camera" to "High Profile",
+            moves = listOf(
+                Move("Tackle", "F>D"),
+            ),
+        )
+
         fun forTitle(title: String): PspProfile = when {
             title.contains("god of war", ignoreCase = true) -> GOD_OF_WAR
+            title.contains("assassin", ignoreCase = true) -> ASSASSINS_CREED
             else -> PspProfile()
         }
 

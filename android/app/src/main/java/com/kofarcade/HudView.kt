@@ -85,6 +85,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val hold: Boolean = false,
         /** Holds this key for as long as the finger stays (a PSP game's L or R). */
         val holdKey: Key? = null,
+        /** And this one with it (Assassin's Creed's Sprint: R and ✕ held together). */
+        val alsoHold: Key? = null,
     )
 
     data class Slot(val name: String?, val active: Boolean)
@@ -1261,6 +1263,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
                     pointerEl[id] = el
                     pressed += el
                     listener.onKey(holdKey, true)
+                    el.sys.alsoHold?.let { listener.onKey(it, true) }
                     haptic()
                 } else if (el.sys.hold) {
                     pointerEl[id] = el
@@ -1353,9 +1356,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (el.key != null && pointerEl.values.any { it.key == el.key }) return
         pressed -= el
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
-        el.sys?.holdKey?.let { k ->
-            // Another finger on a pill holding the same key keeps it held.
-            if (pointerEl.values.none { it.sys?.holdKey == k }) listener.onKey(k, false)
+        // Another finger on a pill holding the same key keeps it held.
+        for (k in listOfNotNull(el.sys?.holdKey, el.sys?.alsoHold)) {
+            if (pointerEl.values.none { it.sys?.holdKey == k || it.sys?.alsoHold == k }) listener.onKey(k, false)
         }
         if (el.kind == Kind.SYS && el.sys?.hold == true) {
             holdRuns--

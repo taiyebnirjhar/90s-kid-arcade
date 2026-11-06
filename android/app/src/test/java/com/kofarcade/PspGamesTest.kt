@@ -102,7 +102,7 @@ class PspGamesTest {
         assertEquals("E>D", p.moves.first { it.name == "Hyperion Charge" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
-        val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
+        val base = PspProfile.forTitle("Need for Speed Most Wanted 5-1-0")
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
         assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
@@ -235,5 +235,22 @@ class PspGamesTest {
         assertEquals(null, PspProfile.GOD_OF_WAR.inPlay)
         // A game without one keeps the D-PAD switch.
         assertEquals(null, PspProfile().inPlay)
+    }
+
+    @Test
+    fun assassinsCreedHasItsOwnControls() {
+        val p = PspProfile.forTitle("Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It)")
+        assertEquals(PspProfile.ASSASSINS_CREED, p)
+        // From the game's own button panel: △ Target, □ Attack, ✕ Blend; R High Profile; L the camera.
+        assertEquals("Target", p.labels['C'])
+        assertEquals("Attack", p.labels['A'])
+        assertEquals("Blend", p.labels['B'])
+        assertEquals("Camera" to "High Profile", p.shoulderHints)
+        // Sprint holds R and ✕ for one thumb; Tackle is R, then ○.
+        assertEquals("held:FB", p.system.first { it.name == "Sprint" }.cmd)
+        assertEquals("F>D", p.moves.first { it.name == "Tackle" }.cmd)
+        // On Home, found by its file name.
+        val ac = PspTitle.ALL.first { it.id == "acb" }
+        assertEquals(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"), ac.copyIn(listOf(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"))))
     }
 }

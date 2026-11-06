@@ -62,6 +62,9 @@ class PspHudTest {
     fun godOfWar() = shot("psp_hud_god_of_war", PspProfile.GOD_OF_WAR)
 
     @Test
+    fun assassinsCreed() = shot("psp_hud_assassins_creed", PspProfile.ASSASSINS_CREED)
+
+    @Test
     fun anyGame() = shot("psp_hud_base", PspProfile())
 
     @Test

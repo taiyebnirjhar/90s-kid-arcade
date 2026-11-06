@@ -317,7 +317,13 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 when (m.cmd) {
                     PspProfile.HOLD_L -> HudView.SysButton(m.name, profile.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
                     PspProfile.HOLD_R -> HudView.SysButton(m.name, profile.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
-                    else -> HudView.SysButton(m.name, sysHint(m.cmd), m.cmd)
+                    // "held:FB": both held while pressed (Assassin's Creed's Sprint: R and ✕).
+                    else -> if (m.cmd.startsWith("held:") && m.cmd.length == 7) {
+                        val (a, b) = m.cmd.removePrefix("held:").map { c -> Key.valueOf(c.toString()) }
+                        HudView.SysButton(m.name, "hold " + listOf(a, b).joinToString("+") { PspProfile.FACE_NAMES[it.name[0]] ?: it.name }, null, holdKey = a, alsoHold = b)
+                    } else {
+                        HudView.SysButton(m.name, sysHint(m.cmd), m.cmd)
+                    }
                 }
             },
             block = profile.blockHoldsL,
