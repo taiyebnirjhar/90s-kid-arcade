@@ -739,6 +739,20 @@ decision was made in the conversation. Get the time now with
     found every spot nearer the buttons taken).
 - Next (G2): every move tried in the game, close up; L + each face button.
 
+### 2026-11-07 00:33 Dhaka · God of War: moves checked in the game, a card on Home
+- Owner: "Except adding it to library. U can add card".
+- Moves, checked in the game (one fresh run per move from the same moment,
+  two seconds after a load, compared with doing nothing): □, △, ○ attack;
+  **Hyperion Charge is L held, then ○** (both at once is just ○: the old
+  ring button did a plain grab). With L held, □ △ ✕ do nothing until Kratos
+  has magic, so the magic casts now press L first too (to check once the
+  game gives magic). New step form "E>D" (first held, then both).
+- Home: a "PlayStation Portable" row with a God of War card, the same frame
+  as the arcade's, its picture from libretro's PSP thumbnails (packed at
+  build time: `app/psp-art.txt`, never committed). On the phone: Play;
+  not yet: "Add your copy" opens the PSP games to add it. The library
+  stays for later.
+
 ---
 
 ## Where things stand (update whenever it changes)

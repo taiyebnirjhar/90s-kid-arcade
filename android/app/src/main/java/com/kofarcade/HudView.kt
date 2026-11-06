@@ -1082,12 +1082,14 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // (shrunk to fit when drawn). A very long one (Garou's Deadly Rave) shows
     // how it starts: all of it wouldn't be readable in a button.
     /** A PSP game's own steps ("pad:6,BE", "hold:A"), shown as text: they aren't arcade commands. */
-    private fun isPspSteps(cmd: String) = ':' in cmd
+    private fun isPspSteps(cmd: String) = ':' in cmd || '>' in cmd
 
     private fun pspStepsText(cmd: String): String = cmd.split(',').joinToString(" ") { step ->
         when {
             step.startsWith("pad:") -> "✚" + toArrows(step.removePrefix("pad:"))
             step.startsWith("hold:") -> "hold " + step.removePrefix("hold:").map(::buttonName).joinToString("")
+            // "E>D": the first held, then the second: "L›○".
+            '>' in step -> step.split('>').joinToString("›") { part -> part.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+") }
             else -> step.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+")
         }
     }

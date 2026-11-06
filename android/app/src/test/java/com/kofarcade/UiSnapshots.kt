@@ -52,7 +52,7 @@ class UiSnapshots {
 
     private val sets = mapOf("kof97" to "kof97", "kof2002" to "kof2002", "sengoku3" to "sengoku3")
 
-    private val homeUi get() = HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Last played", "Continue")
+    private val homeUi get() = HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Last played", "Continue", psp = PspTitle.ALL.map { it to null })
 
     @Test
     fun home() = shot("home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }

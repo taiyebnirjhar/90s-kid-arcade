@@ -127,6 +127,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-07: G2: moves checked in the game (Hyperion Charge is L, then ○);
+  G5: the God of War card on Home (library later).
 - 2026-11-07: G1 done (goes on from where it was left); G4: speed count
   holds while paused, PSP sound buffer 12 frames; G2 begun: Mash (L/R),
   checked in the game. Next: every move tried close up.

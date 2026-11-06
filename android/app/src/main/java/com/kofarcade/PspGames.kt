@@ -14,6 +14,24 @@ import java.util.zip.ZipInputStream
  * images, as PPSSPP reads them. A download packed as .7z or .zip is
  * unpacked on the way in, so a game is always one ready file.
  */
+/**
+ * A PSP game the app knows by name: a card of its own on Home, with its
+ * picture (packed at build time from libretro's PSP collection, psp-art.txt).
+ * The owner's copy, once added, is the file whose name says [match].
+ */
+data class PspTitle(val id: String, val title: String, val subtitle: String, val match: String, val art: String) {
+    fun copyIn(games: List<File>): File? = games.firstOrNull { PspGames.title(it).lowercase().contains(match) }
+
+    companion object {
+        val ALL = listOf(
+            PspTitle(
+                "gos", "God of War", "Ghost of Sparta", "ghost of sparta",
+                "Named_Titles/God of War - Ghost of Sparta (USA) (En,Fr,Es).png",
+            ),
+        )
+    }
+}
+
 object PspGames {
     /** A PSP game's last session log ([GameLogs]). */
     fun logFile(filesDir: File, game: String) = GameLogs.file(filesDir, "psp-$game")
@@ -179,6 +197,11 @@ data class PspProfile(
          * Hyperion Charge; L+✕ casts the magic picked with the D-pad (→ Eye of
          * Atlantis, ← Scourge of Erinys, ↑ Horn of Boreas); D-pad ↓ swaps
          * weapons.
+         *
+         * Checked in the game (tools/pspemu.py, the boat's first fight): □, △
+         * and ○ attack; L, then ○ while L is held, is Hyperion Charge (both at
+         * once is just ○); with L held, □ △ ✕ do nothing before Kratos has
+         * magic; the Mash pill escapes the first grab.
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
@@ -186,12 +209,12 @@ data class PspProfile(
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             moves = listOf(
-                Move("Hyperion Charge", "DE"),
+                Move("Hyperion Charge", "E>D"),
                 Move("Spirit of Hercules", "A,A,C"),
                 Move("Cyclone of Chaos", "hold:A", "dm"),
-                Move("Atlas Spark", "pad:6,BE", "dm"),
-                Move("Erinys Void", "pad:4,BE", "dm"),
-                Move("Boreas Freeze", "pad:8,BE", "dm"),
+                Move("Atlas Spark", "pad:6,E>B", "dm"),
+                Move("Erinys Void", "pad:4,E>B", "dm"),
+                Move("Boreas Freeze", "pad:8,E>B", "dm"),
             ),
         )
 
@@ -242,11 +265,20 @@ object PspSteps {
     const val GAP = 3
     const val HOLD = 45
 
-    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") }
+    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") || '>' in it }
 
     /** The key codes held on each frame, in order (an empty set lets everything go). */
     fun frames(cmd: String): List<Set<Int>> = buildList {
         for (step in cmd.split(',')) {
+            // "E>D": E held first, then D with it (God of War: L, then ○ while L is
+            // held, is Hyperion Charge; both at once is just ○, checked in the game).
+            if ('>' in step) {
+                val (first, then) = step.split('>', limit = 2)
+                repeat(TAP * 2) { add(keys(first)) }
+                repeat(TAP + 2) { add(keys(first) + keys(then)) }
+                repeat(GAP) { add(emptySet()) }
+                continue
+            }
             val (keys, frames) = when {
                 step.startsWith("pad:") -> setOfNotNull(dpad(step.removePrefix("pad:").toIntOrNull())) to TAP + 2
                 step.startsWith("hold:") -> keys(step.removePrefix("hold:")) to HOLD

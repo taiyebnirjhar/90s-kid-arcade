@@ -95,6 +95,8 @@ data class HomeUi(
     val update: String? = null,
     /** Saved matches, or saving on: a Replays chip. */
     val replays: Boolean = false,
+    /** The PSP games the app knows, each with its file on the phone (null: not added yet). */
+    val psp: List<Pair<PspTitle, String?>> = emptyList(),
 )
 
 /**
@@ -116,6 +118,8 @@ fun HomeScreen(
     onUpdate: () -> Unit = {},
     onReplays: () -> Unit = {},
     onPsp: () -> Unit = {},
+    /** A PSP game's card: plays it, or (not added yet) opens the PSP games to add it. */
+    onPspGame: (PspTitle, String?) -> Unit = { _, _ -> },
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -173,6 +177,22 @@ fun HomeScreen(
                                 width = cardWidth,
                                 selected = game == ui.hero,
                             )
+                        }
+                    }
+                }
+                if (ui.psp.isNotEmpty()) {
+                    Text(
+                        "PlayStation Portable",
+                        color = Palette.text,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        fontStyle = FontStyle.Italic,
+                        maxLines = 1,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 10.dp),
+                    )
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(ui.psp, key = { it.first.id }) { (title, path) ->
+                            PspCard(title, path, onClick = { onPspGame(title, path) }, width = cardWidth)
                         }
                     }
                 }
@@ -398,6 +418,69 @@ fun GameCard(
             )
             Text(
                 game.subtitle ?: if (set != null) "Ready to play" else "Not on this phone",
+                color = Palette.muted,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** A PSP game's card: the same frame and type as an arcade game's. */
+@Composable
+fun PspCard(title: PspTitle, path: String?, onClick: () -> Unit, width: Dp = 210.dp) {
+    val source = remember { MutableInteractionSource() }
+    val outlined = lit(source)
+    val context = LocalContext.current
+    val picture = if (LocalInspectionMode.current) null else key(title.art) {
+        produceState(GameArt.cached(title.art)) {
+            if (value == null) value = withContext(Dispatchers.IO) { GameArt.load(context, title.art) }
+        }.value
+    }
+    Column(
+        Modifier
+            .width(width)
+            .pressScale(source)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(interactionSource = source, indication = null, onClick = onClick),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f)
+                .border(2.5.dp, if (outlined) Palette.gold else Color.Transparent, RoundedCornerShape(20.dp))
+                .padding(5.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(Brush.linearGradient(listOf(Palette.red.copy(alpha = 0.45f), Palette.panel)))
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(15.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (picture != null) {
+                Image(
+                    picture, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop,
+                    colorFilter = if (path == null) GREY else null,
+                )
+            } else {
+                Text(title.title, color = Color.White.copy(alpha = 0.35f), fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, fontSize = 20.sp)
+            }
+            if (path == null) {
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.35f)))
+                PictureTag("Add your copy", Palette.red, Modifier.align(Alignment.TopStart).padding(8.dp))
+            }
+        }
+        Column(Modifier.padding(start = 6.dp, end = 6.dp, bottom = 4.dp)) {
+            Text(
+                title.title,
+                color = if (outlined) Palette.gold else Palette.text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontStyle = FontStyle.Italic,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                if (path != null) "${title.subtitle} · Ready to play" else "${title.subtitle} · Not on this phone",
                 color = Palette.muted,
                 fontSize = 12.sp,
                 maxLines = 1,
