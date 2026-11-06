@@ -61,6 +61,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private var frame = 0L
     /** Directions held by the stick, for the analog stick. */
     private val dirs = HashSet<Key>()
+    /** A PSP step sequence playing ([PspSteps]): the keys held on each frame still to come. */
+    @Volatile private var steps: List<Set<Int>> = emptyList()
+    private var stepsHeld: Set<Int> = emptySet()
     private lateinit var speedText: TextView
     private lateinit var store: PspStore
     private lateinit var settings: PspSettings
@@ -108,6 +111,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             meter.frame(SystemClock.elapsedRealtime())
             padFrame++
             pad.onFrame()
+            stepFrame()
         }
 
         profile = PspProfile.forTitle(PspGames.title(game))
@@ -194,8 +198,11 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             faceButtons = listOf('A', 'B', 'C', 'D'),
             labels = profile.labels,
             moves = profile.moves,
-            system = profile.system.map { HudView.SysButton(it.name, sysHint(it.cmd), it.cmd) },
-            block = profile.blockHoldsR,
+            system = profile.system.map { m ->
+                if (m.cmd == PspProfile.HOLD_R) HudView.SysButton(m.name, "hold R", null, hold = true)
+                else HudView.SysButton(m.name, sysHint(m.cmd), m.cmd)
+            },
+            block = profile.blockHoldsL,
             facingButton = false,
             size = settings.controlsSize,
             coinLabel = "SELECT",
@@ -205,8 +212,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         hud.opacity = settings.controlsOpacity
     }
 
-    /** A pill's keys as the PSP calls them ("L+R"). */
-    private fun sysHint(cmd: String) = cmd.map { c -> if (c == 'E') "L" else if (c == 'F') "R" else c.toString() }.joinToString("+")
+    /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
+    private fun sysHint(cmd: String): String = when {
+        cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
+        else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: if (c == 'E') "L" else if (c == 'F') "R" else c.toString() }.joinToString("+")
+    }
+
+    /** One frame of a PSP step sequence, on the emulator's thread: press what's new, let go what's done. */
+    private fun stepFrame() {
+        val queue = steps
+        val now = queue.firstOrNull() ?: emptySet()
+        if (queue.isNotEmpty()) steps = queue.drop(1)
+        if (now == stepsHeld) return
+        for (k in stepsHeld - now) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
+        stepsHeld = now
+    }
 
     /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
     private fun sendKey(key: Key, down: Boolean) {
@@ -226,16 +247,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     // HudView.Listener: the arcade controls.
     override fun onDir(dir: Int) = pad.setDir(dir)
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
-    override fun onPlay(cmd: String, move: Move?): Int = pad.play(cmd)
+    override fun onPlay(cmd: String, move: Move?): Int {
+        if (!PspSteps.isSteps(cmd)) return pad.play(cmd)
+        val frames = PspSteps.frames(cmd)
+        steps = frames
+        return frames.size
+    }
     override fun onMenu() = if (hud.editing) finishEditing() else showMenu()
     override fun onFlip() = Unit
     override fun onSlot(index: Int) = Unit
     override fun onRapid() = Unit
     override fun onBlock(relDir: Int?) {
-        // God of War blocks with R held.
-        if (profile.blockHoldsR) pad.press(Key.F, relDir != null)
+        // God of War blocks with L held (a tap parries).
+        if (profile.blockHoldsL) pad.press(Key.E, relDir != null)
     }
-    override fun onRun(on: Boolean) = Unit
+    /** A held pill ("Fire": R held for Thera's Bane). */
+    override fun onRun(on: Boolean) = pad.press(Key.F, on)
 
     private fun startEditing() {
         hud.editing = true

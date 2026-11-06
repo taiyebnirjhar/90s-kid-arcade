@@ -574,11 +574,24 @@ decision was made in the conversation. Get the time now with
   names under them; a profile hides what its game never uses (God of War:
   SELECT).
 
+### 2026-11-06 15:22 Dhaka · God of War's own buttons, from the owner's move list
+- Owner sent a move list for Ghost of Sparta (with GameFAQs and manual
+  links). It says L held blocks (tap parries), R + stick rolls, R held is
+  Thera's Bane, L+○ Hyperion Charge, L+✕ casts the magic picked with the
+  D-pad, D-pad ↓ swaps weapons, SELECT opens a menu.
+- Decided: God of War's profile follows it: Block holds L; pills Roll (R),
+  Weapon (D-pad ↓), Fire (R held while pressed); the ring: Hyperion Charge,
+  Spirit of Hercules (□□△), Cyclone of Chaos (□ held), Atlas Spark, Erinys
+  Void, Boreas Freeze (each picks its magic, then casts). SELECT shown.
+  PSP-only steps (D-pad taps, held buttons) play from `PspSteps`. The list
+  reads partly machine-written, so every input gets checked in the game
+  (the owner is sending the game for that).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:14 Dhaka:
+As of 2026-11-06 15:22 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
@@ -587,7 +600,7 @@ As of 2026-11-06 15:14 Dhaka:
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
   - PSP P2: Ghost of Sparta played again with frame skip Auto; the speed report.
-  - God of War's move list (pause menu screenshots), for the ring's combos.
+  - Ghost of Sparta as a Google Drive link, to check every input in the game here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

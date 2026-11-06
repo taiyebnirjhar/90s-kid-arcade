@@ -33,7 +33,7 @@ class PspHudTest {
         val hud = HudView(paparazzi.context, listener)
         hud.state = HudView.State(
             layout = Layout.FIGHTER, faceButtons = listOf('A', 'B', 'C', 'D'), labels = p.labels, moves = p.moves,
-            system = p.system.map { HudView.SysButton(it.name, it.cmd, it.cmd) }, block = p.blockHoldsR,
+            system = p.system.map { HudView.SysButton(it.name, if (it.cmd == PspProfile.HOLD_R) "hold R" else it.cmd.replace("pad:2", "✚↓").replace("F", "R"), it.cmd.takeIf { c -> c != PspProfile.HOLD_R }, hold = it.cmd == PspProfile.HOLD_R) }, block = p.blockHoldsL,
             facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES,
         )
         hud.opacity = PspSettings().controlsOpacity

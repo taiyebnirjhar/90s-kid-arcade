@@ -283,7 +283,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private val keyFor = mapOf('A' to Key.A, 'B' to Key.B, 'C' to Key.C, 'D' to Key.D, 'E' to Key.E, 'F' to Key.F)
 
     /** A button's name as the game calls it ("LP"), or its letter. */
-    private fun buttonName(c: Char): String = state.labels[c]?.takeIf { it.length <= 2 } ?: c.toString()
+    private fun buttonName(c: Char): String = state.faceNames[c] ?: state.labels[c]?.takeIf { it.length <= 2 } ?: c.toString()
 
     init {
         isHapticFeedbackEnabled = true
@@ -602,6 +602,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         elements.map { Triple(it.id, RectF(it.rect), it.round) } + Triple("stick", circle(homeX, homeY, stickRadius()), true)
 
     private fun glyphPath(cmd: String, cx: Float, cy: Float, half: Float): Path? {
+        if (isPspSteps(cmd)) return null
         val g = motionGlyph(cmd) ?: return null
         val k = 2 * half / 48f
         val ox = cx - half
@@ -1054,7 +1055,19 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // A sequence's inputs as text lines: "D B C C ↑", in two lines if long
     // (shrunk to fit when drawn). A very long one (Garou's Deadly Rave) shows
     // how it starts: all of it wouldn't be readable in a button.
+    /** A PSP game's own steps ("pad:6,BE", "hold:A"), shown as text: they aren't arcade commands. */
+    private fun isPspSteps(cmd: String) = ':' in cmd
+
+    private fun pspStepsText(cmd: String): String = cmd.split(',').joinToString(" ") { step ->
+        when {
+            step.startsWith("pad:") -> "✚" + toArrows(step.removePrefix("pad:"))
+            step.startsWith("hold:") -> "hold " + step.removePrefix("hold:").map(::buttonName).joinToString("")
+            else -> step.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+")
+        }
+    }
+
     private fun sequenceLines(cmd: String): List<String> {
+        if (isPspSteps(cmd)) return listOf(pspStepsText(cmd))
         val all = toArrows(cmd).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
         if (all.size > 8) return listOf(all[0], all.drop(1).take(3).joinToString(" ") + " …")
         val tokens = all

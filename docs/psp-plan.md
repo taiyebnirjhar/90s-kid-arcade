@@ -101,7 +101,10 @@ owner's library (downloaded with its key, never committed).
   move list (no reliable list was reachable from here). The face buttons
   show the PSP's symbols (□ ✕ △ ○) with the game's names under them, since
   the games say "press ○"; buttons a game never uses are hidden (God of
-  War: SELECT).
+  War: SELECT, later shown again: the owner's move list says it opens a
+  menu). God of War's ring and pills follow the owner's move list:
+  Hyperion Charge, Spirit of Hercules, Cyclone of Chaos, three magics;
+  Roll, Weapon, Fire; Block holds L. To check in the game.
 - 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
   first check and stable ghost of Sparta"). Home → PSP → Add a game takes
   his `.7z` download (unpacked on the phone) or a plain image; the game

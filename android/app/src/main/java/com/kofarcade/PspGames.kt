@@ -217,22 +217,40 @@ data class PspProfile(
     val select: Boolean = true,
     /** Pills over the buttons: one tap plays its keys (L, R, L+R...). */
     val system: List<Move> = listOf(Move("L", "E"), Move("R", "F")),
-    /** A Block button above the stick that holds R while pressed. */
-    val blockHoldsR: Boolean = false,
+    /** A Block button above the stick that holds L while pressed (God of War blocks with L). */
+    val blockHoldsL: Boolean = false,
     /** One-tap moves on the ring, like a fighter's specials. */
     val moves: List<Move> = emptyList(),
 ) {
     companion object {
-        /** God of War (Chains of Olympus, Ghost of Sparta): R blocks; L and R together roll, steered with the stick. */
+        /**
+         * God of War: Ghost of Sparta (and Chains of Olympus), from the move
+         * list the owner sent (2026-11-06; to check in the game): □ light, △
+         * heavy, ○ grab, ✕ jump; L held blocks (a tap parries); R with the
+         * stick rolls, R held sets the blades on fire (Thera's Bane); L+○
+         * Hyperion Charge; L+✕ casts the magic picked with the D-pad (→ Eye of
+         * Atlantis, ← Scourge of Erinys, ↑ Horn of Boreas); D-pad ↓ swaps
+         * weapons.
+         */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            select = false,
-            system = listOf(Move("Roll", "EF"), Move("L", "E")),
-            blockHoldsR = true,
+            system = listOf(Move("Roll", "F"), Move("Weapon", "pad:2"), Move("Fire", HOLD_R)),
+            blockHoldsL = true,
+            moves = listOf(
+                Move("Hyperion Charge", "DE"),
+                Move("Spirit of Hercules", "A,A,C"),
+                Move("Cyclone of Chaos", "hold:A", "dm"),
+                Move("Atlas Spark", "pad:6,BE", "dm"),
+                Move("Erinys Void", "pad:4,BE", "dm"),
+                Move("Boreas Freeze", "pad:8,BE", "dm"),
+            ),
         )
 
-        /** The PSP's symbols on the arcade face buttons. */
-        val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○")
+        /** The PSP's names for the arcade keys: symbols on the face buttons, L and R for E and F. */
+        val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○", 'E' to "L", 'F' to "R")
+
+        /** A pill's command for "held while pressed" (R): the game screen holds R for as long as the finger stays. */
+        const val HOLD_R = "held:F"
 
         /** The profile for a game, from its title. */
         fun forTitle(title: String): PspProfile = when {
@@ -252,5 +270,44 @@ data class PspProfile(
             Key.START -> android.view.KeyEvent.KEYCODE_BUTTON_START
             else -> null // directions go to the analog stick
         }
+    }
+}
+
+/**
+ * A PSP game's own steps on the ring and the pills, beyond the arcade
+ * commands: "pad:6" taps the D-pad right, "hold:A" holds a button (Cyclone of
+ * Chaos is □ held), "BE" presses buttons together; steps go one after another
+ * ("pad:6,BE": pick a magic, then cast it). Gives the PSP key codes held on
+ * each frame, for the game screen to play.
+ */
+object PspSteps {
+    const val TAP = 4
+    const val GAP = 3
+    const val HOLD = 45
+
+    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") }
+
+    /** The key codes held on each frame, in order (an empty set lets everything go). */
+    fun frames(cmd: String): List<Set<Int>> = buildList {
+        for (step in cmd.split(',')) {
+            val (keys, frames) = when {
+                step.startsWith("pad:") -> setOfNotNull(dpad(step.removePrefix("pad:").toIntOrNull())) to TAP + 2
+                step.startsWith("hold:") -> keys(step.removePrefix("hold:")) to HOLD
+                else -> keys(step) to TAP
+            }
+            repeat(frames) { add(keys) }
+            repeat(GAP) { add(emptySet()) }
+        }
+    }
+
+    private fun keys(buttons: String): Set<Int> =
+        buttons.mapNotNull { c -> Key.entries.firstOrNull { it.name == c.toString() }?.let(PspProfile::keyCode) }.toSet()
+
+    private fun dpad(dir: Int?): Int? = when (dir) {
+        8 -> android.view.KeyEvent.KEYCODE_DPAD_UP
+        2 -> android.view.KeyEvent.KEYCODE_DPAD_DOWN
+        4 -> android.view.KeyEvent.KEYCODE_DPAD_LEFT
+        6 -> android.view.KeyEvent.KEYCODE_DPAD_RIGHT
+        else -> null
     }
 }

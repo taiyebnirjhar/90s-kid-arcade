@@ -94,10 +94,12 @@ class PspGamesTest {
         val p = PspProfile.forTitle("God of War - Ghost of Sparta (USA)")
         assertEquals("Light", p.labels['A'])
         assertEquals("Heavy", p.labels['C'])
-        assertTrue("Block holds R", p.blockHoldsR)
-        assertFalse("God of War never uses SELECT", p.select)
+        assertTrue("Block holds L", p.blockHoldsL)
+        assertTrue("SELECT opens its pause menu", p.select)
+        assertEquals(6, p.moves.size)
+        assertEquals("pad:6,BE", p.moves.first { it.name == "Atlas Spark" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
-        assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
+        assertEquals("F", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
@@ -122,5 +124,17 @@ class PspGamesTest {
         m.frame(t)
         assertEquals(1, m.stalls.size)
         assertTrue(m.stalls.single().second >= 400)
+    }
+
+    @Test
+    fun pspStepsPickAMagicThenCastIt() {
+        val f = PspSteps.frames("pad:6,BE")
+        assertEquals(setOf(android.view.KeyEvent.KEYCODE_DPAD_RIGHT), f.first())
+        assertTrue(f.any { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_B, android.view.KeyEvent.KEYCODE_BUTTON_L1) })
+        assertEquals(emptySet<Int>(), f.last())
+        val hold = PspSteps.frames("hold:A")
+        assertEquals(PspSteps.HOLD, hold.count { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_Y) })
+        assertTrue(PspSteps.isSteps("hold:A"))
+        assertFalse(PspSteps.isSteps("A,A,C"))
     }
 }
