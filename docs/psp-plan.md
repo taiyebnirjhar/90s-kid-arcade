@@ -67,6 +67,12 @@ readout, in our own app on his phone, finds that out first.
   buttons, L and R, START and SELECT) following the button layout rules;
   gamepads; the game's own saves and quick save/load.
 
+- **P5. Weaker phones (noted, not started).** The owner (2026-11-06):
+  after P2, refine so the PSP games also run on phones weaker than his,
+  with minimal graphics if needed (a lowest-settings preset, chosen by the
+  phone's speed). He gives the game file first, so it can be measured
+  here; starts when he says so.
+
 ## Testing
 
 The cloud sandbox has no GPU: P1 is checked with PPSSPP's software renderer

@@ -638,6 +638,14 @@ decision was made in the conversation. Get the time now with
   ending. One shared piece: `GameLog`, `SpeedMeter`, `GameLogs`
   (`GameLog.kt`) and the tab in `ControlsPanel`.
 
+### 2026-11-06 16:21 Dhaka · Next after PSP P2: weaker phones
+- Owner: "After that we will refine, so it supports weaker phone than mine
+  means other phones as well. If needed with mininal graphics an all. For
+  that i will give u the file first. Keep that in note".
+- Noted as P5 in docs/psp-plan.md: once P2 holds on his phone, the PSP
+  games also run on weaker phones, with minimal graphics where needed.
+  He gives the game file first; starts when he says so.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -663,6 +671,7 @@ As of 2026-11-06 16:13 Dhaka:
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
   - A Firebase project, if he wants notifications with the app closed.
+- **Next for PSP (noted):** P5, weaker phones with minimal graphics; the owner sends the game file first.
 - **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3).
 - **Watch:** problem reports (reader account) after the owner's friends
   play online.
