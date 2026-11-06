@@ -146,6 +146,8 @@ fun PauseContent(
     canChangeGame: Boolean = true,
     /** The game's picture, by its name (games without a fighter to show). */
     picture: (@Composable () -> Unit)? = null,
+    /** More items before Settings, for a kind of game that has its own (a PSP game's "Graphics & speed"). */
+    extra: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -181,6 +183,7 @@ fun PauseContent(
                 if (!netplay) item("Load state", onClick = onLoad) else if (!watching && canChangeGame) item("Load state for everyone", onClick = onLoad)
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
                 item(if (soundOn) "Sound: on" else "Sound: off", onClick = onSound)
+                for ((text, onClick) in extra) item(text, onClick = onClick)
                 item("Settings", onClick = onControls)
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
@@ -545,7 +548,7 @@ private fun Arrow(glyph: String, enabled: Boolean, onClick: () -> Unit) {
 
 /** Pick one of [options]: the arrows go round. */
 @Composable
-private fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) -> String, sub: String? = null, onPick: (T) -> Unit) {
+internal fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) -> String, sub: String? = null, onPick: (T) -> Unit) {
     val i = options.indexOf(selected)
     SettingRow(
         label, name(selected), sub,
@@ -556,7 +559,7 @@ private fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) 
 
 /** An amount in [range], shown in percent, in steps of [step]. */
 @Composable
-private fun StepRow(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, sub: String? = null, onChange: (Float) -> Unit) {
+internal fun StepRow(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, sub: String? = null, onChange: (Float) -> Unit) {
     // Snap to the steps, so a saved odd value (46%) lands on the grid on the first press.
     fun stepped(dir: Int) = (((value / step).roundToInt() + dir) * step).coerceIn(range.start, range.endInclusive)
     SettingRow(
@@ -581,7 +584,7 @@ private fun CountRow(label: String, value: Int, range: IntRange, sub: String? = 
 }
 
 @Composable
-private fun ToggleRow(label: String, value: Boolean, onChange: (Boolean) -> Unit, sub: String? = null) {
+internal fun ToggleRow(label: String, value: Boolean, onChange: (Boolean) -> Unit, sub: String? = null) {
     SettingRow(label, if (value) "On" else "Off", sub, onBack = { onChange(!value) }, onNext = { onChange(!value) })
 }
 

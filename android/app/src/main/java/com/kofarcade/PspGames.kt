@@ -96,8 +96,6 @@ data class PspSettings(
     /** Skips some full-screen effects (glows, blur) for speed. */
     val fasterEffects: Boolean = false,
     val picture: Picture = Picture.SHARP,
-    val controlsSize: Float = 0.85f,
-    val controlsOpacity: Float = 0.6f,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
     enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }

@@ -595,11 +595,26 @@ decision was made in the conversation. Get the time now with
   (L+R) and Weapon. The fighter layout gets a fourth pill spot (beside C);
   `PspHudTest` fails if any PSP controls overlap.
 
+### 2026-11-06 15:48 Dhaka · The PSP screen dressed like the arcade games
+- Owner: "Make sure u polish and clean the ui. Like other games. We have
+  aleady decision for those, settings ui, responsiveness, layout button
+  responsive ness, customisation etc."
+- Decided: the PSP game screen uses the arcade's own pieces, no plain
+  lists: the pause menu (`PauseContent`, with "Graphics & speed" and
+  "Speed report" added through its new `extra` items), Settings
+  (`ControlsPanel`, the same saved settings as the arcade games: stick,
+  size, see-through, left-handed, vibration, sound, move timing), the layout
+  editor bar with its size slider and gear (`EditBarContent`,
+  `EditAllSheet`), layouts kept per game and per hand. Graphics & speed is
+  a panel in the same style, kept per game. Leaving the app opens the
+  pause menu. `Overlay`, `PickRow`, `StepRow` and `ToggleRow` are shared
+  (internal) for this.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:37 Dhaka:
+As of 2026-11-06 15:48 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31

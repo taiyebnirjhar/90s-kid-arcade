@@ -1,48 +1,78 @@
 package com.kofarcade
 
-import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
 import android.os.SystemClock
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import com.kofarcade.core.Key
+import com.kofarcade.core.Layout
+import com.kofarcade.core.Move
+import com.kofarcade.core.Pad
+import com.kofarcade.core.Timing
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.LibretroDroid
 import com.swordfish.libretrodroid.ShaderConfig
 import com.swordfish.libretrodroid.Variable
-import com.kofarcade.core.Key
-import com.kofarcade.core.Layout
-import com.kofarcade.core.Move
-import com.kofarcade.core.Pad
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.zip.ZipInputStream
 
 /**
- * Plays one PSP game with PPSSPP (docs/psp-plan.md): its settings (kept per
- * game), the arcade controls (the KOF 2002 layout, [HudView]) with what this
- * game needs on top ([PspProfile]), or a gamepad, and a speed counter for the
- * plan's rule (full speed in 99% of seconds, no long stalls), measured on the
- * emulator's own thread.
+ * Plays one PSP game with PPSSPP (docs/psp-plan.md), dressed like the arcade
+ * games: the KOF 2002 controls ([HudView]) with this game's own buttons on
+ * top ([PspProfile]), the arcade's pause menu, Settings (shared with the
+ * arcade games: stick, size, see-through, left-handed, vibration, sound) and
+ * layout editor, plus this game's Graphics & speed (kept per game). A gamepad
+ * works too. A speed counter checks the plan's rule (full speed in 99% of
+ * seconds, no long stalls), timed on the emulator's own thread.
  */
 class PspGameActivity : ComponentActivity(), HudView.Listener {
     companion object {
@@ -52,11 +82,16 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val ASSETS_VERSION = 1
     }
 
+    /** What's open over the game. */
+    enum class Sheet { PAUSE, SETTINGS, GRAPHICS, REPORT }
+
     private lateinit var retroView: GLRetroView
     private lateinit var hud: HudView
     private lateinit var pad: Pad
     private lateinit var profile: PspProfile
-    private lateinit var doneButton: TextView
+    private lateinit var store: PspStore
+    private lateinit var prefs: Prefs
+    private lateinit var gameFile: File
     @Volatile private var padFrame = 0L
     private var frame = 0L
     /** Directions held by the stick, for the analog stick. */
@@ -64,21 +99,43 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     /** A PSP step sequence playing ([PspSteps]): the keys held on each frame still to come. */
     @Volatile private var steps: List<Set<Int>> = emptyList()
     private var stepsHeld: Set<Int> = emptySet()
-    private lateinit var speedText: TextView
-    private lateinit var store: PspStore
-    private lateinit var settings: PspSettings
     private val meter = SpeedMeter()
-    private var showSpeed = true
+    private var paused = false
+
+    var title by mutableStateOf("")
+        private set
+    var sheet by mutableStateOf<Sheet?>(null)
+        private set
+    var graphics by mutableStateOf(PspSettings())
+        private set
+    var showSpeed by mutableStateOf(true)
+        private set
+    var speedLine by mutableStateOf("")
+        private set
+    /** What's on screen now: the shared settings, or a preview while Settings or the editor is open. */
+    var look by mutableStateOf(Look(ScreenMode.WIDE, StickMode.FLOATING, 1f, DEFAULT_OPACITY, LabelMode.SUPERS, true, false, 2, 4))
+        private set
+    var editing by mutableStateOf(false)
+        private set
+    var editSelected by mutableStateOf<String?>(null)
+        private set
+    var editScale by mutableFloatStateOf(1f)
+        private set
+    private var editBackup: Map<String, HudView.Tweak> = emptyMap()
+    private var editStartLook: Look? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val game = File(intent.getStringExtra(EXTRA_PATH).orEmpty())
-        if (!game.isFile) {
+        gameFile = File(intent.getStringExtra(EXTRA_PATH).orEmpty())
+        if (!gameFile.isFile) {
             finish()
             return
         }
-        store = PspStore(this, game.name)
-        settings = store.settings()
+        title = PspGames.title(gameFile)
+        prefs = Prefs(this)
+        store = PspStore(this, gameFile.name)
+        graphics = store.settings()
+        profile = PspProfile.forTitle(title)
         val system = File(filesDir, "system").apply { mkdirs() }
         unpackAssets(system)
         LibretroDroid.setFrozen(false)
@@ -95,13 +152,13 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
         val data = GLRetroViewData(this).apply {
             coreFilePath = File(applicationInfo.nativeLibraryDir, CORE).absolutePath
-            gameFilePath = game.absolutePath
+            gameFilePath = gameFile.absolutePath
             systemDirectory = system.absolutePath
             savesDirectory = File(filesDir, "psp/saves").apply { mkdirs() }.absolutePath
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
-            shader = shaderFor(settings.picture)
-            variables = variables(settings)
+            shader = shaderFor(graphics.picture)
+            variables = variables(graphics)
         }
         retroView = GLRetroView(this, data)
         lifecycle.addObserver(retroView)
@@ -114,37 +171,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             stepFrame()
         }
 
-        profile = PspProfile.forTitle(PspGames.title(game))
         pad = Pad(send = ::sendKey, clock = { padFrame })
         hud = HudView(this, this)
-        hud.tweaks = store.tweaks()
-        doneButton = TextView(this).apply {
-            text = "DONE"
-            setTextColor(Color.BLACK)
-            setBackgroundColor(Color.rgb(232, 178, 26))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(48, 18, 48, 18)
-            visibility = View.GONE
-            setOnClickListener { finishEditing() }
+        hud.onSelect = { id ->
+            editSelected = id
+            editScale = id?.let { hud.tweaks[it]?.scale } ?: 1f
         }
-        updateHud()
-        speedText = TextView(this).apply {
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.argb(150, 0, 0, 0))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
-            typeface = Typeface.MONOSPACE
-            setPadding(14, 4, 14, 4)
-        }
+        val overlay = ComposeView(this).apply { setContent { KofTheme { Overlays() } } }
         setContentView(
             FrameLayout(this).apply {
                 setBackgroundColor(Color.BLACK)
                 addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER))
                 addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-                addView(doneButton, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
-                addView(speedText, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (44 * resources.displayMetrics.density).toInt() })
+                addView(overlay, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP))
             },
         )
+        applyLook(prefs.look())
 
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect { if (it is GLRetroView.GLRetroEvents.FrameRendered) hud.onFrame(++frame) }
@@ -152,23 +194,26 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         lifecycleScope.launch {
             while (true) {
                 delay(500)
-                speedText.visibility = if (showSpeed) View.VISIBLE else View.GONE
-                speedText.text = "${meter.lastFps} fps · full speed ${meter.fullSpeedPercent}% · slow ${meter.slowSeconds}/${meter.seconds} s · " +
-                    "stalls ${meter.stalls.size} (longest ${meter.longestStallMs} ms)"
+                speedLine = "${meter.lastFps} fps · full speed ${meter.fullSpeedPercent}% · " +
+                    "slow ${meter.slowSeconds}/${meter.seconds} s · stalls ${meter.stalls.size} (longest ${meter.longestStallMs} ms)"
             }
         }
         lifecycleScope.launch {
             retroView.getGLRetroErrors().collect { code ->
-                AlertDialog.Builder(this@PspGameActivity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("The game couldn't start")
-                    .setMessage("Error $code. The file may be damaged or not a PSP game.")
-                    .setPositiveButton("Back") { _, _ -> finish() }
-                    .setCancelable(false)
-                    .show()
+                Toast.makeText(this@PspGameActivity, "The game couldn't start (error $code): the file may be damaged", Toast.LENGTH_LONG).show()
+                finish()
             }
         }
-        onBackPressedDispatcher.addCallback(this) { if (hud.editing) finishEditing() else showMenu() }
+        onBackPressedDispatcher.addCallback(this) {
+            when {
+                editing -> finishEditing(save = false)
+                sheet != null -> close()
+                else -> open(Sheet.PAUSE)
+            }
+        }
     }
+
+    // ----- Settings -----
 
     private fun variables(s: PspSettings) = PspSpeed.options(s).map { (k, v) -> Variable(k, v) }.toTypedArray()
 
@@ -178,18 +223,54 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         PspSettings.Picture.ENHANCED -> ShaderConfig.CUT2()
     }
 
-    /** Saves and applies [s]: the core's options at once, the picture, the controls. */
-    private fun apply(s: PspSettings) {
-        val old = settings
-        settings = s
+    /** Graphics & speed changed: saved for this game, applied at once. */
+    fun applyGraphics(s: PspSettings) {
+        val old = graphics
+        graphics = s
         store.save(s)
         if (PspSpeed.options(old) != PspSpeed.options(s)) {
             retroView.updateVariables(*variables(s))
             meter.reset()
         }
         if (old.picture != s.picture) retroView.shader = shaderFor(s.picture)
+    }
+
+    /** The shared settings (or a preview of them) on the controls and the sound. */
+    fun applyLook(l: Look) {
+        look = l
+        hud.tweaks = prefs.tweaks(layoutKey())
+        pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
+        hud.opacity = l.opacity
+        LibretroDroid.setVolume(if (l.sound) l.volume * l.volume else 0f)
         updateHud()
     }
+
+    /** Settings' Save: kept for every game, as the arcade's own Settings does. */
+    fun saveLook(l: Look) {
+        prefs.stick = l.stick
+        prefs.size = l.size
+        prefs.opacity = l.opacity
+        prefs.labelMode = l.labelMode
+        prefs.haptics = l.haptics
+        prefs.leftHanded = l.leftHanded
+        prefs.stepFrames = l.stepFrames
+        prefs.pressFrames = l.pressFrames
+        prefs.soundOn = l.sound
+        prefs.volume = l.volume
+        applyLook(prefs.look())
+    }
+
+    fun toggleSound() {
+        prefs.soundOn = !prefs.soundOn
+        applyLook(prefs.look())
+    }
+
+    fun toggleSpeed() {
+        showSpeed = !showSpeed
+    }
+
+    /** This game's layout, per hand: its buttons aren't any other game's. */
+    private fun layoutKey() = "PSP-${gameFile.name}.${if (look.leftHanded) "L" else "R"}"
 
     /** The arcade controls for this game: the base layout and the game's own buttons. */
     private fun updateHud() {
@@ -207,30 +288,161 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             },
             block = profile.blockHoldsL,
             facingButton = false,
-            size = settings.controlsSize,
+            size = look.size,
+            leftHanded = look.leftHanded,
+            labelMode = look.labelMode,
+            stick = look.stick,
+            haptics = look.haptics,
             coinLabel = "SELECT",
             showCoin = profile.select,
             faceNames = PspProfile.FACE_NAMES,
         )
-        hud.opacity = settings.controlsOpacity
     }
 
     /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
     private fun sysHint(cmd: String): String = when {
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
-        else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: if (c == 'E') "L" else if (c == 'F') "R" else c.toString() }.joinToString("+")
+        else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
 
-    /** One frame of a PSP step sequence, on the emulator's thread: press what's new, let go what's done. */
-    private fun stepFrame() {
-        val queue = steps
-        val now = queue.firstOrNull() ?: emptySet()
-        if (queue.isNotEmpty()) steps = queue.drop(1)
-        if (now == stepsHeld) return
-        for (k in stepsHeld - now) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
-        for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
-        stepsHeld = now
+    // ----- Pause, sheets, save states -----
+
+    fun open(s: Sheet) {
+        sheet = s
+        pauseGame()
     }
+
+    fun close() {
+        sheet = null
+        applyLook(prefs.look()) // a Settings preview that wasn't saved goes back
+        resumeGame()
+    }
+
+    private fun pauseGame() {
+        if (paused) return
+        paused = true
+        hud.releaseAll()
+        pad.cancel()
+        // Frozen rather than stopped, so the picture still redraws behind the menu.
+        LibretroDroid.pause()
+        LibretroDroid.setFrozen(true)
+    }
+
+    private fun resumeGame() {
+        if (!paused) return
+        paused = false
+        LibretroDroid.setFrozen(false)
+        LibretroDroid.resume()
+    }
+
+    private val stateFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.state")
+
+    fun saveState() {
+        close()
+        lifecycleScope.launch {
+            delay(120)
+            val bytes = withContext(Dispatchers.IO) { retroView.serializeState() }
+            withContext(Dispatchers.IO) { stateFile.writeBytes(bytes) }
+            Toast.makeText(this@PspGameActivity, "State saved", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun loadState() {
+        close()
+        lifecycleScope.launch {
+            delay(120)
+            val bytes = withContext(Dispatchers.IO) { runCatching { stateFile.readBytes() }.getOrNull() }
+            val ok = bytes != null && withContext(Dispatchers.IO) { retroView.unserializeState(bytes) }
+            Toast.makeText(this@PspGameActivity, if (ok) "State loaded" else "No saved state yet: save one first", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun startOver() {
+        close()
+        retroView.reset()
+        meter.reset()
+    }
+
+    /** The speed report, to send (WhatsApp, email…). */
+    fun shareReport() {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade PSP speed report")
+            .putExtra(Intent.EXTRA_TEXT, report())
+        startActivity(Intent.createChooser(send, "Send the speed report"))
+    }
+
+    /** What the counter saw. */
+    fun report(): String {
+        val stalls = meter.stalls
+        val list = if (stalls.isEmpty()) "none" else stalls.takeLast(12).joinToString("\n") { (sec, ms) -> "  at ${sec / 60}:${"%02d".format(sec % 60)}: $ms ms" }
+        val s = graphics
+        return "$title\n" +
+            "Played ${meter.seconds / 60} min ${meter.seconds % 60} s\n" +
+            "Full speed: ${meter.fullSpeedPercent}% of seconds (slow: ${meter.slowSeconds})\n" +
+            "Longest stall: ${meter.longestStallMs} ms\n" +
+            "Stalls over ${SpeedMeter.STALL_MS} ms:\n$list\n" +
+            "Settings: frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, " +
+            "faster effects ${if (s.fasterEffects) "on" else "off"}"
+    }
+
+    fun restartCount() = meter.reset()
+
+    // ----- Layout editor (the arcade's) -----
+
+    fun startEditing() {
+        sheet = null
+        editBackup = hud.tweaks
+        editStartLook = look
+        editing = true
+        hud.editing = true
+        pauseGame()
+    }
+
+    fun changeEditLook(l: Look) {
+        if (l.leftHanded != look.leftHanded) {
+            prefs.setTweaks(layoutKey(), hud.tweaks)
+            look = l
+            hud.tweaks = prefs.tweaks(layoutKey())
+        } else {
+            look = l
+        }
+        hud.opacity = l.opacity
+        updateHud()
+    }
+
+    fun changeEditScale(v: Float) {
+        val id = editSelected ?: return
+        editScale = v
+        hud.setScale(id, v)
+    }
+
+    fun resetLayout() {
+        hud.tweaks = emptyMap()
+        editScale = 1f
+        changeEditLook(look.copy(size = 1f, opacity = DEFAULT_OPACITY))
+    }
+
+    fun finishEditing(save: Boolean) {
+        if (save) {
+            prefs.setTweaks(layoutKey(), hud.tweaks)
+            prefs.stick = look.stick
+            prefs.size = look.size
+            prefs.leftHanded = look.leftHanded
+            prefs.opacity = look.opacity
+        } else {
+            editStartLook?.let { look = it }
+            hud.tweaks = editBackup
+            hud.opacity = look.opacity
+            updateHud()
+        }
+        editStartLook = null
+        editing = false
+        editSelected = null
+        hud.editing = false
+        resumeGame()
+    }
+
+    // ----- Keys to the PSP -----
 
     /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
     private fun sendKey(key: Key, down: Boolean) {
@@ -247,6 +459,17 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
+    /** One frame of a PSP step sequence, on the emulator's thread: press what's new, let go what's done. */
+    private fun stepFrame() {
+        val queue = steps
+        val now = queue.firstOrNull() ?: emptySet()
+        if (queue.isNotEmpty()) steps = queue.drop(1)
+        if (now == stepsHeld) return
+        for (k in stepsHeld - now) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
+        stepsHeld = now
+    }
+
     // HudView.Listener: the arcade controls.
     override fun onDir(dir: Int) = pad.setDir(dir)
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
@@ -256,7 +479,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         steps = frames
         return frames.size
     }
-    override fun onMenu() = if (hud.editing) finishEditing() else showMenu()
+    override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)
     override fun onFlip() = Unit
     override fun onSlot(index: Int) = Unit
     override fun onRapid() = Unit
@@ -266,15 +489,44 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
     override fun onRun(on: Boolean) = Unit
 
-    private fun startEditing() {
-        hud.editing = true
-        doneButton.visibility = View.VISIBLE
+    // A gamepad: Android's A (bottom) is the RetroPad's B (bottom, PPSSPP's
+    // cross), and so on round the diamond.
+    private fun padKey(code: Int): Int? = when (code) {
+        KeyEvent.KEYCODE_BUTTON_A -> KeyEvent.KEYCODE_BUTTON_B
+        KeyEvent.KEYCODE_BUTTON_B -> KeyEvent.KEYCODE_BUTTON_A
+        KeyEvent.KEYCODE_BUTTON_X -> KeyEvent.KEYCODE_BUTTON_Y
+        KeyEvent.KEYCODE_BUTTON_Y -> KeyEvent.KEYCODE_BUTTON_X
+        KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_L2 -> KeyEvent.KEYCODE_BUTTON_L1
+        KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_R2 -> KeyEvent.KEYCODE_BUTTON_R1
+        KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_SELECT,
+        KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> code
+        else -> null
     }
 
-    private fun finishEditing() {
-        hud.editing = false
-        doneButton.visibility = View.GONE
-        store.saveTweaks(hud.tweaks)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val fromPad = event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
+            event.source and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD
+        val mapped = if (fromPad && sheet == null) padKey(event.keyCode) else null
+        if (mapped != null && ::retroView.isInitialized) {
+            if (event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP) retroView.sendKeyEvent(event.action, mapped)
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK && ::retroView.isInitialized) {
+            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y))
+            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_DPAD, event.getAxisValue(MotionEvent.AXIS_HAT_X), event.getAxisValue(MotionEvent.AXIS_HAT_Y))
+            return true
+        }
+        return super.dispatchGenericMotionEvent(event)
+    }
+
+    override fun onPause() {
+        // Leaving the app: the menu comes up, so the game waits for you.
+        if (::pad.isInitialized && sheet == null && !editing) open(Sheet.PAUSE)
+        super.onPause()
     }
 
     /** PPSSPP's fonts and shaders (bundled as assets/PPSSPP.zip) into the system folder, once. */
@@ -301,122 +553,169 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         }
     }
 
-    private fun showMenu() {
-        pad.cancel()
-        val s = settings
-        val items = listOf(
-            "Frame skip: ${s.frameSkip.label}" to {
-                val all = PspSpeed.FrameSkip.entries
-                apply(s.copy(frameSkip = all[(all.indexOf(s.frameSkip) + 1) % all.size]))
-            },
-            "Sharpness: ${if (s.resolution >= 2) "2x (sharper, slower)" else "1x (PSP's own, fastest)"}" to {
-                apply(s.copy(resolution = if (s.resolution >= 2) 1 else 2))
-            },
-            "Picture: ${s.picture.label}" to {
-                val all = PspSettings.Picture.entries
-                apply(s.copy(picture = all[(all.indexOf(s.picture) + 1) % all.size]))
-            },
-            "Faster effects (skips some glows): ${if (s.fasterEffects) "On" else "Off"}" to {
-                apply(s.copy(fasterEffects = !s.fasterEffects))
-            },
-            "Controls size: ${sizeLabel(s.controlsSize)}" to {
-                val sizes = listOf(0.7f, 0.85f, 1f)
-                apply(s.copy(controlsSize = sizes[(sizes.indexOfFirst { it >= s.controlsSize - 0.01f } + 1).mod(sizes.size)]))
-            },
-            "Controls see-through: ${opacityLabel(s.controlsOpacity)}" to {
-                val levels = listOf(0.35f, 0.6f, 0.9f)
-                apply(s.copy(controlsOpacity = levels[(levels.indexOfFirst { it >= s.controlsOpacity - 0.01f } + 1).mod(levels.size)]))
-            },
-            "Move the controls" to ::startEditing,
-            "Put the controls back" to {
-                hud.tweaks = emptyMap()
-                store.saveTweaks(hud.tweaks)
-            },
-            "Hide / show the controls" to { hud.visibility = if (hud.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE },
-            "${if (showSpeed) "Hide" else "Show"} the speed counter" to { showSpeed = !showSpeed },
-            "Speed report" to ::showReport,
-            "Restart the speed count" to { meter.reset() },
-            "Quit the game" to { finish() },
-        )
-        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("PSP")
-            .setItems(items.map { it.first }.toTypedArray()) { _, which -> items[which].second() }
-            .setNegativeButton("Back to the game", null)
-            .show()
-    }
+    // ----- What's drawn over the game -----
 
-    private fun sizeLabel(v: Float) = when {
-        v < 0.8f -> "Small"
-        v > 0.9f -> "Big"
-        else -> "Normal"
-    }
-
-    private fun opacityLabel(v: Float) = when {
-        v < 0.5f -> "Most (faint)"
-        v > 0.8f -> "Least (solid)"
-        else -> "Medium"
-    }
-
-    /** What the counter saw: for the owner to screenshot. */
-    private fun showReport() {
-        val stalls = meter.stalls
-        val list = if (stalls.isEmpty()) "none" else stalls.takeLast(12).joinToString("\n") { (sec, ms) -> "  at ${sec / 60}:${"%02d".format(sec % 60)} — $ms ms" }
-        val s = settings
-        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("Speed report")
-            .setMessage(
-                "Played ${meter.seconds / 60} min ${meter.seconds % 60} s\n" +
-                    "Full speed: ${meter.fullSpeedPercent}% of seconds (slow: ${meter.slowSeconds})\n" +
-                    "Longest stall: ${meter.longestStallMs} ms\n" +
-                    "Stalls over ${SpeedMeter.STALL_MS} ms (time, length):\n$list\n\n" +
-                    "Settings: frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, " +
-                    "faster effects ${if (s.fasterEffects) "on" else "off"}",
-            )
-            .setPositiveButton("OK", null)
-            .show()
-    }
-
-    // A gamepad: Android's A (bottom) is the RetroPad's B (bottom, PPSSPP's
-    // cross), and so on round the diamond.
-    private fun padKey(code: Int): Int? = when (code) {
-        KeyEvent.KEYCODE_BUTTON_A -> KeyEvent.KEYCODE_BUTTON_B
-        KeyEvent.KEYCODE_BUTTON_B -> KeyEvent.KEYCODE_BUTTON_A
-        KeyEvent.KEYCODE_BUTTON_X -> KeyEvent.KEYCODE_BUTTON_Y
-        KeyEvent.KEYCODE_BUTTON_Y -> KeyEvent.KEYCODE_BUTTON_X
-        KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_L2 -> KeyEvent.KEYCODE_BUTTON_L1
-        KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_R2 -> KeyEvent.KEYCODE_BUTTON_R1
-        KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_SELECT,
-        KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> code
-        else -> null
-    }
-
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        val fromPad = event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
-            event.source and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD
-        val mapped = if (fromPad) padKey(event.keyCode) else null
-        if (mapped != null && ::retroView.isInitialized) {
-            if (event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP) retroView.sendKeyEvent(event.action, mapped)
-            return true
+    @Composable
+    private fun Overlays() {
+        if (showSpeed && sheet == null && !editing) SpeedLine(speedLine)
+        if (editing) PspEditBar(this)
+        when (sheet) {
+            Sheet.PAUSE -> Overlay(onDismiss = ::close, scrim = false) {
+                PauseContent(
+                    title = title,
+                    fighter = null,
+                    netplay = false,
+                    playback = speedLine.ifEmpty { null },
+                    onReport = ::shareReport,
+                    soundOn = look.sound,
+                    onSound = ::toggleSound,
+                    onResume = ::close,
+                    onRestart = ::startOver,
+                    onSave = ::saveState,
+                    onLoad = ::loadState,
+                    onEditMoves = {},
+                    onLayout = ::startEditing,
+                    onControls = { sheet = Sheet.SETTINGS },
+                    onQuit = ::finish,
+                    extra = listOf(
+                        "Graphics & speed" to { sheet = Sheet.GRAPHICS },
+                        "Speed report" to { sheet = Sheet.REPORT },
+                    ),
+                )
+            }
+            Sheet.SETTINGS -> PspSettingsSheet(this)
+            Sheet.GRAPHICS -> Overlay(onDismiss = ::close, scrim = false) { PspGraphicsPanel(this) }
+            Sheet.REPORT -> Overlay(onDismiss = ::close) { PspReport(this) }
+            null -> Unit
         }
-        return super.dispatchKeyEvent(event)
-    }
-
-    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        if (event.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK && ::retroView.isInitialized) {
-            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y))
-            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_DPAD, event.getAxisValue(MotionEvent.AXIS_HAT_X), event.getAxisValue(MotionEvent.AXIS_HAT_Y))
-            return true
-        }
-        return super.dispatchGenericMotionEvent(event)
-    }
-
-    override fun onPause() {
-        if (::pad.isInitialized) pad.cancel()
-        super.onPause()
     }
 }
 
-/** A PSP game's settings and control spots, kept on the phone per game. */
+/** The speed counter: small, under the top bar, out of the way. */
+@Composable
+private fun SpeedLine(text: String) {
+    Box(Modifier.fillMaxWidth().padding(top = 46.dp), contentAlignment = Alignment.TopCenter) {
+        Text(
+            text,
+            color = androidx.compose.ui.graphics.Color.White,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier.clip(RoundedCornerShape(6.dp))
+                .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f)).padding(horizontal = 10.dp, vertical = 3.dp),
+        )
+    }
+}
+
+/** Settings: the arcade's own panel (stick, size, see-through, side, vibration, sound, move timing), shared with every game. */
+@Composable
+private fun PspSettingsSheet(game: PspGameActivity) {
+    var look by remember { mutableStateOf(game.look) }
+    Overlay(onDismiss = game::close, scrim = false) {
+        ControlsPanel(
+            look = look,
+            onLook = {
+                look = it
+                game.applyLook(it)
+            },
+            canDetect = false,
+            detectInfo = false,
+            onDetectInfo = {},
+            onCancel = game::close,
+            onSave = {
+                game.saveLook(look)
+                game.close()
+            },
+        )
+    }
+}
+
+/** This game's Graphics & speed, kept per game: the arcade panel's look and rows. */
+@Composable
+private fun PspGraphicsPanel(game: PspGameActivity) {
+    val s = game.graphics
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+        Column(
+            Modifier.fillMaxSize().widthIn(max = 420.dp).slantPanel(left = 28.dp, right = 0.dp)
+                .verticalScroll(rememberScrollState()).padding(start = 44.dp, end = 24.dp, top = 20.dp, bottom = 20.dp),
+        ) {
+            Text("GRAPHICS & SPEED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            Text(game.title, color = Palette.muted, fontSize = 11.sp, maxLines = 1)
+            Spacer(Modifier.height(10.dp))
+            PickRow(
+                "Frame skip", PspSpeed.FrameSkip.entries, s.frameSkip, { it.label },
+                sub = "Auto skips a picture only when behind, so the game never slows",
+            ) { game.applyGraphics(s.copy(frameSkip = it)) }
+            PickRow(
+                "Sharpness", listOf(1, 2), s.resolution, { if (it >= 2) "2x" else "1x (PSP's own)" },
+                sub = "2x is sharper; watch the speed counter",
+            ) { game.applyGraphics(s.copy(resolution = it)) }
+            PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
+                game.applyGraphics(s.copy(picture = it))
+            }
+            ToggleRow("Faster effects", s.fasterEffects, { game.applyGraphics(s.copy(fasterEffects = it)) }, sub = "Skips some glows and blur, for speed")
+            ToggleRow("Speed counter", game.showSpeed, { game.toggleSpeed() })
+            Spacer(Modifier.height(14.dp))
+            Row {
+                GhostButton("Restart the count", { game.restartCount() }, compact = true)
+                Spacer(Modifier.padding(4.dp))
+                GoldButton("Done", { game.close() }, compact = true)
+            }
+        }
+    }
+}
+
+/** The speed report: what the counter saw, and Send. */
+@Composable
+private fun PspReport(game: PspGameActivity) {
+    SheetFrame(
+        width = 420,
+        footer = {
+            Row {
+                GhostButton("Close", { game.close() }, compact = true)
+                Spacer(Modifier.padding(4.dp))
+                GoldButton("Send", { game.shareReport() }, compact = true)
+            }
+        },
+    ) {
+        Text("SPEED REPORT", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Text(game.report(), color = Palette.text, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+    }
+}
+
+/** The arcade's layout editor bar, on a PSP game. */
+@Composable
+private fun PspEditBar(game: PspGameActivity) {
+    var allFromLeft by remember { mutableStateOf<Boolean?>(null) }
+    EditBarContent(
+        picked = game.editSelected?.let(::pspControlName),
+        scale = game.editScale,
+        canResize = game.editSelected.let { it != null && it != "top" },
+        onScale = game::changeEditScale,
+        onAll = { allFromLeft = !game.look.leftHanded },
+        onReset = game::resetLayout,
+        onCancel = { game.finishEditing(save = false) },
+        onSave = { game.finishEditing(save = true) },
+    )
+    allFromLeft?.let { fromLeft ->
+        androidx.activity.compose.BackHandler { allFromLeft = null }
+        EditAllSheet(game.look, game::changeEditLook, fromLeft, onClose = { allFromLeft = null })
+    }
+}
+
+/** Friendly names for the editor, with the PSP's buttons. */
+private fun pspControlName(id: String): String = when {
+    id == "stick" -> "Stick"
+    id == "pause" -> "Pause button"
+    id == "top" -> "Select / Start"
+    id == "block" -> "Block button"
+    id.startsWith("face:") -> "${PspProfile.FACE_NAMES[id.removePrefix("face:").first()] ?: id} button"
+    id.startsWith("move:") -> "Move ${id.removePrefix("move:").toInt() + 1}"
+    id.startsWith("sys:") -> "Quick button ${id.removePrefix("sys:").toInt() + 1}"
+    else -> id
+}
+
+/** A PSP game's graphics settings, kept on the phone per game. */
 class PspStore(context: Context, private val game: String) {
     private val prefs = context.getSharedPreferences("psp", Context.MODE_PRIVATE)
 
@@ -427,8 +726,6 @@ class PspStore(context: Context, private val game: String) {
             resolution = prefs.getInt("$game.res", d.resolution),
             fasterEffects = prefs.getBoolean("$game.fx", d.fasterEffects),
             picture = PspSettings.Picture.entries.firstOrNull { it.name == prefs.getString("$game.picture", null) } ?: d.picture,
-            controlsSize = prefs.getFloat("$game.size", d.controlsSize),
-            controlsOpacity = prefs.getFloat("$game.opacity", d.controlsOpacity),
         )
     }
 
@@ -438,21 +735,6 @@ class PspStore(context: Context, private val game: String) {
             .putInt("$game.res", s.resolution)
             .putBoolean("$game.fx", s.fasterEffects)
             .putString("$game.picture", s.picture.name)
-            .putFloat("$game.size", s.controlsSize)
-            .putFloat("$game.opacity", s.controlsOpacity)
             .apply()
-    }
-
-    /** Where the player moved and resized the controls: "id:dx:dy:scale;…". */
-    fun tweaks(): Map<String, HudView.Tweak> =
-        prefs.getString("$game.tweaks", "").orEmpty().split(';').mapNotNull { part ->
-            val bits = part.split(':')
-            if (bits.size != 4) return@mapNotNull null
-            val n = bits.drop(1).map { it.toFloatOrNull() ?: return@mapNotNull null }
-            bits[0] to HudView.Tweak(n[0], n[1], n[2])
-        }.toMap()
-
-    fun saveTweaks(tweaks: Map<String, HudView.Tweak>) {
-        prefs.edit().putString("$game.tweaks", tweaks.entries.joinToString(";") { (id, t) -> "$id:${t.dx}:${t.dy}:${t.scale}" }).apply()
     }
 }

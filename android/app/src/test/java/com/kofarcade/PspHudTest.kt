@@ -43,7 +43,7 @@ class PspHudTest {
             }, block = p.blockHoldsL,
             facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES,
         )
-        hud.opacity = PspSettings().controlsOpacity
+        hud.opacity = DEFAULT_OPACITY
         paparazzi.snapshot(hud, name)
         // No two controls on top of each other (the arcade layout's rule: 4 dp apart).
         val d = hud.resources.displayMetrics.density
@@ -63,4 +63,17 @@ class PspHudTest {
 
     @Test
     fun anyGame() = shot("psp_hud_base", PspProfile())
+
+    @Test
+    fun pauseMenu() = paparazzi.snapshot(name = "psp_pause") {
+        // Still: the menu's slide-in shows finished.
+        androidx.compose.runtime.CompositionLocalProvider(LocalStill provides true) { KofTheme {
+            PauseContent(
+                title = "God of War - Ghost of Sparta (USA)", fighter = null, netplay = false,
+                playback = "60 fps · full speed 99% · slow 3/478 s · stalls 1 (longest 300 ms)",
+                onResume = {}, onRestart = {}, onSave = {}, onLoad = {}, onEditMoves = {}, onLayout = {}, onControls = {}, onQuit = {},
+                extra = listOf("Graphics & speed" to {}, "Speed report" to {}),
+            )
+        } }
+    }
 }

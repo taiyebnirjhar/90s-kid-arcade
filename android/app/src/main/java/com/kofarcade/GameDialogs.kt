@@ -254,7 +254,7 @@ private fun Title(text: String, sub: String? = null) {
  * empty space around the content.
  */
 @Composable
-private fun Overlay(
+internal fun Overlay(
     onDismiss: () -> Unit,
     dismissOnTap: Boolean = true,
     /** Darken the game behind; off when [content] shades it itself. */
