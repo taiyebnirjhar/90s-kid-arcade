@@ -809,6 +809,16 @@ decision was made in the conversation. Get the time now with
   is play. Every switch now logs the byte's value ("game byte 5"), so a log
   from a place where it's still wrong shows what the game said there.
 
+### 2026-11-07 03:58 Dhaka · The D-PAD switch is manual again
+- Owner (1.0.292 log): "D pad s auto is not working expectedly. In game it
+  turned off and auto unexpectedly … Dpad only needed when we pause inside
+  game. If this cant be solved. Make dpad manual like before".
+- The log: the byte dropped to 0 in the middle of play again and again
+  (6:14, 6:19, 7:00, 7:39, 7:49, 7:53), so "0 = a menu" isn't true past the
+  boat. Decided: no automatic switch for God of War; the D-PAD switch on
+  the top bar is the only way, as before. (`PspProfile.inPlay` stays for a
+  game whose byte holds up.)
+
 ---
 
 ## Where things stand (update whenever it changes)

@@ -230,9 +230,9 @@ class PspGamesTest {
     }
 
     @Test
-    fun godOfWarSaysWhenItsPlayedSoTheStickSwitchesByItself() {
-        // Found in the game: 0 in menus and story, anything else while Kratos is played.
-        assertEquals(0xC5D8D1 to 0, PspProfile.GOD_OF_WAR.inPlay)
+    fun theDPadIsTheOwnersSwitchOnly() {
+        // The game's byte dropped to 0 in play on the phone: no automatic switch.
+        assertEquals(null, PspProfile.GOD_OF_WAR.inPlay)
         // A game without one keeps the D-PAD switch.
         assertEquals(null, PspProfile().inPlay)
     }

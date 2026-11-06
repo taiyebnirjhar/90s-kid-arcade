@@ -219,12 +219,11 @@ data class PspProfile(
             system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
-            // Found in the game (tools/pspemu.py): 0 on the title, difficulty,
-            // pause, Power Up and "You are dead" screens and in story videos;
-            // 4 while Kratos is played on the boat (fights, grabs, prompts),
-            // 2-3 for a moment between. The owner's phone showed the D-pad
-            // left on in a later area: so any value but 0 is play.
-            inPlay = 0xC5D8D1 to 0,
+            // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
+            // boat (tools/pspemu.py), but on the owner's phone it dropped to 0
+            // in the middle of play too (1.0.292's log), flipping the stick to
+            // the D-pad. The owner: "If this cant be solved. Make dpad manual
+            // like before". The D-PAD switch is the only way again.
             moves = listOf(
                 Move("Hyperion Charge", "E>D"),
                 Move("Spirit of Hercules", "A,A,C"),
