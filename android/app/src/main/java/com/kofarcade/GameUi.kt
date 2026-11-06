@@ -446,7 +446,7 @@ fun ControlsPanel(
                         PickRow("Picture", ScreenMode.entries, look.screen, { it.short }, sub = look.screen.label) { onLook(look.copy(screen = it)) }
                         if (canDetect) ToggleRow("Detection readout", detectInfo, onDetectInfo, sub = "For checking fighter detection works")
                         ToggleRow("Save my matches", saveMatches, onSaveMatches, sub = "The last 20 kept on this phone, to watch again and make videos of")
-                        ToggleRow("Send problem reports", problemReports, onProblemReports, sub = "A join or room that fails sends its connection log, to fix it")
+                        ToggleRow("Send problem reports", problemReports, onProblemReports, sub = "A join or room that fails sends its connection log, and a game with a bad freeze its game log, to fix them")
                         Text("90s Kid Arcade ${BuildConfig.VERSION_NAME}", color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp))
                     }
                     SettingsTab.CONTROLS -> {
@@ -496,12 +496,12 @@ fun ControlsPanel(
 private fun GameLogTab(gameLog: () -> String, onCopy: (String) -> Unit, onSend: (String) -> Unit) {
     var text by remember { mutableStateOf(gameLog()) }
     Text(
-        "Everything this game went through: speed second by second, stalls, sound, the room's connection, what you did. Copy it and paste it in the chat.",
+        "Everything this game went through: speed second by second, stalls, sound, the room's connection, what you did. Send to us puts it on our server, where we read it; Copy to paste it anywhere.",
         color = Palette.muted, fontSize = 11.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 8.dp),
     )
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
         GoldButton("Copy", { text = gameLog(); onCopy(text) }, compact = true)
-        GhostButton("Send", { text = gameLog(); onSend(text) }, compact = true)
+        GhostButton("Send to us", { text = gameLog(); onSend(text) }, compact = true)
         GhostButton("Refresh", { text = gameLog() }, compact = true)
     }
     Text(

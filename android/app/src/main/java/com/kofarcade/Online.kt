@@ -100,6 +100,33 @@ object Online {
 
     private const val PROBLEM_EVERY_MS = 120_000L
 
+    /**
+     * A game's log, to our server (problem_reports, kind "game"), for the
+     * owner to read there: on the player's tap ("Send to us"), or [auto]
+     * after a session with a bad freeze (only with problem reports on).
+     * A guest account is made first if there's none. [done] gets null when
+     * it went, else why not; on the main thread.
+     */
+    fun sendGameLog(context: Context, game: String, text: String, auto: Boolean = false, done: (String?) -> Unit = {}) {
+        val app = context.applicationContext
+        if (auto && !Prefs(app).problemReports) return
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        Thread({
+            val error = runCatching {
+                if (!signedIn(app)) account(app).sync(defaultName())
+                com.kofarcade.core.online.ProblemReports(supabase!!).send(
+                    "game",
+                    BuildConfig.VERSION_NAME,
+                    "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}",
+                    null,
+                    (if (auto) "after a bad freeze: " else "") + game,
+                    text,
+                )
+            }.exceptionOrNull()
+            main.post { done(error?.let { com.kofarcade.core.online.explainOnline(it) }) }
+        }, "game-log").apply { isDaemon = true }.start()
+    }
+
     /** A first profile's name, until the player picks one. */
     fun defaultName(): String = "Player ${Random.nextInt(1000, 10000)}"
 

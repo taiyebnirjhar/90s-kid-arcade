@@ -779,6 +779,22 @@ decision was made in the conversation. Get the time now with
   Mash before. Not yet: the three magic casts and Weapon (Kratos has no
   magic or second weapon this early).
 
+### 2026-11-07 01:30 Dhaka · Game logs straight to our server; frame skip Off for PSP
+- Owner: "By send, cant we save it directly on our server, to check log
+  our self directly?" … "Yes go ahead".
+- Decided: Game log's **Send to us** uploads the log to problem_reports as
+  kind 'game' (migration 20261107000000_game_logs.sql); it's read with
+  read_problem_reports (the reader account), like the connection reports.
+  A session that had a freeze of 2 s or more sends its log by itself on
+  quitting, when "Send problem reports" is on. Copy stays.
+- Within the free plan (D8): a game log is at most 200 KB, 20 a day per
+  player (apart from the connection reports' 20), nothing more kept once
+  200 MB of logs are stored (of the free 500 MB), and all older than 30
+  days deleted nightly. Server test: game_logs.test.sql.
+- The owner's latest log (1.0.284): with frame skip Off, sound drops fell
+  from thousands a second to almost none and play held 58-60 fps. Decided:
+  PSP frame skip is Off by default; Auto stays a choice.
+
 ---
 
 ## Where things stand (update whenever it changes)

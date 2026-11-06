@@ -718,7 +718,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
 
     fun copyLog(text: String) = GameLogs.copy(this, text)
 
-    fun sendLog(text: String) = GameLogs.send(this, text)
+    fun sendLog(text: String) = GameLogs.send(this, game.fullTitle, text)
 
     /** The last session of this game, kept after quitting. */
     private fun saveLog() {
@@ -1816,6 +1816,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         log.event(if (isFinishing) "Quit" else "Left the app")
         meter.hold(true)
         saveLog()
+        // A session with a bad freeze sends its log by itself (problem reports on).
+        if (isFinishing && replay == null && meter.longestStallMs >= GameLogs.BAD_FREEZE_MS) {
+            Online.sendGameLog(this, game.fullTitle, logText(), auto = true)
+        }
         // Leaving the game: the match so far is kept (before the emulator goes).
         if (isFinishing) matchTaker?.finish()
         // Leaving the app mid-game: the others wait, as for the menu.

@@ -185,12 +185,16 @@ object GameLogs {
         Toast.makeText(context, "Game log copied: paste it in the chat", Toast.LENGTH_SHORT).show()
     }
 
-    fun send(context: Context, text: String) {
-        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-            .putExtra(Intent.EXTRA_SUBJECT, "90s Kid Arcade game log")
-            .putExtra(Intent.EXTRA_TEXT, text)
-        runCatching { context.startActivity(Intent.createChooser(send, "Send the game log")) }
+    /** Sends [text] to our server, where the owner reads it ("Send to us"). */
+    fun send(context: Context, game: String, text: String) {
+        Toast.makeText(context, "Sending the game log…", Toast.LENGTH_SHORT).show()
+        Online.sendGameLog(context, game, text) { error ->
+            Toast.makeText(context, error?.let { "Couldn't send it: $it" } ?: "Game log sent: we'll read it", Toast.LENGTH_LONG).show()
+        }
     }
+
+    /** A session with a freeze this long (ms) sends its log by itself on leaving (problem reports on). */
+    const val BAD_FREEZE_MS = 2_000L
 
     /** The app and the phone: the log's first lines. */
     fun phone(context: Context, screenHz: Int): List<String> {

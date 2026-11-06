@@ -464,7 +464,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     fun copyLog(text: String) = GameLogs.copy(this, text)
 
-    fun sendLog(text: String) = GameLogs.send(this, text)
+    fun sendLog(text: String) = GameLogs.send(this, title, text)
 
     /** Kept on the phone after quitting (the PSP games list copies it): the last session per game. */
     private fun saveLog() = GameLogs.save(PspGames.logFile(filesDir, gameFile.name), logText())
@@ -692,6 +692,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (::pad.isInitialized) {
             log.event("Quit")
             saveLog()
+            // A session with a bad freeze sends its log by itself (problem reports on).
+            if (meter.longestStallMs >= GameLogs.BAD_FREEZE_MS) Online.sendGameLog(this, title, logText(), auto = true)
         }
         super.finish()
     }

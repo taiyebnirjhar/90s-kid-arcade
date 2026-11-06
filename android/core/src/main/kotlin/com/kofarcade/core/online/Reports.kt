@@ -34,7 +34,16 @@ class Reports(private val supa: Supabase) {
  * lost, for the owner to read in Supabase's dashboard.
  */
 class ProblemReports(private val supa: Supabase) {
-    /** What went wrong ([kind]: join, host, lost, ended), on which [app] build and [phone], in [room], with this [log]. */
+    companion object {
+        /** A game log's most the server keeps (200 KB). */
+        const val GAME_LOG_CHARS = 204_800
+    }
+
+    /**
+     * What went wrong ([kind]: join, host, lost, ended; game: a game's log,
+     * 20261107000000_game_logs.sql), on which [app] build and [phone], in
+     * [room], with this [log] (its end, if longer than the server keeps).
+     */
     fun send(kind: String, app: String?, phone: String?, room: String?, error: String?, log: String) {
         supa.rpc("send_problem_report", buildJsonObject {
             put("kind", kind)
@@ -42,7 +51,7 @@ class ProblemReports(private val supa: Supabase) {
             put("phone", phone?.take(128))
             put("room", room?.take(32))
             put("error", error?.take(1000))
-            put("log", log.takeLast(32_000))
+            put("log", log.takeLast(if (kind == "game") GAME_LOG_CHARS else 32_000))
         })
     }
 }

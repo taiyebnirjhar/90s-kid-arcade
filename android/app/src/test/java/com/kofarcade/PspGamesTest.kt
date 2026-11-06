@@ -116,9 +116,11 @@ class PspGamesTest {
     }
 
     @Test
-    fun theDefaultsSkipOnlyWhenBehindAndCountStalls() {
+    fun theDefaultsNeverSkipAndCountStalls() {
+        // Off by default: steadier on the owner's phone than Auto (his log, 2026-11-07).
         val o = PspSpeed.options(PspSettings())
-        assertEquals("enabled", o["ppsspp_auto_frameskip"])
+        assertEquals("disabled", o["ppsspp_auto_frameskip"])
+        assertEquals("disabled", o["ppsspp_frameskip"])
         assertEquals("480x272", o["ppsspp_internal_resolution"])
         assertEquals("960x544", PspSpeed.options(PspSettings(resolution = 2))["ppsspp_internal_resolution"])
         val m = SpeedMeter()

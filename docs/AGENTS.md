@@ -167,7 +167,9 @@ with a sleeping foreground command.
   Worker `arcade-roms.taiyebnirjhor.workers.dev`, DNS for
   `taiyebnirjhor.com` (`arcade` CNAME → GitHub Pages).
 - **Problem reports:** phones send their connection log when a join/room
-  fails (`Online.reportProblem`; players can turn it off). A reader account
+  fails (`Online.reportProblem`; players can turn it off), and game logs
+  (kind `game`: Game log → Send to us, or by itself after a freeze of 2 s
+  or more; `Online.sendGameLog`). A reader account
   (in table `problem_readers`) reads them with `read_problem_reports`; its
   login is with the owner, never in the repo. Read them over the REST API
   from the sandbox when asked; never print them in public CI logs.

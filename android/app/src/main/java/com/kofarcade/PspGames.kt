@@ -113,7 +113,9 @@ object PspGames {
  * behind (the game never slows; a frame's picture is skipped instead).
  */
 data class PspSettings(
-    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.AUTO,
+    // Off: the owner's log (2026-11-07) ran steadier with it off than on Auto (sound drops
+    // from thousands a second to almost none, 58-60 fps); Auto stays a choice.
+    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.OFF,
     /** 1 = the PSP's own 480x272, 2 = twice as sharp (costs the graphics chip). */
     val resolution: Int = 1,
     /** Skips some full-screen effects (glows, blur) for speed. */
