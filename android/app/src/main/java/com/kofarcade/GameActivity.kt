@@ -694,35 +694,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     /** Settings saved: the new ones, in the log. */
     fun loggedSettings(l: Look) = log.event("Settings saved: ${GameLogs.look(l)}")
 
-    /**
-     * Once a second while the game's on screen: late frames made up and sound
-     * gaps, into the log when there were any (the frames themselves are
-     * counted on the emulator's thread, [meter]).
-     */
-    private fun watchPlayback() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                var last = LibretroDroid.getPlaybackStats()
-                while (true) {
-                    delay(1000)
-                    val now = LibretroDroid.getPlaybackStats()
-                    val madeUp = now[0] - last[0]
-                    val gaps = now[1] - last[1]
-                    val dropped = now[2] - last[2]
-                    if (madeUp > 0 || gaps > 0 || dropped > 0) {
-                        log.event(
-                            listOfNotNull(
-                                if (madeUp > 0) "$madeUp late frames made up" else null,
-                                if (gaps > 0) "$gaps sound gaps" else null,
-                                if (dropped > 0) "$dropped sound frames dropped" else null,
-                            ).joinToString(", ") + " (${meter.lastFps} fps)",
-                        )
-                    }
-                    last = now
-                }
-            }
-        }
-    }
+    private fun watchPlayback() = GameLogs.watchPlayback(this, log, meter)
 
     /** The whole log, to paste into the chat: phone, game, settings, speed, what happened, and a room's connection log. */
     fun logText(): String {
@@ -758,21 +730,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
      * how they're timed (with the screen, or by the clock), frames that ran
      * late and were made up, and gaps in the sound, since it started.
      */
-    val playbackStatus: String
-        get() {
-            val s = LibretroDroid.getPlaybackStats()
-            val rate = (s[3] / 10) / 100.0
-            val ticks = (s[3] % 10).toInt()
-            val pace = when {
-                ticks == 1 -> "with the screen"
-                ticks > 1 -> "with the screen, 1 in $ticks ticks"
-                else -> "by the clock"
-            }
-            val overflow = if (s[2] > 0) ", ${s[2]} sound frames dropped" else ""
-            return "%.2f frames a second, %s (%d Hz). Late frames made up: %d. Sound gaps: %d%s.".format(
-                rate, pace, screenHz(), s[0], s[1], overflow,
-            )
-        }
+    val playbackStatus: String get() = GameLogs.playback(screenHz())
 
     @Suppress("DEPRECATION")
     private fun screenHz(): Int = Math.round(windowManager.defaultDisplay.refreshRate)

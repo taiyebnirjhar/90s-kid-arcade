@@ -165,9 +165,24 @@ class PspGamesTest {
         // A 54 fps board is full speed for an arcade game, slow for a PSP one.
         assertEquals(listOf("0:00-0:01 full speed"), GameLog.timeline(listOf(54, 55), SpeedMeter.ARCADE_SLOW_BELOW))
         assertEquals(listOf("0:00-0:01 slow: 54, 55 fps"), GameLog.timeline(listOf(54, 55)))
+        // Faster than the game's own speed (a story scene like fast-forward) shows too.
+        assertEquals(listOf("0:00 full speed", "0:01-0:02 fast: 90, 89 fps"), GameLog.timeline(listOf(60, 90, 89)))
         val log = GameLog { 0L }
         val text = log.text(listOf("Game: KOF"), SpeedMeter(SpeedMeter.ARCADE_SLOW_BELOW), listOf("Connection log:" to "12:00:01.000  Joined", "Empty:" to ""))
         assertTrue(text, text.contains("Connection log:\n12:00:01.000  Joined"))
         assertFalse(text, text.contains("Empty:"))
+    }
+
+    @Test
+    fun opacityGoesFromFaintToSolidAndTheDefaultLooksAsBefore() {
+        assertEquals(0.55f + 0.45f * DEFAULT_OPACITY, viewAlpha(DEFAULT_OPACITY), 0.001f)
+        assertEquals(0.15f, viewAlpha(0.1f), 0.001f)
+        assertEquals(1f, viewAlpha(1f), 0.001f)
+        var last = 0f
+        for (i in 10..100 step 5) {
+            val a = viewAlpha(i / 100f)
+            assertTrue("$i%: $a", a > last)
+            last = a
+        }
     }
 }

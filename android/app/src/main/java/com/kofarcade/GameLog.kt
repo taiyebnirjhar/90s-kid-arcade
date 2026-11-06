@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.widget.Toast
+import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
@@ -125,16 +128,27 @@ class GameLog(private val now: () -> Long) {
     companion object {
         fun clock(seconds: Long) = "${seconds / 60}:${"%02d".format(seconds % 60)}"
 
-        /** Full-speed stretches as one line ("0:00-2:14 full speed"), slow seconds grouped with their frame counts. */
+        /** Above this many frames a second the game runs fast (a story scene playing like fast-forward). */
+        const val FAST_ABOVE = 62
+
+        /**
+         * Full-speed stretches as one line ("0:00-2:14 full speed"); slow and
+         * fast seconds grouped with their frame counts.
+         */
         fun timeline(perSecond: List<Int>, slowBelow: Int = SpeedMeter.SLOW_BELOW): List<String> {
+            fun kind(fps: Int) = when {
+                fps < slowBelow -> "slow"
+                fps > FAST_ABOVE -> "fast"
+                else -> "full speed"
+            }
             val out = ArrayList<String>()
             var i = 0
             while (i < perSecond.size) {
-                val slow = perSecond[i] < slowBelow
+                val k = kind(perSecond[i])
                 var j = i
-                while (j + 1 < perSecond.size && (perSecond[j + 1] < slowBelow) == slow) j++
+                while (j + 1 < perSecond.size && kind(perSecond[j + 1]) == k) j++
                 val range = if (i == j) clock(i.toLong()) else "${clock(i.toLong())}-${clock(j.toLong())}"
-                out += if (slow) "$range slow: ${perSecond.subList(i, j + 1).joinToString(", ")} fps" else "$range full speed"
+                out += if (k == "full speed") "$range full speed" else "$range $k: ${perSecond.subList(i, j + 1).joinToString(", ")} fps"
                 i = j + 1
             }
             return out
@@ -175,6 +189,56 @@ object GameLogs {
             "90s Kid Arcade ${BuildConfig.VERSION_NAME} · game log",
             "Phone: ${Build.MANUFACTURER} ${Build.MODEL}, $soc, Android ${Build.VERSION.RELEASE}, $ram, screen $screenHz Hz",
         )
+    }
+
+    /**
+     * How the game runs: its frames' rate and how they're timed (with the
+     * screen, or by the clock), frames that ran late and were made up, and
+     * gaps in the sound, since it started.
+     */
+    fun playback(screenHz: Int): String {
+        val s = com.swordfish.libretrodroid.LibretroDroid.getPlaybackStats()
+        val rate = (s[3] / 10) / 100.0
+        val ticks = (s[3] % 10).toInt()
+        val pace = when {
+            ticks == 1 -> "with the screen"
+            ticks > 1 -> "with the screen, 1 in $ticks ticks"
+            else -> "by the clock"
+        }
+        val overflow = if (s[2] > 0) ", ${s[2]} sound frames dropped" else ""
+        return "%.2f frames a second, %s (%d Hz). Late frames made up: %d. Sound gaps: %d%s.".format(
+            rate, pace, screenHz, s[0], s[1], overflow,
+        )
+    }
+
+    /**
+     * Once a second while the game's on screen: late frames made up and sound
+     * gaps, into [log] when there were any (the frames themselves are counted
+     * on the emulator's thread, [meter]).
+     */
+    fun watchPlayback(owner: androidx.lifecycle.LifecycleOwner, log: GameLog, meter: SpeedMeter) {
+        owner.lifecycle.coroutineScope.launch {
+            owner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                var last = com.swordfish.libretrodroid.LibretroDroid.getPlaybackStats()
+                while (true) {
+                    kotlinx.coroutines.delay(1000)
+                    val now = com.swordfish.libretrodroid.LibretroDroid.getPlaybackStats()
+                    val madeUp = now[0] - last[0]
+                    val gaps = now[1] - last[1]
+                    val dropped = now[2] - last[2]
+                    if (madeUp > 0 || gaps > 0 || dropped > 0) {
+                        log.event(
+                            listOfNotNull(
+                                if (madeUp > 0) "$madeUp late frames made up" else null,
+                                if (gaps > 0) "$gaps sound gaps" else null,
+                                if (dropped > 0) "$dropped sound frames dropped" else null,
+                            ).joinToString(", ") + " (${meter.lastFps} fps)",
+                        )
+                    }
+                    last = now
+                }
+            }
+        }
     }
 
     /** The controls' settings in one line. */

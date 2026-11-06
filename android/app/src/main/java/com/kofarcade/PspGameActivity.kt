@@ -96,6 +96,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private var frame = 0L
     /** Directions held by the stick, for the analog stick. */
     private val dirs = HashSet<Key>()
+    /** The stick works the PSP's D-pad (menus, a game's D-pad picks) instead of its analog stick: the top bar's D-PAD switch. */
+    @Volatile private var stickIsDpad = false
     /** A PSP step sequence playing ([PspSteps]): the keys held on each frame still to come. */
     @Volatile private var steps: List<Set<Int>> = emptyList()
     private var stepsHeld: Set<Int> = emptySet()
@@ -190,6 +192,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         )
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
+        GameLogs.watchPlayback(this, log, meter)
 
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect { if (it is GLRetroView.GLRetroEvents.FrameRendered) hud.onFrame(++frame) }
@@ -267,6 +270,12 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
     }
 
+    /** Settings closed without Save: what was previewed goes back to what's saved. */
+    fun cancelSettings() {
+        applyLook(prefs.look())
+        close()
+    }
+
     fun toggleSound() {
         prefs.soundOn = !prefs.soundOn
         applyLook(prefs.look())
@@ -294,7 +303,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 }
             },
             block = profile.blockHoldsL,
-            facingButton = false,
+            // The menus only answer the D-pad: the stick switches to it here.
+            facingButton = true,
+            switchLabel = "D-PAD",
+            switchOn = stickIsDpad,
             size = look.size,
             leftHanded = look.leftHanded,
             labelMode = look.labelMode,
@@ -391,6 +403,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         return GameLogs.phone(this, hz) + listOf(
             "PSP game: $title (${gameFile.name}, ${gameFile.length() / 1_000_000} MB)",
             "Graphics & speed: ${settingsLine(graphics)}",
+            "Playback: ${GameLogs.playback(hz)}",
             "Controls: ${GameLogs.look(look)}",
         )
     }
@@ -470,6 +483,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         }
         synchronized(dirs) {
             if (down) dirs += key else dirs -= key
+            if (stickIsDpad) {
+                dpadCode(key)?.let { retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, it) }
+                return
+            }
             val x = (if (Key.RIGHT in dirs) 1f else 0f) - (if (Key.LEFT in dirs) 1f else 0f)
             val y = (if (Key.DOWN in dirs) 1f else 0f) - (if (Key.UP in dirs) 1f else 0f)
             retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y)
@@ -497,7 +514,23 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         return frames.size
     }
     override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)
-    override fun onFlip() = Unit
+    /** The D-PAD switch: the stick moves between the analog stick and the D-pad (nothing stays held across). */
+    override fun onFlip() {
+        synchronized(dirs) {
+            for (k in dirs.toList()) sendKey(k, false)
+            stickIsDpad = !stickIsDpad
+        }
+        log.event(if (stickIsDpad) "Stick: D-pad" else "Stick: analog")
+        updateHud()
+    }
+
+    private fun dpadCode(key: Key): Int? = when (key) {
+        Key.UP -> KeyEvent.KEYCODE_DPAD_UP
+        Key.DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
+        Key.LEFT -> KeyEvent.KEYCODE_DPAD_LEFT
+        Key.RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
+        else -> null
+    }
     override fun onSlot(index: Int) = Unit
     override fun onRapid() = Unit
     override fun onBlock(relDir: Int?) {
@@ -637,9 +670,9 @@ private fun SpeedLine(text: String) {
 
 /** Settings: the arcade's own panel (stick, size, see-through, side, vibration, sound, move timing), shared with every game. */
 @Composable
-private fun PspSettingsSheet(game: PspGameActivity, startTab: SettingsTab = SettingsTab.SCREEN) {
+private fun PspSettingsSheet(game: PspGameActivity, startTab: SettingsTab = SettingsTab.CONTROLS) {
     var look by remember { mutableStateOf(game.look) }
-    Overlay(onDismiss = game::close, scrim = false) {
+    Overlay(onDismiss = game::cancelSettings, scrim = false) {
         ControlsPanel(
             look = look,
             onLook = {
@@ -649,12 +682,13 @@ private fun PspSettingsSheet(game: PspGameActivity, startTab: SettingsTab = Sett
             canDetect = false,
             detectInfo = false,
             onDetectInfo = {},
-            onCancel = game::close,
+            onCancel = game::cancelSettings,
             onSave = {
                 game.saveLook(look)
                 game.close()
             },
             startTab = startTab,
+            tabs = listOf(SettingsTab.CONTROLS, SettingsTab.MOVES, SettingsTab.SOUND, SettingsTab.LOG),
             gameLog = game::logText,
             onCopyLog = game::copyLog,
             onSendLog = game::sendLog,

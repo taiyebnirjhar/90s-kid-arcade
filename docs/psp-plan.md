@@ -82,6 +82,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: the top bar's D-PAD switch makes the stick work the D-pad
+  (the menus answer only the D-pad); Opacity now reaches faint.
 - 2026-11-06: every game (arcade too, alone and online) has the game log now,
   as a Game log tab in Settings.
 - 2026-11-06: the game log. Nothing on screen during play (the speed

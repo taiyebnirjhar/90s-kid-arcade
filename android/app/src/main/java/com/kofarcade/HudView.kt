@@ -133,10 +133,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
      * glass fills fade with it fully; rings, letters and arrows less, so
      * they stay readable over a busy stage.
      */
+    /**
+     * The controls' see-through: the saved default ([DEFAULT_OPACITY]) looks
+     * as it always has; lower goes down to faint (it used to stop at 69%, so
+     * lowering it hardly showed), higher up to solid.
+     */
     var opacity = 1f
         set(value) {
             field = value
-            alpha = 0.55f + 0.45f * value
+            alpha = viewAlpha(value)
             // Under the view's alpha, the fill ends up 85% of [value] dark.
             glassFill.alpha = (255 * 0.85f * value / alpha).toInt().coerceIn(0, 255)
             invalidate()
@@ -169,6 +174,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val showCoin: Boolean = true,
         /** What each face button shows instead of its letter (a PSP game: ○ □ ✕ △). */
         val faceNames: Map<Char, String> = emptyMap(),
+        /** The FACING pill as a named switch instead ("D-PAD" for a PSP game: the stick works the D-pad); lit when [switchOn]. */
+        val switchLabel: String? = null,
+        val switchOn: Boolean = false,
     )
 
     var state = State()
@@ -396,11 +404,11 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         text.textSize = 10 * d
         val pills = buildList {
             if (st.showCoin) add(Kind.COIN to st.coinLabel)
-            if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to "FACING")
+            if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to (st.switchLabel ?: "FACING"))
             add(Kind.START to "START")
         }
         text.letterSpacing = 0.12f
-        val pillW = pills.map { (k, t) -> text.measureText(t) + 24 * d + if (k == Kind.FACING) 19 * d else 0f }
+        val pillW = pills.map { (k, t) -> text.measureText(t) + 24 * d + if (k == Kind.FACING && st.switchLabel == null) 19 * d else 0f }
         text.letterSpacing = 0f
         var x = w / 2 - (pillW.sum() + 8 * d * (pills.size - 1)) / 2
         val barLeft = x
@@ -795,7 +803,18 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     }
 
     private fun drawPill(canvas: Canvas, el: El) {
-        val facing = el.kind == Kind.FACING
+        val switch = el.kind == Kind.FACING && state.switchLabel != null
+        val facing = el.kind == Kind.FACING && !switch
+        if (switch) {
+            // A switch: gold when on, a plain pill when off.
+            val rr = el.rect.height() / 2
+            if (el !in pressed) canvas.drawRoundRect(el.rect, rr, rr, labelFill)
+            glass(canvas, el, stroke = if (state.switchOn) accent else null, strokeWidth = 2f * d, glow = Color.WHITE)
+            text.letterSpacing = 0.12f
+            centeredText(canvas, state.switchLabel!!, el.cx, el.cy, 10 * d, if (state.switchOn) accent else Color.WHITE)
+            text.letterSpacing = 0f
+            return
+        }
         if (el !in pressed) {
             val rr = el.rect.height() / 2
             canvas.drawRoundRect(el.rect, rr, rr, labelFill)
@@ -1406,5 +1425,15 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             if (!stickRun && sideways && reach > r * 1.25f) setStickRun(true)
             else if (stickRun && (!sideways || reach < r * 0.9f)) setStickRun(false)
         }
+    }
+}
+
+/** How solid the controls are drawn for an Opacity setting: 0.1 faint, the default as before, 1 solid. */
+fun viewAlpha(opacity: Float): Float {
+    val atDefault = 0.55f + 0.45f * DEFAULT_OPACITY
+    return if (opacity <= DEFAULT_OPACITY) {
+        0.15f + (atDefault - 0.15f) * ((opacity - 0.1f) / (DEFAULT_OPACITY - 0.1f)).coerceIn(0f, 1f)
+    } else {
+        atDefault + (1f - atDefault) * ((opacity - DEFAULT_OPACITY) / (1f - DEFAULT_OPACITY)).coerceIn(0f, 1f)
     }
 }
