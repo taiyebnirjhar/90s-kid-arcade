@@ -146,6 +146,8 @@ fun PauseContent(
     canChangeGame: Boolean = true,
     /** The game's picture, by its name (games without a fighter to show). */
     picture: (@Composable () -> Unit)? = null,
+    /** More items before Settings, for a kind of game that has its own (a PSP game's "Graphics & speed"). */
+    extra: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     // The item under a finger lights up; with none pressed, Resume does.
     var pressed by remember { mutableStateOf<String?>(null) }
@@ -181,6 +183,7 @@ fun PauseContent(
                 if (!netplay) item("Load state", onClick = onLoad) else if (!watching && canChangeGame) item("Load state for everyone", onClick = onLoad)
                 if (fighter != null) item("Edit ${fighter.substringBefore(" ")}'s moves", onClick = onEditMoves)
                 item(if (soundOn) "Sound: on" else "Sound: off", onClick = onSound)
+                for ((text, onClick) in extra) item(text, onClick = onClick)
                 item("Settings", onClick = onControls)
                 item("Button layout", onClick = onLayout)
                 // Rarely needed: KOF's challenger mode and continues are the rematch.
@@ -369,7 +372,7 @@ private fun MenuItem(text: String, lit: Boolean, danger: Boolean, onPress: (Bool
 // ----- Controls settings -----
 
 /** The settings panel's tabs. */
-enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves"), SOUND("Sound"), CHAT("Chat") }
+enum class SettingsTab(val title: String) { SCREEN("Screen"), CONTROLS("Controls"), MOVES("Moves"), SOUND("Sound"), CHAT("Chat"), LOG("Game log") }
 
 /**
  * The Controls settings, from plain data (so they can be previewed): a
@@ -391,6 +394,10 @@ fun ControlsPanel(
     onCancel: () -> Unit,
     onSave: () -> Unit,
     startTab: SettingsTab = SettingsTab.SCREEN,
+    /** This session's game log (the Game log tab), and its Copy and Send. */
+    gameLog: (() -> String)? = null,
+    onCopyLog: (String) -> Unit = {},
+    onSendLog: (String) -> Unit = {},
 ) {
     var tab by remember { mutableStateOf(startTab) }
     val shown = slideIn()
@@ -412,6 +419,7 @@ fun ControlsPanel(
             // Scrolls sideways if the tabs don't all fit (small phones).
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 for (t in SettingsTab.entries) {
+                    if (t == SettingsTab.LOG && gameLog == null) continue
                     val on = t == tab
                     // A 48 dp target round a smaller chip.
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.height(48.dp).clickable(remember { MutableInteractionSource() }, indication = null) { tab = t }) {
@@ -470,6 +478,7 @@ fun ControlsPanel(
                         CountRow("Frames per direction", look.stepFrames, 1..6, sub = "Raise if specials don't come out") { onLook(look.copy(stepFrames = it)) }
                         CountRow("Frames button held", look.pressFrames, 1..12) { onLook(look.copy(pressFrames = it)) }
                     }
+                    SettingsTab.LOG -> if (gameLog != null) GameLogTab(gameLog, onCopyLog, onSendLog)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
@@ -478,6 +487,29 @@ fun ControlsPanel(
             }
         }
     }
+}
+
+/** The Game log tab: everything this session went through, to copy into the chat. */
+@Composable
+private fun GameLogTab(gameLog: () -> String, onCopy: (String) -> Unit, onSend: (String) -> Unit) {
+    var text by remember { mutableStateOf(gameLog()) }
+    Text(
+        "Everything this game went through: speed second by second, stalls, sound, the room's connection, what you did. Copy it and paste it in the chat.",
+        color = Palette.muted, fontSize = 11.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 8.dp),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
+        GoldButton("Copy", { text = gameLog(); onCopy(text) }, compact = true)
+        GhostButton("Send", { text = gameLog(); onSend(text) }, compact = true)
+        GhostButton("Refresh", { text = gameLog() }, compact = true)
+    }
+    Text(
+        text,
+        color = Palette.text,
+        fontSize = 10.sp,
+        lineHeight = 13.sp,
+        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.bg).padding(8.dp),
+    )
 }
 
 /**
@@ -545,7 +577,7 @@ private fun Arrow(glyph: String, enabled: Boolean, onClick: () -> Unit) {
 
 /** Pick one of [options]: the arrows go round. */
 @Composable
-private fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) -> String, sub: String? = null, onPick: (T) -> Unit) {
+internal fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) -> String, sub: String? = null, onPick: (T) -> Unit) {
     val i = options.indexOf(selected)
     SettingRow(
         label, name(selected), sub,
@@ -556,7 +588,7 @@ private fun <T> PickRow(label: String, options: List<T>, selected: T, name: (T) 
 
 /** An amount in [range], shown in percent, in steps of [step]. */
 @Composable
-private fun StepRow(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, sub: String? = null, onChange: (Float) -> Unit) {
+internal fun StepRow(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, sub: String? = null, onChange: (Float) -> Unit) {
     // Snap to the steps, so a saved odd value (46%) lands on the grid on the first press.
     fun stepped(dir: Int) = (((value / step).roundToInt() + dir) * step).coerceIn(range.start, range.endInclusive)
     SettingRow(
@@ -581,7 +613,7 @@ private fun CountRow(label: String, value: Int, range: IntRange, sub: String? = 
 }
 
 @Composable
-private fun ToggleRow(label: String, value: Boolean, onChange: (Boolean) -> Unit, sub: String? = null) {
+internal fun ToggleRow(label: String, value: Boolean, onChange: (Boolean) -> Unit, sub: String? = null) {
     SettingRow(label, if (value) "On" else "Off", sub, onBack = { onChange(!value) }, onNext = { onChange(!value) })
 }
 

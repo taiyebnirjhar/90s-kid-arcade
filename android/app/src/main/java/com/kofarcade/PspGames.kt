@@ -1,5 +1,7 @@
 package com.kofarcade
 
+import com.kofarcade.core.Key
+import com.kofarcade.core.Move
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import java.io.File
 import java.io.IOException
@@ -13,6 +15,9 @@ import java.util.zip.ZipInputStream
  * unpacked on the way in, so a game is always one ready file.
  */
 object PspGames {
+    /** A PSP game's last session log ([GameLogs]). */
+    fun logFile(filesDir: File, game: String) = GameLogs.file(filesDir, "psp-$game")
+
     /** What PPSSPP plays: disc images (plain, CSO, CHD) and PSN eboots. */
     val GAME_TYPES = setOf("iso", "cso", "chd", "pbp")
 
@@ -21,6 +26,8 @@ object PspGames {
     /** The games in [dir], A to Z. */
     fun list(dir: File): List<File> =
         dir.listFiles { f -> f.isFile && isGame(f.name) }.orEmpty().sortedBy { it.name.lowercase() }
+
+    /** Where a game's last session log is kept. */
 
     /** "God of War - Ghost of Sparta (USA)" from its file name. */
     fun title(file: File): String = file.nameWithoutExtension.replace('_', ' ').trim()
@@ -82,87 +89,169 @@ object PspGames {
 }
 
 /**
- * The PPSSPP settings that keep the game at full speed on a modest phone
- * (Snapdragon 680 class): the PSP's own resolution, nothing that costs the
- * graphics chip extra. Frame skipping is the safety net, off unless chosen.
+ * A game's settings, kept per game: how it's drawn and the safety net.
+ * The defaults keep it at full speed on a modest phone (Snapdragon 680
+ * class): the PSP's own resolution, frame skipping only when it falls
+ * behind (the game never slows; a frame's picture is skipped instead).
  */
+data class PspSettings(
+    val frameSkip: PspSpeed.FrameSkip = PspSpeed.FrameSkip.AUTO,
+    /** 1 = the PSP's own 480x272, 2 = twice as sharp (costs the graphics chip). */
+    val resolution: Int = 1,
+    /** Skips some full-screen effects (glows, blur) for speed. */
+    val fasterEffects: Boolean = false,
+    val picture: Picture = Picture.SHARP,
+) {
+    /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
+    enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
+}
+
+/** The PPSSPP options for [settings]. */
 object PspSpeed {
     enum class FrameSkip(val label: String, val value: String, val auto: Boolean) {
         OFF("Off", "disabled", false),
         ONE("1", "1", false),
-        AUTO("Auto", "1", true),
+        AUTO("Auto (only when behind)", "1", true),
     }
 
-    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = mapOf(
+    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = options(PspSettings(frameSkip = skip))
+
+    fun options(settings: PspSettings): Map<String, String> = mapOf(
         "ppsspp_cpu_core" to "JIT",
         "ppsspp_fast_memory" to "enabled",
         "ppsspp_io_timing_method" to "Fast",
         "ppsspp_backend" to "opengl",
-        "ppsspp_internal_resolution" to "480x272",
+        "ppsspp_internal_resolution" to if (settings.resolution >= 2) "960x544" else "480x272",
         "ppsspp_mulitsample_level" to "Disabled",
         "ppsspp_texture_scaling_level" to "disabled",
         "ppsspp_texture_anisotropic_filtering" to "disabled",
         "ppsspp_texture_filtering" to "Auto",
         "ppsspp_lower_resolution_for_effects" to "disabled",
+        "ppsspp_skip_buffer_effects" to if (settings.fasterEffects) "enabled" else "disabled",
         "ppsspp_skip_gpu_readbacks" to "enabled",
         "ppsspp_inflight_frames" to "Up to 2",
         // The whole disc in memory would take 1-2 GB: read it as needed.
         "ppsspp_cache_iso" to "disabled",
         "ppsspp_button_preference" to "Cross",
         "ppsspp_language" to "English",
-        "ppsspp_frameskip" to skip.value,
+        "ppsspp_frameskip" to settings.frameSkip.value,
         "ppsspp_frameskiptype" to "Number of frames",
-        "ppsspp_auto_frameskip" to if (skip.auto) "enabled" else "disabled",
+        "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
     )
 }
 
 /**
- * How fast the game runs, second by second, for the plan's rule: full speed in
- * 99% of seconds, no stall over a second. The PSP draws 59.94 frames a
- * second; a second with fewer than [SLOW_BELOW] counts as slow.
+ * A PSP game's controls on the arcade layout (the KOF 2002 one): the same
+ * base for every game, stick, A B C D, SELECT and START on top, and on top
+ * of it what this game needs, like a fighter's own moves.
+ *
+ * The PSP's buttons on the arcade keys: A = square, B = cross, C = triangle,
+ * D = circle (bottom row, then top), E = L, F = R, COIN = SELECT. The face
+ * buttons show the PSP's symbols, since the game says "press ○".
  */
-class SpeedMeter {
-    var seconds = 0
-        private set
-    var slowSeconds = 0
-        private set
-    var lastFps = 0
-        private set
-    /** The longest gap between two frames so far (ms). */
-    var longestStallMs = 0L
-        private set
-
-    private var secondStart = -1L
-    private var framesThisSecond = 0
-    private var lastFrame = -1L
-
-    /** A frame came out at [nowMs]. */
-    fun frame(nowMs: Long) {
-        if (lastFrame >= 0) longestStallMs = maxOf(longestStallMs, nowMs - lastFrame)
-        lastFrame = nowMs
-        if (secondStart < 0) secondStart = nowMs
-        framesThisSecond++
-        while (nowMs - secondStart >= 1000) close()
-    }
-
-    private fun close() {
-        lastFps = framesThisSecond
-        seconds++
-        if (framesThisSecond < SLOW_BELOW) slowSeconds++
-        framesThisSecond = 0
-        secondStart += 1000
-    }
-
-    /** Percent of seconds at full speed (100 before the first second). */
-    val fullSpeedPercent: Int get() = if (seconds == 0) 100 else ((seconds - slowSeconds) * 100) / seconds
-
-    fun reset() {
-        seconds = 0; slowSeconds = 0; lastFps = 0; longestStallMs = 0
-        secondStart = -1; framesThisSecond = 0; lastFrame = -1
-    }
-
+data class PspProfile(
+    /** What each of A-D does in this game ("Light"), under its symbol. */
+    val labels: Map<Char, String> = emptyMap(),
+    /** SELECT on the top bar; off for a game that never uses it. */
+    val select: Boolean = true,
+    /** Pills over the buttons: one tap plays its keys (L+R...), or [HOLD_L]/[HOLD_R] held while pressed. */
+    val system: List<Move> = listOf(Move("L", HOLD_L), Move("R", HOLD_R)),
+    /** What L and R do in this game, under their names ("Block"). */
+    val shoulderHints: Pair<String, String> = "" to "",
+    /** A Block button above the stick that holds L while pressed (God of War blocks with L). */
+    val blockHoldsL: Boolean = false,
+    /** One-tap moves on the ring, like a fighter's specials. */
+    val moves: List<Move> = emptyList(),
+) {
     companion object {
-        /** 95% of 59.94: a second under this the eye sees as slow. */
-        const val SLOW_BELOW = 57
+        /**
+         * God of War: Ghost of Sparta (and Chains of Olympus), from the move
+         * list the owner sent (2026-11-06, corrected against the game's manual;
+         * to check in the game): □ light, △ heavy, ○ grab, ✕ jump; L held
+         * blocks (a tap parries); L+R with the stick rolls; R held sets the
+         * blades on fire (Thera's Bane), or aims the spear (Arms of Sparta); L+○
+         * Hyperion Charge; L+✕ casts the magic picked with the D-pad (→ Eye of
+         * Atlantis, ← Scourge of Erinys, ↑ Horn of Boreas); D-pad ↓ swaps
+         * weapons.
+         */
+        val GOD_OF_WAR = PspProfile(
+            labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
+            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2")),
+            blockHoldsL = true,
+            shoulderHints = "Block" to "Fire / Aim",
+            moves = listOf(
+                Move("Hyperion Charge", "DE"),
+                Move("Spirit of Hercules", "A,A,C"),
+                Move("Cyclone of Chaos", "hold:A", "dm"),
+                Move("Atlas Spark", "pad:6,BE", "dm"),
+                Move("Erinys Void", "pad:4,BE", "dm"),
+                Move("Boreas Freeze", "pad:8,BE", "dm"),
+            ),
+        )
+
+        /** The PSP's names for the arcade keys: symbols on the face buttons, L and R for E and F. */
+        val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○", 'E' to "L", 'F' to "R")
+
+        /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
+        const val HOLD_L = "held:E"
+        const val HOLD_R = "held:F"
+
+        /** The profile for a game, from its title. */
+        fun forTitle(title: String): PspProfile = when {
+            title.contains("god of war", ignoreCase = true) -> GOD_OF_WAR
+            else -> PspProfile()
+        }
+
+        /** The Android key code LibretroDroid gives the core as the PSP button for [key], or null. */
+        fun keyCode(key: Key): Int? = when (key) {
+            Key.A -> android.view.KeyEvent.KEYCODE_BUTTON_Y // square
+            Key.B -> android.view.KeyEvent.KEYCODE_BUTTON_B // cross
+            Key.C -> android.view.KeyEvent.KEYCODE_BUTTON_X // triangle
+            Key.D -> android.view.KeyEvent.KEYCODE_BUTTON_A // circle
+            Key.E -> android.view.KeyEvent.KEYCODE_BUTTON_L1
+            Key.F -> android.view.KeyEvent.KEYCODE_BUTTON_R1
+            Key.COIN -> android.view.KeyEvent.KEYCODE_BUTTON_SELECT
+            Key.START -> android.view.KeyEvent.KEYCODE_BUTTON_START
+            else -> null // directions go to the analog stick
+        }
+    }
+}
+
+/**
+ * A PSP game's own steps on the ring and the pills, beyond the arcade
+ * commands: "pad:6" taps the D-pad right, "hold:A" holds a button (Cyclone of
+ * Chaos is □ held), "BE" presses buttons together; steps go one after another
+ * ("pad:6,BE": pick a magic, then cast it). Gives the PSP key codes held on
+ * each frame, for the game screen to play.
+ */
+object PspSteps {
+    const val TAP = 4
+    const val GAP = 3
+    const val HOLD = 45
+
+    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") }
+
+    /** The key codes held on each frame, in order (an empty set lets everything go). */
+    fun frames(cmd: String): List<Set<Int>> = buildList {
+        for (step in cmd.split(',')) {
+            val (keys, frames) = when {
+                step.startsWith("pad:") -> setOfNotNull(dpad(step.removePrefix("pad:").toIntOrNull())) to TAP + 2
+                step.startsWith("hold:") -> keys(step.removePrefix("hold:")) to HOLD
+                else -> keys(step) to TAP
+            }
+            repeat(frames) { add(keys) }
+            repeat(GAP) { add(emptySet()) }
+        }
+    }
+
+    private fun keys(buttons: String): Set<Int> =
+        buttons.mapNotNull { c -> Key.entries.firstOrNull { it.name == c.toString() }?.let(PspProfile::keyCode) }.toSet()
+
+    private fun dpad(dir: Int?): Int? = when (dir) {
+        8 -> android.view.KeyEvent.KEYCODE_DPAD_UP
+        2 -> android.view.KeyEvent.KEYCODE_DPAD_DOWN
+        4 -> android.view.KeyEvent.KEYCODE_DPAD_LEFT
+        6 -> android.view.KeyEvent.KEYCODE_DPAD_RIGHT
+        else -> null
     }
 }

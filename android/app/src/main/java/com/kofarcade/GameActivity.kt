@@ -92,6 +92,9 @@ sealed interface GameDialog {
     data class Roster(val slot: Int) : GameDialog
     data class Editor(val character: Character) : GameDialog
     data object Controls : GameDialog
+
+    /** Settings open on its Game log tab. */
+    data object GameLog : GameDialog
     data class Error(val message: String, val title: String = "Can't start the game") : GameDialog
 
     /** Multiplayer: the room (key, seats, who watches). [first]: it just opened, here. */
@@ -212,6 +215,10 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // Multiplayer: the room, and this phone's buttons as a RetroPad mask.
     // (Read on the emulator's thread too, every frame: see onNetFrame.)
     @Volatile private var room: Room? = null
+
+    /** This session's game log (Settings: Game log): speed second by second, stalls, sound, what happened. */
+    private val meter = SpeedMeter(SpeedMeter.ARCADE_SLOW_BELOW)
+    private val log = com.kofarcade.GameLog(android.os.SystemClock::elapsedRealtime)
     @Volatile private var localMask = 0
     @Volatile private var padFrame = 0L
     @Volatile private var netStarted = false
@@ -379,6 +386,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         // because the main thread was busy drawing): multiplayer's inputs, and
         // alone the macros and rapid fire, so a move's every step lands on its frame.
         retroView.onFrame = {
+            meter.frame(android.os.SystemClock.elapsedRealtime())
             if (room != null) {
                 onNetFrame()
             } else if (replay != null) {
@@ -458,8 +466,21 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         ramMap?.let(::startDetection)
         startSavingMatches()
+        log.event(
+            "Started ${game.title} ($set) " + when {
+                replay != null -> "as a replay"
+                room?.internet != null -> "in an online room"
+                room != null -> "in a nearby room"
+                else -> "alone"
+            },
+        )
+        watchPlayback()
         lifecycleScope.launch {
-            retroView.getGLRetroErrors().collect { code -> show(GameDialog.Error(errorMessage(code))) }
+            retroView.getGLRetroErrors().collect { code ->
+                log.event("Emulator error $code: ${errorMessage(code)}")
+                saveLog()
+                show(GameDialog.Error(errorMessage(code)))
+            }
         }
         onBackPressedDispatcher.addCallback(this) {
             when {
@@ -658,6 +679,78 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             .putExtra(Intent.EXTRA_SUBJECT, if (room != null) "90s Kid Arcade connection report" else "90s Kid Arcade performance report")
             .putExtra(Intent.EXTRA_TEXT, report)
         runCatching { startActivity(Intent.createChooser(send, if (room != null) "Send connection report" else "Send report")) }
+    }
+
+    // ----- Game log -----
+
+    private fun dialogName(d: GameDialog) = when (d) {
+        GameDialog.Pause -> "the pause menu"
+        GameDialog.Controls, GameDialog.GameLog -> "Settings"
+        is GameDialog.Room -> "the room sheet"
+        is GameDialog.Error -> "an error: ${d.title}: ${d.message}"
+        else -> d::class.simpleName ?: "a dialog"
+    }
+
+    /** Settings saved: the new ones, in the log. */
+    fun loggedSettings(l: Look) = log.event("Settings saved: ${GameLogs.look(l)}")
+
+    /**
+     * Once a second while the game's on screen: late frames made up and sound
+     * gaps, into the log when there were any (the frames themselves are
+     * counted on the emulator's thread, [meter]).
+     */
+    private fun watchPlayback() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                var last = LibretroDroid.getPlaybackStats()
+                while (true) {
+                    delay(1000)
+                    val now = LibretroDroid.getPlaybackStats()
+                    val madeUp = now[0] - last[0]
+                    val gaps = now[1] - last[1]
+                    val dropped = now[2] - last[2]
+                    if (madeUp > 0 || gaps > 0 || dropped > 0) {
+                        log.event(
+                            listOfNotNull(
+                                if (madeUp > 0) "$madeUp late frames made up" else null,
+                                if (gaps > 0) "$gaps sound gaps" else null,
+                                if (dropped > 0) "$dropped sound frames dropped" else null,
+                            ).joinToString(", ") + " (${meter.lastFps} fps)",
+                        )
+                    }
+                    last = now
+                }
+            }
+        }
+    }
+
+    /** The whole log, to paste into the chat: phone, game, settings, speed, what happened, and a room's connection log. */
+    fun logText(): String {
+        val r = room
+        val header = GameLogs.phone(this, screenHz()) + listOfNotNull(
+            "Game: ${game.fullTitle} ($set)",
+            when {
+                replay != null -> "Playing: a replay"
+                r?.internet != null -> "Playing: online room ${r.key}, ${if (r.isOwner) "host" else if (r.watching) "watching" else "player"}"
+                r != null -> "Playing: nearby room ${r.key}, ${if (r.isOwner) "host" else if (r.watching) "watching" else "player"}"
+                else -> "Playing: alone"
+            },
+            r?.let { "Room: ${roomInfo.orEmpty()}. ${it.status()}" + (it.pingMs?.let { p -> "; ping $p ms" } ?: "") },
+            "Playback: $playbackStatus",
+            "Controls: ${GameLogs.look(look)}",
+            activeCharacter()?.let { "Fighter: ${it.name}" },
+        )
+        return log.text(header, meter, listOf("Connection log (rooms; times are the phone's clock):" to NetLog.dump()))
+    }
+
+    fun copyLog(text: String) = GameLogs.copy(this, text)
+
+    fun sendLog(text: String) = GameLogs.send(this, text)
+
+    /** The last session of this game, kept after quitting. */
+    private fun saveLog() {
+        if (replay != null) return
+        GameLogs.save(GameLogs.file(filesDir, game.id), logText())
     }
 
     /**
@@ -1561,6 +1654,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
      */
     fun restartGame() {
         if (room == null) return startOver()
+        log.event("Asked to restart for everyone")
         sendNet { it.requestRematch() }
         close()
     }
@@ -1568,6 +1662,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     private fun netEnded(reason: String) {
         if (isFinishing) return
         Online.reportProblem(this, "ended", roomUi?.key, reason = reason)
+        log.event("Room ended: $reason")
+        saveLog()
         room?.close()
         micOn = false
         canVoice = false
@@ -1758,6 +1854,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     override fun onPause() {
+        log.event(if (isFinishing) "Quit" else "Left the app")
+        saveLog()
         // Leaving the game: the match so far is kept (before the emulator goes).
         if (isFinishing) matchTaker?.finish()
         // Leaving the app mid-game: the others wait, as for the menu.
@@ -2111,6 +2209,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // ----- Dialogs, pause, save states -----
 
     fun show(d: GameDialog) {
+        if (dialog == null) log.event("Opened ${dialogName(d)}")
         dialog = d
         // The room sheet sits over the game without stopping it (for anyone).
         if (d !is GameDialog.Room) pauseEmulation()
@@ -2179,6 +2278,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     }
 
     fun close(after: (suspend () -> Unit)? = null) {
+        if (dialog != null) log.event("Back to the game")
         dialog = null
         resumeEmulation()
         if (after != null) {
@@ -2294,6 +2394,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         runFrom = frame
         startingOver = false
+        log.event("Started over")
         announce("Started over")
     }
 
@@ -2304,6 +2405,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
             room?.let { LibretroDroid.getNetState().takeIf { raw -> raw.size > 4 }?.let { raw -> raw.copyOfRange(4, raw.size) } } ?: retroView.serializeState()
         }
         withContext(Dispatchers.IO) { stateFile.writeBytes(bytes) }
+        log.event("State saved")
         Toast.makeText(this, "State saved", Toast.LENGTH_SHORT).show()
     }
 
@@ -2325,6 +2427,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         val r = room ?: return@close
         val bytes = withContext(Dispatchers.IO) { runCatching { stateFile.readBytes() }.getOrNull() }
         val asked = bytes != null && withContext(Dispatchers.IO) { r.loadForEveryone(bytes) }
+        log.event(if (asked) "Asked to load my state for everyone" else "Load for everyone: couldn't reach the host")
         if (!asked) Toast.makeText(this, "Couldn't reach the host: try again in a moment", Toast.LENGTH_SHORT).show()
     }
 
@@ -2336,6 +2439,7 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         }
         val bytes = withContext(Dispatchers.IO) { file.readBytes() }
         val ok = withContext(Dispatchers.IO) { retroView.unserializeState(bytes) }
+        log.event(if (ok) "State loaded" else "Load state failed")
         Toast.makeText(this, if (ok) "State loaded" else "Couldn't load the state", Toast.LENGTH_SHORT).show()
     }
 

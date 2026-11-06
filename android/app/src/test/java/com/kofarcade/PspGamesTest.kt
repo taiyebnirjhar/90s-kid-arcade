@@ -88,4 +88,86 @@ class PspGamesTest {
         assertEquals("disabled", o["ppsspp_cache_iso"])
         assertEquals("enabled", PspSpeed.options(PspSpeed.FrameSkip.AUTO)["ppsspp_auto_frameskip"])
     }
+
+    @Test
+    fun godOfWarGetsItsOwnButtonsOnTheArcadeLayout() {
+        val p = PspProfile.forTitle("God of War - Ghost of Sparta (USA)")
+        assertEquals("Light", p.labels['A'])
+        assertEquals("Heavy", p.labels['C'])
+        assertTrue("Block holds L", p.blockHoldsL)
+        assertTrue("SELECT opens its pause menu", p.select)
+        assertEquals(6, p.moves.size)
+        assertEquals("pad:6,BE", p.moves.first { it.name == "Atlas Spark" }.cmd)
+        assertEquals("○", PspProfile.FACE_NAMES['D'])
+        assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
+        val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
+        assertEquals(PspProfile(), base)
+        assertEquals(listOf("L", "R"), base.system.map { it.name })
+        assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
+        assertEquals(listOf("L", "R", "Roll", "Weapon"), p.system.map { it.name })
+        // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_R1, PspProfile.keyCode(com.kofarcade.core.Key.F))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_SELECT, PspProfile.keyCode(com.kofarcade.core.Key.COIN))
+        assertEquals(null, PspProfile.keyCode(com.kofarcade.core.Key.UP))
+    }
+
+    @Test
+    fun theDefaultsSkipOnlyWhenBehindAndCountStalls() {
+        val o = PspSpeed.options(PspSettings())
+        assertEquals("enabled", o["ppsspp_auto_frameskip"])
+        assertEquals("480x272", o["ppsspp_internal_resolution"])
+        assertEquals("960x544", PspSpeed.options(PspSettings(resolution = 2))["ppsspp_internal_resolution"])
+        val m = SpeedMeter()
+        var t = 0L
+        repeat(60) { m.frame(t); t += 16 }
+        t += 400
+        m.frame(t)
+        assertEquals(1, m.stalls.size)
+        assertTrue(m.stalls.single().second >= 400)
+    }
+
+    @Test
+    fun pspStepsPickAMagicThenCastIt() {
+        val f = PspSteps.frames("pad:6,BE")
+        assertEquals(setOf(android.view.KeyEvent.KEYCODE_DPAD_RIGHT), f.first())
+        assertTrue(f.any { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_B, android.view.KeyEvent.KEYCODE_BUTTON_L1) })
+        assertEquals(emptySet<Int>(), f.last())
+        val hold = PspSteps.frames("hold:A")
+        assertEquals(PspSteps.HOLD, hold.count { it == setOf(android.view.KeyEvent.KEYCODE_BUTTON_Y) })
+        assertTrue(PspSteps.isSteps("hold:A"))
+        assertFalse(PspSteps.isSteps("A,A,C"))
+    }
+
+    @Test
+    fun theGameLogShowsTheTimelineStallsAndEvents() {
+        var t = 0L
+        val log = GameLog { t }
+        val m = SpeedMeter()
+        // 3 seconds at full speed, 2 slow, then full speed again with a stall.
+        repeat(180) { m.frame(t); t += 16 + (it % 3).coerceAtMost(1) }
+        repeat(80) { m.frame(t); t += 25 }
+        t += 400
+        repeat(120) { m.frame(t); t += 16 + (it % 3).coerceAtMost(1) }
+        log.event("Paused (pause)")
+        val text = log.text(listOf("Phone: test"), m)
+        assertTrue(text.startsWith("Phone: test"))
+        assertTrue(text, text.contains("full speed"))
+        assertTrue(text, text.contains("slow: "))
+        assertTrue(text, text.contains("Stalls over 250 ms: 1"))
+        assertTrue(text, text.contains("Paused (pause)"))
+        assertEquals(listOf("0:00-0:01 full speed", "0:02 slow: 40 fps", "0:03-0:04 full speed"), GameLog.timeline(listOf(60, 60, 40, 60, 59)))
+    }
+
+    @Test
+    fun anArcadeGamesLogCountsSlowByItsOwnRateAndAddsTheRoomsLog() {
+        // A 54 fps board is full speed for an arcade game, slow for a PSP one.
+        assertEquals(listOf("0:00-0:01 full speed"), GameLog.timeline(listOf(54, 55), SpeedMeter.ARCADE_SLOW_BELOW))
+        assertEquals(listOf("0:00-0:01 slow: 54, 55 fps"), GameLog.timeline(listOf(54, 55)))
+        val log = GameLog { 0L }
+        val text = log.text(listOf("Game: KOF"), SpeedMeter(SpeedMeter.ARCADE_SLOW_BELOW), listOf("Connection log:" to "12:00:01.000  Joined", "Empty:" to ""))
+        assertTrue(text, text.contains("Connection log:\n12:00:01.000  Joined"))
+        assertFalse(text, text.contains("Empty:"))
+    }
 }

@@ -83,6 +83,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val on: Boolean = false,
         /** Works while held (Run) instead of on a tap. */
         val hold: Boolean = false,
+        /** Holds this key for as long as the finger stays (a PSP game's L or R). */
+        val holdKey: Key? = null,
     )
 
     data class Slot(val name: String?, val active: Boolean)
@@ -161,6 +163,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val run: Boolean = false,
         /** An internet room: the menu doesn't pause the game, so its button is a gear, not pause. */
         val menuGear: Boolean = false,
+        /** The top bar's COIN pill's name ("SELECT" for a PSP game). */
+        val coinLabel: String = "COIN",
+        /** Hides the COIN pill, for a game that never uses it. */
+        val showCoin: Boolean = true,
+        /** What each face button shows instead of its letter (a PSP game: ○ □ ✕ △). */
+        val faceNames: Map<Char, String> = emptyMap(),
     )
 
     var state = State()
@@ -277,7 +285,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     private val keyFor = mapOf('A' to Key.A, 'B' to Key.B, 'C' to Key.C, 'D' to Key.D, 'E' to Key.E, 'F' to Key.F)
 
     /** A button's name as the game calls it ("LP"), or its letter. */
-    private fun buttonName(c: Char): String = state.labels[c]?.takeIf { it.length <= 2 } ?: c.toString()
+    private fun buttonName(c: Char): String = state.faceNames[c] ?: state.labels[c]?.takeIf { it.length <= 2 } ?: c.toString()
 
     init {
         isHapticFeedbackEnabled = true
@@ -387,7 +395,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         els += El("pause", Kind.PAUSE, placed("pause", safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
         text.textSize = 10 * d
         val pills = buildList {
-            add(Kind.COIN to "COIN")
+            if (st.showCoin) add(Kind.COIN to st.coinLabel)
             if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to "FACING")
             add(Kind.START to "START")
         }
@@ -459,7 +467,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
             val r = faceR * (faceScale[c] ?: 1f)
-            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = c.toString())
+            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = st.faceNames[c] ?: c.toString())
         }
         val skillR = 26 * d * sc
         // Big buttons on a narrow screen: a high move that would sit on
@@ -532,8 +540,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         } else if (six) {
             listOf(Pt(-0.7f * s, -1.6f * s), Pt(0.6f * s, -1.6f * s))
         } else {
-            // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row.
-            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s))
+            // MAX and Roll over C and D; the third (Blowback) beside A, on the bottom row;
+            // a fourth (a PSP game's) beside C, on the top row.
+            listOf(Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s))
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
         st.system.indices.forEach { i ->
@@ -596,6 +605,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         elements.map { Triple(it.id, RectF(it.rect), it.round) } + Triple("stick", circle(homeX, homeY, stickRadius()), true)
 
     private fun glyphPath(cmd: String, cx: Float, cy: Float, half: Float): Path? {
+        if (isPspSteps(cmd)) return null
         val g = motionGlyph(cmd) ?: return null
         val k = 2 * half / 48f
         val ox = cx - half
@@ -792,7 +802,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
         glass(canvas, el, stroke = if (facing) withAlpha(accent, 170) else null, glow = Color.WHITE)
         val label = when (el.kind) {
-            Kind.COIN -> "COIN"
+            Kind.COIN -> state.coinLabel
             Kind.START -> "START"
             else -> "FACING"
         }
@@ -885,7 +895,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.strokeWidth = 1.5f * d
             canvas.drawCircle(el.cx, el.cy, el.r - 4.5f * d, ring)
         }
-        text.typeface = boldItalic
+        // PSP symbols stand upright (a slanted □ reads as a different shape).
+        text.typeface = if (el.letter in state.faceNames) bold else boldItalic
         val label = state.labels[el.letter]
         if (label != null && label.length <= 2) {
             // A short name ("LP") is the button's name.
@@ -1047,7 +1058,19 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     // A sequence's inputs as text lines: "D B C C ↑", in two lines if long
     // (shrunk to fit when drawn). A very long one (Garou's Deadly Rave) shows
     // how it starts: all of it wouldn't be readable in a button.
+    /** A PSP game's own steps ("pad:6,BE", "hold:A"), shown as text: they aren't arcade commands. */
+    private fun isPspSteps(cmd: String) = ':' in cmd
+
+    private fun pspStepsText(cmd: String): String = cmd.split(',').joinToString(" ") { step ->
+        when {
+            step.startsWith("pad:") -> "✚" + toArrows(step.removePrefix("pad:"))
+            step.startsWith("hold:") -> "hold " + step.removePrefix("hold:").map(::buttonName).joinToString("")
+            else -> step.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("+")
+        }
+    }
+
     private fun sequenceLines(cmd: String): List<String> {
+        if (isPspSteps(cmd)) return listOf(pspStepsText(cmd))
         val all = toArrows(cmd).split(" ").map { t -> t.map { c -> if (c in keyFor) buttonName(c) else c.toString() }.joinToString("") }
         if (all.size > 8) return listOf(all[0], all.drop(1).take(3).joinToString(" ") + " …")
         val tokens = all
@@ -1208,7 +1231,13 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             Kind.SKILL -> fire(id, el, el.move!!.cmd)
             Kind.SYS -> {
                 val cmd = el.sys!!.cmd
-                if (el.sys.hold) {
+                val holdKey = el.sys.holdKey
+                if (holdKey != null) {
+                    pointerEl[id] = el
+                    pressed += el
+                    listener.onKey(holdKey, true)
+                    haptic()
+                } else if (el.sys.hold) {
                     pointerEl[id] = el
                     pressed += el
                     holdRuns++
@@ -1299,6 +1328,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         if (el.key != null && pointerEl.values.any { it.key == el.key }) return
         pressed -= el
         if (el.kind == Kind.FACE || el.kind == Kind.COIN || el.kind == Kind.START) listener.onKey(el.key!!, false)
+        el.sys?.holdKey?.let { k ->
+            // Another finger on a pill holding the same key keeps it held.
+            if (pointerEl.values.none { it.sys?.holdKey == k }) listener.onKey(k, false)
+        }
         if (el.kind == Kind.SYS && el.sys?.hold == true) {
             holdRuns--
             if (holdRuns == 0 && !stickRun) listener.onRun(false)

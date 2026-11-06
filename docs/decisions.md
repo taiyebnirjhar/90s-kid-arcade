@@ -543,19 +543,124 @@ decision was made in the conversation. Get the time now with
 - Can't be measured here (the sandbox has no GPU): his report from the
   phone decides what P2 tunes.
 
+### 2026-11-06 15:05 Dhaka · PSP: Ghost of Sparta's first run, and P2 begun
+- Owner's screenshot: 60 fps, full speed 96%, 19 slow seconds of 478,
+  longest stall 921 ms (frame skip off). Asked: improve the layout per game
+  ("combination of buttons, quick combo… keep control as far possible from
+  the screen"), settings, graphics, and optimise as much as possible.
+- Decided: frame skip Auto by default (a skipped picture, never a slower
+  game); the counter on the emulator's thread with a stall list; per-game
+  settings (sharpness 1x/2x, picture Sharp/Smooth/Enhanced edges, faster
+  effects, controls size and see-through), saved per game; controls at the
+  edges, movable, with God of War's labels, a Roll (L+R) combo, SELECT
+  hidden. 2x sharpness stays a choice: on a Snapdragon 680 it likely costs
+  full speed, so the phone decides.
+- R2: not needed yet (games are picked from the phone until P3).
+
+### 2026-11-06 15:10 Dhaka · PSP games use the arcade (KOF 2002) controls
+- Owner: "Didnt like the layout. Select and start should be on top like
+  arcade. Buttons and layout should exactly like kof 2002 layout … We show
+  based layout, based on game we show dedicated buttons. Dont want psp
+  looking buttons. Button Name / label can be as game suggest."
+- Decided: the PSP screen uses `HudView` itself (the arcade layout, editor,
+  size and see-through); the PSP-style pad is removed. A game's
+  `PspProfile` gives its button names, pills, Block and ring moves. The
+  top bar's COIN pill can be renamed (`coinLabel`), "SELECT" for PSP.
+- God of War's ring combos wait for the game's own move list from the
+  owner, rather than a guessed list.
+- Then: "remove unwanted button which that game dont use … we can use psp
+  labels like o, square, x … But layout should like ours". Decided: the
+  face buttons show the PSP's symbols (□ ✕ △ ○, upright) with the game's
+  names under them; a profile hides what its game never uses (God of War:
+  SELECT).
+
+### 2026-11-06 15:22 Dhaka · God of War's own buttons, from the owner's move list
+- Owner sent a move list for Ghost of Sparta (with GameFAQs and manual
+  links). It says L held blocks (tap parries), R + stick rolls, R held is
+  Thera's Bane, L+○ Hyperion Charge, L+✕ casts the magic picked with the
+  D-pad, D-pad ↓ swaps weapons, SELECT opens a menu.
+- Decided: God of War's profile follows it: Block holds L; pills Roll (R),
+  Weapon (D-pad ↓), Fire (R held while pressed); the ring: Hyperion Charge,
+  Spirit of Hercules (□□△), Cyclone of Chaos (□ held), Atlas Spark, Erinys
+  Void, Boreas Freeze (each picks its magic, then casts). SELECT shown.
+  PSP-only steps (D-pad taps, held buttons) play from `PspSteps`. The list
+  reads partly machine-written, so every input gets checked in the game
+  (the owner is sending the game for that).
+- Then the owner's corrected list (against the game's manual): Roll is
+  L+R with the stick; R held is Thera's Bane, or aims the spear with the
+  Arms of Sparta. Roll's pill now presses L+R; Fire is "Fire / Aim".
+- Then: "I dont see L+R. Or sepetate L and R if needed". Decided: every PSP
+  game has L and R pills that stay pressed while held (`SysButton.holdKey`),
+  named for what they do (God of War: L Block, R Fire / Aim), beside Roll
+  (L+R) and Weapon. The fighter layout gets a fourth pill spot (beside C);
+  `PspHudTest` fails if any PSP controls overlap.
+
+### 2026-11-06 15:48 Dhaka · The PSP screen dressed like the arcade games
+- Owner: "Make sure u polish and clean the ui. Like other games. We have
+  aleady decision for those, settings ui, responsiveness, layout button
+  responsive ness, customisation etc."
+- Decided: the PSP game screen uses the arcade's own pieces, no plain
+  lists: the pause menu (`PauseContent`, with "Graphics & speed" and
+  "Speed report" added through its new `extra` items), Settings
+  (`ControlsPanel`, the same saved settings as the arcade games: stick,
+  size, see-through, left-handed, vibration, sound, move timing), the layout
+  editor bar with its size slider and gear (`EditBarContent`,
+  `EditAllSheet`), layouts kept per game and per hand. Graphics & speed is
+  a panel in the same style, kept per game. Leaving the app opens the
+  pause menu. `Overlay`, `PickRow`, `StepRow` and `ToggleRow` are shared
+  (internal) for this.
+
+### 2026-11-06 16:08 Dhaka · The PSP game log, off the game screen
+- Owner: "Where hv u set the logs. It should not visible on game play. But
+  under setting keep a section where i just copy and paste complete log of
+  game play so u understand and can improve based on it".
+- Decided: the speed counter is off during play by default (Graphics &
+  speed can switch it on). The pause menu's **Game log** (also a button in
+  Graphics & speed) shows the whole session: phone, app version, game,
+  settings and controls; full-speed summary; speed second by second; every
+  stall and when; and what happened (paused, saved, settings changed, left
+  the app, errors). **Copy** puts it on the clipboard for the chat; **Send**
+  shares it. It is saved on pause and quit (`psp/logs/<game>.txt`), and the
+  PSP list has a **Log** button per game to copy the last one (`PspLog`).
+
+### 2026-11-06 16:13 Dhaka · A game log for every game, alone and online
+- Owner: "Make for all games. So i can just copy and give u logs for both
+  online and offline plays".
+- Decided: every game's Settings has a **Game log** tab (and the pause menu
+  a "Game log" item that opens it), arcade and PSP, alone, in a room or
+  watching: phone and app, the game and how it's played (alone, nearby or
+  online room, host or player), the room's status and ping, controls,
+  speed second by second (frames counted on the emulator's thread; under
+  52 fps is slow for an arcade board, under 57 for the PSP), stalls, late
+  frames and sound gaps, what was done, and the room's connection log
+  (`NetLog`). **Copy** and **Send**. The last session per game is saved
+  (`logs/<game>.txt`) on leaving the app, quitting, an error or a room
+  ending. One shared piece: `GameLog`, `SpeedMeter`, `GameLogs`
+  (`GameLog.kt`) and the tab in `ControlsPanel`.
+
+### 2026-11-06 16:21 Dhaka · Next after PSP P2: weaker phones
+- Owner: "After that we will refine, so it supports weaker phone than mine
+  means other phones as well. If needed with mininal graphics an all. For
+  that i will give u the file first. Keep that in note".
+- Noted as P5 in docs/psp-plan.md: once P2 holds on his phone, the PSP
+  games also run on weaker phones, with minimal graphics where needed.
+  He gives the game file first; starts when he says so.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 03:14 Dhaka:
+As of 2026-11-06 16:13 Dhaka:
 
-- **Open:** PSP P1 (Ghost of Sparta in the app, with a speed counter).
-- **Merged:** #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
+- **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
+- **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.267.
+- **Latest release:** v1.0.269.
 - **Waiting on the owner:**
-  - PSP P1: Ghost of Sparta played 15 minutes; what the speed counter says.
+  - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
+  - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
+  - Ghost of Sparta as a Google Drive link, to check every input in the game here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current
@@ -566,6 +671,7 @@ As of 2026-11-06 03:14 Dhaka:
   - Redeploy `server/worker.js` in Cloudflare to get download resume
     (optional; the app works without it).
   - A Firebase project, if he wants notifications with the app closed.
+- **Next for PSP (noted):** P5, weaker phones with minimal graphics; the owner sends the game file first.
 - **Ideas not started:** everyone-rotates seats, a lobby, bots (Step 3).
 - **Watch:** problem reports (reader account) after the owner's friends
   play online.

@@ -109,6 +109,7 @@ fun GameDialogs(game: GameActivity) {
         is GameDialog.Roster -> RosterPicker(game, d.slot)
         is GameDialog.Editor -> MoveEditor(game, d.character)
         GameDialog.Controls -> ControlsSettings(game)
+        GameDialog.GameLog -> ControlsSettings(game, SettingsTab.LOG)
         is GameDialog.VideoReady -> Sheet(onDismiss = { game.finish() }) {
             val context = androidx.compose.ui.platform.LocalContext.current
             val targets = remember { Videos.targets(context) }
@@ -254,7 +255,7 @@ private fun Title(text: String, sub: String? = null) {
  * empty space around the content.
  */
 @Composable
-private fun Overlay(
+internal fun Overlay(
     onDismiss: () -> Unit,
     dismissOnTap: Boolean = true,
     /** Darken the game behind; off when [content] shades it itself. */
@@ -334,6 +335,7 @@ private fun PauseMenu(game: GameActivity) {
             onLayout = { game.startEditing() },
             onControls = { game.show(GameDialog.Controls) },
             onQuit = { game.finish() },
+            extra = listOf("Game log" to { game.show(GameDialog.GameLog) }),
         )
     }
 }
@@ -636,7 +638,7 @@ fun MoveEditorContent(
 }
 
 @Composable
-private fun ControlsSettings(game: GameActivity) {
+private fun ControlsSettings(game: GameActivity, startTab: SettingsTab = SettingsTab.SCREEN) {
     val p = game.settings
     var look by remember { mutableStateOf(p.look()) }
     var info by remember { mutableStateOf(p.detectInfo) }
@@ -686,9 +688,14 @@ private fun ControlsSettings(game: GameActivity) {
                 p.detectInfo = info
                 p.problemReports = reports
                 p.saveMatches = saving
+                game.loggedSettings(look)
                 game.applyPrefs()
                 game.close()
             },
+            startTab = startTab,
+            gameLog = game::logText,
+            onCopyLog = game::copyLog,
+            onSendLog = game::sendLog,
         )
     }
 }

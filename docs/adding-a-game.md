@@ -130,8 +130,9 @@ places every control from the game's kind (`Game.layout`) and how many face
 buttons it has, never by hand for one game:
 
 - **Fighter, four buttons** (KOF, Garou, Last Blade, Samurai Shodown,
-  Double Dragon): A B C D in a square, C D on top. System moves over C and
-  D, a third beside A; **a lone one is centred over C and D**.
+  Double Dragon, and the PSP games): A B C D in a square, C D on top. System
+  moves over C and D, a third beside A, a fourth beside C; **a lone one is
+  centred over C and D**.
 - **Fighter, six buttons** (Street Fighter III, Marvel vs Capcom, Vampire
   Savior): punches over kicks in straight columns. System moves over the
   punches; **a lone one is centred over MP**.

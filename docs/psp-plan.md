@@ -67,6 +67,12 @@ readout, in our own app on his phone, finds that out first.
   buttons, L and R, START and SELECT) following the button layout rules;
   gamepads; the game's own saves and quick save/load.
 
+- **P5. Weaker phones (noted, not started).** The owner (2026-11-06):
+  after P2, refine so the PSP games also run on phones weaker than his,
+  with minimal graphics if needed (a lowest-settings preset, chosen by the
+  phone's speed). He gives the game file first, so it can be measured
+  here; starts when he says so.
+
 ## Testing
 
 The cloud sandbox has no GPU: P1 is checked with PPSSPP's software renderer
@@ -76,6 +82,42 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-06: every game (arcade too, alone and online) has the game log now,
+  as a Game log tab in Settings.
+- 2026-11-06: the game log. Nothing on screen during play (the speed
+  counter is off unless switched on); pause menu → Game log shows the
+  whole session (phone, settings, speed second by second, stalls, what
+  happened) with Copy and Send, saved on quit, and a Log button per game
+  in the PSP list. The owner pastes it in the chat after playing.
+- 2026-11-06: first report from the phone (Ghost of Sparta, 8 minutes, frame
+  skip off): 60 fps, full speed 96% (19 slow seconds of 478), longest stall
+  921 ms. Close, not yet the rule. P2 started with: the counter timed on the
+  emulator's thread (the main thread's own pauses had counted as stalls),
+  frame skip Auto by default (skips a picture only when behind, so the game
+  never slows), a stall list with when each happened (a loading screen or
+  gameplay), Android's sustained-performance mode, and per-game settings:
+  frame skip, sharpness 1x/2x, picture (Sharp, Smooth, Enhanced edges), faster
+  effects. Controls (P4 begun, the owner's ask): kept to the screen's edges,
+  movable, size and see-through settings, and God of War's own labels (□
+  Light, △ Heavy, ○ Grab, ✕ Jump, R Block), a Roll button (L+R, steered with
+  the stick), SELECT hidden.
+- 2026-11-06: the owner didn't like PSP-looking controls: "Buttons and layout should
+  exactly like kof 2002 layout … We show based layout, based on game we show
+  dedicated buttons". Now every PSP game uses the arcade controls
+  (`HudView`, the KOF 2002 layout): stick, A B C D, SELECT and START on top,
+  the same menu and layout editor; each game's profile (`PspProfile`) adds
+  its names and dedicated buttons, as a fighter adds its moves. The PSP's
+  buttons on the arcade keys: A = square, B = cross, C = triangle, D =
+  circle, E = L, F = R, COIN = SELECT; the stick goes to the analog stick.
+  God of War: A Light, B Jump, C Heavy, D Grab, Block (holds R), pills Roll
+  (L+R) and L. Its combos go on the ring once the owner sends the game's own
+  move list (no reliable list was reachable from here). The face buttons
+  show the PSP's symbols (□ ✕ △ ○) with the game's names under them, since
+  the games say "press ○"; buttons a game never uses are hidden (God of
+  War: SELECT, later shown again: the owner's move list says it opens a
+  menu). God of War's ring and pills follow the owner's move list:
+  Hyperion Charge, Spirit of Hercules, Cyclone of Chaos, three magics;
+  Roll, Weapon, Fire; Block holds L. To check in the game.
 - 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
   first check and stable ghost of Sparta"). Home → PSP → Add a game takes
   his `.7z` download (unpacked on the phone) or a plain image; the game
