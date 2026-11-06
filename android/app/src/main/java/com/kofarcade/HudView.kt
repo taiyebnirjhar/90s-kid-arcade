@@ -161,6 +161,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val run: Boolean = false,
         /** An internet room: the menu doesn't pause the game, so its button is a gear, not pause. */
         val menuGear: Boolean = false,
+        /** The top bar's COIN pill's name ("SELECT" for a PSP game). */
+        val coinLabel: String = "COIN",
     )
 
     var state = State()
@@ -387,7 +389,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         els += El("pause", Kind.PAUSE, placed("pause", safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
         text.textSize = 10 * d
         val pills = buildList {
-            add(Kind.COIN to "COIN")
+            add(Kind.COIN to st.coinLabel)
             if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to "FACING")
             add(Kind.START to "START")
         }
@@ -792,7 +794,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         }
         glass(canvas, el, stroke = if (facing) withAlpha(accent, 170) else null, glow = Color.WHITE)
         val label = when (el.kind) {
-            Kind.COIN -> "COIN"
+            Kind.COIN -> state.coinLabel
             Kind.START -> "START"
             else -> "FACING"
         }

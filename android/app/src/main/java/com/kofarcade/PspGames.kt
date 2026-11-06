@@ -1,5 +1,7 @@
 package com.kofarcade
 
+import com.kofarcade.core.Key
+import com.kofarcade.core.Move
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import java.io.File
 import java.io.IOException
@@ -94,8 +96,8 @@ data class PspSettings(
     /** Skips some full-screen effects (glows, blur) for speed. */
     val fasterEffects: Boolean = false,
     val picture: Picture = Picture.SHARP,
-    val controlsScale: Float = 1f,
-    val controlsOpacity: Float = 0.45f,
+    val controlsSize: Float = 0.85f,
+    val controlsOpacity: Float = 0.6f,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
     enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
@@ -196,5 +198,52 @@ class SpeedMeter {
         const val SLOW_BELOW = 57
         /** A gap this long between frames counts as a stall. */
         const val STALL_MS = 250L
+    }
+}
+
+/**
+ * A PSP game's controls on the arcade layout (the KOF 2002 one): the same
+ * base for every game, stick, A B C D, SELECT and START on top, and on top
+ * of it what this game needs, like a fighter's own moves.
+ *
+ * The PSP's buttons on the arcade keys: A = square, B = cross, C = triangle,
+ * D = circle (bottom row, then top), E = L, F = R, COIN = SELECT.
+ */
+data class PspProfile(
+    /** What each of A-D does in this game ("Light"); the base shows the PSP's names. */
+    val labels: Map<Char, String> = mapOf('A' to "Square", 'B' to "Cross", 'C' to "Triangle", 'D' to "Circle"),
+    /** Pills over the buttons: one tap plays its keys (L, R, L+R...). */
+    val system: List<Move> = listOf(Move("L", "E"), Move("R", "F")),
+    /** A Block button above the stick that holds R while pressed. */
+    val blockHoldsR: Boolean = false,
+    /** One-tap moves on the ring, like a fighter's specials. */
+    val moves: List<Move> = emptyList(),
+) {
+    companion object {
+        /** God of War (Chains of Olympus, Ghost of Sparta): R blocks; L and R together roll, steered with the stick. */
+        val GOD_OF_WAR = PspProfile(
+            labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
+            system = listOf(Move("Roll", "EF"), Move("L", "E")),
+            blockHoldsR = true,
+        )
+
+        /** The profile for a game, from its title. */
+        fun forTitle(title: String): PspProfile = when {
+            title.contains("god of war", ignoreCase = true) -> GOD_OF_WAR
+            else -> PspProfile()
+        }
+
+        /** The Android key code LibretroDroid gives the core as the PSP button for [key], or null. */
+        fun keyCode(key: Key): Int? = when (key) {
+            Key.A -> android.view.KeyEvent.KEYCODE_BUTTON_Y // square
+            Key.B -> android.view.KeyEvent.KEYCODE_BUTTON_B // cross
+            Key.C -> android.view.KeyEvent.KEYCODE_BUTTON_X // triangle
+            Key.D -> android.view.KeyEvent.KEYCODE_BUTTON_A // circle
+            Key.E -> android.view.KeyEvent.KEYCODE_BUTTON_L1
+            Key.F -> android.view.KeyEvent.KEYCODE_BUTTON_R1
+            Key.COIN -> android.view.KeyEvent.KEYCODE_BUTTON_SELECT
+            Key.START -> android.view.KeyEvent.KEYCODE_BUTTON_START
+            else -> null // directions go to the analog stick
+        }
     }
 }

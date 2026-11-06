@@ -3,7 +3,6 @@ package com.kofarcade
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.graphics.PointF
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.SystemClock
@@ -29,6 +28,10 @@ import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.LibretroDroid
 import com.swordfish.libretrodroid.ShaderConfig
 import com.swordfish.libretrodroid.Variable
+import com.kofarcade.core.Key
+import com.kofarcade.core.Layout
+import com.kofarcade.core.Move
+import com.kofarcade.core.Pad
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -36,11 +39,12 @@ import java.util.zip.ZipInputStream
 
 /**
  * Plays one PSP game with PPSSPP (docs/psp-plan.md): its settings (kept per
- * game), the PSP's touch controls laid out for the game (or a gamepad), and a
- * speed counter for the plan's rule (full speed in 99% of seconds, no long
- * stalls), measured on the emulator's own thread.
+ * game), the arcade controls (the KOF 2002 layout, [HudView]) with what this
+ * game needs on top ([PspProfile]), or a gamepad, and a speed counter for the
+ * plan's rule (full speed in 99% of seconds, no long stalls), measured on the
+ * emulator's own thread.
  */
-class PspGameActivity : ComponentActivity() {
+class PspGameActivity : ComponentActivity(), HudView.Listener {
     companion object {
         const val EXTRA_PATH = "path"
         private const val CORE = "libppsspp_libretro_android.so"
@@ -49,7 +53,14 @@ class PspGameActivity : ComponentActivity() {
     }
 
     private lateinit var retroView: GLRetroView
-    private lateinit var pad: PspPad
+    private lateinit var hud: HudView
+    private lateinit var pad: Pad
+    private lateinit var profile: PspProfile
+    private lateinit var doneButton: TextView
+    @Volatile private var padFrame = 0L
+    private var frame = 0L
+    /** Directions held by the stick, for the analog stick. */
+    private val dirs = HashSet<Key>()
     private lateinit var speedText: TextView
     private lateinit var store: PspStore
     private lateinit var settings: PspSettings
@@ -93,19 +104,27 @@ class PspGameActivity : ComponentActivity() {
         lifecycle.addObserver(retroView)
         // Timed on the emulator's thread, right after each frame: a busy main
         // thread can't make a stall that isn't there.
-        retroView.onFrame = { meter.frame(SystemClock.elapsedRealtime()) }
-
-        pad = PspPad(
-            this,
-            PspProfile.forTitle(PspGames.title(game)),
-            onKey = { code, down -> retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code) },
-            onStick = { x, y -> retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y) },
-            onMenu = ::onMenuButton,
-        ).apply {
-            moves.putAll(store.moves())
-            scale = settings.controlsScale
-            opacity = settings.controlsOpacity
+        retroView.onFrame = {
+            meter.frame(SystemClock.elapsedRealtime())
+            padFrame++
+            pad.onFrame()
         }
+
+        profile = PspProfile.forTitle(PspGames.title(game))
+        pad = Pad(send = ::sendKey, clock = { padFrame })
+        hud = HudView(this, this)
+        hud.tweaks = store.tweaks()
+        doneButton = TextView(this).apply {
+            text = "DONE"
+            setTextColor(Color.BLACK)
+            setBackgroundColor(Color.rgb(232, 178, 26))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(48, 18, 48, 18)
+            visibility = View.GONE
+            setOnClickListener { finishEditing() }
+        }
+        updateHud()
         speedText = TextView(this).apply {
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(150, 0, 0, 0))
@@ -117,11 +136,15 @@ class PspGameActivity : ComponentActivity() {
             FrameLayout(this).apply {
                 setBackgroundColor(Color.BLACK)
                 addView(retroView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER))
-                addView(pad, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                addView(hud, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                addView(doneButton, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
                 addView(speedText, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (44 * resources.displayMetrics.density).toInt() })
             },
         )
 
+        lifecycleScope.launch {
+            retroView.getGLRetroEvents().collect { if (it is GLRetroView.GLRetroEvents.FrameRendered) hud.onFrame(++frame) }
+        }
         lifecycleScope.launch {
             while (true) {
                 delay(500)
@@ -140,7 +163,7 @@ class PspGameActivity : ComponentActivity() {
                     .show()
             }
         }
-        onBackPressedDispatcher.addCallback(this) { onMenuButton() }
+        onBackPressedDispatcher.addCallback(this) { if (hud.editing) finishEditing() else showMenu() }
     }
 
     private fun variables(s: PspSettings) = PspSpeed.options(s).map { (k, v) -> Variable(k, v) }.toTypedArray()
@@ -161,8 +184,66 @@ class PspGameActivity : ComponentActivity() {
             meter.reset()
         }
         if (old.picture != s.picture) retroView.shader = shaderFor(s.picture)
-        pad.scale = s.controlsScale
-        pad.opacity = s.controlsOpacity
+        updateHud()
+    }
+
+    /** The arcade controls for this game: the base layout and the game's own buttons. */
+    private fun updateHud() {
+        hud.state = HudView.State(
+            layout = Layout.FIGHTER,
+            faceButtons = listOf('A', 'B', 'C', 'D'),
+            labels = profile.labels,
+            moves = profile.moves,
+            system = profile.system.map { HudView.SysButton(it.name, sysHint(it.cmd), it.cmd) },
+            block = profile.blockHoldsR,
+            facingButton = false,
+            size = settings.controlsSize,
+            coinLabel = "SELECT",
+        )
+        hud.opacity = settings.controlsOpacity
+    }
+
+    /** A pill's keys as the PSP calls them ("L+R"). */
+    private fun sysHint(cmd: String) = cmd.map { c -> if (c == 'E') "L" else if (c == 'F') "R" else c.toString() }.joinToString("+")
+
+    /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
+    private fun sendKey(key: Key, down: Boolean) {
+        val code = PspProfile.keyCode(key)
+        if (code != null) {
+            retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)
+            return
+        }
+        synchronized(dirs) {
+            if (down) dirs += key else dirs -= key
+            val x = (if (Key.RIGHT in dirs) 1f else 0f) - (if (Key.LEFT in dirs) 1f else 0f)
+            val y = (if (Key.DOWN in dirs) 1f else 0f) - (if (Key.UP in dirs) 1f else 0f)
+            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y)
+        }
+    }
+
+    // HudView.Listener: the arcade controls.
+    override fun onDir(dir: Int) = pad.setDir(dir)
+    override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
+    override fun onPlay(cmd: String, move: Move?): Int = pad.play(cmd)
+    override fun onMenu() = if (hud.editing) finishEditing() else showMenu()
+    override fun onFlip() = Unit
+    override fun onSlot(index: Int) = Unit
+    override fun onRapid() = Unit
+    override fun onBlock(relDir: Int?) {
+        // God of War blocks with R held.
+        if (profile.blockHoldsR) pad.press(Key.F, relDir != null)
+    }
+    override fun onRun(on: Boolean) = Unit
+
+    private fun startEditing() {
+        hud.editing = true
+        doneButton.visibility = View.VISIBLE
+    }
+
+    private fun finishEditing() {
+        hud.editing = false
+        doneButton.visibility = View.GONE
+        store.saveTweaks(hud.tweaks)
     }
 
     /** PPSSPP's fonts and shaders (bundled as assets/PPSSPP.zip) into the system folder, once. */
@@ -189,17 +270,8 @@ class PspGameActivity : ComponentActivity() {
         }
     }
 
-    private fun onMenuButton() {
-        if (pad.editing) {
-            pad.editing = false
-            store.saveMoves(pad.moves)
-            return
-        }
-        showMenu()
-    }
-
     private fun showMenu() {
-        pad.releaseAll()
+        pad.cancel()
         val s = settings
         val items = listOf(
             "Frame skip: ${s.frameSkip.label}" to {
@@ -216,21 +288,20 @@ class PspGameActivity : ComponentActivity() {
             "Faster effects (skips some glows): ${if (s.fasterEffects) "On" else "Off"}" to {
                 apply(s.copy(fasterEffects = !s.fasterEffects))
             },
-            "Controls size: ${sizeLabel(s.controlsScale)}" to {
-                val sizes = listOf(0.8f, 1f, 1.2f)
-                apply(s.copy(controlsScale = sizes[(sizes.indexOfFirst { it >= s.controlsScale - 0.01f } + 1).mod(sizes.size)]))
+            "Controls size: ${sizeLabel(s.controlsSize)}" to {
+                val sizes = listOf(0.7f, 0.85f, 1f)
+                apply(s.copy(controlsSize = sizes[(sizes.indexOfFirst { it >= s.controlsSize - 0.01f } + 1).mod(sizes.size)]))
             },
             "Controls see-through: ${opacityLabel(s.controlsOpacity)}" to {
-                val levels = listOf(0.25f, 0.45f, 0.7f)
+                val levels = listOf(0.35f, 0.6f, 0.9f)
                 apply(s.copy(controlsOpacity = levels[(levels.indexOfFirst { it >= s.controlsOpacity - 0.01f } + 1).mod(levels.size)]))
             },
-            "Move the controls" to { pad.editing = true },
+            "Move the controls" to ::startEditing,
             "Put the controls back" to {
-                pad.moves.clear()
-                store.saveMoves(pad.moves)
-                pad.relayout()
+                hud.tweaks = emptyMap()
+                store.saveTweaks(hud.tweaks)
             },
-            "Hide / show the controls" to { pad.visibility = if (pad.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE },
+            "Hide / show the controls" to { hud.visibility = if (hud.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE },
             "${if (showSpeed) "Hide" else "Show"} the speed counter" to { showSpeed = !showSpeed },
             "Speed report" to ::showReport,
             "Restart the speed count" to { meter.reset() },
@@ -244,14 +315,14 @@ class PspGameActivity : ComponentActivity() {
     }
 
     private fun sizeLabel(v: Float) = when {
-        v < 0.9f -> "Small"
-        v > 1.1f -> "Big"
+        v < 0.8f -> "Small"
+        v > 0.9f -> "Big"
         else -> "Normal"
     }
 
     private fun opacityLabel(v: Float) = when {
-        v < 0.35f -> "Most (faint)"
-        v > 0.6f -> "Least (solid)"
+        v < 0.5f -> "Most (faint)"
+        v > 0.8f -> "Least (solid)"
         else -> "Medium"
     }
 
@@ -309,7 +380,7 @@ class PspGameActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        if (::pad.isInitialized) pad.releaseAll()
+        if (::pad.isInitialized) pad.cancel()
         super.onPause()
     }
 }
@@ -325,7 +396,7 @@ class PspStore(context: Context, private val game: String) {
             resolution = prefs.getInt("$game.res", d.resolution),
             fasterEffects = prefs.getBoolean("$game.fx", d.fasterEffects),
             picture = PspSettings.Picture.entries.firstOrNull { it.name == prefs.getString("$game.picture", null) } ?: d.picture,
-            controlsScale = prefs.getFloat("$game.scale", d.controlsScale),
+            controlsSize = prefs.getFloat("$game.size", d.controlsSize),
             controlsOpacity = prefs.getFloat("$game.opacity", d.controlsOpacity),
         )
     }
@@ -336,22 +407,21 @@ class PspStore(context: Context, private val game: String) {
             .putInt("$game.res", s.resolution)
             .putBoolean("$game.fx", s.fasterEffects)
             .putString("$game.picture", s.picture.name)
-            .putFloat("$game.scale", s.controlsScale)
+            .putFloat("$game.size", s.controlsSize)
             .putFloat("$game.opacity", s.controlsOpacity)
             .apply()
     }
 
-    /** "group:x:y;…" as fractions of the screen. */
-    fun moves(): Map<String, PointF> =
-        prefs.getString("$game.moves", "").orEmpty().split(';').mapNotNull { part ->
+    /** Where the player moved and resized the controls: "id:dx:dy:scale;…". */
+    fun tweaks(): Map<String, HudView.Tweak> =
+        prefs.getString("$game.tweaks", "").orEmpty().split(';').mapNotNull { part ->
             val bits = part.split(':')
-            if (bits.size != 3) return@mapNotNull null
-            val x = bits[1].toFloatOrNull() ?: return@mapNotNull null
-            val y = bits[2].toFloatOrNull() ?: return@mapNotNull null
-            bits[0] to PointF(x, y)
+            if (bits.size != 4) return@mapNotNull null
+            val n = bits.drop(1).map { it.toFloatOrNull() ?: return@mapNotNull null }
+            bits[0] to HudView.Tweak(n[0], n[1], n[2])
         }.toMap()
 
-    fun saveMoves(moves: Map<String, PointF>) {
-        prefs.edit().putString("$game.moves", moves.entries.joinToString(";") { (g, p) -> "$g:${p.x}:${p.y}" }).apply()
+    fun saveTweaks(tweaks: Map<String, HudView.Tweak>) {
+        prefs.edit().putString("$game.tweaks", tweaks.entries.joinToString(";") { (id, t) -> "$id:${t.dx}:${t.dy}:${t.scale}" }).apply()
     }
 }

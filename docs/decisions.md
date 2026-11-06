@@ -557,11 +557,23 @@ decision was made in the conversation. Get the time now with
   full speed, so the phone decides.
 - R2: not needed yet (games are picked from the phone until P3).
 
+### 2026-11-06 15:10 Dhaka · PSP games use the arcade (KOF 2002) controls
+- Owner: "Didnt like the layout. Select and start should be on top like
+  arcade. Buttons and layout should exactly like kof 2002 layout … We show
+  based layout, based on game we show dedicated buttons. Dont want psp
+  looking buttons. Button Name / label can be as game suggest."
+- Decided: the PSP screen uses `HudView` itself (the arcade layout, editor,
+  size and see-through); the PSP-style pad is removed. A game's
+  `PspProfile` gives its button names, pills, Block and ring moves. The
+  top bar's COIN pill can be renamed (`coinLabel`), "SELECT" for PSP.
+- God of War's ring combos wait for the game's own move list from the
+  owner, rather than a guessed list.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:05 Dhaka:
+As of 2026-11-06 15:10 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
@@ -570,6 +582,7 @@ As of 2026-11-06 15:05 Dhaka:
 - **Latest release:** v1.0.269.
 - **Waiting on the owner:**
   - PSP P2: Ghost of Sparta played again with frame skip Auto; the speed report.
+  - God of War's move list (pause menu screenshots), for the ring's combos.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

@@ -88,6 +88,17 @@ owner's library (downloaded with its key, never committed).
   movable, size and see-through settings, and God of War's own labels (□
   Light, △ Heavy, ○ Grab, ✕ Jump, R Block), a Roll button (L+R, steered with
   the stick), SELECT hidden.
+- 2026-11-06: the owner didn't like PSP-looking controls: "Buttons and layout should
+  exactly like kof 2002 layout … We show based layout, based on game we show
+  dedicated buttons". Now every PSP game uses the arcade controls
+  (`HudView`, the KOF 2002 layout): stick, A B C D, SELECT and START on top,
+  the same menu and layout editor; each game's profile (`PspProfile`) adds
+  its names and dedicated buttons, as a fighter adds its moves. The PSP's
+  buttons on the arcade keys: A = square, B = cross, C = triangle, D =
+  circle, E = L, F = R, COIN = SELECT; the stick goes to the analog stick.
+  God of War: A Light, B Jump, C Heavy, D Grab, Block (holds R), pills Roll
+  (L+R) and L. Its combos go on the ring once the owner sends the game's own
+  move list (no reliable list was reachable from here).
 - 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
   first check and stable ghost of Sparta"). Home → PSP → Add a game takes
   his `.7z` download (unpacked on the phone) or a plain image; the game

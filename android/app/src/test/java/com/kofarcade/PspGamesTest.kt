@@ -90,13 +90,21 @@ class PspGamesTest {
     }
 
     @Test
-    fun godOfWarGetsItsOwnControls() {
+    fun godOfWarGetsItsOwnButtonsOnTheArcadeLayout() {
         val p = PspProfile.forTitle("God of War - Ghost of Sparta (USA)")
-        assertEquals("Light", p.labels["squ"])
-        assertEquals("Block", p.labels["r"])
-        assertEquals(listOf(android.view.KeyEvent.KEYCODE_BUTTON_L1, android.view.KeyEvent.KEYCODE_BUTTON_R1), p.combos.single().keyCodes)
-        assertTrue("sel" in p.hidden)
-        assertEquals(PspProfile(), PspProfile.forTitle("Assassin's Creed Bloodlines"))
+        assertEquals("Light", p.labels['A'])
+        assertEquals("Heavy", p.labels['C'])
+        assertTrue("Block holds R", p.blockHoldsR)
+        assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
+        val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
+        assertEquals(PspProfile(), base)
+        assertEquals(listOf("L", "R"), base.system.map { it.name })
+        // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_R1, PspProfile.keyCode(com.kofarcade.core.Key.F))
+        assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_SELECT, PspProfile.keyCode(com.kofarcade.core.Key.COIN))
+        assertEquals(null, PspProfile.keyCode(com.kofarcade.core.Key.UP))
     }
 
     @Test
