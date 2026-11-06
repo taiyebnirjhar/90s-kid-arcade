@@ -537,6 +537,8 @@ class UiSnapshots {
                     Look(ScreenMode.SLIGHT, StickMode.FLOATING, 1f, 0.46f, LabelMode.SUPERS, true, false, 2, 4),
                     onLook = {}, canDetect = true, canRapid = true,
                     detectInfo = false, onDetectInfo = {}, onCancel = {}, onSave = {}, startTab = tab,
+                    // Every game's Settings has its log: arcade (alone, online, replays) and PSP.
+                    gameLog = { "90s Kid Arcade 1.0 · game log\nGame: KOF 2002 Magic Plus (kf2k2mp)\nFull speed: 100% of 60 s\n\nWhat happened:\n  0:00 Started alone" },
                 )
             }
         }
@@ -550,6 +552,9 @@ class UiSnapshots {
 
     @Test
     fun controlsMoves() = controlsShot("controls_moves", SettingsTab.MOVES)
+
+    @Test
+    fun controlsGameLog() = controlsShot("controls_game_log", SettingsTab.LOG)
 
     @Test
     fun controlsSmall() = controlsShot("controls_small", SettingsTab.CONTROLS, small = true)

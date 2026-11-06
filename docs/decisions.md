@@ -794,6 +794,12 @@ decision was made in the conversation. Get the time now with
 - The owner's latest log (1.0.284): with frame skip Off, sound drops fell
   from thousands a second to almost none and play held 58-60 fps. Decided:
   PSP frame skip is Off by default; Auto stays a choice.
+- Then: "Make sure it works for all game". Checked: only two screens run
+  games, the arcade's (all 31, alone, online and replays) and the PSP's;
+  both have Game log → Send to us and send by themselves after a bad
+  freeze. The Settings tab row now scrolls to the open tab, so Game log
+  (last of six on the arcade's) shows when opened from the pause menu.
+  Snapshot: controls_game_log.
 
 ---
 

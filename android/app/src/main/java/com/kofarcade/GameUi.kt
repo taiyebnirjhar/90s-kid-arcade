@@ -418,8 +418,13 @@ fun ControlsPanel(
                 Spacer(Modifier.width(12.dp))
                 Text("Changes show as you make them", color = Palette.muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 6.dp))
             }
-            // Scrolls sideways if the tabs don't all fit (small phones).
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            // Scrolls sideways if the tabs don't all fit (small phones), and
+            // shows the open one (Game log, last, opened from the pause menu).
+            val tabScroll = rememberScrollState()
+            LaunchedEffect(tabScroll.maxValue, tab) {
+                if (tab == tabs.last { it != SettingsTab.LOG || gameLog != null }) tabScroll.scrollTo(tabScroll.maxValue)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(tabScroll)) {
                 for (t in tabs) {
                     if (t == SettingsTab.LOG && gameLog == null) continue
                     val on = t == tab
