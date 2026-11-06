@@ -99,7 +99,7 @@ class PspGamesTest {
         assertEquals(6, p.moves.size)
         assertEquals("pad:6,BE", p.moves.first { it.name == "Atlas Spark" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
-        assertEquals("F", p.system.first { it.name == "Roll" }.cmd)
+        assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })

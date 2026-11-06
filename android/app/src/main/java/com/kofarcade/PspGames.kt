@@ -225,16 +225,17 @@ data class PspProfile(
     companion object {
         /**
          * God of War: Ghost of Sparta (and Chains of Olympus), from the move
-         * list the owner sent (2026-11-06; to check in the game): □ light, △
-         * heavy, ○ grab, ✕ jump; L held blocks (a tap parries); R with the
-         * stick rolls, R held sets the blades on fire (Thera's Bane); L+○
+         * list the owner sent (2026-11-06, corrected against the game's manual;
+         * to check in the game): □ light, △ heavy, ○ grab, ✕ jump; L held
+         * blocks (a tap parries); L+R with the stick rolls; R held sets the
+         * blades on fire (Thera's Bane), or aims the spear (Arms of Sparta); L+○
          * Hyperion Charge; L+✕ casts the magic picked with the D-pad (→ Eye of
          * Atlantis, ← Scourge of Erinys, ↑ Horn of Boreas); D-pad ↓ swaps
          * weapons.
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("Roll", "F"), Move("Weapon", "pad:2"), Move("Fire", HOLD_R)),
+            system = listOf(Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Fire / Aim", HOLD_R)),
             blockHoldsL = true,
             moves = listOf(
                 Move("Hyperion Charge", "DE"),
