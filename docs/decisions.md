@@ -819,6 +819,16 @@ decision was made in the conversation. Get the time now with
   the top bar is the only way, as before. (`PspProfile.inPlay` stays for a
   game whose byte holds up.)
 
+### 2026-11-07 04:00 Dhaka · Updates show without reopening the app
+- Owner: "Why do i close and open again. Cant i get trigger via socket to
+  show update state" … (asked whether to check on coming back and every 2
+  minutes instead) "Yes".
+- Decided: no socket (every open app holding a Supabase Realtime
+  connection would eat the free plan's 200, shared with online play).
+  Instead version.json (a few hundred bytes on GitHub Pages) is asked on
+  every return to the app, at most once a minute, and every 2 minutes
+  while it's open; the Update button then shows within about 2 minutes.
+
 ---
 
 ## Where things stand (update whenever it changes)
