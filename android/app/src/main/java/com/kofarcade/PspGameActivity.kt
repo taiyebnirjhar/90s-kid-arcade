@@ -192,6 +192,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         )
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
+        GameLogs.watchPlayback(this, log, meter)
 
         lifecycleScope.launch {
             retroView.getGLRetroEvents().collect { if (it is GLRetroView.GLRetroEvents.FrameRendered) hud.onFrame(++frame) }
@@ -402,6 +403,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         return GameLogs.phone(this, hz) + listOf(
             "PSP game: $title (${gameFile.name}, ${gameFile.length() / 1_000_000} MB)",
             "Graphics & speed: ${settingsLine(graphics)}",
+            "Playback: ${GameLogs.playback(hz)}",
             "Controls: ${GameLogs.look(look)}",
         )
     }

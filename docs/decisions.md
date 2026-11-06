@@ -661,6 +661,21 @@ decision was made in the conversation. Get the time now with
   only what applies (Controls, Moves, Sound, Game log; the picture is in
   Graphics & speed), and Cancel puts back what's saved.
 
+### 2026-11-06 20:28 Dhaka · PSP story scenes feel like fast-forward; a skip button
+- Owner: "we want our game feels native. So no lag is priority. But fast
+  forward felt on story Disturb exp when i want to see the story. We can
+  add skip story button. Again game should play smooth and native. Like
+  video is running. No lag."
+- Not found from here yet (the game isn't in the sandbox). Suspects: frame
+  skip Auto showing a story scene in jumps, the pacing making up late
+  frames two at a time, or a story scene's own frame rate. Decided: the
+  game log now shows it: seconds faster than the game's own speed
+  ("fast: 90 fps"), and for PSP too the playback line (frames a second,
+  paced with the screen or by the clock, the screen's Hz), late frames
+  made up and sound gaps each second they happen.
+- The skip button waits for the game file: the game's own skip input is
+  checked in the game first, not guessed.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -675,7 +690,7 @@ As of 2026-11-06 16:13 Dhaka:
 - **Waiting on the owner:**
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
   - Game logs from arcade play, alone and online (Settings → Game log → Copy), when something feels off.
-  - Ghost of Sparta as a Google Drive link, to check every input in the game here.
+  - Ghost of Sparta uploaded (R2), to check every input, the story scenes' speed and the skip input here.
   - Screen recordings for the app tutorial (`marketing/tutorial-script.md`).
   - A current `pgm.zip` (with `ddp3_bios.u37` and `bios.u42`) for Knights
     of Valour, KOV 2 Plus and The Gladiator; `avspu.key` and a current

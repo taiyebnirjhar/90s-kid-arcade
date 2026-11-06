@@ -165,6 +165,8 @@ class PspGamesTest {
         // A 54 fps board is full speed for an arcade game, slow for a PSP one.
         assertEquals(listOf("0:00-0:01 full speed"), GameLog.timeline(listOf(54, 55), SpeedMeter.ARCADE_SLOW_BELOW))
         assertEquals(listOf("0:00-0:01 slow: 54, 55 fps"), GameLog.timeline(listOf(54, 55)))
+        // Faster than the game's own speed (a story scene like fast-forward) shows too.
+        assertEquals(listOf("0:00 full speed", "0:01-0:02 fast: 90, 89 fps"), GameLog.timeline(listOf(60, 90, 89)))
         val log = GameLog { 0L }
         val text = log.text(listOf("Game: KOF"), SpeedMeter(SpeedMeter.ARCADE_SLOW_BELOW), listOf("Connection log:" to "12:00:01.000  Joined", "Empty:" to ""))
         assertTrue(text, text.contains("Connection log:\n12:00:01.000  Joined"))
