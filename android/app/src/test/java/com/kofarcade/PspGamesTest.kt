@@ -95,6 +95,8 @@ class PspGamesTest {
         assertEquals("Light", p.labels['A'])
         assertEquals("Heavy", p.labels['C'])
         assertTrue("Block holds R", p.blockHoldsR)
+        assertFalse("God of War never uses SELECT", p.select)
+        assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Assassin's Creed Bloodlines")
         assertEquals(PspProfile(), base)

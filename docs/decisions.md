@@ -568,12 +568,17 @@ decision was made in the conversation. Get the time now with
   top bar's COIN pill can be renamed (`coinLabel`), "SELECT" for PSP.
 - God of War's ring combos wait for the game's own move list from the
   owner, rather than a guessed list.
+- Then: "remove unwanted button which that game dont use … we can use psp
+  labels like o, square, x … But layout should like ours". Decided: the
+  face buttons show the PSP's symbols (□ ✕ △ ○, upright) with the game's
+  names under them; a profile hides what its game never uses (God of War:
+  SELECT).
 
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 15:10 Dhaka:
+As of 2026-11-06 15:14 Dhaka:
 
 - **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31

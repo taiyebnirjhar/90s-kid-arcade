@@ -34,7 +34,7 @@ class PspHudTest {
         hud.state = HudView.State(
             layout = Layout.FIGHTER, faceButtons = listOf('A', 'B', 'C', 'D'), labels = p.labels, moves = p.moves,
             system = p.system.map { HudView.SysButton(it.name, it.cmd, it.cmd) }, block = p.blockHoldsR,
-            facingButton = false, coinLabel = "SELECT",
+            facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES,
         )
         hud.opacity = PspSettings().controlsOpacity
         paparazzi.snapshot(hud, name)

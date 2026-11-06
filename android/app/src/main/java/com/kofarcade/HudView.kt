@@ -163,6 +163,10 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val menuGear: Boolean = false,
         /** The top bar's COIN pill's name ("SELECT" for a PSP game). */
         val coinLabel: String = "COIN",
+        /** Hides the COIN pill, for a game that never uses it. */
+        val showCoin: Boolean = true,
+        /** What each face button shows instead of its letter (a PSP game: ○ □ ✕ △). */
+        val faceNames: Map<Char, String> = emptyMap(),
     )
 
     var state = State()
@@ -389,7 +393,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         els += El("pause", Kind.PAUSE, placed("pause", safeL + 12 * d + 17 * d, top + 17 * d, 17 * d), true)
         text.textSize = 10 * d
         val pills = buildList {
-            add(Kind.COIN to st.coinLabel)
+            if (st.showCoin) add(Kind.COIN to st.coinLabel)
             if (st.layout == Layout.FIGHTER && st.facingButton) add(Kind.FACING to "FACING")
             add(Kind.START to "START")
         }
@@ -461,7 +465,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         for (c in st.faceButtons) {
             val (fx, fy) = facePos.getValue(c)
             val r = faceR * (faceScale[c] ?: 1f)
-            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = c.toString())
+            els += El("face:$c", Kind.FACE, placed("face:$c", ax + fx * s * mirror, ay + fy * s, r), true, key = keyFor[c], letter = c, label = st.faceNames[c] ?: c.toString())
         }
         val skillR = 26 * d * sc
         // Big buttons on a narrow screen: a high move that would sit on
@@ -887,7 +891,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             ring.strokeWidth = 1.5f * d
             canvas.drawCircle(el.cx, el.cy, el.r - 4.5f * d, ring)
         }
-        text.typeface = boldItalic
+        // PSP symbols stand upright (a slanted □ reads as a different shape).
+        text.typeface = if (el.letter in state.faceNames) bold else boldItalic
         val label = state.labels[el.letter]
         if (label != null && label.length <= 2) {
             // A short name ("LP") is the button's name.

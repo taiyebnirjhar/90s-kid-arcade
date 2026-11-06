@@ -98,7 +98,10 @@ owner's library (downloaded with its key, never committed).
   circle, E = L, F = R, COIN = SELECT; the stick goes to the analog stick.
   God of War: A Light, B Jump, C Heavy, D Grab, Block (holds R), pills Roll
   (L+R) and L. Its combos go on the ring once the owner sends the game's own
-  move list (no reliable list was reachable from here).
+  move list (no reliable list was reachable from here). The face buttons
+  show the PSP's symbols (□ ✕ △ ○) with the game's names under them, since
+  the games say "press ○"; buttons a game never uses are hidden (God of
+  War: SELECT).
 - 2026-11-06: P1 built for Ghost of Sparta first (the owner: "We will
   first check and stable ghost of Sparta"). Home → PSP → Add a game takes
   his `.7z` download (unpacked on the phone) or a plain image; the game

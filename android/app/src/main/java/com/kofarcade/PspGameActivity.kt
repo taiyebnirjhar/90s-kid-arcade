@@ -199,6 +199,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             facingButton = false,
             size = settings.controlsSize,
             coinLabel = "SELECT",
+            showCoin = profile.select,
+            faceNames = PspProfile.FACE_NAMES,
         )
         hud.opacity = settings.controlsOpacity
     }

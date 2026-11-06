@@ -207,11 +207,14 @@ class SpeedMeter {
  * of it what this game needs, like a fighter's own moves.
  *
  * The PSP's buttons on the arcade keys: A = square, B = cross, C = triangle,
- * D = circle (bottom row, then top), E = L, F = R, COIN = SELECT.
+ * D = circle (bottom row, then top), E = L, F = R, COIN = SELECT. The face
+ * buttons show the PSP's symbols, since the game says "press ○".
  */
 data class PspProfile(
-    /** What each of A-D does in this game ("Light"); the base shows the PSP's names. */
-    val labels: Map<Char, String> = mapOf('A' to "Square", 'B' to "Cross", 'C' to "Triangle", 'D' to "Circle"),
+    /** What each of A-D does in this game ("Light"), under its symbol. */
+    val labels: Map<Char, String> = emptyMap(),
+    /** SELECT on the top bar; off for a game that never uses it. */
+    val select: Boolean = true,
     /** Pills over the buttons: one tap plays its keys (L, R, L+R...). */
     val system: List<Move> = listOf(Move("L", "E"), Move("R", "F")),
     /** A Block button above the stick that holds R while pressed. */
@@ -223,9 +226,13 @@ data class PspProfile(
         /** God of War (Chains of Olympus, Ghost of Sparta): R blocks; L and R together roll, steered with the stick. */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
+            select = false,
             system = listOf(Move("Roll", "EF"), Move("L", "E")),
             blockHoldsR = true,
         )
+
+        /** The PSP's symbols on the arcade face buttons. */
+        val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○")
 
         /** The profile for a game, from its title. */
         fun forTitle(title: String): PspProfile = when {
