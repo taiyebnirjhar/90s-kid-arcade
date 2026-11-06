@@ -73,6 +73,51 @@ readout, in our own app on his phone, finds that out first.
   phone's speed). He gives the game file first, so it can be measured
   here; starts when he says so.
 
+## God of War as part of the app (the owner, 2026-11-06)
+
+"We need to make the gow game and controller first party native support
+instead of thirdparty. Like its part of our app … improve layout, combos,
+buttons, max ux, graphics and butter smooth game play. Goal it to improve
+and maximize gaming exp on touch screen phone and play native smooth."
+
+Everything below is checked in the game itself: it runs in the sandbox
+(`tools/pspemu.py`), and every move, menu and fix is tried there before it
+ships, as the arcade's moves are (`tools/movetest.py`). One PR per step;
+each starts when the owner says so.
+
+- **G1. Saves that just work.** Leaving the game keeps it where it was, and
+  opening it goes on from there (as the arcade games do), every time.
+  Quick save and load checked in the game (a load takes a few frames to
+  show: the core applies it at the next frame). The game's own saves stay
+  on the phone and are kept when the app updates.
+- **G2. Every move, checked.** God of War: Ghost of Sparta's full move list
+  (attacks, grabs, L+□ / L+△ / L+○ / L+✕, magic, items, Spartan Rage),
+  each tried in the game and given its place: face buttons and pills for
+  what's pressed often, the ring for combos; anything that doesn't work in
+  the game is fixed or left out. Helpers for touch: a held button that
+  mashes for the game's "press ○ quickly" and "alternate L and R"
+  prompts, and a swipe to roll.
+- **G3. A God of War layout.** Built for this game on the KOF 2002 base:
+  sizes and places tuned for the thumbs, magic as one row of pills, PSP
+  symbols with the game's names, nothing it doesn't use, D-pad only when
+  it's needed (menus), the layout editor kept.
+- **G4. Butter smooth.** One game frame per screen frame (story videos at
+  their own speed: done), the pacing and sound paths as the arcade's,
+  frame skip only as a safety net, loading stalls measured from the game
+  log and cut, sharper picture (2x, Smooth) where the phone keeps full
+  speed.
+- **G5. On Home like every game.** A God of War card in the games rows,
+  with its picture, Play and Continue. Until the library has it, "Add your
+  copy" picks the file once; later it downloads from the library (P3).
+- **G6. The library.** The ROM library moves to the new Cloudflare account
+  (planned, waiting on the owner); the PSP games go in its `psp/` folder and
+  download with resume like the arcade's.
+
+Google Drive as the library: it can work (the Worker reads the files from
+Drive with a service account and keeps the key check, so the files stay
+private, downloads resume), but R2 is faster, made for this, and has no
+download quotas; Drive is the fallback if R2 isn't possible.
+
 ## Testing
 
 The cloud sandbox has no GPU: P1 is checked with PPSSPP's software renderer

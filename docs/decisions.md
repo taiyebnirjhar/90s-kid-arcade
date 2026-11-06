@@ -703,6 +703,19 @@ decision was made in the conversation. Get the time now with
   held (START, SELECT, ✕, ○, △): the game doesn't allow it there. Later
   scenes to be tried as the game goes on.
 
+### 2026-11-06 23:57 Dhaka · God of War, first party: the plan
+- Owner: "Our save state didnt worked on gow. Not all L + O available. Not
+  all combination is here also not all combination worked. We need to make
+  the gow game and controller first party native support … improve layout,
+  combos, buttons, max ux, graphics and butter smooth game play … Also add
+  gow card on app like other app … can we use google drive as our library?"
+- Checked here: quick save and load work in the core (a load shows a few
+  frames later). A PSP game doesn't yet go on from where it was left, as
+  the arcade games do: that's G1.
+- Decided: the plan G1-G6 in docs/psp-plan.md (saves, every move checked in
+  the game, a God of War layout, smoothness, the Home card, the library).
+  Google Drive can be the library behind the Worker; R2 stays first choice.
+
 ---
 
 ## Where things stand (update whenever it changes)
