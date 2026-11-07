@@ -1058,6 +1058,15 @@ decision was made in the conversation. Get the time now with
   Attack, Tackle and Block in a real fight waits for the owner's save past
   the tutorial (the beam).
 
+### 2026-11-07 22:01 Dhaka · God of War: two Mash pills, L R and ○
+- Owner: "If need we can use seperate buttons. Press l+r continuously
+  should be one mash. If needed u can create another".
+- Checked in the game (the boat's first grab, "quickly alternate L and R"):
+  L R L R escapes; the old L ○ R ○ didn't (Kratos died: too long between an
+  L and the next R); ○ alone didn't. So: Mash LR (L R… 40 presses, about
+  4.7 s) and Mash ○ (36 presses, about 4.2 s, for "press ○ quickly": a chain,
+  a door), each a pill; the second sits above the first, past the ring.
+
 ---
 
 ## Where things stand (update whenever it changes)

@@ -113,7 +113,7 @@ class PspGamesTest {
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
         assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
-        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash"), p.system.map { it.name })
+        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash LR", "Mash ○"), p.system.map { it.name })
         // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
@@ -226,19 +226,21 @@ class PspGamesTest {
 
     @Test
     fun mashAlternatesLAndRAsTheGameAsks() {
-        // Checked in Ghost of Sparta: L ○ R ○, 4 frames held and 3 apart, escapes the boat's first grab.
-        val frames = PspSteps.frames(PspProfile.MASH_LR)
+        // Checked in Ghost of Sparta: L R L R, 4 frames held and 3 apart, escapes the boat's first grab
+        // (L ○ R ○ didn't); ○ ○ ○ is a pill of its own.
         val l = PspProfile.keyCode(com.kofarcade.core.Key.E)!!
         val r = PspProfile.keyCode(com.kofarcade.core.Key.F)!!
         val circle = PspProfile.keyCode(com.kofarcade.core.Key.D)!!
-        val pressed = frames.filter { it.isNotEmpty() }.map { it.single() }
-        val presses = pressed.zipWithNext().count { (a, b) -> a != b } + 1
-        assertTrue("$presses presses", presses >= 48)
-        // L and R alternate (with ○ between, still an escape in the game), and ○ comes every other press.
-        assertEquals(setOf(l, r, circle), pressed.toSet())
-        val runs = pressed.filterIndexed { i, k -> i == 0 || pressed[i - 1] != k }
-        val lr = runs.filter { it != circle }
-        assertTrue(lr.zipWithNext().all { (a, b) -> a != b })
+        val lr = PspSteps.frames(PspProfile.MASH_LR).filter { it.isNotEmpty() }.map { it.single() }
+        val lrPresses = lr.filterIndexed { i, k -> i == 0 || lr[i - 1] != k }
+        assertEquals(40, lrPresses.size)
+        assertTrue(lrPresses.zipWithNext().all { (a, b) -> a != b })
+        assertEquals(setOf(l, r), lrPresses.toSet())
+        val o = PspSteps.frames(PspProfile.MASH_O)
+        assertEquals(setOf(circle), o.filter { it.isNotEmpty() }.map { it.single() }.toSet())
+        assertEquals(36, o.zipWithNext().count { (a, b) -> a.isEmpty() && b.isNotEmpty() } + 1)
+        val gow = PspProfile.GOD_OF_WAR.system.map { it.cmd }
+        assertTrue(PspProfile.MASH_LR in gow && PspProfile.MASH_O in gow)
     }
 
     @Test

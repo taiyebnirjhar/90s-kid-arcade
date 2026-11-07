@@ -400,7 +400,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
     private fun sysHint(cmd: String): String = when {
-        cmd == PspProfile.MASH_LR -> "L ○ R ○"
+        cmd == PspProfile.MASH_LR -> "L R L R"
+        cmd == PspProfile.MASH_O -> "○ ○ ○"
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
         else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
@@ -700,7 +701,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             return 1
         }
         // Mash goes frame by frame too (its timing is the one checked in the game).
-        if (!PspSteps.isSteps(cmd) && cmd != PspProfile.MASH_LR) return pad.play(cmd)
+        if (!PspSteps.isSteps(cmd) && cmd !in PspProfile.MASHES) return pad.play(cmd)
         val frames = PspSteps.frames(cmd)
         steps = frames
         return frames.size
