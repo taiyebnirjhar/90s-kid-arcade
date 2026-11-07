@@ -889,6 +889,17 @@ decision was made in the conversation. Get the time now with
   page could change (the official Drive API is the fallback). R2 stays for
   later, if many players use it.
 
+### 2026-11-07 16:49 Dhaka · The PSP stick is a real analog stick
+- Owner (1.0.298, the chain pull): "Check why the round round stick not
+  working".
+- Found: the on-screen stick gave the PSP 8 directions at full push (the
+  arcade's stick, through the Pad), so turning it round only stepped
+  through 8 fixed points, and Kratos walked in 8 directions at one speed.
+- Decided: for PSP games the stick sends its real angle and push
+  (`HudView.Listener.onStick`, a 12% dead zone); with D-PAD on it still
+  works the D-pad. Arcade games keep the 8-way stick. Mash still turns the
+  stick for you as a fallback.
+
 ---
 
 ## Where things stand (update whenever it changes)

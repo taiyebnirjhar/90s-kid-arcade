@@ -72,6 +72,9 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
 
         /** Run: held from the Run button, or the stick pushed to its edge. */
         fun onRun(on: Boolean)
+
+        /** Where the stick is, -1..1 each way (y down), for an analog stick (a PSP game). */
+        fun onStick(x: Float, y: Float) {}
     }
 
     /** A one-tap button on the inner ring. [cmd] null means a toggle (rapid fire). */
@@ -1341,6 +1344,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             lastDir = 5
             resetStick()
             listener.onDir(5)
+            listener.onStick(0f, 0f)
             setStickRun(false)
             return
         }
@@ -1420,6 +1424,7 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val k = if (hypot(dx, dy) > r) r / hypot(dx, dy) else 1f
         knobDx = dx * k
         knobDy = dy * k
+        listener.onStick(knobDx / r, knobDy / r)
         val dir = angleToDir(dx, dy, 14 * d)
         if (dir != lastDir) {
             lastDir = dir

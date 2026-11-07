@@ -88,6 +88,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val RESUME_AT_FRAME = 60L
         /** RETRO_MEMORY_SYSTEM_RAM: the PSP's main memory, from 0x08000000. */
         private const val SYSTEM_RAM = 2
+        /** The stick's dead zone (of its reach): a resting thumb doesn't walk. */
+        private const val STICK_DEAD = 0.12f
     }
 
     /** What's open over the game. */
@@ -591,11 +593,27 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** One frame of a PSP step sequence, on the emulator's thread: press what's new, let go what's done. */
+    /** Where the thumb holds the on-screen stick, -1..1 (its real angle and push, not 8 ways). */
+    @Volatile private var stickX = 0f
+    @Volatile private var stickY = 0f
+
     /** The analog stick where the thumb holds it. */
-    private fun sendStick() = synchronized(dirs) {
-        val x = (if (Key.RIGHT in dirs) 1f else 0f) - (if (Key.LEFT in dirs) 1f else 0f)
-        val y = (if (Key.DOWN in dirs) 1f else 0f) - (if (Key.UP in dirs) 1f else 0f)
+    private fun sendStick() {
+        val (x, y) = if (stickIsDpad) 0f to 0f else stickX to stickY
         retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y)
+    }
+
+    /**
+     * The on-screen stick as a real analog stick: its angle and how far it's
+     * pushed (the owner's "rotate the stick" prompt failed with 8 directions
+     * at full push; and Kratos walks any way, at any speed). A small dead zone.
+     */
+    override fun onStick(x: Float, y: Float) {
+        val far = kotlin.math.hypot(x, y)
+        val k = if (far < STICK_DEAD) 0f else ((far - STICK_DEAD) / (1 - STICK_DEAD)).coerceAtMost(1f) / far
+        stickX = x * k
+        stickY = y * k
+        if (!stickIsDpad && spinLeft == 0) sendStick()
     }
 
     /** Frames the stick still turns round (Mash); then it's let go to what the thumb holds. */
