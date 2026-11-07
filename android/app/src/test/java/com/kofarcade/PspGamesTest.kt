@@ -102,7 +102,7 @@ class PspGamesTest {
         // From the game's move list: Cyclone of Chaos is L + □.
         assertEquals("E>A", p.moves.first { it.name == "Cyclone of Chaos" }.cmd)
         // Spaced presses: checked in the game, quick ones cut the combo short.
-        val spirit = PspSteps.frames(p.moves.first { it.name == "Spirit of Hercules" }.cmd)
+        val spirit = PspSteps.frames(p.moves.first { it.name == "Plume of Prometheus" }.cmd)
         assertEquals(3 * (PspSteps.TAP + PspSteps.GAP) + 2 * 10, spirit.size)
         assertEquals("pad:6,E>B", p.moves.first { it.name == "Atlas Spark" }.cmd)
         // Checked in the game: L first, then ○ with it (both at once is just ○).

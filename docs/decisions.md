@@ -1023,23 +1023,40 @@ decision was made in the conversation. Get the time now with
   The backlog below stays in "Where things stand" for whenever work opens
   again.
 
+### 2026-11-07 21:06 Dhaka · Backlog 1-3 reopened and finished: tournaments T2-T6, God of War's moves
+- Owner: "Close 1 to 3 for now. Left are on hold. Make a proper plan and
+  implement at once" (1 tournaments, 2 God of War's moves, 3 Assassin's
+  Creed's fight buttons; the rest stays on hold).
+- Tournaments, all built (docs/tournament-plan.md, "Where it stands"):
+  T2 for all 11 fighters (each checked in the game); T3 the players say,
+  the host settles; T4 the host's phone seats each pair from the bracket,
+  60 s no-show; T5 the World Cup style bracket, VS intro, our own trophy
+  and confetti; T6 tournament wins on the profile (a small table, a count
+  that only goes up). Tested in core (the bracket, the tournament, a
+  three-phone room through to a champion) and in pictures.
+- Decided: the bracket lives on every phone of the room, shared by the host
+  (a new host carries on), not on the server: the server only keeps wins.
+  A game-read win counts only with both seats played by people (Marvel vs
+  Capcom counts the computer's wins in the same byte).
+- God of War: the game's own Moves screen read in the game: □ □ △ is Plume
+  of Prometheus (renamed); hold □ Olympic Slash, hold △ Olympic Ascension,
+  ○ on a foe in the air Orion's Harpoon, ✕ in the air Icarus Lift, L + ○ in
+  the air Hyperion Charge, tap L Athena's Revenge all checked on the boat
+  (face buttons as they are). Its Magic group is locked this early, so the
+  magic pills wait to be seen on the owner's phone.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-07 20:51 Dhaka:
+As of 2026-11-07 21:06 Dhaka:
 
-- **Development closed, features locked** (the owner, this date). Last PR:
-  #93. Latest release: v1.0.310.
+- **Development closed, features locked**, except backlog 1-3, reopened
+  and finished 2026-11-07 21:06 (tournaments T2-T6, God of War's moves; Assassin's
+  Creed's buttons as far as the tutorial allows). Latest release: v1.0.310.
 - **Backlog** (not started, or started and paused):
-  - Tournaments: T2 for the other fighters (Garou, Last Blade 1 and 2,
-    Samurai Shodown II, SF III 3rd Strike, Marvel vs Capcom); T3 the players
-    say who won (host decides disputes); T4 seats from the bracket (60 s
-    no-show); T5 the tournament screen (World Cup style bracket, versus
-    intro, our own trophy); T6 kept on the server, wins on the profile.
-  - God of War: the rest of its moves (Arms of Sparta, magic, later levels)
-    from the game's Moves screen; fire, magic and Cyclone of Chaos checked
-    on the phone.
+  - God of War on the phone: fire (R), the magics and Cyclone of Chaos
+    (past the boat; the magic group is locked in our saves).
   - Assassin's Creed: Attack, Target, Tackle checked in a fight (needs a
     save past the tutorial).
   - PSP: Chains of Olympus and NFS Most Wanted profiles; P5 weaker phones.

@@ -54,6 +54,37 @@ class UiSnapshots {
 
     private val homeUi get() = HomeUi(true, GAMES.associate { it.id to sets[it.id] }, gameById("sengoku3")!!, "Last played", "Continue", psp = PspTitle.ALL.map { it to null })
 
+    // Tournaments (T5): an 8-player bracket part played, a 5-player one, the VS intro, the champion.
+    private val eight = (1..8).associate { "$it" to listOf("Rafi", "Tanu", "Mim", "Sakib", "Nila", "Arif", "Joy", "Rumi")[it - 1] }
+    private val cup: com.kofarcade.core.tournament.Tournament get() {
+        var t = com.kofarcade.core.tournament.Tournament(com.kofarcade.core.tournament.Bracket((1..8).map { "$it" }), eight, "kof2002mp")
+        repeat(5) { t = t.callNext(0).gameWon(it % 2, com.kofarcade.core.tournament.Tournament.How.GAME).first }
+        return t.callNext(0)
+    }
+
+    @Test
+    fun tournamentRoomSection() = shot("tournament_section") {
+        Box(Modifier.padding(16.dp)) { TournamentSection(cup, isHost = true, inRoom = 8, localId = 1, onStart = {}, onReport = {}, onDecide = {}, onEnd = {}) }
+    }
+
+    @Test
+    fun tournamentFiveAndStart() = shot("tournament_five") {
+        Column(Modifier.padding(16.dp)) {
+            TournamentSection(null, isHost = true, inRoom = 5, localId = 1, onStart = {}, onReport = {}, onDecide = {}, onEnd = {})
+            TournamentSection(
+                com.kofarcade.core.tournament.Tournament(com.kofarcade.core.tournament.Bracket((1..5).map { "$it" }), eight, "kof97").callNext(0),
+                isHost = false, inRoom = 5, localId = 4, onStart = {}, onReport = {}, onDecide = {}, onEnd = {},
+            )
+            TournamentBar(cup)
+        }
+    }
+
+    @Test
+    fun tournamentVsIntro() = shot("tournament_vs") { VsIntro("Semi-final 1 of 2", "Rafi", "Sakib", you = true, onDone = {}) }
+
+    @Test
+    fun tournamentChampion() = shot("tournament_champion") { ChampionScreen("Rafi", you = true, game = "KOF 2002 Magic Plus", onDone = {}) }
+
     @Test
     fun home() = shot("home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
 

@@ -131,6 +131,13 @@ interface RoomListener {
 
     /** The host changed the room's voice rules (who's muted, whether watchers only listen). */
     fun onVoiceRules(rules: VoiceRules) {}
+
+    /**
+     * The room's tournament changed (null: none, or it was called off):
+     * the bracket, who's on, a result, the champion. [outcome] says what just
+     * happened, on the owner only (null otherwise, and for a plain update).
+     */
+    fun onTournament(tournament: com.kofarcade.core.tournament.Tournament?, outcome: com.kofarcade.core.tournament.Tournament.Outcome?) {}
 }
 
 /** A link to another phone of the room ([id]: its member id, -1 before it has one). */
@@ -667,6 +674,7 @@ class Room private constructor(
             val now = System.nanoTime()
             if (isOwner) {
                 releaseEnded()
+                if (tournament?.playing != null) worker.execute { watchNoShows() }
                 // A seat that opened (a game over, its countdown run out) goes to the first in line.
                 if (members.values.any { it.line > 0 }) worker.execute { serveLine() }
                 val all = ownerLines()
@@ -796,6 +804,181 @@ class Room private constructor(
             val payload = encode(rules)
             for (line in ownerLines()) if (line.id in members) sendTo(line, Msg.VOICE, payload)
             listener?.onVoiceRules(rules)
+        }
+    }
+
+    // ----- Tournaments (docs/tournament-plan.md, T3-T5) -----
+
+    /** The room's tournament (every phone keeps the owner's latest), or null. */
+    @Volatile var tournament: com.kofarcade.core.tournament.Tournament? = null
+        private set
+
+    /** How long a result shows before the next game or pair (tests: shorter). */
+    internal var resultPauseMs = 6_000L
+
+    // Owner: since when each of the pair on now hasn't been there (member id to System.currentTimeMillis).
+    private val absentSince = HashMap<Int, Long>()
+
+    private fun heardTournament(payload: ByteArray) {
+        val t = if (payload.isEmpty()) null else runCatching { decode<com.kofarcade.core.tournament.Tournament>(payload) }.getOrNull() ?: return
+        tournament = t
+        listener?.onTournament(t, null)
+    }
+
+    // Owner: the tournament to everyone (on the worker).
+    private fun shareTournament(outcome: com.kofarcade.core.tournament.Tournament.Outcome? = null) {
+        val payload = tournament?.let { encode(it) } ?: ByteArray(0)
+        for (line in ownerLines()) if (line.id in members) sendTo(line, Msg.TOURNAMENT, payload)
+        listener?.onTournament(tournament, outcome)
+    }
+
+    /**
+     * Owner: a tournament for everyone in the room now (3 to 8), [bestOf] 1
+     * or 3, drawn at random; the first pair is called at once. Null if it
+     * started, else why not.
+     */
+    fun startTournament(game: String, bestOf: Int): String? {
+        if (!isOwner) return "Only the host starts a tournament"
+        val players = members.values.filter { !it.away }.associate { it.id.toString() to it.name }
+        if (players.size < com.kofarcade.core.tournament.Tournament.MIN_PLAYERS) return "A tournament needs 3 or more in the room"
+        if (players.size > com.kofarcade.core.tournament.Bracket.MAX) return "A tournament is for up to 8"
+        if (maxPlayers < 2) return "This game isn't for two"
+        worker.execute {
+            tournament = com.kofarcade.core.tournament.Tournament.start(players, game, bestOf)
+            absentSince.clear()
+            news("Tournament! ${players.size} players, ${if (bestOf == 3) "best of 3" else "one match each"}")
+            shareTournament()
+            callNext()
+        }
+        return null
+    }
+
+    /** Owner: calls the tournament off. */
+    fun endTournament() {
+        if (!isOwner) return
+        worker.execute {
+            if (tournament == null) return@execute
+            tournament = null
+            news("Tournament called off")
+            shareTournament()
+        }
+    }
+
+    /**
+     * Owner: the game says seat [seat]'s player won the game on now
+     * ([com.kofarcade.core.tournament.WinWatch]). Seats 0 and 1 are the pair.
+     */
+    fun tournamentGameWon(seat: Int) {
+        if (!isOwner || seat !in 0..1) return
+        worker.execute {
+            val t = tournament ?: return@execute
+            if (t.current == null) return@execute
+            val (next, outcome) = t.gameWon(seat, com.kofarcade.core.tournament.Tournament.How.GAME)
+            applyTournament(next, outcome)
+        }
+    }
+
+    /** A player on now says member [winner] won the game (T3); the owner gathers both. */
+    fun reportWinner(winner: Int): Boolean {
+        val match = tournament?.playing ?: return false
+        if (isOwner) {
+            worker.execute { reportFrom(localId, Report(match, winner)) }
+            return true
+        }
+        val to = ownerLine ?: return false
+        return runCatching { to.send(Msg.REPORT, encode(Report(match, winner))) }.isSuccess
+    }
+
+    /** Owner: member [winner] won the game on now, the host says (a dispute, or no word from the players). */
+    fun hostDecides(winner: Int) {
+        if (!isOwner) return
+        worker.execute {
+            val t = tournament ?: return@execute
+            if (t.current == null) return@execute
+            val (next, outcome) = runCatching { t.hostDecides(winner.toString()) }.getOrNull() ?: return@execute
+            applyTournament(next, outcome)
+        }
+    }
+
+    // Owner: a player's word on who won (on the worker).
+    private fun reportFrom(from: Int, said: Report) {
+        if (closed || !isOwner) return
+        val t = tournament ?: return
+        if (t.playing != said.match) return
+        val (next, outcome) = runCatching { t.report(from.toString(), said.winner.toString()) }.getOrNull() ?: return
+        if (outcome == com.kofarcade.core.tournament.Tournament.Outcome.Disputed) {
+            news("${t.name(t.pair?.first)} and ${t.name(t.pair?.second)} disagree on who won: the host decides")
+        }
+        applyTournament(next, outcome)
+    }
+
+    // Owner: a new tournament after a result (on the worker): tell everyone, then the next game or pair.
+    private fun applyTournament(next: com.kofarcade.core.tournament.Tournament, outcome: com.kofarcade.core.tournament.Tournament.Outcome) {
+        tournament = next
+        shareTournament(outcome)
+        when (outcome) {
+            is com.kofarcade.core.tournament.Tournament.Outcome.NextGame -> {
+                news("${next.score.games[0]}-${next.score.games[1]}: next game")
+                worker.schedule({ if (tournament === next) seat("Next game", fromStart = startState != null) }, resultPauseMs, TimeUnit.MILLISECONDS)
+            }
+            is com.kofarcade.core.tournament.Tournament.Outcome.MatchOver -> {
+                val r = outcome.result
+                news(if (outcome.champion != null) "${next.name(outcome.champion)} wins the tournament!" else "${next.name(r.winner)} goes through")
+                if (outcome.champion == null) worker.schedule({ if (tournament === next) callNext() }, resultPauseMs, TimeUnit.MILLISECONDS)
+            }
+            else -> {}
+        }
+    }
+
+    // Owner: the next pair to the seats, the game from its start (on the worker).
+    private fun callNext() {
+        if (closed || !isOwner) return
+        val t = tournament ?: return
+        val called = t.callNext(System.currentTimeMillis())
+        if (called === t) return
+        tournament = called
+        absentSince.clear()
+        val (a, b) = called.pair ?: return
+        val ids = listOf(a, b).map { it.toInt() }
+        val moves = HashMap<Int, Int>()
+        for (m in members.values) if (m.seat >= 0 && m.id !in ids) moves[m.id] = -1
+        ids.forEachIndexed { seat, id -> if (members[id]?.away == false) moves[id] = seat }
+        shareTournament()
+        seat("${called.bracket.label(called.current!!)}: ${called.name(a)} vs ${called.name(b)}", moves = moves, fromStart = startState != null)
+        for (id in ids) if (id != localId) tell(id, "You're up! ${called.name(a)} vs ${called.name(b)}")
+        if (localId in ids) news("You're up! ${called.name(a)} vs ${called.name(b)}")
+    }
+
+    // Owner, every second during a match: a player of the pair not there for NO_SHOW_MS loses it.
+    private fun watchNoShows() {
+        val t = tournament ?: return
+        val (a, b) = t.pair ?: return
+        val now = System.currentTimeMillis()
+        for ((seat, id) in listOf(a, b).map { it.toInt() }.withIndex()) {
+            val m = members[id]
+            val there = m != null && !m.away && m.seat == seat
+            if (there) {
+                absentSince.remove(id)
+                continue
+            }
+            val since = absentSince.getOrPut(id) { maxOf(now, t.upAt) }
+            if (now - since >= com.kofarcade.core.tournament.Tournament.NO_SHOW_MS) {
+                news("${t.name(id.toString())} didn't come: ${t.name(if (seat == 0) b else a)} goes through")
+                val (next, outcome) = t.noShow(id.toString())
+                applyTournament(next, outcome)
+                return
+            }
+        }
+    }
+
+    // Owner: member [id] left the room for good (on the worker).
+    private fun leftTournament(id: Int) {
+        val t = tournament ?: return
+        if (id.toString() !in t.bracket.players || t.over) return
+        val (next, outcome) = t.left(id.toString())
+        if (outcome != null) applyTournament(next, outcome) else {
+            tournament = next
+            shareTournament()
         }
     }
 
@@ -995,6 +1178,10 @@ class Room private constructor(
                         val said = runCatching { decode<ChatLine>(payload) }.getOrNull()
                         if (said != null) worker.execute { chatFrom(from, said) }
                     }
+                    Msg.REPORT -> {
+                        val said = runCatching { decode<Report>(payload) }.getOrNull()
+                        if (said != null) worker.execute { reportFrom(from, said) }
+                    }
                     Msg.LOAD -> {
                         val state = runCatching { unpack(payload) }.getOrNull()
                         worker.execute { if (state != null) loadSaved(from, state) else tell(from, "That saved game didn't arrive whole. Try again.") }
@@ -1068,12 +1255,14 @@ class Room private constructor(
 
     // Tells everyone who's in, for the same game.
     private fun roster() {
-        // Voice rules too, for newcomers (only where the host set any).
+        // Voice rules too, for newcomers (only where the host set any), and the tournament.
         val rules = voiceRules.takeIf { it != VoiceRules() }?.let { encode(it) }
+        val cup = tournament?.let { encode(it) }
         for (line in ownerLines()) {
             if (line.id !in members) continue
             sendTo(line, Msg.ROSTER, encode(Seating(epoch, localId, membersFor(line))))
             if (rules != null) sendTo(line, Msg.VOICE, rules)
+            if (cup != null) sendTo(line, Msg.TOURNAMENT, cup)
         }
         listener?.onRoster()
     }
@@ -1299,6 +1488,8 @@ class Room private constructor(
         line?.close()
         val m = members[id] ?: return
         if (m.away) return
+        // Left for good (not dropped, which the no-show watch covers): out of the tournament.
+        if (!dropped) leftTournament(id)
         if (m.seat >= 0 && dropped && m.device.isNotEmpty() && holdMs > 0) {
             hold(id, "$news. Seat held ${holdMs / 1000} s")
         } else if (m.seat >= 0) {
@@ -1661,6 +1852,7 @@ class Room private constructor(
 
         // What the clearing dropped that still holds: the room's voice rules.
         private fun voiceAfter() {
+            tournament?.let { t -> encode(t) }?.let { cup -> queue.add { line.send(Msg.TOURNAMENT, cup) } }
             val rules = voiceRules.takeIf { it != VoiceRules() }?.let { encode(it) } ?: return
             queue.add { line.send(Msg.VOICE, rules) }
         }
@@ -1780,6 +1972,7 @@ class Room private constructor(
                         voiceRules = rules
                         listener?.onVoiceRules(rules)
                     }
+                    Msg.TOURNAMENT -> heardTournament(payload)
                     Msg.BYE -> {
                         ownerGone(line)
                         return
@@ -1806,6 +1999,7 @@ class Room private constructor(
             if (t == Msg.STATE) return payload
             // The voice rules a newcomer is told on its way in are kept.
             if (t == Msg.VOICE) runCatching { decode<VoiceRules>(payload) }.getOrNull()?.let { voiceRules = it }
+            if (t == Msg.TOURNAMENT) heardTournament(payload)
             if (t !in SKIPPABLE && t != Msg.INPUTS) throw IOException("Expected the game state")
         }
     }
@@ -1976,6 +2170,8 @@ class Room private constructor(
         }
         owner = localId
         tookOver = true
+        // A tournament between matches carries on with this phone calling the next pair.
+        tournament?.let { t -> if (t.playing == null && !t.over) worker.schedule({ callNext() }, resultPauseMs, TimeUnit.MILLISECONDS) }
         // All at once: one unreachable phone mustn't make the others give up waiting.
         val calls = others.mapNotNull { id ->
             val m = members[id] ?: return@mapNotNull null
@@ -2191,7 +2387,7 @@ class Room private constructor(
         private const val FRESH_NS = 50_000_000L
         private const val LINE_QUIET_NS = 10_000_000_000L
         private const val ARRIVING_QUIET_NS = 60_000_000_000L
-        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME, Msg.CHAT, Msg.VOICE)
+        private val SKIPPABLE = setOf(Msg.PING, Msg.NEWS, Msg.ROSTER, Msg.PAUSE, Msg.RESUME, Msg.CHAT, Msg.VOICE, Msg.TOURNAMENT)
 
         /** Lines of chat a phone keeps. */
         const val CHAT_KEEP = 50

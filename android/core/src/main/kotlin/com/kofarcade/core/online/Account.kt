@@ -70,8 +70,20 @@ class Account(private val supa: Supabase, private val store: KeyValue, private v
         writeCounts(PLAYS, counts)
     }
 
+    /** Tournaments won per game id, on this phone (tournaments T6). */
+    fun tournamentWins(): Map<String, Int> = synchronized(state) { readCounts(CUPS) }
+
+    /** A tournament won: counted now, sent with the next sync. */
+    fun recordTournamentWin(game: String) = synchronized(state) {
+        val counts = readCounts(CUPS).toMutableMap()
+        counts[game] = (counts[game] ?: 0) + 1
+        writeCounts(CUPS, counts)
+    }
+
     /** Whether something on the phone hasn't gone up yet. */
-    fun dirty(): Boolean = synchronized(state) { readProfile()?.pending == true || readCounts(PLAYS) != readCounts(SENT) }
+    fun dirty(): Boolean = synchronized(state) {
+        readProfile()?.pending == true || readCounts(PLAYS) != readCounts(SENT) || readCounts(CUPS) != readCounts(CUPS_SENT)
+    }
 
     /** A new name or icon: kept on the phone now, saved by the next [sync]. */
     fun edit(name: String, icon: Int) = synchronized(state) {
@@ -120,6 +132,11 @@ class Account(private val supa: Supabase, private val store: KeyValue, private v
                 store.put(SENT_FOR, user)
             }
         }
+        val (cups, cupsBefore) = synchronized(state) { readCounts(CUPS) to readCounts(CUPS_SENT) }
+        if (cups.isNotEmpty() && (cups != cupsBefore || p.savedFor != sentFor)) {
+            supa.rpc("record_tournament_wins", buildJsonObject { put("counts", JsonObject(cups.mapValues { (_, n) -> JsonPrimitive(n) })) })
+            synchronized(state) { writeCounts(CUPS_SENT, cups) }
+        }
         return p
     }
 
@@ -147,5 +164,7 @@ class Account(private val supa: Supabase, private val store: KeyValue, private v
         const val PLAYS = "online.plays"
         const val SENT = "online.playsSent"
         const val SENT_FOR = "online.playsSentFor"
+        const val CUPS = "online.tournamentWins"
+        const val CUPS_SENT = "online.tournamentWinsSent"
     }
 }

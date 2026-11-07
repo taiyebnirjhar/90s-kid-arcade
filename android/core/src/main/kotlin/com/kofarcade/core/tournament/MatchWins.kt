@@ -1,5 +1,7 @@
 package com.kofarcade.core.tournament
 
+import kotlinx.serialization.Serializable
+
 /**
  * Where a fighting game counts each side's match wins (docs/tournament-plan.md,
  * T2): one byte per side, by its offset in the RAM as the app reads it (Neo
@@ -44,6 +46,7 @@ class WinWatch(private val wins: MatchWins) {
  * A tournament match as the host sets it: the game's own match once
  * ([bestOf] 1), or best of 3 games. [games] holds each side's games won.
  */
+@Serializable
 data class MatchScore(val bestOf: Int = 1, val games: List<Int> = listOf(0, 0)) {
     init {
         require(bestOf == 1 || bestOf == 3) { "Best of 1 or 3" }

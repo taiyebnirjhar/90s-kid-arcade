@@ -78,17 +78,39 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
 
 ## Where it stands
 
-- **T1 done** (2026-11-07): `core/tournament/Bracket.kt` and its tests.
-- **T2, KOF done** (2026-11-07): each side's match-win count, checked in
-  KOF '97, '97 Plus, 2002, 2002 Magic Plus and 2005 (docs/kof-ram.md);
-  `Game.matchWins`, `WinWatch` (a byte going up is a win, a draw moves
-  none) and `MatchScore` (best of 1 or 3). In a room every phone logs the
-  winner and says "<name> won the match". KOF '98 isn't in the app. The
-  other fighters (Garou, Last Blade 1 and 2, Samurai Shodown II, SF III 3rd
-  Strike, Marvel vs Capcom) are next, one by one; until then, T3.
-- **Defaults used** (the owner said "go" without picking; he can change
-  them): single elimination, best of 1, online and nearby both, KOF 2002
-  Magic Plus first.
+All six phases are built (2026-11-07 21:06; the owner: "Close 1 to 3 for now ... Make
+a proper plan and implement at once"), checked as below; what's left is
+the owner's phones.
+
+- **T1** `core/tournament/Bracket.kt`, tested.
+- **T2** each fighter's match-win count per side, checked in the game with
+  two players each winning (docs/kof-ram.md; tools/emu.py): the five KOFs,
+  Garou, Last Blade 1 and 2, Samurai Shodown II, SF III 3rd Strike, Marvel
+  vs Capcom (`Game.matchWins`). A draw moves neither. Marvel vs Capcom
+  also counts the computer's wins on an empty side, so a win only counts
+  with both seats played by people. `WinWatch`, `MatchScore`.
+- **T3** the two playing tap "I won" / "<name> won" in the room sheet;
+  both the same is the result, different and the host decides (the host can
+  settle any game). Every result shows to the room (news, the bracket).
+- **T4** the host's phone calls each pair: the two to seats 0 and 1, the
+  rest watch, the game from the room's start state; "You're up!" for the
+  two; a best of 3 replays with the same seats. A player of the pair not
+  there (left, dropped, away) for 60 s loses the match; one who leaves the
+  room loses their next one. A new host carries on (every phone keeps the
+  tournament the host shares: `Msg.TOURNAMENT`; players' word: `Msg.REPORT`).
+- **T5** `Tournaments.kt`: the room sheet's Tournament part (start: one
+  match or best of 3; the bracket World Cup style, two halves meeting at the
+  final with the trophy under it, each winner's line drawn in gold as it
+  happens, the match on now glowing; report and settle buttons; call off),
+  the bar over the game, the VS intro before each match, a result flash,
+  and the champion's screen: our own trophy (drawn in code, not FIFA's)
+  rising, light rays, confetti. The host shares the champion in the chat.
+- **T6** tournaments won per game on the champion's phone, synced like the
+  games played (`record_tournament_wins`, migration
+  20261107010000_tournament_wins.sql: one small row per player and game, a
+  count only goes up) and shown on the profile. The bracket in play lives
+  on every phone of the room, not the server (a new host carries on), so
+  nothing of it needs the free database.
 
 ## To settle with the owner
 

@@ -2,9 +2,11 @@
 
 ## Development is closed: features locked (2026-11-07)
 
-The owner closed development and locked the features. Start nothing new
-unless he reopens it; the backlog is in docs/decisions.md, "Where things
-stand".
+The owner closed development and locked the features, then reopened only
+the first three backlog items (tournaments T2-T6, God of War's moves,
+Assassin's Creed's fight buttons) to finish them. The rest of the backlog
+(docs/decisions.md, "Where things stand") is on hold: start nothing there
+unless he says so.
 
 ## Read first: docs/AGENTS.md and docs/decisions.md
 
@@ -48,11 +50,12 @@ offline, and a game ships only if it never lags or hangs on his phone
 (the rule in the plan). Phases P1-P4, one PR each; start a phase only when
 the owner says so. The arcade games stay as they are.
 
-## Tournaments: planned
+## Tournaments: built (T1-T6)
 
-Follow [docs/tournament-plan.md](docs/tournament-plan.md): up to 8 players
-in a Tournament room, single elimination, phases T1-T6, one PR each; start
-a phase only when the owner says so.
+[docs/tournament-plan.md](docs/tournament-plan.md): up to 8 players in a
+room, single elimination, who won read from the game (all 11 fighters) or
+said by the players, seats from the bracket, the World Cup style screen and
+our own trophy, wins on the profile.
 
 ## Seats in rooms follow the game's own countdown
 

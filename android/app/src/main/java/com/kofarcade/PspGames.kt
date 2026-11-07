@@ -262,7 +262,7 @@ data class PspProfile(
          * Checked in the game (tools/pspemu.py, the boat's first fight): □, △
          * and ○ attack; L, then ○ while L is held, is Hyperion Charge (both at
          * once is just ○); with L held, □ △ ✕ do nothing before Kratos has
-         * magic; □ □ △ (Spirit of Hercules) and L + □ (Cyclone of Chaos, from level 2)
+         * magic; □ □ △ (Plume of Prometheus) and L + □ (Cyclone of Chaos, from level 2)
          * each come out as their own combo; L+R with the stick rolls; the Mash
          * pill escapes the first grab.
          */
@@ -287,11 +287,18 @@ data class PspProfile(
             // arcade's quick timing, 4 and the △ slam spaced); □ ×6 likewise
             // (5 hits quick, 8 spaced). Cyclone of Chaos comes at blade level 2,
             // after the boat. "Hyperion Rush" (□ during the charge) did nothing:
-            // gone.
+            // gone. The game's Moves screen (read in the game, 2026-11-07) names
+            // □ □ △ Plume of Prometheus and lists, all checked on the boat: Hold
+            // □ Olympic Slash, Hold △ Olympic Ascension, ○ on a foe in the air
+            // Orion's Harpoon, ✕ in the air Icarus Lift, L + ○ in the air
+            // (after a double jump) Hyperion Charge, tap L Athena's Revenge.
+            // Those are the face buttons as they are; the six pills are the ones
+            // that need several buttons. Its Magic group is locked this early,
+            // so the magic pills (the owner's list) wait to be seen on his phone.
             moves = listOf(
                 Move("Hyperion Charge", "E>D"),
                 Move("Cyclone of Chaos", "E>A"),
-                Move("Spirit of Hercules", "A,wait:10,A,wait:10,C"),
+                Move("Plume of Prometheus", "A,wait:10,A,wait:10,C"),
                 Move("Atlas Spark", "pad:6,E>B", "dm"),
                 Move("Erinys Void", "pad:4,E>B", "dm"),
                 Move("Boreas Freeze", "pad:8,E>B", "dm"),

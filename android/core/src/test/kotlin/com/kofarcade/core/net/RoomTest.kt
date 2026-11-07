@@ -296,6 +296,35 @@ open class RoomTest {
     }
 
     @Test
+    fun aTournamentSeatsEachPairAndMovesOnFromTheResults() {
+        val h = host()
+        h.startState = byteArrayOf(1)
+        h.resultPauseMs = 200
+        FakeGame(h).apply { play() }
+        val guests = listOf("A", "B").map { n -> join(h, n).also { FakeGame(it).apply { play() } } }
+        waitFor("both in") { h.watcherCount == 2 }
+        // Only the host starts one, and it needs three.
+        assertTrue(guests[0].startTournament("kof97", 1) != null)
+        assertEquals(null, h.startTournament("kof97", 1))
+        val phones = listOf(h) + guests
+        waitFor("everyone has it, a pair called") { phones.all { it.tournament?.playing != null } }
+        val t = h.tournament!!
+        val (a, b) = t.pair!!.let { (x, y) -> x.toInt() to y.toInt() }
+        // The pair sits in seats 0 and 1, the third watches.
+        waitFor("the pair seated") { phones.first { it.localId == a }.localPlayer == 0 && phones.first { it.localId == b }.localPlayer == 1 }
+        // Both players say a won (T3): a goes through, the next match is called.
+        phones.first { it.localId == a }.reportWinner(a)
+        phones.first { it.localId == b }.reportWinner(a)
+        waitFor("a result, and the final called") { phones.all { p -> p.tournament?.results?.size == 1 && p.tournament?.playing != null } }
+        assertEquals(a.toString(), h.tournament!!.results.single().winner)
+        // The final: the host settles it from the game (seat 1 won).
+        val final = h.tournament!!.pair!!
+        waitFor("the final seated") { phones.all { p -> p.tournament?.pair == final } && phones.first { it.localId == final.second.toInt() }.localPlayer == 1 }
+        h.tournamentGameWon(1)
+        waitFor("a champion everywhere") { phones.all { it.tournament?.champion == final.second } }
+    }
+
+    @Test
     fun watchersComingAndGoingNeverStopThePlayers() {
         val h = host()
         val a = FakeGame(h).apply { play() }

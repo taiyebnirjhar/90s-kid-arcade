@@ -63,8 +63,8 @@ class MatchWinsTest {
     }
 
     @Test
-    fun everyKofKnowsWhereItsWinsAre() {
-        for (id in listOf("kof97", "kof97plus", "kof2002", "kof2002mp", "kof2005")) {
+    fun everyFighterKnowsWhereItsWinsAre() {
+        for (id in listOf("kof97", "kof97plus", "kof2002", "kof2002mp", "kof2005", "garou", "lastblad", "lastbld2", "samsho2", "sfiii3", "mvsc")) {
             assertNotNull(GAMES.first { it.id == id }.matchWins, id)
         }
     }
