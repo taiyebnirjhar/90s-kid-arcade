@@ -209,8 +209,10 @@ with a sleeping foreground command.
   through the FileProvider (`${applicationId}.files`). Asked on opening or
   coming back to the app (at most once a minute) and every 2 minutes while
   it's open. If `pages.yml` fails
-  after a build (GitHub Pages can time out), the app never hears of the
-  build: re-run it.
+  after a build (GitHub Pages can time out; its deploy waits 30 minutes, the
+  site carries the ~100 MB APK), the app never hears of the build: a re-run
+  of the same commit fails (the artifact's there twice, or the deployment
+  was cancelled), so push a change that runs it again.
 - **Deep links:** `https://arcade.taiyebnirjhor.com/join.html?code=XXXXXX`
   (verified App Link via `assetlinks.json`, signed by the fixed debug key in
   `android/app/debug.keystore`), `kidarcade://join?code=…`, and the in-app

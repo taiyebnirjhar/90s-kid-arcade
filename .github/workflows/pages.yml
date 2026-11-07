@@ -97,3 +97,8 @@ jobs:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # The site carries the APK (~100 MB): GitHub took over the default
+          # 10 minutes to sync it twice (1.0.282, 1.0.298), and the app never
+          # heard of those builds. 30 minutes.
+          timeout: 1800000

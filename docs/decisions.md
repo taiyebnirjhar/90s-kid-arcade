@@ -848,6 +848,13 @@ decision was made in the conversation. Get the time now with
 - Home: an Assassin's Creed card beside God of War (libretro's picture).
 - The D-PAD switch stays manual (God of War's lesson).
 
+### 2026-11-07 15:31 Dhaka · The website's deploy gets 30 minutes
+- 1.0.298 (Assassin's Creed) built, but the website step timed out at
+  GitHub Pages ("syncing_files" past 10 minutes), as for 1.0.282: the site
+  carries the APK (~100 MB). The app never hears of such a build.
+- Decided: deploy-pages waits 30 minutes. Merging this change runs the
+  website step again (pages.yml changed), which publishes 1.0.298.
+
 ---
 
 ## Where things stand (update whenever it changes)
