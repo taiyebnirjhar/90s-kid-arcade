@@ -1067,6 +1067,31 @@ decision was made in the conversation. Get the time now with
   4.7 s) and Mash ○ (36 presses, about 4.2 s, for "press ○ quickly": a chain,
   a door), each a pill; the second sits above the first, past the ring.
 
+### 2026-11-07 23:32 Dhaka · God of War: no faster effects, a safe start after a crash, less lag; PSP saves to share
+- Owner (1.0.319): "god of war should play on 2x on my phone. It just feels
+  slow means few frame behind. Also turn on for faster (remove some view)
+  goes the screen blank. Its on 2x and that settings on. Now opening game,
+  app getting crushing. We need to fix it. Also i dont want to lost my game
+  progress. What to do. Another thing, we should able to load or save game
+  data, so people can play from that stage feature".
+- Faster effects (PPSSPP skipping buffer effects) blanks God of War's
+  screen: never used there (`PspProfile.fasterEffectsOk`; the saved setting
+  is cleared, the toggle hidden), and Auto no longer steps to it in any game.
+- A start that doesn't reach ten seconds of play (the app closed on it)
+  counts; the next start uses the safe graphics (1x, Sharp), and a second one
+  in a row also starts the game fresh, keeping where it was left aside
+  (`.auto.state.kept`). The game's own saves (psp/saves/PSP/SAVEDATA) are
+  never touched. A normal pause or leave clears the count.
+- Lag: one frame queued for the graphics chip instead of two
+  (ppsspp_inflight_frames "Up to 1"): a press shows a frame sooner. At 2x
+  the phone's chip (Adreno 610) still runs big fights below 60.
+- Saves to share (`core/psp/PspSaves.kt`, tested): the PSP page's Export
+  save writes the game's save folders (by the disc's id, read from
+  UMD_DATA.BIN: Ghost of Sparta is UCUS98737) and where it was left into one
+  zip, anywhere the phone's file picker reaches; Load save puts one back for
+  that game (another game's is refused), keeping what was there in
+  psp/saves-kept. Nothing goes through our server.
+
 ---
 
 ## Where things stand (update whenever it changes)

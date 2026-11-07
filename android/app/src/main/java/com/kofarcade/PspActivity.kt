@@ -57,6 +57,60 @@ class PspActivity : ComponentActivity() {
 
     private val pick = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(::add) }
 
+    // Saves (the owner: "we should able to load or save game data, so people can play from that stage").
+    private var saveFor: File? = null
+    private var saveNote by mutableStateOf<String?>(null)
+    private val exportTo = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        val game = saveFor
+        if (uri != null && game != null) exportSave(game, uri)
+    }
+    private val importFrom = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val game = saveFor
+        if (uri != null && game != null) importSave(game, uri)
+    }
+
+    private val savedata get() = File(filesDir, "psp/saves/PSP/SAVEDATA")
+    private fun placeOf(game: File) = File(File(filesDir, "psp/states"), "${game.name}.auto.state")
+
+    /** The game's saves, and where it was left, into one file the player picks. */
+    private fun exportSave(game: File, uri: Uri) {
+        lifecycleScope.launch {
+            saveNote = "Saving ${PspGames.title(game)}…"
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openOutputStream(uri)!!.use { out ->
+                        com.kofarcade.core.psp.PspSaves.export(out, PspGames.title(game), com.kofarcade.core.psp.PspSaves.discId(game), savedata, placeOf(game))
+                    }
+                }
+            }
+            saveNote = result.fold(
+                { i -> "Saved: ${i.folders.size} game save${if (i.folders.size == 1) "" else "s"}${if (i.hasPlace) " and where you left off" else ""}. Share the file; Load save puts it back." },
+                { e -> runCatching { android.provider.DocumentsContract.deleteDocument(contentResolver, uri) }; e.message ?: "Couldn't save" },
+            )
+        }
+    }
+
+    /** A save file loaded for [game]: its saves in, the old ones kept aside. */
+    private fun importSave(game: File, uri: Uri) {
+        lifecycleScope.launch {
+            saveNote = "Loading the save…"
+            val backup = File(filesDir, "psp/saves-kept/${System.currentTimeMillis()}")
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openInputStream(uri)!!.use { input ->
+                        com.kofarcade.core.psp.PspSaves.import(input, com.kofarcade.core.psp.PspSaves.discId(game), savedata, placeOf(game), backup)
+                    }
+                }
+            }
+            saveNote = result.fold(
+                { i ->
+                    "Loaded ${i.title}'s save" + if (i.hasPlace) ": Play goes on from that spot. Your old one is kept." else ": load it from the game's own menu. Your old one is kept."
+                },
+                { e -> e.message ?: "Couldn't load that file" },
+            )
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         games = PspGames.list(dir)
@@ -157,6 +211,7 @@ class PspActivity : ComponentActivity() {
                 GoldButton("Add a game", { pick.launch(arrayOf("*/*")) })
             }
             error?.let { Text(it, color = Palette.red, fontSize = 13.sp) }
+            saveNote?.let { Text(it, color = Palette.gold, fontSize = 13.sp) }
             DriveLibrary()
             Spacer(Modifier.height(4.dp))
             if (games.isEmpty() && busy == null) {
@@ -208,25 +263,38 @@ class PspActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
     @Composable
     private fun GameRow(game: File) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.panel)
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.panel)
                 .border(1.dp, Palette.line, RoundedCornerShape(14.dp)).clickable { play(game) }.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(Modifier.weight(1f)) {
+            Column {
                 Text(PspGames.title(game), color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text("${game.extension.uppercase()} · ${game.length() / 1_000_000} MB", color = Palette.muted, fontSize = 12.sp)
             }
-            GhostButton("Log", { copyLog(game) }, compact = true)
-            Spacer(Modifier.padding(4.dp))
-            GhostButton("Remove", {
-                game.delete()
-                games = PspGames.list(dir)
-            }, compact = true, danger = true)
-            Spacer(Modifier.padding(4.dp))
-            GoldButton("Play", { play(game) }, compact = true, play = true)
+            // Buttons wrap on a narrow screen instead of squeezing the title.
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                GoldButton("Play", { play(game) }, compact = true, play = true)
+                GhostButton("Export save", {
+                    saveFor = game
+                    exportTo.launch("${PspGames.title(game)} save.zip")
+                }, compact = true)
+                GhostButton("Load save", {
+                    saveFor = game
+                    importFrom.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+                }, compact = true)
+                GhostButton("Log", { copyLog(game) }, compact = true)
+                GhostButton("Remove", {
+                    game.delete()
+                    games = PspGames.list(dir)
+                }, compact = true, danger = true)
+            }
         }
     }
 }

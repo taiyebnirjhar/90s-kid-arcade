@@ -193,3 +193,10 @@ owner's library (downloaded with its key, never committed).
   complecated. And the ui is mess. Thats why we are adding on our app"), so
   measuring moved into our app (P1). Next: his go on P1; the three games on
   his phone as `.cso` (the library upload can wait until P3).
+
+## Saves to share (2026-11-07)
+
+The PSP page has **Export save** and **Load save** for each game: the
+game's own saves (PPSSPP's memory stick folders for the disc's id) and
+where it was left, in one zip. Load save takes only the same game's, and
+keeps the saves it replaces in `psp/saves-kept/`. `core/psp/PspSaves.kt`.

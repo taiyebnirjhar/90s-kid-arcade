@@ -152,9 +152,25 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         title = PspGames.title(gameFile)
         prefs = Prefs(this)
         store = PspStore(this, gameFile.name)
-        graphics = store.settings()
-        chosen = graphics
         profile = PspProfile.forTitle(title)
+        var start = store.settings()
+        // Never "faster effects" where it blanks the screen (God of War).
+        if (!profile.fasterEffectsOk && start.fasterEffects) start = start.copy(fasterEffects = false).also(store::save)
+        // A start that didn't get going last time (the app closed on it): the
+        // safe settings this time; a second time, the game's own start too
+        // (where it was left is kept aside, not deleted).
+        val failed = store.failedStarts()
+        if (failed >= 1) {
+            start = PspSettings(auto = start.auto).also(store::save)
+            safeStart = true
+        }
+        if (failed >= 2 && placeFile.isFile) {
+            placeFile.renameTo(File(placeFile.path + ".kept"))
+            skippedPlace = true
+        }
+        store.setFailedStarts(failed + 1)
+        graphics = start
+        chosen = graphics
         val system = File(filesDir, "system").apply { mkdirs() }
         unpackAssets(system)
         LibretroDroid.setFrozen(false)
@@ -211,6 +227,15 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         )
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
+        if (safeStart) {
+            log.event("The last start didn't get going: safe graphics this time" + if (skippedPlace) ", and the game's own start" else "")
+            Toast.makeText(
+                this,
+                if (skippedPlace) "The game started fresh after a problem. Load your save from the game's menu; your last spot is kept."
+                else "The last start had a problem: safe graphics this time",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
         GameLogs.watchPlayback(this, log, meter)
         guardSpeed()
         followTheGame()
@@ -220,6 +245,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 if (it is GLRetroView.GLRetroEvents.FrameRendered) {
                     hud.onFrame(++frame)
                     if (frame == RESUME_AT_FRAME) goOnWhereLeft()
+                    // Ten seconds in and running: this start went fine.
+                    if (frame == KEEP_AFTER_FRAMES) store.setFailedStarts(0)
                 }
             }
         }
@@ -351,6 +378,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
     }
 
+    /** Whether this game takes "Faster effects" (God of War doesn't: a blank screen). */
+    val fasterEffectsOk: Boolean get() = profile.fasterEffectsOk
+
     fun toggleSpeed() {
         showSpeed = !showSpeed
     }
@@ -420,6 +450,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     // ----- Where you left off -----
+
+    // This start follows one that didn't get going (safe settings), and skipped where it was left.
+    private var safeStart = false
+    private var skippedPlace = false
 
     /** The game as it was when last paused or left: opening it goes on from there. */
     private val placeFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.auto.state")
@@ -802,6 +836,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     override fun onPause() {
+        // Left the normal way (a crash never gets here): this start wasn't one that failed.
+        if (::store.isInitialized) store.setFailedStarts(0)
         // Leaving the app: the menu comes up, so the game waits for you.
         if (::pad.isInitialized) {
             log.event("Left the app")
@@ -946,7 +982,7 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             if (s.auto && game.graphics != s) {
                 val g = game.graphics
                 Text(
-                    "Now, for a heavy scene: sharpness ${g.resolution}x, ${g.picture.label}, faster effects ${if (g.fasterEffects) "on" else "off"}",
+                    "Now, for a heavy scene: sharpness ${g.resolution}x, ${g.picture.label}",
                     color = Palette.gold, fontSize = 11.sp,
                 )
                 Spacer(Modifier.height(6.dp))
@@ -962,7 +998,9 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
                 game.applyGraphics(s.copy(picture = it))
             }
-            ToggleRow("Faster effects", s.fasterEffects, { game.applyGraphics(s.copy(fasterEffects = it)) }, sub = "Skips some glows and blur, for speed")
+            if (game.fasterEffectsOk) {
+                ToggleRow("Faster effects", s.fasterEffects, { game.applyGraphics(s.copy(fasterEffects = it)) }, sub = "Skips some glows and blur, for speed")
+            }
             ToggleRow("Speed counter on screen", game.showSpeed, { game.toggleSpeed() }, sub = "Off keeps the game clear; the game log has it all")
             Spacer(Modifier.height(14.dp))
             Row {
@@ -1021,6 +1059,14 @@ class PspStore(context: Context, private val game: String) {
             picture = PspSettings.Picture.entries.firstOrNull { it.name == prefs.getString("$game.picture", null) } ?: d.picture,
             auto = prefs.getBoolean("$game.auto", d.auto),
         )
+    }
+
+    /** Starts in a row that didn't reach ten seconds of play (the app closed on them). */
+    fun failedStarts(): Int = prefs.getInt("$game.failedStarts", 0)
+
+    fun setFailedStarts(n: Int) {
+        // Written at once: the next thing may be the app closing.
+        prefs.edit().putInt("$game.failedStarts", n).commit()
     }
 
     fun save(s: PspSettings) {
