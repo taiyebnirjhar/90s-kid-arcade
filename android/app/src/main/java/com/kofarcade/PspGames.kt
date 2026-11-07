@@ -243,7 +243,10 @@ data class PspProfile(
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
+            // R stays held from one tap to the next (the owner, 2026-11-07: "Need
+            // combo attack including press R for fire"): with Thera's Bane on,
+            // every combo below comes out on fire; with the spear, it aims (□ throws).
+            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
@@ -252,9 +255,14 @@ data class PspProfile(
             // the D-pad. The owner: "If this cant be solved. Make dpad manual
             // like before". The D-PAD switch is the only way again.
             moves = listOf(
-                Move("Hyperion Charge", "E>D"),
+                // Hyperion Charge (L, then ○ while L is held: checked in the
+                // game), then □ while it runs: the charge goes on into a strike.
+                // Six pills fit on the ring: the charge alone is L (Block) + ○,
+                // and Cyclone of Chaos is □ held.
+                Move("Hyperion Rush", "E>D,A"),
+                // Six □: the Blades' long combo (Olympic Fury, in PSNProfiles' list).
+                Move("Olympic Fury", "A,A,A,A,A,A"),
                 Move("Spirit of Hercules", "A,A,C"),
-                Move("Cyclone of Chaos", "hold:A", "dm"),
                 Move("Atlas Spark", "pad:6,E>B", "dm"),
                 Move("Erinys Void", "pad:4,E>B", "dm"),
                 Move("Boreas Freeze", "pad:8,E>B", "dm"),
@@ -267,6 +275,9 @@ data class PspProfile(
         /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
         const val HOLD_L = "held:E"
         const val HOLD_R = "held:F"
+
+        /** A pill that keeps R held from one tap to the next (God of War's Thera's Bane, or the spear's aim). */
+        const val LATCH_R = "latch:F"
 
         /**
          * The game's mashing prompts: "alternate L and R quickly" (a grab to

@@ -97,9 +97,12 @@ class PspGamesTest {
         assertTrue("Block holds L", p.blockHoldsL)
         assertTrue("SELECT opens its pause menu", p.select)
         assertEquals(6, p.moves.size)
+        // R stays held between taps: every combo on fire (Thera's Bane).
+        assertEquals(PspProfile.LATCH_R, p.system.first { it.name == "R" }.cmd)
+        assertEquals("A,A,A,A,A,A", p.moves.first { it.name == "Olympic Fury" }.cmd)
         assertEquals("pad:6,E>B", p.moves.first { it.name == "Atlas Spark" }.cmd)
         // Checked in the game: L first, then ○ with it (both at once is just ○).
-        assertEquals("E>D", p.moves.first { it.name == "Hyperion Charge" }.cmd)
+        assertEquals("E>D,A", p.moves.first { it.name == "Hyperion Rush" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Need for Speed Most Wanted 5-1-0")

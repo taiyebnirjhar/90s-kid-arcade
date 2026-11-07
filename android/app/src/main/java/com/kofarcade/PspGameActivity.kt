@@ -336,6 +336,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 when (m.cmd) {
                     PspProfile.HOLD_L -> HudView.SysButton(m.name, profile.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
                     PspProfile.HOLD_R -> HudView.SysButton(m.name, profile.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
+                    // Tap on, tap off: lit while R is held.
+                    PspProfile.LATCH_R -> HudView.SysButton(m.name, if (rLatched) "on · tap off" else profile.shoulderHints.second.ifEmpty { "tap" }, m.cmd, on = rLatched)
                     // "held:FB": both held while pressed (Assassin's Creed's Sprint: R and ✕).
                     else -> if (m.cmd.startsWith("held:") && m.cmd.length == 7) {
                         val (a, b) = m.cmd.removePrefix("held:").map { c -> Key.valueOf(c.toString()) }
@@ -374,6 +376,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     fun open(s: Sheet) {
         if (sheet == null && !paused) {
+            // The game's menus don't want R held.
+            setRLatched(false)
             log.event("Paused (${s.name.lowercase()})")
             keepPlace()
         }
@@ -633,6 +637,17 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (!stickIsDpad && spinLeft == 0) sendStick()
     }
 
+    /** R held by its pill between taps ([PspProfile.LATCH_R]): Thera's Bane's fire for every combo. */
+    @Volatile private var rLatched = false
+
+    private fun setRLatched(on: Boolean) {
+        if (on == rLatched) return
+        rLatched = on
+        sendKey(Key.F, on)
+        log.event(if (on) "R held (fire / aim)" else "R let go")
+        runOnUiThread { updateHud() }
+    }
+
     /** Frames the stick still turns round (Mash); then it's let go to what the thumb holds. */
     @Volatile private var spinLeft = 0
     private var spinAt = 0
@@ -661,6 +676,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     override fun onDir(dir: Int) = pad.setDir(dir)
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
     override fun onPlay(cmd: String, move: Move?): Int {
+        if (cmd == PspProfile.LATCH_R) {
+            setRLatched(!rLatched)
+            return 1
+        }
         // Mash goes frame by frame too (its timing is the one checked in the game), with the stick turning.
         if (!PspSteps.isSteps(cmd) && cmd != PspProfile.MASH_LR) return pad.play(cmd)
         val frames = PspSteps.frames(cmd)

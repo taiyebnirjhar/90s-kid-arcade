@@ -950,6 +950,22 @@ decision was made in the conversation. Get the time now with
   notification and a "ready to play" note at the end). The PSP page has
   the app's usual header with a back button.
 
+### 2026-11-07 18:52 Dhaka · God of War: R stays on for fire combos; Olympic Fury and Hyperion Rush
+- Owner (1.0.303, a screenshot in play): "Need combo attack including
+  press R for fire. Check what can we do. We actually need all combo
+  attacks can u please google and grab all of them".
+- R is now tap on, tap off (lit while held), so Thera's Bane's fire stays
+  on and every combo, tapped or from a pill, comes out on fire; with the
+  spear it aims and □ throws. It lets go when the game pauses.
+- On the ring (six fit; seven overlapped): Hyperion Rush (L, ○ with it, then
+  □), Olympic Fury (□ ×6), Spirit of Hercules (□□△), and the three magics.
+  The charge alone is Block + ○; Cyclone of Chaos is □ held.
+- The full move lists (psnprofiles.com, godofwar.fandom.com, GameFAQs)
+  can't be read from here (the network blocks them); only search snippets
+  came through, and they disagree on names and on PS3/Vita buttons. The
+  game's own list (the weapon upgrade screen, per level) is the one to go
+  by: the owner sends screenshots of it and the rest go in.
+
 ---
 
 ## Where things stand (update whenever it changes)
