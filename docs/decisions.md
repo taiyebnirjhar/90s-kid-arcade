@@ -1104,6 +1104,20 @@ decision was made in the conversation. Get the time now with
   smoothed on the way to the screen by LibretroDroid's single-pass upscale
   (CUT), cheap next to Enhanced edges (two passes). To be seen on his phone.
 
+### 2026-11-08 01:30 Dhaka · God of War: the owner's layout is its default
+- Owner (a screenshot of his phone): "For gow this layout is perfect for
+  me. Make it default".
+- A game can now have its own default spots for its controls
+  (`PspProfile.layout`, `HudView.Anchor`: shares of the screen, mirrored for
+  the left hand); layout changes move them from there, Reset goes back to
+  them. God of War's are measured from his screenshot (face buttons bottom
+  right, L Block and Weapon to their left, Roll and R above, the six moves in
+  an arc, both Mash pills bottom middle). Sizes stay his Size setting's.
+- His saved changes were moves from the old layout, so a game with its own
+  layout keeps its changes under a new key (".2"): his phone starts from
+  this layout. Checked in a picture at his phone's screen (2408 x 1080, 420
+  dpi) and the controls-overlap test.
+
 ---
 
 ## Where things stand (update whenever it changes)

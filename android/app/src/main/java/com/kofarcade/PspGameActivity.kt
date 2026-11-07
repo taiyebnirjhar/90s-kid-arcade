@@ -345,7 +345,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     /** The shared settings (or a preview of them) on the controls and the sound. */
     fun applyLook(l: Look) {
         look = l
-        hud.tweaks = prefs.tweaks(layoutKey())
+        hud.anchors = profile.layout
+        hud.tweaks = savedTweaks()
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
         hud.opacity = l.opacity
         LibretroDroid.setVolume(if (l.sound) l.volume * l.volume else 0f)
@@ -387,7 +388,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** This game's layout, per hand: its buttons aren't any other game's. */
-    private fun layoutKey() = "PSP-${gameFile.name}.${if (look.leftHanded) "L" else "R"}"
+    private fun oldLayoutKey() = "PSP-${gameFile.name}.${if (look.leftHanded) "L" else "R"}"
+
+    // A game with its own default layout keeps its changes under ".2": the old
+    // ones were moves from the arcade layout, not from it.
+    private fun layoutKey() = oldLayoutKey() + if (profile.layout.isNotEmpty()) ".2" else ""
+
+    /**
+     * The layout changes saved for this game. The first time a game has its
+     * own layout, the old changes' sizes carry over (only the owner's
+     * positions are new: "I only asked for re arrangement of layout").
+     */
+    private fun savedTweaks(): Map<String, HudView.Tweak> {
+        val now = prefs.tweaks(layoutKey())
+        if (now.isNotEmpty() || profile.layout.isEmpty()) return now
+        return prefs.tweaks(oldLayoutKey()).mapValues { (_, t) -> HudView.Tweak(scale = t.scale) }.filterValues { it.scale != 1f }
+    }
 
     /** The arcade controls for this game: the base layout and the game's own buttons. */
     private fun updateHud() {
@@ -622,7 +638,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (l.leftHanded != look.leftHanded) {
             prefs.setTweaks(layoutKey(), hud.tweaks)
             look = l
-            hud.tweaks = prefs.tweaks(layoutKey())
+            hud.tweaks = savedTweaks()
         } else {
             look = l
         }
