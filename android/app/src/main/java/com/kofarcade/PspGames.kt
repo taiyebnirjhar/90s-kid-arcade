@@ -271,7 +271,7 @@ data class PspProfile(
             // R stays held from one tap to the next (the owner, 2026-11-07: "Need
             // combo attack including press R for fire"): with Thera's Bane on,
             // every combo below comes out on fire; with the spear, it aims (□ throws).
-            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
+            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
@@ -316,13 +316,20 @@ data class PspProfile(
         const val LATCH_R = "latch:F"
 
         /**
-         * The game's mashing prompts: "alternate L and R quickly" (a grab to
-         * escape) and "press ○ quickly" (a chain to pull, a door to lift):
-         * L, ○, R, ○… about three seconds, so one pill does both (the owner's
-         * chain pull failed with L and R alone). Checked in Ghost of Sparta:
-         * L ○ R ○ still escapes the boat's first grab.
+         * The game's mashing prompts, one pill each (the owner, 2026-11-07:
+         * "Press l+r continuously should be one mash. If needed u can create
+         * another"). Mash L/R: "alternate L and R quickly" (a grab to escape),
+         * L R L R… about 4.7 s. Checked in Ghost of Sparta on the boat's first
+         * grab: L R escapes it; the old L ○ R ○ didn't (too slow between an L
+         * and the next R), nor ○ alone.
          */
-        val MASH_LR: String get() = List(12) { "E,D,F,D" }.joinToString(",")
+        val MASH_LR: String get() = List(20) { "E,F" }.joinToString(",")
+
+        /** Mash ○: "press ○ quickly" (a chain to pull, a door to lift), ○ ○ ○… about 4.2 s. */
+        val MASH_O: String get() = List(36) { "D" }.joinToString(",")
+
+        /** Every mash pill: played frame by frame (their timing is the one checked in the game). */
+        val MASHES: Set<String> get() = setOf(MASH_LR, MASH_O)
 
         /** The profile for a game, from its title. */
         /**

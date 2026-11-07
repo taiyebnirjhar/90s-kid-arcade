@@ -557,8 +557,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
             // a fourth (a PSP game's) beside C, on the top row; a fifth on the bottom row past the ring.
             listOf(
                 Pt(-0.43f * s, -1.71f * s), Pt(0.89f * s, -1.73f * s), Pt(-1.75f * s, 0.6f * s), Pt(-1.75f * s, -0.62f * s),
-                // A fifth (a PSP game's Mash): on the bottom row, past the ring.
-                Pt(-5.25f * s, 0.6f * s),
+                // A fifth and sixth (a PSP game's two Mash pills): past the ring, bottom row then above it.
+                Pt(-5.25f * s, 0.6f * s), Pt(-5.25f * s, -0.62f * s),
             )
         }
         val sysArc = arcPositions(st.system.size, 1.72f * s, 104f, 34f)
