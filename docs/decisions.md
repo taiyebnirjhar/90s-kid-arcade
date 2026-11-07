@@ -1015,18 +1015,46 @@ decision was made in the conversation. Get the time now with
   it): T4 moves the seats on from it.
 - The other fighters follow one by one; KOF '98 isn't in the app.
 
+### 2026-11-07 20:51 Dhaka · Development closed; features locked
+- Owner: "We will close our development. And lock the feature. Tell me
+  what are on backlog."
+- No new features from here. The last PR (#93: God of War moves checked in
+  the game, tournaments T2 for KOF) goes in as is; nothing else is started.
+  The backlog below stays in "Where things stand" for whenever work opens
+  again.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-07 17:38 Dhaka:
+As of 2026-11-07 20:51 Dhaka:
 
-- **Open:** Tournaments T2 (who won, from the game: KOF done). Next: T2 for the other fighters, then T3-T6; the World Cup look and the trophy in T5.
+- **Development closed, features locked** (the owner, this date). Last PR:
+  #93. Latest release: v1.0.310.
+- **Backlog** (not started, or started and paused):
+  - Tournaments: T2 for the other fighters (Garou, Last Blade 1 and 2,
+    Samurai Shodown II, SF III 3rd Strike, Marvel vs Capcom); T3 the players
+    say who won (host decides disputes); T4 seats from the bracket (60 s
+    no-show); T5 the tournament screen (World Cup style bracket, versus
+    intro, our own trophy); T6 kept on the server, wins on the profile.
+  - God of War: the rest of its moves (Arms of Sparta, magic, later levels)
+    from the game's Moves screen; fire, magic and Cyclone of Chaos checked
+    on the phone.
+  - Assassin's Creed: Attack, Target, Tackle checked in a fight (needs a
+    save past the tutorial).
+  - PSP: Chains of Olympus and NFS Most Wanted profiles; P5 weaker phones.
+  - Recording: R4 voices in the video, R5 trim and polish.
+  - Online Step 3 ideas: everyone-rotates seats, a lobby, bots.
+  - Moving the ROM library to the owner's new Cloudflare account (needs
+    his card).
+  - Games waiting on files: Knights of Valour, KOV 2 Plus, The Gladiator
+    (a current pgm.zip), Alien vs Predator (avspu.key, avsp.zip), Bust-A-Move
+    2 (pbobbl2n.zip).
+  - Notifications with the app closed (a Firebase project).
 - **Merged lately:** #87-#91 (God of War first party, game logs to the server, D-PAD manual, Assassin's Creed, the Drive PSP library, the analog stick, PspGuard).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.269.
 - **The PSP games for testing:** in the owner's Google Drive folder (shared by link; the link is with the owner and in the chat, never in the repo): Ghost of Sparta, Chains of Olympus, Assassin's Creed: Bloodlines, Need for Speed: Most Wanted 5-1-0.
 - **Waiting on the owner:**
   - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).

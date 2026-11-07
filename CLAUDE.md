@@ -1,5 +1,11 @@
 # Notes for working on this repo
 
+## Development is closed: features locked (2026-11-07)
+
+The owner closed development and locked the features. Start nothing new
+unless he reopens it; the backlog is in docs/decisions.md, "Where things
+stand".
+
 ## Read first: docs/AGENTS.md and docs/decisions.md
 
 [docs/AGENTS.md](docs/AGENTS.md) is the handbook: the owner's workflow
