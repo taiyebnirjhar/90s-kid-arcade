@@ -1118,6 +1118,26 @@ decision was made in the conversation. Get the time now with
   this layout. Checked in a picture at his phone's screen (2408 x 1080, 420
   dpi) and the controls-overlap test.
 
+### 2026-11-08 03:00 Dhaka · God of War: no second page of moves
+- The Blades' level 3 moves on a second page (PR #98) were dropped: the
+  owner, "Lets not add these. It becoming to many buttons. Skip this pr".
+  The controls stay as his layout has them; those moves are the face
+  buttons in the game (△ △ △, △ △ □, □ or △ during a Hyperion Charge, held
+  after a roll).
+
+### 2026-11-08 03:06 Dhaka · PSP Auto: the emulator's own frame skipping, nothing on screen changes
+- Owner (a screenshot at 2x, Auto on): "it keeps saying that it dropped or
+  upped. Sometimes shows blank screem than comeback. Do this totally
+  internally. So user dont feel or notice anything at all".
+- The blank came from Auto switching the internal resolution (2x and 1x)
+  mid-game: PPSSPP rebuilds its pictures then. So Auto no longer changes any
+  setting while playing (PspGuard and its notes are gone). Auto at 2x is
+  PPSSPP's own frame skipping instead: up to two pictures in a row, only
+  when it's behind, decided frame by frame; the game keeps full speed, the
+  sharpness and picture stay as picked. At 1x Auto does nothing (his phone
+  keeps full speed there, and skipping hurt its sound, 2026-11-07); the
+  Frame skip choice shows when Auto isn't skipping.
+
 ---
 
 ## Where things stand (update whenever it changes)

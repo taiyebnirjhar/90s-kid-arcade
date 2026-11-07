@@ -125,7 +125,7 @@ data class PspSettings(
     /** Skips some full-screen effects (glows, blur) for speed. */
     val fasterEffects: Boolean = false,
     val picture: Picture = Picture.SHARP,
-    /** The picture follows what the phone can do ([PspGuard]): down in heavy scenes, back up when smooth. */
+    /** Keeps full speed in heavy scenes by drawing fewer pictures (PPSSPP's own skipping); nothing else changes. */
     val auto: Boolean = true,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
@@ -146,50 +146,6 @@ data class PspSettings(
     }
 }
 
-/**
- * Auto (on unless the player turns it off): the picture follows what the
- * phone can do. When the last 10 seconds mostly ran slow it steps down, the
- * cheapest look first (Enhanced edges to Smooth, then 2x to 1x; never
- * faster effects, which blanks some games' screens: God of War); after a steady stretch at full speed it steps back up, one step
- * at a time, never past what the player chose. The owner's phone (Adreno 610)
- * ran God of War's calm places at 2x Sharp at full speed and its big fights
- * at 30-40 fps; Enhanced edges at 20-38 fps (1.0.303's log).
- */
-object PspGuard {
-    const val WINDOW = 10
-    const val SLOW = 50
-    /** Full speed, for stepping back up. */
-    const val FULL = 57
-    /** Seconds at full speed before a step back up. */
-    const val STEADY = 30
-
-    /** The settings to step down to, and what to tell the player; null if it's fast enough or nothing's left to drop. */
-    fun stepDown(s: PspSettings, perSecond: List<Int>): Pair<PspSettings, String>? {
-        if (perSecond.size < WINDOW) return null
-        val last = perSecond.takeLast(WINDOW)
-        if (last.count { it < SLOW } < 7 || last.average() >= 45) return null
-        return when {
-            s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Heavy scene: picture to Smooth for now"
-            s.resolution >= 2 -> s.copy(resolution = 1) to "Heavy scene: sharpness 1x for now"
-            else -> null
-        }
-    }
-
-    /**
-     * One step back toward [chosen] once the last [steady] seconds all ran at
-     * full speed (the reverse order: sharpness first, the look the player
-     * notices most); null if it's already there or not steady yet.
-     */
-    fun stepUp(s: PspSettings, chosen: PspSettings, perSecond: List<Int>, steady: Int = STEADY): Pair<PspSettings, String>? {
-        if (perSecond.size < steady || perSecond.takeLast(steady).any { it < FULL }) return null
-        return when {
-            s.resolution < chosen.resolution -> s.copy(resolution = chosen.resolution) to "Running smooth: sharpness back to ${chosen.resolution}x"
-            s.picture != chosen.picture -> s.copy(picture = chosen.picture) to "Running smooth: picture back to ${chosen.picture.label}"
-            else -> null
-        }
-    }
-}
-
 /** The PPSSPP options for [settings]. */
 object PspSpeed {
     enum class FrameSkip(val label: String, val value: String, val auto: Boolean) {
@@ -198,7 +154,10 @@ object PspSpeed {
         AUTO("Auto (only when behind)", "1", true),
     }
 
-    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = options(PspSettings(frameSkip = skip))
+    fun options(skip: FrameSkip = FrameSkip.OFF): Map<String, String> = options(PspSettings(frameSkip = skip, auto = false))
+
+    /** Whether Auto has PPSSPP skip pictures when behind: on, at 2x. */
+    fun autoSkips(settings: PspSettings) = settings.auto && settings.resolution >= 2
 
     fun options(settings: PspSettings): Map<String, String> = mapOf(
         "ppsspp_cpu_core" to "JIT",
@@ -220,9 +179,16 @@ object PspSpeed {
         "ppsspp_cache_iso" to "disabled",
         "ppsspp_button_preference" to "Cross",
         "ppsspp_language" to "English",
-        "ppsspp_frameskip" to settings.frameSkip.value,
+        // Auto: PPSSPP's own frame skipping, up to two pictures in a row and
+        // only when it's behind; the game keeps full speed and nothing on
+        // screen changes (the owner, 2026-11-08: Auto switching 2x and 1x
+        // mid-game flashed blank and said so each time; "Do this totally
+        // internally. So user dont feel or notice anything at all").
+        // Only at 2x, where the phone falls behind: at 1x skipping made the sound
+        // worse on his phone (2026-11-07), and it keeps full speed there anyway.
+        "ppsspp_frameskip" to if (autoSkips(settings)) "2" else settings.frameSkip.value,
         "ppsspp_frameskiptype" to "Number of frames",
-        "ppsspp_auto_frameskip" to if (settings.frameSkip.auto) "enabled" else "disabled",
+        "ppsspp_auto_frameskip" to if (autoSkips(settings) || settings.frameSkip.auto) "enabled" else "disabled",
         // A frame for every one of the screen's, even when the game shows a
         // new picture less often (its story videos): without it each frame we
         // ask for ran on to the game's next picture, and Ghost of Sparta's
