@@ -269,36 +269,18 @@ class PspGamesTest {
     }
 
     @Test
-    fun autoStepsDownInHeavyScenesCheapestFirst() {
-        // The owner's phone: 2x ran 28-37 fps in fights; Enhanced edges 19-22.
-        val slow = listOf(60, 60, 30, 32, 28, 35, 37, 30, 29, 31, 33, 30)
-        val chosen = PspSettings(resolution = 2, picture = PspSettings.Picture.ENHANCED)
-        val one = PspGuard.stepDown(chosen, slow)!!.first
-        assertEquals(PspSettings.Picture.SMOOTH, one.picture)
-        val two = PspGuard.stepDown(one, slow)!!.first
-        assertEquals(1, two.resolution)
-        // Never faster effects: it blanks God of War's screen.
-        assertEquals(false, two.fasterEffects)
-        // Nothing left to drop, or fast enough, or a short loading dip: nothing.
-        assertEquals(null, PspGuard.stepDown(two, slow))
-        assertEquals(null, PspGuard.stepDown(chosen, List(12) { 59 }))
-        assertEquals(null, PspGuard.stepDown(chosen, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
-    }
-
-    @Test
-    fun autoStepsBackUpWhenSmoothNeverPastTheChoice() {
-        val chosen = PspSettings(resolution = 2, picture = PspSettings.Picture.ENHANCED)
-        val low = PspSettings(resolution = 1, picture = PspSettings.Picture.SMOOTH)
-        val smooth = List(PspGuard.STEADY) { 60 }
-        assertEquals(null, PspGuard.stepUp(low, chosen, List(PspGuard.STEADY - 1) { 60 }))
-        assertEquals(null, PspGuard.stepUp(low, chosen, smooth.dropLast(1) + 48))
-        // Sharpness first, then the picture; then it's back where chosen.
-        val one = PspGuard.stepUp(low, chosen, smooth)!!.first
-        assertEquals(2, one.resolution)
-        val two = PspGuard.stepUp(one, chosen, smooth)!!.first
-        assertEquals(chosen, two)
-        assertEquals(null, PspGuard.stepUp(two, chosen, smooth))
-        assertEquals(null, PspGuard.stepUp(low, chosen, smooth, steady = 60))
+    fun autoIsPpssppsOwnFrameSkippingAndNothingElse() {
+        // Auto: skip up to two pictures, only when behind; the resolution and picture never change.
+        val auto = PspSpeed.options(PspSettings(resolution = 2, auto = true))
+        assertEquals("enabled", auto["ppsspp_auto_frameskip"])
+        assertEquals("2", auto["ppsspp_frameskip"])
+        assertEquals("960x544", auto["ppsspp_internal_resolution"])
+        // At 1x it doesn't skip (his phone keeps full speed there, and skipping hurt the sound).
+        assertEquals("disabled", PspSpeed.options(PspSettings(resolution = 1, auto = true))["ppsspp_frameskip"])
+        // Off: the frame skip as picked.
+        val off = PspSpeed.options(PspSettings(resolution = 2, auto = false))
+        assertEquals("disabled", off["ppsspp_auto_frameskip"])
+        assertEquals("disabled", off["ppsspp_frameskip"])
     }
 
     @Test

@@ -1125,6 +1125,19 @@ decision was made in the conversation. Get the time now with
   buttons in the game (△ △ △, △ △ □, □ or △ during a Hyperion Charge, held
   after a roll).
 
+### 2026-11-08 03:06 Dhaka · PSP Auto: the emulator's own frame skipping, nothing on screen changes
+- Owner (a screenshot at 2x, Auto on): "it keeps saying that it dropped or
+  upped. Sometimes shows blank screem than comeback. Do this totally
+  internally. So user dont feel or notice anything at all".
+- The blank came from Auto switching the internal resolution (2x and 1x)
+  mid-game: PPSSPP rebuilds its pictures then. So Auto no longer changes any
+  setting while playing (PspGuard and its notes are gone). Auto at 2x is
+  PPSSPP's own frame skipping instead: up to two pictures in a row, only
+  when it's behind, decided frame by frame; the game keeps full speed, the
+  sharpness and picture stay as picked. At 1x Auto does nothing (his phone
+  keeps full speed there, and skipping hurt its sound, 2026-11-07); the
+  Frame skip choice shows when Auto isn't skipping.
+
 ---
 
 ## Where things stand (update whenever it changes)
