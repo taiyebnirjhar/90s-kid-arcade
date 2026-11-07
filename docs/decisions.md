@@ -912,6 +912,16 @@ decision was made in the conversation. Get the time now with
   then Enhanced edges to Smooth, with a note on screen and in the log.
   Suggested: 1x with Enhanced edges, to see whether that holds.
 
+### 2026-11-07 17:31 Dhaka · Tournaments: planned
+- Owner: "For arcade challenger game like kof, we need tournament. Upto 8
+  player. We want that feature. Lets plan".
+- Planned in docs/tournament-plan.md: a Tournament room (up to 8, single
+  elimination, byes), built on rooms, the watchers' line, host migration;
+  phases T1-T6 (bracket, who won from the game's RAM, the players say as
+  the fallback, seats from the bracket, the tournament screen, kept on the
+  server). Waiting on the owner's choices (format, match length, online or
+  nearby, first game) and his go.
+
 ---
 
 ## Where things stand (update whenever it changes)
