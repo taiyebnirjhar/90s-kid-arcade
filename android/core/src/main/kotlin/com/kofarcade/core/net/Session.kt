@@ -1347,6 +1347,9 @@ class Room private constructor(
                 feed.seating(Seating(nextEpoch, localId, membersFor(feed.line, next.values)), packed, nextEpoch)
             }
         }
+        // The tournament again, after the seating: a watcher who now plays lost its feed, and
+        // what was queued on it with it (a pair called in a tournament is just that).
+        tournament?.let { encode(it) }?.let { cup -> for (line in live.values) if (line.id in next) sendTo(line, Msg.TOURNAMENT, cup) }
         if (news != null) news(news)
     }
 
