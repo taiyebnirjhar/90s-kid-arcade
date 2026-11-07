@@ -276,11 +276,11 @@ class PspGamesTest {
         val one = PspGuard.stepDown(chosen, slow)!!.first
         assertEquals(PspSettings.Picture.SMOOTH, one.picture)
         val two = PspGuard.stepDown(one, slow)!!.first
-        assertTrue(two.fasterEffects)
-        val three = PspGuard.stepDown(two, slow)!!.first
-        assertEquals(1, three.resolution)
+        assertEquals(1, two.resolution)
+        // Never faster effects: it blanks God of War's screen.
+        assertEquals(false, two.fasterEffects)
         // Nothing left to drop, or fast enough, or a short loading dip: nothing.
-        assertEquals(null, PspGuard.stepDown(three, slow))
+        assertEquals(null, PspGuard.stepDown(two, slow))
         assertEquals(null, PspGuard.stepDown(chosen, List(12) { 59 }))
         assertEquals(null, PspGuard.stepDown(chosen, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
     }
@@ -288,20 +288,23 @@ class PspGamesTest {
     @Test
     fun autoStepsBackUpWhenSmoothNeverPastTheChoice() {
         val chosen = PspSettings(resolution = 2, picture = PspSettings.Picture.ENHANCED)
-        val low = PspSettings(resolution = 1, fasterEffects = true, picture = PspSettings.Picture.SMOOTH)
+        val low = PspSettings(resolution = 1, picture = PspSettings.Picture.SMOOTH)
         val smooth = List(PspGuard.STEADY) { 60 }
-        // Not steady long enough, or a dip in it: stays down.
         assertEquals(null, PspGuard.stepUp(low, chosen, List(PspGuard.STEADY - 1) { 60 }))
         assertEquals(null, PspGuard.stepUp(low, chosen, smooth.dropLast(1) + 48))
-        // Sharpness first, then effects, then the picture; then it's back where chosen.
+        // Sharpness first, then the picture; then it's back where chosen.
         val one = PspGuard.stepUp(low, chosen, smooth)!!.first
         assertEquals(2, one.resolution)
         val two = PspGuard.stepUp(one, chosen, smooth)!!.first
-        assertEquals(false, two.fasterEffects)
-        val three = PspGuard.stepUp(two, chosen, smooth)!!.first
-        assertEquals(chosen, three)
-        assertEquals(null, PspGuard.stepUp(three, chosen, smooth))
-        // A longer wait after a step up was taken back.
+        assertEquals(chosen, two)
+        assertEquals(null, PspGuard.stepUp(two, chosen, smooth))
         assertEquals(null, PspGuard.stepUp(low, chosen, smooth, steady = 60))
     }
+
+    @Test
+    fun godOfWarNeverSkipsBufferEffects() {
+        assertEquals(false, PspProfile.GOD_OF_WAR.fasterEffectsOk)
+        assertEquals("Up to 1", PspSpeed.options(PspSettings())["ppsspp_inflight_frames"])
+    }
+
 }

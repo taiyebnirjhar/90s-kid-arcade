@@ -135,8 +135,8 @@ data class PspSettings(
 /**
  * Auto (on unless the player turns it off): the picture follows what the
  * phone can do. When the last 10 seconds mostly ran slow it steps down, the
- * cheapest look first (Enhanced edges to Smooth, then faster effects on, then
- * 2x to 1x); after a steady stretch at full speed it steps back up, one step
+ * cheapest look first (Enhanced edges to Smooth, then 2x to 1x; never
+ * faster effects, which blanks some games' screens: God of War); after a steady stretch at full speed it steps back up, one step
  * at a time, never past what the player chose. The owner's phone (Adreno 610)
  * ran God of War's calm places at 2x Sharp at full speed and its big fights
  * at 30-40 fps; Enhanced edges at 20-38 fps (1.0.303's log).
@@ -156,7 +156,6 @@ object PspGuard {
         if (last.count { it < SLOW } < 7 || last.average() >= 45) return null
         return when {
             s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Heavy scene: picture to Smooth for now"
-            !s.fasterEffects -> s.copy(fasterEffects = true) to "Heavy scene: faster effects on for now"
             s.resolution >= 2 -> s.copy(resolution = 1) to "Heavy scene: sharpness 1x for now"
             else -> null
         }
@@ -171,7 +170,6 @@ object PspGuard {
         if (perSecond.size < steady || perSecond.takeLast(steady).any { it < FULL }) return null
         return when {
             s.resolution < chosen.resolution -> s.copy(resolution = chosen.resolution) to "Running smooth: sharpness back to ${chosen.resolution}x"
-            s.fasterEffects && !chosen.fasterEffects -> s.copy(fasterEffects = false) to "Running smooth: full effects back"
             s.picture != chosen.picture -> s.copy(picture = chosen.picture) to "Running smooth: picture back to ${chosen.picture.label}"
             else -> null
         }
@@ -201,7 +199,9 @@ object PspSpeed {
         "ppsspp_lower_resolution_for_effects" to "disabled",
         "ppsspp_skip_buffer_effects" to if (settings.fasterEffects) "enabled" else "disabled",
         "ppsspp_skip_gpu_readbacks" to "enabled",
-        "ppsspp_inflight_frames" to "Up to 2",
+        // One frame queued for the graphics chip, not two: a press shows a frame
+        // sooner (the owner, 1.0.316: "few frame behind" at 2x).
+        "ppsspp_inflight_frames" to "Up to 1",
         // The whole disc in memory would take 1-2 GB: read it as needed.
         "ppsspp_cache_iso" to "disabled",
         "ppsspp_button_preference" to "Cross",
@@ -247,6 +247,12 @@ data class PspProfile(
      * D-PAD switch on the top bar.
      */
     val inPlay: Pair<Int, Int>? = null,
+    /**
+     * Whether "Faster effects" (PPSSPP skipping buffer effects) works in this
+     * game. God of War draws through those buffers: with it on the screen goes
+     * blank (the owner's phone, 1.0.316), so it's never used there.
+     */
+    val fasterEffectsOk: Boolean = true,
 ) {
     companion object {
         /**
@@ -274,6 +280,7 @@ data class PspProfile(
             system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
+            fasterEffectsOk = false,
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
             // boat (tools/pspemu.py), but on the owner's phone it dropped to 0
             // in the middle of play too (1.0.292's log), flipping the stick to
