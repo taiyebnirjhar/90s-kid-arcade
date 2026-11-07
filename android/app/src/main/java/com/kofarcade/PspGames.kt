@@ -335,13 +335,16 @@ data class PspProfile(
          * want the D-pad: the D-PAD switch.
          */
         val ASSASSINS_CREED = PspProfile(
-            labels = mapOf('A' to "Attack", 'B' to "Blend", 'C' to "Target", 'D' to "Grab"),
+            // The game's own button panel (read in the game, 2026-11-07): out of a
+            // fight ✕ blends and △ targets (Talk near someone); in a fight R blocks,
+            // ✕ dodges, △ disengages, ○ grabs; with R held ✕ sprints, ○ tackles.
+            labels = mapOf('A' to "Attack", 'B' to "Blend/Dodge", 'C' to "Target", 'D' to "Grab"),
             system = listOf(
                 Move("L", HOLD_L), Move("R", HOLD_R),
                 // R and ✕ together, for one thumb: the stick steers.
                 Move("Sprint", "held:FB"),
             ),
-            shoulderHints = "Camera" to "High Profile",
+            shoulderHints = "Camera" to "Run / Block",
             moves = listOf(
                 Move("Tackle", "F>D"),
             ),

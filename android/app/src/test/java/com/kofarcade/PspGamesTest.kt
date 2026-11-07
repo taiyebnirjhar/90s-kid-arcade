@@ -253,11 +253,11 @@ class PspGamesTest {
     fun assassinsCreedHasItsOwnControls() {
         val p = PspProfile.forTitle("Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It)")
         assertEquals(PspProfile.ASSASSINS_CREED, p)
-        // From the game's own button panel: △ Target, □ Attack, ✕ Blend; R High Profile; L the camera.
+        // From the game's own button panel: △ Target, □ Attack, ✕ Blend (Dodge in a fight); R runs (blocks in a fight); L the camera.
         assertEquals("Target", p.labels['C'])
         assertEquals("Attack", p.labels['A'])
-        assertEquals("Blend", p.labels['B'])
-        assertEquals("Camera" to "High Profile", p.shoulderHints)
+        assertEquals("Blend/Dodge", p.labels['B'])
+        assertEquals("Camera" to "Run / Block", p.shoulderHints)
         // Sprint holds R and ✕ for one thumb; Tackle is R, then ○.
         assertEquals("held:FB", p.system.first { it.name == "Sprint" }.cmd)
         assertEquals("F>D", p.moves.first { it.name == "Tackle" }.cmd)

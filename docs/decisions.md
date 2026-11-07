@@ -1045,6 +1045,19 @@ decision was made in the conversation. Get the time now with
   (face buttons as they are). Its Magic group is locked this early, so the
   magic pills wait to be seen on the owner's phone.
 
+### 2026-11-07 21:18 Dhaka · Assassin's Creed: labels from the game's own button panel
+- Backlog 3 (the owner reopened it): played here past the tutorial's
+  Blend and Talk steps into Acre (tools/pspemu.py), stopped by the first
+  free-run beam before any fight; the tutorial's "spotted" fight is
+  scripted and takes no input, so no button was checked in a fight.
+- The game's button panel, read at each stage: out of a fight △ Target
+  (Talk near someone), □ Attack, ✕ Blend, L camera, R High Profile; with R
+  held ✕ Sprint, ○ Tackle (Drop at an edge); in a fight R Block, ✕ Dodge,
+  △ Disengage, ○ Grab. The app's Sprint (R + ✕) was seen free-running.
+- So the labels say both: ✕ "Blend/Dodge", R "Run / Block". Checking
+  Attack, Tackle and Block in a real fight waits for the owner's save past
+  the tutorial (the beam).
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -1057,8 +1070,8 @@ As of 2026-11-07 21:06 Dhaka:
 - **Backlog** (not started, or started and paused):
   - God of War on the phone: fire (R), the magics and Cyclone of Chaos
     (past the boat; the magic group is locked in our saves).
-  - Assassin's Creed: Attack, Target, Tackle checked in a fight (needs a
-    save past the tutorial).
+  - Assassin's Creed: Attack, Tackle, Block checked in a real fight (needs
+    the owner's save past the tutorial; labels already from the game's panel).
   - PSP: Chains of Olympus and NFS Most Wanted profiles; P5 weaker phones.
   - Recording: R4 voices in the video, R5 trim and polish.
   - Online Step 3 ideas: everyone-rotates seats, a lobby, bots.
