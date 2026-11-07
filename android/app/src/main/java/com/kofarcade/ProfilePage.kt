@@ -71,6 +71,8 @@ data class ProfileUi(
     val state: SyncState,
     /** Games played, most first. */
     val plays: List<Pair<Game, Int>>,
+    /** Tournaments won, per game, most first (tournaments T6). */
+    val cups: List<Pair<Game, Int>> = emptyList(),
 )
 
 /**
@@ -85,6 +87,7 @@ fun ProfileDialog(onClose: () -> Unit) {
     var profile by remember { mutableStateOf(account.profile()) }
     var state by remember { mutableStateOf<SyncState>(SyncState.Syncing) }
     val plays = remember { account.plays() }
+    val cups = remember { account.tournamentWins() }
     val scope = rememberCoroutineScope()
 
     fun sync() {
@@ -106,7 +109,10 @@ fun ProfileDialog(onClose: () -> Unit) {
     BackHandler(onBack = onClose)
 
     ProfileScreen(
-        ProfileUi(profile, state, plays.mapNotNull { (id, n) -> gameById(id)?.let { it to n } }.sortedByDescending { it.second }),
+        ProfileUi(
+            profile, state, plays.mapNotNull { (id, n) -> gameById(id)?.let { it to n } }.sortedByDescending { it.second },
+            cups.mapNotNull { (id, n) -> gameById(id)?.let { it to n } }.sortedByDescending { it.second },
+        ),
         onBack = onClose,
         onRetry = ::sync,
         onSave = { name, icon ->
@@ -206,6 +212,22 @@ fun ProfileScreen(
                 }
             }
 
+            if (ui.cups.isNotEmpty()) {
+                SectionLabel("Tournaments won")
+                Panel {
+                    ui.cups.forEachIndexed { k, (game, n) ->
+                        if (k > 0) Spacer(Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.foundation.Canvas(Modifier.size(18.dp)) { drawTrophy(size.width / 2, size.height, size.height) }
+                            Spacer(Modifier.width(10.dp))
+                            Text(game.fullTitle, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            Spacer(Modifier.width(12.dp))
+                            Text(if (n == 1) "1 win" else "$n wins", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+            }
             SectionLabel("Games played")
             if (ui.plays.isEmpty()) {
                 Text("None yet: every game you start counts here.", color = Palette.muted, fontSize = 14.sp)
@@ -223,7 +245,7 @@ fun ProfileScreen(
             }
             Spacer(Modifier.height(24.dp))
             Text(
-                "A guest profile, kept on this phone. Wins show here once public play comes.\n90s Kid Arcade ${BuildConfig.VERSION_NAME}",
+                "A guest profile, kept on this phone.\n90s Kid Arcade ${BuildConfig.VERSION_NAME}",
                 color = Palette.muted.copy(alpha = 0.8f),
                 fontSize = 12.sp,
                 lineHeight = 17.sp,

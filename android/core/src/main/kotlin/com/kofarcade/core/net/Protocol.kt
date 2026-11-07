@@ -209,7 +209,15 @@ internal object Msg {
     const val CHAT: Byte = 24
     /** Owner to everyone: the room's [VoiceRules]. */
     const val VOICE: Byte = 25
+    /** Owner to everyone: the room's tournament (a [com.kofarcade.core.tournament.Tournament]; empty: none). */
+    const val TOURNAMENT: Byte = 26
+    /** A player to the owner: who won the tournament game on now ([Report]). */
+    const val REPORT: Byte = 27
 }
+
+/** A player says [winner] (a member id) won tournament match [match]'s game on now (T3). */
+@Serializable
+data class Report(val match: Int, val winner: Int)
 
 /**
  * The players' inputs for frames [start] until start + count, as the owner

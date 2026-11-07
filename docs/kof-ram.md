@@ -23,6 +23,20 @@ the same way the app does:
   - In the fight, 0x108171 = 0x00 (Kyo) and 0x108371 = 0x09 (Leona).
   - The round flag turned true when the fight started.
 
+- **Who won a match (tournaments, T2), 2026-11-07.** Two players, team
+  select mashed, one side attacking and the other standing still, each
+  side winning in turn (tools/emu.py):
+  - kof97 and kof97pls: rounds lost P1 0x10A84A, P2 **0x10A85B** (the
+    inferred address holds), 0 to 3. The win counters 0x10DAF5 (P1) and
+    0x10DAF7 (P2) go up by one for the winner at the end of the match (P2
+    won: 0x10DAF7 0 to 1; P1 won: 0x10DAF5 0 to 1). A double knockout in
+    the last round put both rounds-lost bytes at 3 and moved neither win
+    counter: a draw.
+  - kof2002, kf2k2mp2 (Magic Plus) and kf2k5uni: rounds lost 0x10A7E5 /
+    0x10A80B, win counters 0x10DAB7 / 0x10DAB9, the same way.
+  - The app reads the win counters (offsets 0xDAF4/0xDAF6 and 0xDAB6/0xDAB8,
+    swapped in pairs): `Game.matchWins`.
+
 So the "inferred" KOF 2002 in-match address below holds, at least for the
 2005 hack that shares its program.
 

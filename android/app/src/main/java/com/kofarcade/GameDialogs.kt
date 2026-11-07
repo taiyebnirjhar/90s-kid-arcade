@@ -86,6 +86,7 @@ fun GameDialogs(game: GameActivity) {
     }
     if (game.editing) EditBar(game)
     RoomLayer(game)
+    TournamentLayer(game)
     if (game.chatOpen) {
         Overlay(onDismiss = { game.closeChat() }, scrim = false) {
             ChatPanel(
@@ -168,6 +169,16 @@ fun GameDialogs(game: GameActivity) {
                     onWatchersListen = { game.watchersListen(it) },
                     onInvite = { game.inviteFriend(it) },
                 )
+                TournamentSection(
+                    game.tournament,
+                    isHost = game.isRoomHost,
+                    inRoom = game.roomCount,
+                    localId = game.roomLocalId,
+                    onStart = { game.startTournament(it) },
+                    onReport = { game.reportTournamentWinner(it) },
+                    onDecide = { game.hostDecidesTournament(it) },
+                    onEnd = { game.endTournament() },
+                )
             }
         }
     }
@@ -200,6 +211,27 @@ private fun RoomLayer(game: GameActivity) {
         }
         AnnouncementBanner(news, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
     }
+}
+
+// Over the game in a tournament: the bar at the top, the VS intro before each
+// match, a result for a moment, and the champion's trophy.
+@Composable
+private fun TournamentLayer(game: GameActivity) {
+    val t = game.tournament ?: return
+    if (game.dialog == null && !game.editing) {
+        Box(Modifier.fillMaxWidth().padding(top = 14.dp), contentAlignment = Alignment.TopCenter) {
+            TournamentBar(t, Modifier.fillMaxWidth())
+        }
+    }
+    game.championShown?.let { name ->
+        ChampionScreen(name, you = t.champion == game.roomLocalId.toString(), game = game.gameTitle, onDone = { game.closeChampion() })
+        return
+    }
+    game.vsIntro?.let { v ->
+        VsIntro(v.round, v.a, v.b, v.you, onDone = { game.endVsIntro() })
+        return
+    }
+    game.resultFlash?.let { ResultFlash(it, onDone = { game.endResultFlash() }) }
 }
 
 /** A dialog over the game: a slanted black panel, like the pause menu's. */

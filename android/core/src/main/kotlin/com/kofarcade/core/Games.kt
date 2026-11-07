@@ -176,6 +176,8 @@ data class Game(
     val pad: PadMap = PadMap.NEO_GEO,
     /** Where the game says each player is in or out, for seats in a room; null: not known. */
     val seats: SeatStatus? = if (neoGeo) NEO_GEO_SEATS else null,
+    /** Where the game counts each side's match wins, for tournaments (T2); null: not known yet, the players say. */
+    val matchWins: com.kofarcade.core.tournament.MatchWins? = null,
     /**
      * The cabinet's settings (DIP switches) the game needs, by FBNeo's name:
      * "Number_of_Players" to "4". Every phone sets the same, for every version.
@@ -203,29 +205,34 @@ const val BIOS = "neogeo.zip"
 
 private val KOF_SYSTEM = listOf(Move("Roll", "AB"), Move("Blowback", "CD"))
 
+// Each side's match wins (Fightcade's detectors' "P1 Win"/"P2 Win"), checked in
+// the games: the winner's byte goes up by one at the end of a match.
+private val KOF97_WINS = com.kofarcade.core.tournament.MatchWins(listOf(0xDAF4, 0xDAF6))
+private val KOF2002_WINS = com.kofarcade.core.tournament.MatchWins(listOf(0xDAB6, 0xDAB8))
+
 val GAMES: List<Game> = listOf(
     Game(
         id = "kof97", series = "The King of Fighters", title = "KOF '97", sets = listOf("kof97"),
         art = "The King of Fighters '97 (NGM-2320)",
-        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3, block = true, matchWins = KOF97_WINS,
     ),
     Game(
         id = "kof2002", series = "The King of Fighters", title = "KOF 2002", sets = listOf("kof2002"),
         art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
     // Hacks with their own cards: the same fighters, some moves changed
     // (their move lists were checked in the real games like the originals').
     Game(
         id = "kof97plus", series = "The King of Fighters", title = "KOF '97 Plus", sets = listOf("kof97pls"),
         art = "The King of Fighters '97 Plus (bootleg)",
-        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97plus", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97plus", team = 3, block = true, matchWins = KOF97_WINS,
     ),
     Game(
         id = "kof2002mp", series = "The King of Fighters", title = "KOF 2002", subtitle = "Magic Plus",
         art = "The King of Fighters 2002 Magic Plus (bootleg, set 1)",
         sets = listOf("kf2k2mp", "kf2k2mpl", "kf2k2mp2"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
     // There is no official Neo Geo KOF 2005: "KOF 2005" is the 10th
     // Anniversary hacks of KOF 2002. Its move list is 2002's with the inputs
@@ -236,7 +243,7 @@ val GAMES: List<Game> = listOf(
         // have (artUrl), this one until then.
         art = "The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002)",
         sets = listOf("kf2k5uni", "kof10th", "kf10thep"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2005", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2005", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
 ) + listOf(
     Triple("mslug", "Metal Slug", "Metal Slug - Super Vehicle-001"),
@@ -445,6 +452,8 @@ val GAMES: List<Game> = listOf(
     // Capcom CPS-3, 1999: no BIOS. Six buttons, LP MP HP over LK MK HK; the
     // older dumps' chip files are converted on import (RomRepack.kt).
     id = "sfiii3", series = "Street Fighter", title = "Street Fighter III", subtitle = "3rd Strike",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0x16CD6, 0x16CD4)),
     sets = listOf("sfiii3n", "sfiii3nr1", "sfiii3", "sfiii3r1"),
     art = "Street Fighter III 3rd Strike: Fight for the Future (Japan 990608, NO CD)",
     layout = Layout.FIGHTER, roster = "sfiii3", team = 1, block = true,
@@ -462,6 +471,8 @@ val GAMES: List<Game> = listOf(
     // Two-character teams: HP+HK tags, MP+MK calls the Special Partner.
     // Six buttons as in Street Fighter III (checked in mvsc, tools/emu.py).
     id = "mvsc", series = "Marvel vs Capcom", title = "Marvel vs Capcom",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0x32A5, 0x36A5)),
     sets = listOf("mvsc", "mvscu", "mvscur1", "mvscj", "mvscjr1", "mvsca", "mvscar1", "mvscb", "mvsch", "mvscr1"),
     art = "Marvel Vs. Capcom: Clash of Super Heroes (Europe 980123)",
     layout = Layout.FIGHTER, roster = "mvsc", team = 2, block = true,
@@ -498,6 +509,8 @@ val GAMES: List<Game> = listOf(
     // (tools/garou_roster.py): all 137 moves of the 14 fighters, Grant and
     // Kain included (the main set's MVS codes pick them).
     id = "garou", series = "Fatal Fury", title = "Garou", subtitle = "Mark of the Wolves",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0x7482, 0x7484)),
     sets = listOf("garou", "garouh", "garouha", "garoup", "garoubl", "garoubs", "garoujq"),
     art = "Garou - Mark of the Wolves (NGM-2530)",
     layout = Layout.FIGHTER, roster = "garou", team = 1, block = true,
@@ -507,6 +520,8 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Evade", "AB"), Move("T.O.P.", "CD"), Move("Feint", "2+AC")),
 ) + Game(
     id = "lastblad", series = "The Last Blade", title = "The Last Blade", subtitle = "Bakumatsu Roman",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0xACB3, 0xACB2)),
     sets = listOf("lastblad", "lastblada", "lastbladh", "lastbldi", "lastbldp", "lastblsp", "lastsold"),
     art = "The Last Blade _ Bakumatsu Roman - Gekka no Kenshi (NGM-2340)",
     layout = Layout.FIGHTER, roster = "lastblad", team = 1, block = true,
@@ -517,6 +532,8 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Low repel", "2+D")),
 ) + Game(
     id = "lastbld2", series = "The Last Blade", title = "The Last Blade 2", subtitle = "Bakumatsu Roman",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0xE363, 0xE362)),
     sets = listOf("lastbld2", "lastbd2b", "lastbd2e", "lastbd2i", "lastbd2p", "lastbd2t"),
     art = "The Last Blade 2 _ Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi (NGM-2430 ~ NGH-2430)",
     layout = Layout.FIGHTER, roster = "lastbld2", team = 1, block = true,
@@ -527,6 +544,8 @@ val GAMES: List<Game> = listOf(
     system = listOf(Move("Throw", "CD"), Move("Unblockable", "BC"), Move("Low repel", "2+D")),
 ) + Game(
     id = "samsho2", series = "Samurai Shodown", title = "Samurai Shodown II", subtitle = "Shin Samurai Spirits",
+    // Each side's match wins (checked in the game, two players each winning: tournaments T2).
+    matchWins = com.kofarcade.core.tournament.MatchWins(listOf(0xD0D, 0xD1D)),
     sets = listOf("samsho2", "samsho2k", "samsho2ka", "samsho2pe", "samsho2t", "samsh2sp", "samsh2jq", "ssho2emb"),
     art = "Samurai Shodown II _ Shin Samurai Spirits - Haohmaru Jigokuhen (NGM-063 ~ NGH-063)",
     layout = Layout.FIGHTER, roster = "samsho2", team = 1, block = true,

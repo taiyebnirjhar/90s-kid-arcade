@@ -982,18 +982,109 @@ decision was made in the conversation. Get the time now with
   back within a minute doubles the next wait (up to 5 minutes), so a scene
   on the edge doesn't flicker. Off: the picture stays as picked.
 
+### 2026-11-07 20:29 Dhaka · God of War moves checked in the game, and from its own move list
+- Owner: "Yes start testing gow and assassin moves", then three screenshots
+  of the game's Moves screen: Cyclone of Chaos L + □ (level 2), Olympic
+  Ascension hold △, Olympic Slash hold □, Orion's Harpoon ○, Icarus Lift
+  ✕ in the air, Athena's Revenge (parry) □ or △, Fire Blades hold R.
+- Played on the boat (tools/pspemu.py, each move against doing nothing):
+  Hyperion Charge comes out; hold △ launches; □ □ △ lands 2 hits at the
+  arcade's quick timing but 4 and the △ slam with its presses about 14
+  frames apart; □ ×6 likewise (5 hits quick, 8 spaced). "Hyperion Rush"
+  (□ during the charge) did nothing at any timing: gone, and "Olympic Fury"
+  (a name from the web, not in the game's list) with it. Cyclone of Chaos
+  needs level 2 (after the boat): not checked here.
+- So: the ring is Hyperion Charge, Cyclone of Chaos (L, then □), Spirit of
+  Hercules (spaced: a new "wait:N" step), and the three magics. Olympic
+  Slash and Ascension are the face buttons held.
+- Assassin's Creed: still in the tutorial's Blend step here (the soldiers
+  spot Altair at the marker every try); its fights want a later save from
+  the owner.
+
+### 2026-11-07 20:40 Dhaka · Tournaments T2: who won, from the game (KOF)
+- Owner: "Start tournament step 2".
+- Each KOF keeps a match-win count per side (Fightcade's detectors' "P1
+  Win"/"P2 Win"); checked here with two players in each game: the winner's
+  byte goes up by one when the match ends, and a double knockout moves
+  neither. The rounds-lost bytes agree (P2's in '97, only guessed before,
+  is right). Rounds lost alone would need to tell a draw by timing; the win
+  counts don't.
+- `Game.matchWins` for KOF '97, '97 Plus, 2002, 2002 Magic Plus and 2005;
+  `WinWatch` and `MatchScore` (best of 1 or 3) in core, tested. In a room,
+  every phone reads the bytes and shows "<name> won the match" (and logs
+  it): T4 moves the seats on from it.
+- The other fighters follow one by one; KOF '98 isn't in the app.
+
+### 2026-11-07 20:51 Dhaka · Development closed; features locked
+- Owner: "We will close our development. And lock the feature. Tell me
+  what are on backlog."
+- No new features from here. The last PR (#93: God of War moves checked in
+  the game, tournaments T2 for KOF) goes in as is; nothing else is started.
+  The backlog below stays in "Where things stand" for whenever work opens
+  again.
+
+### 2026-11-07 21:06 Dhaka · Backlog 1-3 reopened and finished: tournaments T2-T6, God of War's moves
+- Owner: "Close 1 to 3 for now. Left are on hold. Make a proper plan and
+  implement at once" (1 tournaments, 2 God of War's moves, 3 Assassin's
+  Creed's fight buttons; the rest stays on hold).
+- Tournaments, all built (docs/tournament-plan.md, "Where it stands"):
+  T2 for all 11 fighters (each checked in the game); T3 the players say,
+  the host settles; T4 the host's phone seats each pair from the bracket,
+  60 s no-show; T5 the World Cup style bracket, VS intro, our own trophy
+  and confetti; T6 tournament wins on the profile (a small table, a count
+  that only goes up). Tested in core (the bracket, the tournament, a
+  three-phone room through to a champion) and in pictures.
+- Decided: the bracket lives on every phone of the room, shared by the host
+  (a new host carries on), not on the server: the server only keeps wins.
+  A game-read win counts only with both seats played by people (Marvel vs
+  Capcom counts the computer's wins in the same byte).
+- God of War: the game's own Moves screen read in the game: □ □ △ is Plume
+  of Prometheus (renamed); hold □ Olympic Slash, hold △ Olympic Ascension,
+  ○ on a foe in the air Orion's Harpoon, ✕ in the air Icarus Lift, L + ○ in
+  the air Hyperion Charge, tap L Athena's Revenge all checked on the boat
+  (face buttons as they are). Its Magic group is locked this early, so the
+  magic pills wait to be seen on the owner's phone.
+
+### 2026-11-07 21:18 Dhaka · Assassin's Creed: labels from the game's own button panel
+- Backlog 3 (the owner reopened it): played here past the tutorial's
+  Blend and Talk steps into Acre (tools/pspemu.py), stopped by the first
+  free-run beam before any fight; the tutorial's "spotted" fight is
+  scripted and takes no input, so no button was checked in a fight.
+- The game's button panel, read at each stage: out of a fight △ Target
+  (Talk near someone), □ Attack, ✕ Blend, L camera, R High Profile; with R
+  held ✕ Sprint, ○ Tackle (Drop at an edge); in a fight R Block, ✕ Dodge,
+  △ Disengage, ○ Grab. The app's Sprint (R + ✕) was seen free-running.
+- So the labels say both: ✕ "Blend/Dodge", R "Run / Block". Checking
+  Attack, Tackle and Block in a real fight waits for the owner's save past
+  the tutorial (the beam).
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-07 17:38 Dhaka:
+As of 2026-11-07 21:06 Dhaka:
 
-- **Open:** Tournaments T1 (the bracket). Next: T2 (who won, from the game), then T3-T6; the World Cup look and the trophy in T5.
+- **Development closed, features locked**, except backlog 1-3, reopened
+  and finished 2026-11-07 21:06 (tournaments T2-T6, God of War's moves; Assassin's
+  Creed's buttons as far as the tutorial allows). Latest release: v1.0.310.
+- **Backlog** (not started, or started and paused):
+  - God of War on the phone: fire (R), the magics and Cyclone of Chaos
+    (past the boat; the magic group is locked in our saves).
+  - Assassin's Creed: Attack, Tackle, Block checked in a real fight (needs
+    the owner's save past the tutorial; labels already from the game's panel).
+  - PSP: Chains of Olympus and NFS Most Wanted profiles; P5 weaker phones.
+  - Recording: R4 voices in the video, R5 trim and polish.
+  - Online Step 3 ideas: everyone-rotates seats, a lobby, bots.
+  - Moving the ROM library to the owner's new Cloudflare account (needs
+    his card).
+  - Games waiting on files: Knights of Valour, KOV 2 Plus, The Gladiator
+    (a current pgm.zip), Alien vs Predator (avspu.key, avsp.zip), Bust-A-Move
+    2 (pbobbl2n.zip).
+  - Notifications with the app closed (a Firebase project).
 - **Merged lately:** #87-#91 (God of War first party, game logs to the server, D-PAD manual, Assassin's Creed, the Drive PSP library, the analog stick, PspGuard).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
-- **Latest release:** v1.0.269.
 - **The PSP games for testing:** in the owner's Google Drive folder (shared by link; the link is with the owner and in the chat, never in the repo): Ghost of Sparta, Chains of Olympus, Assassin's Creed: Bloodlines, Need for Speed: Most Wanted 5-1-0.
 - **Waiting on the owner:**
   - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).

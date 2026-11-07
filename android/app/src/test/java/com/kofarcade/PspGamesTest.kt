@@ -99,10 +99,14 @@ class PspGamesTest {
         assertEquals(6, p.moves.size)
         // R stays held between taps: every combo on fire (Thera's Bane).
         assertEquals(PspProfile.LATCH_R, p.system.first { it.name == "R" }.cmd)
-        assertEquals("A,A,A,A,A,A", p.moves.first { it.name == "Olympic Fury" }.cmd)
+        // From the game's move list: Cyclone of Chaos is L + □.
+        assertEquals("E>A", p.moves.first { it.name == "Cyclone of Chaos" }.cmd)
+        // Spaced presses: checked in the game, quick ones cut the combo short.
+        val spirit = PspSteps.frames(p.moves.first { it.name == "Plume of Prometheus" }.cmd)
+        assertEquals(3 * (PspSteps.TAP + PspSteps.GAP) + 2 * 10, spirit.size)
         assertEquals("pad:6,E>B", p.moves.first { it.name == "Atlas Spark" }.cmd)
         // Checked in the game: L first, then ○ with it (both at once is just ○).
-        assertEquals("E>D,A", p.moves.first { it.name == "Hyperion Rush" }.cmd)
+        assertEquals("E>D", p.moves.first { it.name == "Hyperion Charge" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Need for Speed Most Wanted 5-1-0")
@@ -249,11 +253,11 @@ class PspGamesTest {
     fun assassinsCreedHasItsOwnControls() {
         val p = PspProfile.forTitle("Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It)")
         assertEquals(PspProfile.ASSASSINS_CREED, p)
-        // From the game's own button panel: △ Target, □ Attack, ✕ Blend; R High Profile; L the camera.
+        // From the game's own button panel: △ Target, □ Attack, ✕ Blend (Dodge in a fight); R runs (blocks in a fight); L the camera.
         assertEquals("Target", p.labels['C'])
         assertEquals("Attack", p.labels['A'])
-        assertEquals("Blend", p.labels['B'])
-        assertEquals("Camera" to "High Profile", p.shoulderHints)
+        assertEquals("Blend/Dodge", p.labels['B'])
+        assertEquals("Camera" to "Run / Block", p.shoulderHints)
         // Sprint holds R and ✕ for one thumb; Tackle is R, then ○.
         assertEquals("held:FB", p.system.first { it.name == "Sprint" }.cmd)
         assertEquals("F>D", p.moves.first { it.name == "Tackle" }.cmd)

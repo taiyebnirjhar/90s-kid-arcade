@@ -766,6 +766,79 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     val chatLines = androidx.compose.runtime.mutableStateListOf<ChatShown>()
 
     /** The chat panel is open (the game goes on behind it). */
+    // ----- Tournaments (T3-T5) -----
+
+    /** The room's tournament as this phone has it, or null. */
+    var tournament by mutableStateOf<com.kofarcade.core.tournament.Tournament?>(null)
+        private set
+    /** The VS intro showing: (round, player a, player b, this phone plays). */
+    var vsIntro by mutableStateOf<VsCall?>(null)
+        private set
+    /** A match's result showing for a moment. */
+    var resultFlash by mutableStateOf<String?>(null)
+        private set
+    /** The champion's screen: their name. */
+    var championShown by mutableStateOf<String?>(null)
+        private set
+
+    data class VsCall(val round: String, val a: String, val b: String, val you: Boolean)
+
+    fun endVsIntro() { vsIntro = null }
+    fun endResultFlash() { resultFlash = null }
+    fun closeChampion() { championShown = null }
+
+    /** Members in the room now (for "Start tournament": 3 to 8). */
+    val roomCount: Int get() = room?.members?.values?.count { !it.away } ?: 0
+    val roomLocalId: Int get() = room?.localId ?: -1
+    val isRoomHost: Boolean get() = room?.isOwner == true
+
+    fun startTournament(bestOf: Int) {
+        val r = room ?: return
+        lifecycleScope.launch(netSends) {
+            val why = r.startTournament(game.title, bestOf)
+            if (why != null) runOnUiThread { Toast.makeText(this@GameActivity, why, Toast.LENGTH_SHORT).show() }
+        }
+    }
+    fun reportTournamentWinner(winner: Int) = sendNet { it.reportWinner(winner) }
+    fun hostDecidesTournament(winner: Int) = sendNet { it.hostDecides(winner) }
+    fun endTournament() = sendNet { it.endTournament() }
+
+    // The tournament changed (on the main thread): the overlays follow it.
+    private fun tournamentChanged(room: Room, t: com.kofarcade.core.tournament.Tournament?) {
+        val before = tournament
+        tournament = t
+        if (t == null) {
+            if (before != null) log.event("Tournament ended")
+            return
+        }
+        if (before == null) log.event("Tournament: ${t.bracket.players.size} players, best of ${t.bestOf}")
+        // A new match called: the VS intro.
+        if (t.playing != null && t.playing != before?.playing) {
+            val (a, b) = t.pair ?: return
+            log.event("Tournament: ${t.bar()}")
+            vsIntro = VsCall(t.bracket.label(t.current!!), t.name(a), t.name(b), room.localId.toString() in listOf(a, b))
+        }
+        // A match decided.
+        val r = t.results.lastOrNull()
+        if (r != null && t.results.size != before?.results?.size) {
+            log.event("Tournament: ${t.name(r.winner)} beat ${t.name(r.loser)} (${r.how.name.lowercase()})")
+            if (t.champion == null) resultFlash = "${t.name(r.winner)} goes through!"
+        }
+        // The champion.
+        val champ = t.champion
+        if (champ != null && before?.champion == null) {
+            championShown = t.name(champ)
+            log.event("Tournament champion: ${t.name(champ)}")
+            if (champ == room.localId.toString()) {
+                // On the profile (synced from home, like games played).
+                val account = Online.account(this)
+                lifecycleScope.launch(Dispatchers.IO) { account.recordTournamentWin(game.id) }
+            }
+            // The host shares it in the chat.
+            if (room.isOwner) sendNet { it.say("🏆 ${t.name(champ)} won the ${game.title} tournament!") }
+        }
+    }
+
     var chatOpen by mutableStateOf(false)
         private set
 
@@ -1222,6 +1295,20 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // How long the room's game has run, in ms of game time (frames at 60 a second).
     private fun gameMs(): Long = LibretroDroid.getNetFrame().toLong() * 1000 / 60
 
+    /** A match ended in the game (its own count of wins went up): who won, in the log and on screen. */
+    private fun matchWon(room: Room, side: Int) {
+        val name = room.seats[side]?.name ?: "Player ${side + 1}"
+        log.event("Match won by $name (player ${side + 1}), read from the game")
+        // In a tournament the host's phone puts it in (every phone reads the same), and the bracket says it.
+        if (room.tournament?.current != null) {
+            // Only with both seats played by people: in Marvel vs Capcom the computer taking
+            // an empty side counts its wins in the same byte (checked in the game).
+            if (room.isOwner && room.seats.keys.containsAll(listOf(0, 1))) sendNet { it.tournamentGameWon(side) }
+            return
+        }
+        Toast.makeText(this, "$name won the match", Toast.LENGTH_LONG).show()
+    }
+
     private fun startNetplay(room: Room) {
         // Voice (internet rooms): the mic button, the room's volumes, who's speaking.
         canVoice = room.internet != null
@@ -1246,6 +1333,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 // The game's own time (its frames), not the clock's: a pause or a wait doesn't count down a seat.
                 val now = gameMs()
                 for (seat in seats.offsets.indices) seats.isOut(seat, ::readByte)?.let { seatWatch?.sample(seat, it, now) }
+            }
+        }
+        // Who won each match, from the game itself (Game.matchWins, tournaments
+        // T2): every phone reads the same bytes, so every phone agrees.
+        game.matchWins?.let { wins ->
+            val watch = com.kofarcade.core.tournament.WinWatch(wins)
+            lifecycleScope.launch(Dispatchers.Default) {
+                while (isActive && this@GameActivity.room === room) {
+                    delay(SEAT_SAMPLE_MS)
+                    val side = watch.sample(::readByte) ?: continue
+                    withContext(Dispatchers.Main) { matchWon(room, side) }
+                }
             }
         }
         lifecycleScope.launch {
@@ -1300,6 +1399,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 }
 
                 override fun onChat(line: com.kofarcade.core.net.ChatLine) = runOnUiThread { if (!destroyed) heardChat(room, line) }
+
+                override fun onTournament(tournament: com.kofarcade.core.tournament.Tournament?, outcome: com.kofarcade.core.tournament.Tournament.Outcome?) =
+                    runOnUiThread { if (!destroyed) tournamentChanged(room, tournament) }
 
                 // The game's own word: this seat's player never started, or
                 // their game is over. Null where the game can't say.

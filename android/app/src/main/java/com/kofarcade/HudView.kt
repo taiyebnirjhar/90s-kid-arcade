@@ -1089,7 +1089,8 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     /** A PSP game's own steps ("pad:6,BE", "hold:A"), shown as text: they aren't arcade commands. */
     private fun isPspSteps(cmd: String) = ':' in cmd || '>' in cmd
 
-    private fun pspStepsText(cmd: String): String = cmd.split(',').joinToString(" ") { step ->
+    // Waits ("wait:10", a combo's pause between presses) aren't shown.
+    private fun pspStepsText(cmd: String): String = cmd.split(',').filterNot { it.startsWith("wait:") }.joinToString(" ") { step ->
         when {
             step.startsWith("pad:") -> "✚" + toArrows(step.removePrefix("pad:"))
             step.startsWith("hold:") -> "hold " + step.removePrefix("hold:").map(::buttonName).joinToString("")
