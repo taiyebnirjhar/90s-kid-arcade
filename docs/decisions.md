@@ -982,7 +982,7 @@ decision was made in the conversation. Get the time now with
   back within a minute doubles the next wait (up to 5 minutes), so a scene
   on the edge doesn't flicker. Off: the picture stays as picked.
 
-### 2026-11-07 21:10 Dhaka · God of War moves checked in the game, and from its own move list
+### 2026-11-07 20:29 Dhaka · God of War moves checked in the game, and from its own move list
 - Owner: "Yes start testing gow and assassin moves", then three screenshots
   of the game's Moves screen: Cyclone of Chaos L + □ (level 2), Olympic
   Ascension hold △, Olympic Slash hold □, Orion's Harpoon ○, Icarus Lift
