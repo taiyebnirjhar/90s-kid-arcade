@@ -982,6 +982,25 @@ decision was made in the conversation. Get the time now with
   back within a minute doubles the next wait (up to 5 minutes), so a scene
   on the edge doesn't flicker. Off: the picture stays as picked.
 
+### 2026-11-07 20:29 Dhaka · God of War moves checked in the game, and from its own move list
+- Owner: "Yes start testing gow and assassin moves", then three screenshots
+  of the game's Moves screen: Cyclone of Chaos L + □ (level 2), Olympic
+  Ascension hold △, Olympic Slash hold □, Orion's Harpoon ○, Icarus Lift
+  ✕ in the air, Athena's Revenge (parry) □ or △, Fire Blades hold R.
+- Played on the boat (tools/pspemu.py, each move against doing nothing):
+  Hyperion Charge comes out; hold △ launches; □ □ △ lands 2 hits at the
+  arcade's quick timing but 4 and the △ slam with its presses about 14
+  frames apart; □ ×6 likewise (5 hits quick, 8 spaced). "Hyperion Rush"
+  (□ during the charge) did nothing at any timing: gone, and "Olympic Fury"
+  (a name from the web, not in the game's list) with it. Cyclone of Chaos
+  needs level 2 (after the boat): not checked here.
+- So: the ring is Hyperion Charge, Cyclone of Chaos (L, then □), Spirit of
+  Hercules (spaced: a new "wait:N" step), and the three magics. Olympic
+  Slash and Ascension are the face buttons held.
+- Assassin's Creed: still in the tutorial's Blend step here (the soldiers
+  spot Altair at the marker every try); its fights want a later save from
+  the owner.
+
 ---
 
 ## Where things stand (update whenever it changes)

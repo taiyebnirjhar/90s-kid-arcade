@@ -262,7 +262,7 @@ data class PspProfile(
          * Checked in the game (tools/pspemu.py, the boat's first fight): □, △
          * and ○ attack; L, then ○ while L is held, is Hyperion Charge (both at
          * once is just ○); with L held, □ △ ✕ do nothing before Kratos has
-         * magic; □ □ △ (Spirit of Hercules) and □ held (Cyclone of Chaos)
+         * magic; □ □ △ (Spirit of Hercules) and L + □ (Cyclone of Chaos, from level 2)
          * each come out as their own combo; L+R with the stick rolls; the Mash
          * pill escapes the first grab.
          */
@@ -279,15 +279,19 @@ data class PspProfile(
             // in the middle of play too (1.0.292's log), flipping the stick to
             // the D-pad. The owner: "If this cant be solved. Make dpad manual
             // like before". The D-PAD switch is the only way again.
+            // From the game's own move list (the owner's screenshots, 2026-11-07:
+            // Cyclone of Chaos is L + □; hold □ is Olympic Slash, hold △ Olympic
+            // Ascension, ○ on a foe in the air Orion's Harpoon) and checked in
+            // the game (tools/pspemu.py, the boat): Hyperion Charge comes out;
+            // □ □ △ needs its presses about 14 frames apart (2 hits at the
+            // arcade's quick timing, 4 and the △ slam spaced); □ ×6 likewise
+            // (5 hits quick, 8 spaced). Cyclone of Chaos comes at blade level 2,
+            // after the boat. "Hyperion Rush" (□ during the charge) did nothing:
+            // gone.
             moves = listOf(
-                // Hyperion Charge (L, then ○ while L is held: checked in the
-                // game), then □ while it runs: the charge goes on into a strike.
-                // Six pills fit on the ring: the charge alone is L (Block) + ○,
-                // and Cyclone of Chaos is □ held.
-                Move("Hyperion Rush", "E>D,A"),
-                // Six □: the Blades' long combo (Olympic Fury, in PSNProfiles' list).
-                Move("Olympic Fury", "A,A,A,A,A,A"),
-                Move("Spirit of Hercules", "A,A,C"),
+                Move("Hyperion Charge", "E>D"),
+                Move("Cyclone of Chaos", "E>A"),
+                Move("Spirit of Hercules", "A,wait:10,A,wait:10,C"),
                 Move("Atlas Spark", "pad:6,E>B", "dm"),
                 Move("Erinys Void", "pad:4,E>B", "dm"),
                 Move("Boreas Freeze", "pad:8,E>B", "dm"),
@@ -359,8 +363,8 @@ data class PspProfile(
 
 /**
  * A PSP game's own steps on the ring and the pills, beyond the arcade
- * commands: "pad:6" taps the D-pad right, "hold:A" holds a button (Cyclone of
- * Chaos is □ held), "BE" presses buttons together; steps go one after another
+ * commands: "pad:6" taps the D-pad right, "hold:A" holds a button (Olympic
+ * Slash is □ held), "wait:10" lets go for ten frames, "BE" presses buttons together; steps go one after another
  * ("pad:6,BE": pick a magic, then cast it). Gives the PSP key codes held on
  * each frame, for the game screen to play.
  */
@@ -369,7 +373,10 @@ object PspSteps {
     const val GAP = 3
     const val HOLD = 45
 
-    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") || '>' in it }
+    fun isSteps(cmd: String) = cmd.split(',').any { it.startsWith("pad:") || it.startsWith("hold:") || '>' in it || isWait(it) }
+
+    /** "wait:10": ten frames with nothing pressed (God of War takes a combo's next press only once the last swing's on). */
+    private fun isWait(step: String) = step.startsWith("wait:")
 
     /** The key codes held on each frame, in order (an empty set lets everything go). */
     fun frames(cmd: String): List<Set<Int>> = buildList {
@@ -381,6 +388,10 @@ object PspSteps {
                 repeat(TAP * 2) { add(keys(first)) }
                 repeat(TAP + 2) { add(keys(first) + keys(then)) }
                 repeat(GAP) { add(emptySet()) }
+                continue
+            }
+            if (isWait(step)) {
+                repeat(step.removePrefix("wait:").toIntOrNull() ?: 0) { add(emptySet()) }
                 continue
             }
             val (keys, frames) = when {
