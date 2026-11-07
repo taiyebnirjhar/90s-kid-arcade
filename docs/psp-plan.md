@@ -127,6 +127,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-07: Assassin's Creed: Bloodlines set up (profile from its own
+  tutorial and button panel, a Sprint pill, the Home card); checked here.
 - 2026-11-07: the D-PAD switch is manual again for God of War: its "menu"
   byte also read 0 in play later in the game (the owner's log).
 - 2026-11-07: the D-PAD button is gone for God of War: the stick follows

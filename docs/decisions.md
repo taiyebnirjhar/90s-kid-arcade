@@ -829,6 +829,25 @@ decision was made in the conversation. Get the time now with
   every return to the app, at most once a minute, and every 2 minutes
   while it's open; the Update button then shows within about 2 minutes.
 
+### 2026-11-07 05:53 Dhaka · Assassin's Creed: Bloodlines, set up end to end
+- Owner: "I want to add assassin cred next. Do a complete setup end to
+  end..i will check om the morning".
+- Played here from the owner's Drive copy (tools/pspemu.py): it boots, the
+  first questions (install data, a save) want the D-pad (the D-PAD switch;
+  answer Yes to both on the phone), then the title and the tutorial.
+- Controls, from the game's own tutorial and button panel: the stick
+  walks; R held High Profile (the stick runs; ✕ then sprints, ○ tackles);
+  L held turns the camera with the four buttons, a tap centres it; △
+  Target, □ Attack, ✕ held Blend. Profile `ASSASSINS_CREED`: those names
+  under □ ✕ △ ○, L "Camera", R "High Profile", a **Sprint** pill holding R
+  and ✕ together for one thumb (`SysButton.alsoHold`), Tackle (R, then ○)
+  on the ring. Checked: run, sprint (unlike walking), camera, blend.
+- Speed: lighter than Ghost of Sparta here (8 ms a frame, 17 for GoS); it
+  draws 30 pictures a second; story and play sound at 44,100 a second with
+  frame duplication on.
+- Home: an Assassin's Creed card beside God of War (libretro's picture).
+- The D-PAD switch stays manual (God of War's lesson).
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -840,6 +859,7 @@ As of 2026-11-06 16:13 Dhaka:
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
 - **Latest release:** v1.0.269.
+- **The PSP games for testing:** in the owner's Google Drive folder (shared by link; the link is with the owner and in the chat, never in the repo): Ghost of Sparta, Chains of Olympus, Assassin's Creed: Bloodlines, Need for Speed: Most Wanted 5-1-0.
 - **Waiting on the owner:**
   - Moving the ROM library to his new Cloudflare account (on hold: needs his card for R2). Steps given: bucket `arcade-roms`, zips at the top, Worker `server/worker.js` with binding `ROMS` and the same `ARCADE_KEY`, PSP game in `psp/` with Round Sync (RCX left the Play Store); he sends the new Worker address, then `Library.DEFAULT_URL` changes. The old account stays (TURN, DNS).
   - PSP P2: Ghost of Sparta played again with frame skip Auto; its game log (pause menu → Game log → Copy).
