@@ -119,7 +119,11 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private set
     var sheet by mutableStateOf<Sheet?>(null)
         private set
+    /** The settings in use now: what the player chose, or lower for a while ([PspGuard]). */
     var graphics by mutableStateOf(PspSettings())
+        private set
+    /** What the player chose in Graphics & speed (saved); Auto never goes past it. */
+    var chosen by mutableStateOf(PspSettings())
         private set
     /** The speed counter over the game: off unless chosen (Graphics & speed); the game log has it all. */
     var showSpeed by mutableStateOf(false)
@@ -149,6 +153,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         prefs = Prefs(this)
         store = PspStore(this, gameFile.name)
         graphics = store.settings()
+        chosen = graphics
         profile = PspProfile.forTitle(title)
         val system = File(filesDir, "system").apply { mkdirs() }
         unpackAssets(system)
@@ -207,6 +212,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
         GameLogs.watchPlayback(this, log, meter)
+        guardSpeed()
         followTheGame()
 
         lifecycleScope.launch {
@@ -251,11 +257,55 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         PspSettings.Picture.ENHANCED -> ShaderConfig.CUT2()
     }
 
-    /** Graphics & speed changed: saved for this game, applied at once. */
+    /**
+     * Auto ([PspSettings.auto]): every 5 seconds of play, the picture steps
+     * down when the phone can't keep up and back up when it runs smooth
+     * ([PspGuard]). A step up that's taken back within a minute makes the
+     * next wait twice as long (up to 5 minutes), so a scene on the edge
+     * doesn't flicker between the two.
+     */
+    private fun guardSpeed() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                var steady = PspGuard.STEADY
+                var upAt = 0L
+                while (true) {
+                    delay(5_000)
+                    if (paused || !chosen.auto) continue
+                    val now = SystemClock.elapsedRealtime()
+                    val down = PspGuard.stepDown(graphics, meter.perSecond)
+                    if (down != null) {
+                        if (now - upAt < 60_000) steady = (steady * 2).coerceAtMost(300)
+                        autoStep(down.first, down.second)
+                        continue
+                    }
+                    if (upAt != 0L && now - upAt > 120_000) steady = PspGuard.STEADY
+                    val up = PspGuard.stepUp(graphics, chosen, meter.perSecond, steady) ?: continue
+                    upAt = now
+                    autoStep(up.first, up.second)
+                }
+            }
+        }
+    }
+
+    private fun autoStep(s: PspSettings, why: String) {
+        log.event("Auto: $why")
+        apply(s)
+        // The count starts again: the next step waits for the new settings' own seconds.
+        meter.reset()
+        Toast.makeText(this, why, Toast.LENGTH_SHORT).show()
+    }
+
+    /** Graphics & speed changed by the player: saved for this game, applied at once. */
     fun applyGraphics(s: PspSettings) {
+        chosen = s
+        store.save(s)
+        apply(s)
+    }
+
+    private fun apply(s: PspSettings) {
         val old = graphics
         graphics = s
-        store.save(s)
         if (old != s) log.event("Graphics & speed: ${settingsLine(s)}")
         if (PspSpeed.options(old) != PspSpeed.options(s)) {
             retroView.updateVariables(*variables(s))
@@ -514,7 +564,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun settingsLine(s: PspSettings) =
-        "frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, faster effects ${if (s.fasterEffects) "on" else "off"}"
+        "frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, faster effects ${if (s.fasterEffects) "on" else "off"}, auto ${if (s.auto) "on" else "off"}"
 
     fun restartCount() {
         log.event("Speed count restarted")
@@ -879,7 +929,7 @@ private fun PspSettingsSheet(game: PspGameActivity, startTab: SettingsTab = Sett
 /** This game's Graphics & speed, kept per game: the arcade panel's look and rows. */
 @Composable
 private fun PspGraphicsPanel(game: PspGameActivity) {
-    val s = game.graphics
+    val s = game.chosen
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
         Column(
             Modifier.fillMaxSize().widthIn(max = 420.dp).slantPanel(left = 28.dp, right = 0.dp)
@@ -888,13 +938,25 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             Text("GRAPHICS & SPEED", color = Palette.gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
             Text(game.title, color = Palette.muted, fontSize = 11.sp, maxLines = 1)
             Spacer(Modifier.height(10.dp))
+            ToggleRow(
+                "Auto", s.auto, { game.applyGraphics(s.copy(auto = it)) },
+                sub = "Lowers the picture in heavy scenes and puts it back when the game runs smooth, never past what you pick below",
+            )
+            if (s.auto && game.graphics != s) {
+                val g = game.graphics
+                Text(
+                    "Now, for a heavy scene: sharpness ${g.resolution}x, ${g.picture.label}, faster effects ${if (g.fasterEffects) "on" else "off"}",
+                    color = Palette.gold, fontSize = 11.sp,
+                )
+                Spacer(Modifier.height(6.dp))
+            }
             PickRow(
                 "Frame skip", PspSpeed.FrameSkip.entries, s.frameSkip, { it.label },
                 sub = "Auto skips a picture only when behind, so the game never slows",
             ) { game.applyGraphics(s.copy(frameSkip = it)) }
             PickRow(
                 "Sharpness", listOf(1, 2), s.resolution, { if (it >= 2) "2x" else "1x (PSP's own)" },
-                sub = "2x is sharper but heavy: busy fights may slow down on some phones",
+                sub = "2x is sharper but heavy (with Auto on, it drops to 1x in heavy scenes and comes back)",
             ) { game.applyGraphics(s.copy(resolution = it)) }
             PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
                 game.applyGraphics(s.copy(picture = it))
@@ -956,6 +1018,7 @@ class PspStore(context: Context, private val game: String) {
             resolution = prefs.getInt("$game.res", d.resolution),
             fasterEffects = prefs.getBoolean("$game.fx", d.fasterEffects),
             picture = PspSettings.Picture.entries.firstOrNull { it.name == prefs.getString("$game.picture", null) } ?: d.picture,
+            auto = prefs.getBoolean("$game.auto", d.auto),
         )
     }
 
@@ -965,6 +1028,7 @@ class PspStore(context: Context, private val game: String) {
             .putInt("$game.res", s.resolution)
             .putBoolean("$game.fx", s.fasterEffects)
             .putString("$game.picture", s.picture.name)
+            .putBoolean("$game.auto", s.auto)
             .apply()
     }
 }

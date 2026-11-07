@@ -125,9 +125,57 @@ data class PspSettings(
     /** Skips some full-screen effects (glows, blur) for speed. */
     val fasterEffects: Boolean = false,
     val picture: Picture = Picture.SHARP,
+    /** The picture follows what the phone can do ([PspGuard]): down in heavy scenes, back up when smooth. */
+    val auto: Boolean = true,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
     enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
+}
+
+/**
+ * Auto (on unless the player turns it off): the picture follows what the
+ * phone can do. When the last 10 seconds mostly ran slow it steps down, the
+ * cheapest look first (Enhanced edges to Smooth, then faster effects on, then
+ * 2x to 1x); after a steady stretch at full speed it steps back up, one step
+ * at a time, never past what the player chose. The owner's phone (Adreno 610)
+ * ran God of War's calm places at 2x Sharp at full speed and its big fights
+ * at 30-40 fps; Enhanced edges at 20-38 fps (1.0.303's log).
+ */
+object PspGuard {
+    const val WINDOW = 10
+    const val SLOW = 50
+    /** Full speed, for stepping back up. */
+    const val FULL = 57
+    /** Seconds at full speed before a step back up. */
+    const val STEADY = 30
+
+    /** The settings to step down to, and what to tell the player; null if it's fast enough or nothing's left to drop. */
+    fun stepDown(s: PspSettings, perSecond: List<Int>): Pair<PspSettings, String>? {
+        if (perSecond.size < WINDOW) return null
+        val last = perSecond.takeLast(WINDOW)
+        if (last.count { it < SLOW } < 7 || last.average() >= 45) return null
+        return when {
+            s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Heavy scene: picture to Smooth for now"
+            !s.fasterEffects -> s.copy(fasterEffects = true) to "Heavy scene: faster effects on for now"
+            s.resolution >= 2 -> s.copy(resolution = 1) to "Heavy scene: sharpness 1x for now"
+            else -> null
+        }
+    }
+
+    /**
+     * One step back toward [chosen] once the last [steady] seconds all ran at
+     * full speed (the reverse order: sharpness first, the look the player
+     * notices most); null if it's already there or not steady yet.
+     */
+    fun stepUp(s: PspSettings, chosen: PspSettings, perSecond: List<Int>, steady: Int = STEADY): Pair<PspSettings, String>? {
+        if (perSecond.size < steady || perSecond.takeLast(steady).any { it < FULL }) return null
+        return when {
+            s.resolution < chosen.resolution -> s.copy(resolution = chosen.resolution) to "Running smooth: sharpness back to ${chosen.resolution}x"
+            s.fasterEffects && !chosen.fasterEffects -> s.copy(fasterEffects = false) to "Running smooth: full effects back"
+            s.picture != chosen.picture -> s.copy(picture = chosen.picture) to "Running smooth: picture back to ${chosen.picture.label}"
+            else -> null
+        }
+    }
 }
 
 /** The PPSSPP options for [settings]. */

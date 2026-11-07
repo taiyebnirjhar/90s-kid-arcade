@@ -970,12 +970,17 @@ decision was made in the conversation. Get the time now with
 - Owner: "On Mash rotate not needed. We can remove that. L + R is okey".
 - Mash is L ○ R ○ again, without the stick spin.
 
-### 2026-11-07 19:30 Dhaka · No automatic step-down for PSP graphics
-- Owner: "Make sure it doesnt auto down grade. We dont want auto here".
-- PspGuard is gone: the picture stays as set (2x, Enhanced edges) however
-  the game runs; the player changes it in Graphics & speed. Suggested on
-  his phone: 2x, Sharp, faster effects on, frame skip off (his log: 2x
-  Sharp full speed 93% of the time, Enhanced edges 20-38 fps).
+### 2026-11-07 19:45 Dhaka · PSP graphics: Auto goes both ways
+- Owner, after the step-down was taken out: "Keep the auto. Can we auto
+  adjust settings? I meant graphic settings".
+- Auto is back and on by default, a switch at the top of Graphics &
+  speed. In a heavy scene (7 of the last 10 seconds slow) it steps down
+  the cheapest look first: Enhanced edges to Smooth, then faster effects
+  on, then 2x to 1x. After 30 seconds at full speed it steps back up one
+  step at a time, sharpness first, never past what the player picked
+  (kept apart from what's in use now, which isn't saved). A step up taken
+  back within a minute doubles the next wait (up to 5 minutes), so a scene
+  on the edge doesn't flicker. Off: the picture stays as picked.
 
 ---
 
