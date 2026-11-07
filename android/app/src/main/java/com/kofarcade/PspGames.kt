@@ -129,7 +129,21 @@ data class PspSettings(
     val auto: Boolean = true,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
-    enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
+    enum class Picture(val label: String) {
+        SHARP("Sharp"),
+        /**
+         * The 1x picture with its edges smoothed on the way to the screen: a
+         * single-pass upscale (LibretroDroid's CUT), cheap next to Enhanced
+         * edges (two passes: 20-38 fps on the owner's phone). The nearest to
+         * 2x at 1x's speed (the owner: "play at 2x. But on speed on 1x"): real
+         * 2x is about 2.2x the work (measured here, God of War's boat: 41
+         * against 18 frames a second; drawing effects smaller only won back
+         * 6-9%), and there's no size between 1x and 2x.
+         */
+        CRISP("Crisp edges"),
+        SMOOTH("Smooth"),
+        ENHANCED("Enhanced edges"),
+    }
 }
 
 /**

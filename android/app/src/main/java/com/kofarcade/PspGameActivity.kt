@@ -280,6 +280,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     private fun shaderFor(p: PspSettings.Picture): ShaderConfig = when (p) {
         PspSettings.Picture.SHARP -> ShaderConfig.Sharp
+        PspSettings.Picture.CRISP -> ShaderConfig.CUT()
         PspSettings.Picture.SMOOTH -> ShaderConfig.Default
         PspSettings.Picture.ENHANCED -> ShaderConfig.CUT2()
     }
@@ -995,7 +996,7 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
                 "Sharpness", listOf(1, 2), s.resolution, { if (it >= 2) "2x" else "1x (PSP's own)" },
                 sub = "2x is sharper but heavy (with Auto on, it drops to 1x in heavy scenes and comes back)",
             ) { game.applyGraphics(s.copy(resolution = it)) }
-            PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
+            PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen. Crisp edges at 1x looks close to 2x at full speed") {
                 game.applyGraphics(s.copy(picture = it))
             }
             if (game.fasterEffectsOk) {

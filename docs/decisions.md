@@ -1092,6 +1092,18 @@ decision was made in the conversation. Get the time now with
   that game (another game's is refused), keeping what was there in
   psp/saves-kept. Nothing goes through our server.
 
+### 2026-11-08 00:36 Dhaka · PSP picture: Crisp edges, the 2x look at 1x's speed
+- Owner (1.0.321's log: 2x held 29-31 fps, 1x full speed 86% of the time):
+  "is it somehow possible to play at 2x. But on speed on 1x".
+- Measured here on God of War's boat (tools/pspemu.py, the same frames): 1x
+  41 frames a second, 2x 18 (about 2.2x the work); PPSSPP's "lower
+  resolution for effects" at 2x won back only 6-9% (Safe 19.5, Balanced
+  19.4, Aggressive 20.1); the core offers no size between 1x and 2x. So real
+  2x can't run at full speed on the owner's phone (Adreno 610).
+- Instead: a Picture choice, Crisp edges: the 1x picture with its edges
+  smoothed on the way to the screen by LibretroDroid's single-pass upscale
+  (CUT), cheap next to Enhanced edges (two passes). To be seen on his phone.
+
 ---
 
 ## Where things stand (update whenever it changes)
