@@ -870,6 +870,25 @@ decision was made in the conversation. Get the time now with
   Android stops as the app goes. Checked in the game: a state taken off
   that thread loads back.
 
+### 2026-11-07 16:47 Dhaka · The PSP library: the owner's public Google Drive folder
+- Owner: "Can we add psp roms on library as psp library. those file will
+  come from google drive. Tell me what are bottlenecks, and r2 vs drive" …
+  "Yes. And Drive will be public folder."
+- Decided: the PSP screen has a **PSP library**: paste the Drive folder's
+  link once (kept on the phone, never in the app or the repo); its games
+  are listed (Drive's folder view) with **Get**. A download goes through
+  the app's one download queue (background service, notification, resume:
+  Drive serves byte ranges, checked), answers Drive's "can't scan, download
+  anyway?" step for big files, and is unpacked into the PSP games
+  (`DriveFolder`, entries named `psp:<id>:<file>`). Needs 3.5 GB free while
+  a game is added. Checked live: the owner's folder lists its 4 games and
+  Assassin's Creed (439,634,277 bytes) downloads whole.
+- Bottlenecks told: Drive's download limit if a file is fetched very often
+  in a day; anyone with the link can download; space while unpacking;
+  unpacking a .7z takes a minute or two (.cso files need none); Drive's
+  page could change (the official Drive API is the fallback). R2 stays for
+  later, if many players use it.
+
 ---
 
 ## Where things stand (update whenever it changes)

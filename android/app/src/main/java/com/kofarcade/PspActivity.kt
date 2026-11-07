@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -56,11 +57,22 @@ class PspActivity : ComponentActivity() {
     private var added by mutableStateOf(0L)
     private var error by mutableStateOf<String?>(null)
 
+    // The PSP library (a public Google Drive folder): its link, its games, and how listing it went.
+    private val prefs by lazy { Prefs(this) }
+    private var link by mutableStateOf("")
+    private var driveGames by mutableStateOf<List<Library.Entry>>(emptyList())
+    private var driveNote by mutableStateOf<String?>(null)
+    private var listing by mutableStateOf(false)
+
     private val pick = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(::add) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         games = PspGames.list(dir)
+        link = prefs.pspDriveLink.orEmpty()
+        if (link.isNotEmpty()) loadDrive()
+        // A game landing from the library shows in the list at once.
+        lifecycleScope.launch { LibraryDownloads.get(this@PspActivity).installed.collect { games = PspGames.list(dir) } }
         setContent { KofTheme { Screen() } }
     }
 
@@ -94,6 +106,34 @@ class PspActivity : ComponentActivity() {
             result.onFailure { e -> error = e.message ?: "Couldn't add $name" }
             games = PspGames.list(dir)
         }
+    }
+
+    /** Lists the Drive folder's games (off the main thread). */
+    private fun loadDrive() {
+        val l = link.trim()
+        if (DriveFolder.folderId(l) == null) {
+            driveNote = "Paste the Google Drive folder's link (shared with anyone who has the link)"
+            return
+        }
+        prefs.pspDriveLink = l
+        listing = true
+        driveNote = null
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { runCatching { DriveFolder.list(l) } }
+            listing = false
+            result.onSuccess { driveGames = it; if (it.isEmpty()) driveNote = "No PSP games in that folder" }
+                .onFailure { driveNote = it.message ?: "Couldn't open the folder" }
+        }
+    }
+
+    /** Downloads a Drive game (the app's download queue: in the background, picked up after drops). */
+    private fun getFromDrive(e: Library.Entry) {
+        // The download and the unpacked game sit side by side for a moment: about 3 GB for the biggest.
+        if (filesDir.usableSpace < 3_500_000_000L) {
+            driveNote = "Free some space first: a PSP game needs up to 3.5 GB while it's added (${filesDir.usableSpace / 1_000_000} MB free)"
+            return
+        }
+        LibraryDownloads.get(this).enqueue(listOf(e))
     }
 
     private fun displayName(uri: Uri): String? =
@@ -138,11 +178,54 @@ class PspActivity : ComponentActivity() {
                 GoldButton("Add a game", { pick.launch(arrayOf("*/*")) })
             }
             error?.let { Text(it, color = Palette.red, fontSize = 13.sp) }
+            DriveLibrary()
             Spacer(Modifier.height(4.dp))
             if (games.isEmpty() && busy == null) {
                 Text("No PSP games yet.", color = Palette.muted, fontSize = 14.sp)
             }
             for (g in games) GameRow(g)
+        }
+    }
+
+    /** The PSP library: the Drive folder's games, each with Get (or its download's progress). */
+    @Composable
+    private fun DriveLibrary() {
+        val downloads by LibraryDownloads.get(this).state.collectAsState()
+        Text("PSP library", color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Black)
+        Text(
+            "Games from your Google Drive folder. Downloads go on in the background and pick up after a drop.",
+            color = Palette.muted, fontSize = 12.sp,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ArcadeField(link, { link = it }, label = null, modifier = Modifier.weight(1f), placeholder = "Google Drive folder link", onDone = ::loadDrive)
+            Spacer(Modifier.padding(4.dp))
+            GhostButton(if (listing) "…" else "Open", ::loadDrive, compact = true, enabled = !listing)
+        }
+        driveNote?.let { Text(it, color = Palette.red, fontSize = 12.sp) }
+        for (e in driveGames) {
+            val (_, file) = DriveFolder.parseEntry(e.name) ?: continue
+            val d = downloads[e.name]
+            val title = LibraryDownloads.title(e.name)
+            val onPhone = games.any { g -> PspGames.title(g).lowercase().let { t -> title.lowercase().split(' ', '-', ':').filter { it.length > 3 }.all { w -> w in t } } }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Palette.panel)
+                    .border(1.dp, Palette.line, RoundedCornerShape(14.dp)).padding(14.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    val line = when {
+                        d == null -> if (onPhone) "On this phone" else file
+                        d.queued -> "Waiting its turn…"
+                        d.result != null -> d.result
+                        else -> "Downloading… ${d.done / 1_000_000} MB"
+                    }
+                    Text(line, color = Palette.muted, fontSize = 12.sp)
+                }
+                if (!onPhone && (d == null || d.retry || (d.result != null && !d.ok))) {
+                    GoldButton("Get", { getFromDrive(e) }, compact = true)
+                }
+            }
         }
     }
 
