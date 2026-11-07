@@ -105,6 +105,17 @@ the owner's phones.
   the bar over the game, the VS intro before each match, a result flash,
   and the champion's screen: our own trophy (drawn in code, not FIFA's)
   rising, light rays, confetti. The host shares the champion in the chat.
+  Sized to the screen (the owner: "Make sure the ui is reponsive, have
+  proper spacing and completely optimise"): the bracket's cards take the
+  width there is (76-130 dp, sideways scroll only if even the smallest
+  don't fit), grow with the phone's text size, buttons wrap, the bar is at
+  most half the screen, the VS names and the champion's trophy scale to the
+  screen (a short landscape phone keeps the trophy clear of the name).
+  Pictures at a small phone, small landscape, landscape, tablet and big
+  text (UiSnapshots). Smooth: the bracket's layout is worked out once per
+  bracket (and the bracket's matches once, not on every look), and the
+  glow, lines and confetti move in the drawing only, never rebuilding the
+  cards.
 - **T6** tournaments won per game on the champion's phone, synced like the
   games played (`record_tournament_wins`, migration
   20261107010000_tournament_wins.sql: one small row per player and game, a

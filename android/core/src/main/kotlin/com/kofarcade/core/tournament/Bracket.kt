@@ -38,9 +38,12 @@ data class Bracket(
     /** Rounds to a champion: 2 or 3. */
     val rounds: Int get() = if (size == 4) 2 else 3
 
-    /** Every match, round by round, with what's known of it; byes and players who left decided without play. */
-    val matches: List<Match>
-        get() {
+    /**
+     * Every match, round by round, with what's known of it; byes and players
+     * who left decided without play. Worked out once per bracket (each change
+     * is a new one), not on every look.
+     */
+    val matches: List<Match> by lazy {
             val out = ArrayList<Match>()
             // The first round's places, by seed: the top seeds meet the byes.
             var sides: List<Side> = seedOrder(size).map { seed -> players.getOrNull(seed)?.let { Side.Player(it) } ?: Side.Bye }
@@ -57,7 +60,7 @@ data class Bracket(
                 }
                 sides = next
             }
-            return out
+            out
         }
 
     /** The winner, once the final's decided. */

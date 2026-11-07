@@ -220,7 +220,7 @@ private fun TournamentLayer(game: GameActivity) {
     val t = game.tournament ?: return
     if (game.dialog == null && !game.editing) {
         Box(Modifier.fillMaxWidth().padding(top = 14.dp), contentAlignment = Alignment.TopCenter) {
-            TournamentBar(t, Modifier.padding(horizontal = 120.dp))
+            TournamentBar(t, Modifier.fillMaxWidth())
         }
     }
     game.championShown?.let { name ->

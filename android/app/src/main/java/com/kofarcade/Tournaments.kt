@@ -16,6 +16,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -41,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -77,26 +81,31 @@ private val GoldLight = Color(0xFFFFE9A8)
 private val CardBg = Color(0xFF1C1C24)
 private val Line = Color(0xFF5A5A66)
 
-/** The bar over the game: "Quarter-final 2 of 4 · Rafi vs Tanu". */
+/** The bar over the game: "Quarter-final 2 of 4 · Rafi vs Tanu". At most half the screen wide, so it never covers the controls. */
 @Composable
 fun TournamentBar(t: Tournament, modifier: Modifier = Modifier) {
     val text = t.bar() ?: if (t.over) "Champion: ${t.name(t.champion)}" else "Tournament: the next match is coming up"
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.62f))
-            .border(1.dp, Gold.copy(alpha = 0.6f), RoundedCornerShape(50)).padding(horizontal = 12.dp, vertical = 4.dp),
-    ) {
-        Canvas(Modifier.size(12.dp)) { drawTrophy(size.width / 2, size.height, size.height) }
-        Spacer(Modifier.width(6.dp))
-        Text(text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    BoxWithConstraints(modifier, contentAlignment = Alignment.TopCenter) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.widthIn(max = (maxWidth * 0.5f).coerceAtLeast(220.dp)).clip(RoundedCornerShape(50))
+                .background(Color.Black.copy(alpha = 0.62f)).border(1.dp, Gold.copy(alpha = 0.6f), RoundedCornerShape(50))
+                .padding(horizontal = 12.dp, vertical = 5.dp),
+        ) {
+            Canvas(Modifier.size(12.dp)) { drawTrophy(size.width / 2, size.height, size.height) }
+            Spacer(Modifier.width(6.dp))
+            Text(text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
 /**
  * The tournament part of the room sheet: the host starts one (best of 1 or
  * 3), everyone sees the bracket; the two playing say who won (T3), the host
- * decides a dispute or any game; the host can call it off.
+ * decides a dispute or any game; the host can call it off. Buttons wrap to
+ * a new line on a narrow screen or with big text.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TournamentSection(
     t: Tournament?,
@@ -108,29 +117,34 @@ fun TournamentSection(
     onDecide: (winner: Int) -> Unit,
     onEnd: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(top = 14.dp)) {
+    val rowGap = Arrangement.spacedBy(8.dp)
+    Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(18.dp)) { drawTrophy(size.width / 2, size.height, size.height) }
             Spacer(Modifier.width(8.dp))
             Text("TOURNAMENT", color = Gold, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            if (t != null) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "${t.bracket.players.size} players · ${if (t.bestOf == 3) "best of 3" else "one match each"}",
+                    color = Palette.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-        Spacer(Modifier.height(8.dp))
         if (t == null) {
             if (!isHost) {
-                Text("The host can start a tournament: everyone in the room, one match at a time, until there's a champion.", color = Palette.muted, fontSize = 12.sp)
+                Text("The host can start a tournament: everyone in the room, one match at a time, until there's a champion.", color = Palette.muted, fontSize = 12.sp, lineHeight = 17.sp)
                 return
             }
             var bestOf by remember { mutableStateOf(1) }
             Text(
                 if (inRoom >= Tournament.MIN_PLAYERS) "$inRoom in the room: a bracket drawn at random, byes for the top seeds."
                 else "A tournament needs 3 to 8 in the room ($inRoom now).",
-                color = Palette.muted, fontSize = 12.sp,
+                color = Palette.muted, fontSize = 12.sp, lineHeight = 17.sp,
             )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(horizontalArrangement = rowGap, verticalArrangement = rowGap) {
                 Chip("One match", bestOf == 1) { bestOf = 1 }
                 Chip("Best of 3", bestOf == 3) { bestOf = 3 }
-                Spacer(Modifier.weight(1f))
                 GoldButton("Start tournament", { onStart(bestOf) }, compact = true, enabled = inRoom in Tournament.MIN_PLAYERS..Bracket.MAX)
             }
             return
@@ -140,60 +154,87 @@ fun TournamentSection(
         if (pair != null) {
             val (a, b) = pair
             val me = localId.toString()
-            Spacer(Modifier.height(8.dp))
             if (me == a || me == b) {
                 val other = if (me == a) b else a
                 val said = t.reports[me]
                 Text(
                     if (said != null) "You said ${if (said == me) "you" else t.name(said)} won. Waiting for ${t.name(other)}…"
                     else "When the game's done, if the app doesn't see who won:",
-                    color = Palette.muted, fontSize = 12.sp,
+                    color = Palette.muted, fontSize = 12.sp, lineHeight = 17.sp,
                 )
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = rowGap, verticalArrangement = rowGap) {
                     GhostButton("I won", { onReport(me.toInt()) }, compact = true)
                     GhostButton("${t.name(other)} won", { onReport(other.toInt()) }, compact = true)
                 }
             }
             if (isHost) {
                 val disputed = t.reports.size == 2 && t.reports.values.toSet().size == 2
-                Spacer(Modifier.height(6.dp))
-                Text(if (disputed) "They disagree: you decide who won this game." else "Host: settle this game", color = if (disputed) Palette.red else Palette.muted, fontSize = 12.sp)
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    if (disputed) "They disagree: you decide who won this game." else "Host: settle this game",
+                    color = if (disputed) Palette.red else Palette.muted, fontSize = 12.sp,
+                )
+                FlowRow(horizontalArrangement = rowGap, verticalArrangement = rowGap) {
                     GhostButton("${t.name(a)} won", { onDecide(a.toInt()) }, compact = true)
                     GhostButton("${t.name(b)} won", { onDecide(b.toInt()) }, compact = true)
                 }
             }
         }
-        if (isHost) {
-            Spacer(Modifier.height(8.dp))
-            GhostButton(if (t.over) "Close the tournament" else "Call it off", onEnd, compact = true, danger = !t.over)
-        }
+        if (isHost) GhostButton(if (t.over) "Close the tournament" else "Call it off", onEnd, compact = true, danger = !t.over)
     }
 }
 
 @Composable
 private fun Chip(text: String, on: Boolean, onClick: () -> Unit) {
-    Text(
-        text, color = if (on) Color.Black else Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Gold else Color.Transparent)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.height(38.dp).clip(RoundedCornerShape(50)).background(if (on) Gold else Color.Transparent)
             .border(1.dp, if (on) Gold else Palette.line, RoundedCornerShape(50)).clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    )
+            .padding(horizontal = 14.dp),
+    ) {
+        Text(text, color = if (on) Color.Black else Palette.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+    }
+}
+
+/** Where each match of a bracket sits: its column (0 = the left edge) and its middle, as a share of the height. */
+private class BracketLayout(val bracket: Bracket) {
+    val rounds = bracket.rounds
+    val columns = rounds * 2 - 1
+    val matches = bracket.matches
+    private val byRound = matches.groupBy { it.round }
+    val firstHalf = byRound.getValue(0).size / 2
+
+    /** (column, middle 0..1) of [m]. */
+    val spot: Map<Int, Pair<Int, Float>> = matches.associate { m ->
+        val inRound = byRound.getValue(m.round)
+        val i = inRound.indexOf(m)
+        val per = inRound.size
+        val final = m.round == rounds - 1
+        val left = i < per / 2
+        val col = if (final) rounds - 1 else if (left) m.round else columns - 1 - m.round
+        val j = if (final) 0 else if (left) i else i - per / 2
+        val count = if (final) 1 else per / 2
+        m.number to (col to (j + 0.5f) / count)
+    }
+
+    /** The match each one's winner goes on to. */
+    val next: Map<Int, Int> = matches.filter { it.round < rounds - 1 }.associate { m ->
+        val i = byRound.getValue(m.round).indexOf(m)
+        m.number to byRound.getValue(m.round + 1)[i / 2].number
+    }
 }
 
 /**
  * The bracket, World Cup style: the first round's two halves on the left and
  * right, the rounds stepping in to the final in the middle with the trophy
  * under it. Each winner's line lights up gold, drawn in as it happens; the
- * match on now glows.
+ * match on now glows. The cards size to the space (scrolling sideways only
+ * when even the smallest don't fit); the layout is worked out once per
+ * bracket and the glow and lines animate in the drawing alone, so a frame of
+ * animation never rebuilds the cards.
  */
 @Composable
 fun BracketView(t: Tournament, modifier: Modifier = Modifier) {
-    val matches = t.bracket.matches
-    val rounds = t.bracket.rounds
-    // Lines drawn in when results come.
+    val layout = remember(t.bracket) { BracketLayout(t.bracket) }
     val still = LocalStill.current
     val grow = remember { Animatable(if (still) 1f else 0f) }
     LaunchedEffect(t.results.size) {
@@ -201,90 +242,77 @@ fun BracketView(t: Tournament, modifier: Modifier = Modifier) {
         grow.snapTo(0f)
         grow.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
     }
-    val glow by rememberInfiniteTransition(label = "glow").animateFloat(0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "on now")
+    val glow = if (still || t.playing == null) remember { mutableStateOf(1f) }
+    else rememberInfiniteTransition(label = "glow").animateFloat(0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "on now")
     val latest = t.results.lastOrNull()?.match
     BoxWithConstraints(modifier) {
-        // Columns: round 0 left, …, final, …, round 0 right.
-        val cols = rounds * 2 - 1
-        val colW = 96.dp
-        val gap = 14.dp
-        val width = colW * cols + gap * (cols - 1)
-        val firstRound = matches.count { it.round == 0 }
-        val half = firstRound / 2
-        val slotH = 46.dp
-        val height = slotH * half * 2 + 24.dp
-        val full = maxOf(width, if (this.maxWidth.value.isFinite()) this.maxWidth else width)
-        Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) { Box(Modifier.width(full).height(height)) {
-            val left = (full - width) / 2
-            // Where each match sits: its column and its middle (in dp).
-            fun place(m: Bracket.Match): Pair<Float, Float> {
-                val inRound = matches.filter { it.round == m.round }
-                val i = inRound.indexOf(m)
-                val per = inRound.size
-                val final = m.round == rounds - 1
-                val side = if (final) 0 else if (i < per / 2) -1 else 1
-                val col = if (final) rounds - 1 else if (side < 0) m.round else cols - 1 - m.round
-                val j = if (final) 0 else if (side < 0) i else i - per / 2
-                val count = if (final) 1 else per / 2
-                val span = height.value - 24f
-                val mid = 12f + span * (j + 0.5f) / count
-                return (left.value + col * (colW.value + gap.value)) to mid
-            }
-            // The lines first, under the cards.
-            Canvas(Modifier.fillMaxSize()) {
-                val d = density
-                for (m in matches) {
-                    if (m.round == rounds - 1) continue
-                    val next = matches.first { it.round == m.round + 1 && matches.filter { x -> x.round == m.round }.indexOf(m) / 2 == matches.filter { x -> x.round == m.round + 1 }.indexOf(it) }
-                    val (x, y) = place(m)
-                    val (nx, ny) = place(next)
-                    val fromRight = x > nx
-                    val sx = (if (fromRight) x else x + colW.value) * d
-                    val ex = (if (fromRight) nx + colW.value else nx) * d
-                    val midX = (sx + ex) / 2
-                    val won = m.winner != null && m.a != null && m.b != null
-                    val p = if (m.number == latest) grow.value else 1f
-                    val c = if (won) Gold else Line
-                    val w = if (won) 2.5f * d else 1.5f * d
-                    drawLine(Line, Offset(sx, y * d), Offset(midX, y * d), 1.5f * d)
-                    drawLine(Line, Offset(midX, y * d), Offset(midX, ny * d), 1.5f * d)
-                    drawLine(Line, Offset(midX, ny * d), Offset(ex, ny * d), 1.5f * d)
-                    if (won) {
-                        // The winner's way on, drawn in.
-                        val segs = listOf(Offset(sx, y * d) to Offset(midX, y * d), Offset(midX, y * d) to Offset(midX, ny * d), Offset(midX, ny * d) to Offset(ex, ny * d))
-                        val total = 3f * p
+        val gap = 12.dp
+        val avail = if (maxWidth.value.isFinite()) maxWidth else 600.dp
+        // As wide as fits, between a readable 76 dp and a roomy 130 dp a card.
+        val colW = ((avail - gap * (layout.columns - 1)) / layout.columns).coerceIn(76.dp, 130.dp)
+        val width = colW * layout.columns + gap * (layout.columns - 1)
+        // Taller cards with bigger text (the phone's text size), up to 1.4x.
+        val cardH = 42.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceIn(1f, 1.4f)
+        val slotH = cardH + 10.dp
+        val trophyRoom = 64.dp
+        val height = (slotH * layout.firstHalf).coerceAtLeast(cardH + trophyRoom + 20.dp) + 16.dp
+        val full = maxOf(width, avail)
+        val left = (full - width) / 2
+        Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+            Box(Modifier.width(full).height(height)) {
+                fun x(m: Bracket.Match) = left + (colW + gap) * layout.spot.getValue(m.number).first
+                fun y(m: Bracket.Match) = 8.dp + (height - 16.dp) * layout.spot.getValue(m.number).second
+                Canvas(Modifier.fillMaxSize()) {
+                    for (m in layout.matches) {
+                        val to = layout.next[m.number]?.let { layout.matches[it] } ?: continue
+                        val fromRight = x(m) > x(to)
+                        val sx = (if (fromRight) x(m) else x(m) + colW).toPx()
+                        val ex = (if (fromRight) x(to) + colW else x(to)).toPx()
+                        val sy = y(m).toPx()
+                        val ey = y(to).toPx()
+                        val midX = (sx + ex) / 2
+                        val thin = 1.5.dp.toPx()
+                        drawLine(Line, Offset(sx, sy), Offset(midX, sy), thin)
+                        drawLine(Line, Offset(midX, sy), Offset(midX, ey), thin)
+                        drawLine(Line, Offset(midX, ey), Offset(ex, ey), thin)
+                        if (m.winner == null || m.a == null || m.b == null) continue
+                        // The winner's way on, drawn in (the newest one grows).
+                        val p = if (m.number == latest) grow.value else 1f
+                        val segs = listOf(Offset(sx, sy) to Offset(midX, sy), Offset(midX, sy) to Offset(midX, ey), Offset(midX, ey) to Offset(ex, ey))
                         segs.forEachIndexed { k, (a, b) ->
-                            val f = (total - k).coerceIn(0f, 1f)
-                            if (f > 0f) drawLine(c, a, Offset(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f), w, StrokeCap.Round)
+                            val f = (3f * p - k).coerceIn(0f, 1f)
+                            if (f > 0f) drawLine(Gold, a, Offset(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f), 2.5.dp.toPx(), StrokeCap.Round)
                         }
                     }
+                    val final = layout.matches.last()
+                    val trophyH = minOf(trophyRoom.toPx() - 8.dp.toPx(), (height - y(final) - cardH / 2).toPx() - 6.dp.toPx())
+                    if (trophyH > 16.dp.toPx()) drawTrophy((x(final) + colW / 2).toPx(), (y(final) + cardH / 2).toPx() + 6.dp.toPx() + trophyH, trophyH)
                 }
-                // The trophy under the final.
-                val fm = matches.last()
-                val (fx, fy) = place(fm)
-                drawTrophy((fx + colW.value / 2) * d, (fy + slotH.value * 1.45f) * d, 30f * d)
-            }
-            for (m in matches) {
-                val (x, y) = place(m)
-                val bye = m.round == 0 && (m.a == null || m.b == null)
-                val on = m.number == t.playing
-                Box(
-                    Modifier.padding(start = x.dp, top = (y - slotH.value / 2 + 2).dp).width(colW).height(slotH - 4.dp)
-                        .alpha(if (bye) 0.45f else 1f),
-                ) {
-                    MatchCard(t, m, on, if (on) glow else 0f)
+                for (m in layout.matches) {
+                    val bye = m.round == 0 && (m.a == null || m.b == null)
+                    Box(Modifier.padding(start = x(m), top = y(m) - cardH / 2).width(colW).height(cardH).alpha(if (bye) 0.45f else 1f)) {
+                        MatchCard(t, m, if (m.number == t.playing) glow else null)
+                    }
                 }
             }
-        } }
+        }
     }
 }
 
 @Composable
-private fun MatchCard(t: Tournament, m: Bracket.Match, on: Boolean, glow: Float) {
-    val border = if (on) Gold.copy(alpha = glow) else Palette.line
+private fun MatchCard(t: Tournament, m: Bracket.Match, glow: androidx.compose.runtime.State<Float>?) {
+    val shape = RoundedCornerShape(8.dp)
     Column(
-        Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).background(CardBg).border(if (on) 2.dp else 1.dp, border, RoundedCornerShape(8.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+        Modifier.fillMaxSize().clip(shape).background(CardBg)
+            .then(
+                if (glow == null) Modifier.border(1.dp, Palette.line, shape)
+                // The glow reads its value while drawing only: the card isn't rebuilt each frame.
+                else Modifier.drawWithContent {
+                    drawContent()
+                    drawRoundRect(Gold.copy(alpha = glow.value), cornerRadius = CornerRadius(8.dp.toPx()), style = Stroke(2.dp.toPx()))
+                },
+            )
+            .padding(horizontal = 7.dp, vertical = 3.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
     ) {
         for (id in listOf(m.a, m.b)) {
@@ -301,7 +329,7 @@ private fun MatchCard(t: Tournament, m: Bracket.Match, on: Boolean, glow: Float)
                     lost -> Palette.muted.copy(alpha = 0.6f)
                     else -> Palette.text
                 },
-                fontSize = 11.sp, fontWeight = if (won) FontWeight.Black else FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                fontSize = 11.sp, lineHeight = 13.sp, fontWeight = if (won) FontWeight.Black else FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -332,22 +360,25 @@ fun VsIntro(round: String, a: String, b: String, you: Boolean, onDone: () -> Uni
         contentAlignment = Alignment.Center,
     ) {
         val w = maxWidth.value
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Sized to the screen: a small phone gets smaller names, a tablet bigger.
+        val nameSize = (w / 26f).coerceIn(20f, 40f).sp
+        val vsSize = (w / 18f).coerceIn(30f, 58f).sp
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 16.dp)) {
             Text(round.uppercase(), color = Gold, fontSize = 16.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
             if (you) Text("YOU'RE UP!", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    a, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, textAlign = TextAlign.End,
+                    a, color = Color.White, fontSize = nameSize, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, textAlign = TextAlign.End,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.width((w * 0.36f).dp).graphicsLayer { translationX = -slide.value * w * density },
                 )
                 Text(
-                    "VS", color = Gold, fontSize = 44.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic,
+                    "VS", color = Gold, fontSize = vsSize, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic,
                     modifier = Modifier.padding(horizontal = 18.dp).scale(vs.value).alpha((2f - vs.value).coerceIn(0f, 1f)),
                 )
                 Text(
-                    b, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic,
+                    b, color = Color.White, fontSize = nameSize, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.width((w * 0.36f).dp).graphicsLayer { translationX = slide.value * w * density },
                 )
@@ -402,12 +433,16 @@ fun ChampionScreen(name: String, you: Boolean, game: String, onDone: () -> Unit)
         val start = withFrameNanos { it }
         while (true) withFrameNanos { time = (it - start) / 1e9f }
     }
-    Box(
+    BoxWithConstraints(
         Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xF0302008), Color(0xF2000000)))).clickable(onClick = onDone),
         contentAlignment = Alignment.Center,
     ) {
+        // A short landscape screen keeps the trophy smaller, so the name below never meets it.
+        val short = maxHeight < 480.dp
+        val textRoom = if (short) 104.dp else 150.dp
         Canvas(Modifier.fillMaxSize()) {
-            val c = Offset(size.width / 2, size.height * 0.42f)
+            val room = size.height - textRoom.toPx()
+            val c = Offset(size.width / 2, room * 0.46f)
             // Rays.
             rotate(turn, c) {
                 for (k in 0 until 16) {
@@ -422,15 +457,18 @@ fun ChampionScreen(name: String, you: Boolean, game: String, onDone: () -> Unit)
                 }
             }
             // The trophy, rising then lifted.
-            val h = size.minDimension * 0.42f
+            val h = minOf(room * 0.78f, size.width * 0.5f)
             val y = c.y + h * 0.5f + rise.value * size.height * 0.6f - lift.value * h * 0.06f
             drawTrophy(c.x, y, h)
             // Confetti.
             for (p in pieces) p.draw(this, time)
         }
-        Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("CHAMPION", color = Gold, fontSize = 18.sp, fontWeight = FontWeight.Black, letterSpacing = 6.sp)
-            Text(name, color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(
+            Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 16.dp, bottom = if (short) 14.dp else 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("CHAMPION", color = Gold, fontSize = if (short) 15.sp else 18.sp, fontWeight = FontWeight.Black, letterSpacing = 6.sp)
+            Text(name, color = Color.White, fontSize = if (short) 28.sp else 36.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(if (you) "You won the $game tournament!" else "$game tournament", color = GoldLight, fontSize = 13.sp)
             Spacer(Modifier.height(6.dp))
             Text("Tap to close", color = Palette.muted, fontSize = 11.sp)

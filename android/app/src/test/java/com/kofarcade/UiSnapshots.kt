@@ -79,6 +79,23 @@ class UiSnapshots {
         }
     }
 
+    // The same at every size: a small phone, a small landscape phone (the game's own way up), a tablet, big text.
+    private val tournamentSheet: @androidx.compose.runtime.Composable () -> Unit = {
+        Column(Modifier.padding(16.dp)) {
+            TournamentBar(cup, Modifier.fillMaxWidth())
+            TournamentSection(cup, isHost = true, inRoom = 8, localId = 6, onStart = {}, onReport = {}, onDecide = {}, onEnd = {})
+        }
+    }
+
+    @Test fun tournamentSmall() { small(); shot("tournament_small", tournamentSheet) }
+    @Test fun tournamentSmallLandscape() { smallLandscape(); shot("tournament_small_landscape", tournamentSheet) }
+    @Test fun tournamentLandscape() { landscape(); shot("tournament_landscape", tournamentSheet) }
+    @Test fun tournamentTablet() { tablet(); shot("tournament_tablet", tournamentSheet) }
+    @Test fun tournamentBigText() { bigText(landscape = true); shot("tournament_big_text", tournamentSheet) }
+    @Test fun tournamentVsSmallLandscape() { smallLandscape(); shot("tournament_vs_small_landscape") { VsIntro("Quarter-final 2 of 4", "Abdullah Al Mamun", "Tanu", you = false, onDone = {}) } }
+    @Test fun tournamentChampionSmallLandscape() { smallLandscape(); shot("tournament_champion_small_landscape") { ChampionScreen("Rafi", you = false, game = "Garou", onDone = {}) } }
+    @Test fun tournamentChampionTablet() { tablet(); shot("tournament_champion_tablet") { ChampionScreen("Rafi", you = true, game = "KOF '97", onDone = {}) } }
+
     @Test
     fun tournamentVsIntro() = shot("tournament_vs") { VsIntro("Semi-final 1 of 2", "Rafi", "Sakib", you = true, onDone = {}) }
 
