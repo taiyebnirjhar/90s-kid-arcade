@@ -900,6 +900,18 @@ decision was made in the conversation. Get the time now with
   works the D-pad. Arcade games keep the 8-way stick. Mash still turns the
   stick for you as a fallback.
 
+### 2026-11-07 16:52 Dhaka · Sharper pictures step back when the phone can't keep up
+- Owner (1.0.298 log, screenshots): "i want to play sharpness 2x. Picture
+  enhanced ... Check if can be fixed".
+- The log: 1x Sharp 58-60 fps; 2x Sharp or Smooth 28-37; 2x with Enhanced
+  edges 19-22. The Adreno 610 can't draw God of War at 2x at full speed;
+  no setting of ours changes that.
+- Decided (the rule: never lags): `PspGuard` checks every 5 s of play;
+  when 7 of the last 10 seconds ran under 50 fps (and they averaged under
+  45, so a loading dip doesn't count), the picture steps down: 2x to 1x,
+  then Enhanced edges to Smooth, with a note on screen and in the log.
+  Suggested: 1x with Enhanced edges, to see whether that holds.
+
 ---
 
 ## Where things stand (update whenever it changes)

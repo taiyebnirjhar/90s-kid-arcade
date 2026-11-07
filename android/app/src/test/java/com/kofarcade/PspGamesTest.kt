@@ -258,4 +258,18 @@ class PspGamesTest {
         val ac = PspTitle.ALL.first { it.id == "acb" }
         assertEquals(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"), ac.copyIn(listOf(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"))))
     }
+
+    @Test
+    fun aPictureThePhoneCantKeepUpWithStepsDown() {
+        val sharp2x = PspSettings(resolution = 2)
+        // The owner's phone: 2x ran 28-37 fps; Enhanced edges 19-22.
+        val slow = listOf(60, 60, 30, 32, 28, 35, 37, 30, 29, 31, 33, 30)
+        assertEquals(PspSettings(resolution = 1), PspGuard.stepDown(sharp2x, slow)!!.first)
+        val enhanced = PspSettings(picture = PspSettings.Picture.ENHANCED)
+        assertEquals(PspSettings.Picture.SMOOTH, PspGuard.stepDown(enhanced, slow)!!.first.picture)
+        // Nothing left to drop, or fast enough, or a short loading dip: nothing.
+        assertEquals(null, PspGuard.stepDown(PspSettings(), slow))
+        assertEquals(null, PspGuard.stepDown(sharp2x, List(12) { 59 }))
+        assertEquals(null, PspGuard.stepDown(sharp2x, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
+    }
 }

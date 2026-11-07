@@ -207,6 +207,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
         GameLogs.watchPlayback(this, log, meter)
+        guardSpeed()
         followTheGame()
 
         lifecycleScope.launch {
@@ -252,6 +253,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** Graphics & speed changed: saved for this game, applied at once. */
+    /** Every 5 seconds of play: a picture setting the phone can't keep at full speed steps down ([PspGuard]). */
+    private fun guardSpeed() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(5_000)
+                    if (paused) continue
+                    val (down, why) = PspGuard.stepDown(graphics, meter.perSecond) ?: continue
+                    log.event("Too slow: $why")
+                    applyGraphics(down)
+                    Toast.makeText(this@PspGameActivity, why, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     fun applyGraphics(s: PspSettings) {
         val old = graphics
         graphics = s
@@ -892,7 +909,7 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             ) { game.applyGraphics(s.copy(frameSkip = it)) }
             PickRow(
                 "Sharpness", listOf(1, 2), s.resolution, { if (it >= 2) "2x" else "1x (PSP's own)" },
-                sub = "2x is sharper; watch the speed counter",
+                sub = "2x is sharper but heavy: if the phone falls behind, it goes back to 1x by itself",
             ) { game.applyGraphics(s.copy(resolution = it)) }
             PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
                 game.applyGraphics(s.copy(picture = it))
