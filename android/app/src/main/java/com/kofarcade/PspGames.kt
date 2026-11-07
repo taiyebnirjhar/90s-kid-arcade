@@ -267,6 +267,11 @@ data class PspProfile(
      * blank (the owner's phone, 1.0.316), so it's never used there.
      */
     val fasterEffectsOk: Boolean = true,
+    /**
+     * Where this game's controls sit by default (right-handed; shares of the
+     * screen), when the owner set them up himself; empty: the arcade layout.
+     */
+    val layout: Map<String, HudView.Anchor> = emptyMap(),
 ) {
     companion object {
         /**
@@ -295,6 +300,30 @@ data class PspProfile(
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             fasterEffectsOk = false,
+            // The owner's own layout (a screenshot of his phone, 2026-11-08: "For
+            // gow this layout is perfect for me. Make it default"): the four
+            // buttons bottom right, L Block and Weapon to their left, Roll and R
+            // above, the moves in an arc over them, both Mash pills bottom middle.
+            layout = mapOf(
+                "stick" to HudView.Anchor(0.1225f, 0.7467f),
+                "block" to HudView.Anchor(0.1225f, 0.4056f),
+                "face:C" to HudView.Anchor(0.835f, 0.7167f),
+                "face:D" to HudView.Anchor(0.915f, 0.7167f),
+                "face:A" to HudView.Anchor(0.8335f, 0.8978f),
+                "face:B" to HudView.Anchor(0.915f, 0.8978f),
+                "move:0" to HudView.Anchor(0.9265f, 0.3789f),
+                "move:1" to HudView.Anchor(0.8455f, 0.3589f),
+                "move:2" to HudView.Anchor(0.7685f, 0.4111f),
+                "move:3" to HudView.Anchor(0.705f, 0.5256f),
+                "move:4" to HudView.Anchor(0.6675f, 0.6856f),
+                "move:5" to HudView.Anchor(0.6615f, 0.8667f),
+                "sys:0" to HudView.Anchor(0.747f, 0.8922f),
+                "sys:1" to HudView.Anchor(0.924f, 0.5489f),
+                "sys:2" to HudView.Anchor(0.8385f, 0.5444f),
+                "sys:3" to HudView.Anchor(0.745f, 0.7167f),
+                "sys:4" to HudView.Anchor(0.5075f, 0.902f),
+                "sys:5" to HudView.Anchor(0.431f, 0.902f),
+            ),
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
             // boat (tools/pspemu.py), but on the owner's phone it dropped to 0
             // in the middle of play too (1.0.292's log), flipping the stick to

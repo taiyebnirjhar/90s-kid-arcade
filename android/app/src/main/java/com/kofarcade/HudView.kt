@@ -98,6 +98,20 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
     data class Tweak(val dx: Float = 0f, val dy: Float = 0f, val scale: Float = 1f)
 
     /**
+     * A game's own default spot for a control, as a share of the screen's
+     * width and height (right-handed; mirrored for the left hand): where it
+     * sits before any layout change, which then moves it from there.
+     */
+    data class Anchor(val fx: Float, val fy: Float)
+
+    /** Per-control default spots ([Anchor]), keyed like [tweaks]; empty: the arcade layout's own. */
+    var anchors: Map<String, Anchor> = emptyMap()
+        set(value) {
+            field = value
+            refresh()
+        }
+
+    /**
      * Per-control layout changes, keyed by control id ("stick", "face:A",
      * "move:0", "sys:1", "team", "top", "pause"). Set from saved settings.
      */
@@ -369,8 +383,12 @@ class HudView(context: Context, private val listener: Listener) : View(context) 
         val t = tweak(id)
         val rr = r * t.scale
         val (safeL, safeR) = safeInsets()
-        val rawX = cx + t.dx * d
-        val rawY = cy + t.dy * d
+        // The game's own spot, if it has one, instead of the arcade layout's.
+        val a = anchors[id]
+        val baseX = if (a == null) cx else (if (state.leftHanded) 1f - a.fx else a.fx) * width
+        val baseY = if (a == null) cy else a.fy * height
+        val rawX = baseX + t.dx * d
+        val rawY = baseY + t.dy * d
         val x = if (width - safeL - safeR > 2 * rr) rawX.coerceIn(safeL + rr, width - safeR - rr) else rawX
         val y = if (height > 2 * rr) rawY.coerceIn(rr, height - rr) else rawY
         overshoot[id] = (x - rawX) to (y - rawY)

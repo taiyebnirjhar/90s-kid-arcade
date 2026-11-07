@@ -44,6 +44,7 @@ class PspHudTest {
             }, block = p.blockHoldsL,
             facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES,
         )
+        hud.anchors = p.layout
         hud.opacity = DEFAULT_OPACITY
         paparazzi.snapshot(hud, name)
         // No two controls on top of each other (the arcade layout's rule: 4 dp apart).
@@ -61,6 +62,22 @@ class PspHudTest {
 
     @Test
     fun godOfWar() = shot("psp_hud_god_of_war", PspProfile.GOD_OF_WAR)
+
+    /** Prints where each control sits on the owner's phone (2408 x 1080, 420 dpi, size 85%), for the default layout. */
+    @Test
+    fun printSpotsOwnersPhone() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_6.copy(orientation = ScreenOrientation.LANDSCAPE, screenWidth = 2408, screenHeight = 1080, density = com.android.resources.Density.create(420)))
+        val p = PspProfile.GOD_OF_WAR
+        val hud = HudView(paparazzi.context, listener)
+        hud.state = HudView.State(
+            layout = Layout.FIGHTER, faceButtons = listOf('A', 'B', 'C', 'D'), labels = p.labels, moves = p.moves,
+            system = p.system.map { HudView.SysButton(it.name, "", it.cmd) }, block = p.blockHoldsL,
+            facingButton = false, coinLabel = "SELECT", showCoin = p.select, faceNames = PspProfile.FACE_NAMES, size = 0.85f,
+        )
+        hud.anchors = p.layout
+        paparazzi.snapshot(hud, "spots")
+        for ((id, r, _) in hud.controlSpots()) println("SPOT $id ${r.centerX()} ${r.centerY()} ${r.width() / 2}")
+    }
 
     @Test
     fun assassinsCreed() = shot("psp_hud_assassins_creed", PspProfile.ASSASSINS_CREED)

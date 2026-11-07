@@ -345,6 +345,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     /** The shared settings (or a preview of them) on the controls and the sound. */
     fun applyLook(l: Look) {
         look = l
+        hud.anchors = profile.layout
         hud.tweaks = prefs.tweaks(layoutKey())
         pad.timing = Timing(step = l.stepFrames, press = l.pressFrames)
         hud.opacity = l.opacity
@@ -387,7 +388,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** This game's layout, per hand: its buttons aren't any other game's. */
-    private fun layoutKey() = "PSP-${gameFile.name}.${if (look.leftHanded) "L" else "R"}"
+    // A game with its own default layout starts the saved changes afresh (".2"):
+    // the old ones were moves from the arcade layout, not from it.
+    private fun layoutKey() = "PSP-${gameFile.name}.${if (look.leftHanded) "L" else "R"}" + if (profile.layout.isNotEmpty()) ".2" else ""
 
     /** The arcade controls for this game: the base layout and the game's own buttons. */
     private fun updateHud() {
