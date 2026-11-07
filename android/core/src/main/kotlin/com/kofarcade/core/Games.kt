@@ -176,6 +176,8 @@ data class Game(
     val pad: PadMap = PadMap.NEO_GEO,
     /** Where the game says each player is in or out, for seats in a room; null: not known. */
     val seats: SeatStatus? = if (neoGeo) NEO_GEO_SEATS else null,
+    /** Where the game counts each side's match wins, for tournaments (T2); null: not known yet, the players say. */
+    val matchWins: com.kofarcade.core.tournament.MatchWins? = null,
     /**
      * The cabinet's settings (DIP switches) the game needs, by FBNeo's name:
      * "Number_of_Players" to "4". Every phone sets the same, for every version.
@@ -203,29 +205,34 @@ const val BIOS = "neogeo.zip"
 
 private val KOF_SYSTEM = listOf(Move("Roll", "AB"), Move("Blowback", "CD"))
 
+// Each side's match wins (Fightcade's detectors' "P1 Win"/"P2 Win"), checked in
+// the games: the winner's byte goes up by one at the end of a match.
+private val KOF97_WINS = com.kofarcade.core.tournament.MatchWins(listOf(0xDAF4, 0xDAF6))
+private val KOF2002_WINS = com.kofarcade.core.tournament.MatchWins(listOf(0xDAB6, 0xDAB8))
+
 val GAMES: List<Game> = listOf(
     Game(
         id = "kof97", series = "The King of Fighters", title = "KOF '97", sets = listOf("kof97"),
         art = "The King of Fighters '97 (NGM-2320)",
-        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97", team = 3, block = true, matchWins = KOF97_WINS,
     ),
     Game(
         id = "kof2002", series = "The King of Fighters", title = "KOF 2002", sets = listOf("kof2002"),
         art = "The King of Fighters 2002 (NGM-2650 ~ NGH-2650)",
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
     // Hacks with their own cards: the same fighters, some moves changed
     // (their move lists were checked in the real games like the originals').
     Game(
         id = "kof97plus", series = "The King of Fighters", title = "KOF '97 Plus", sets = listOf("kof97pls"),
         art = "The King of Fighters '97 Plus (bootleg)",
-        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97plus", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "ABC"), system = KOF_SYSTEM, roster = "kof97plus", team = 3, block = true, matchWins = KOF97_WINS,
     ),
     Game(
         id = "kof2002mp", series = "The King of Fighters", title = "KOF 2002", subtitle = "Magic Plus",
         art = "The King of Fighters 2002 Magic Plus (bootleg, set 1)",
         sets = listOf("kf2k2mp", "kf2k2mpl", "kf2k2mp2"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2002mp", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
     // There is no official Neo Geo KOF 2005: "KOF 2005" is the 10th
     // Anniversary hacks of KOF 2002. Its move list is 2002's with the inputs
@@ -236,7 +243,7 @@ val GAMES: List<Game> = listOf(
         // have (artUrl), this one until then.
         art = "The King of Fighters 10th Anniversary 2005 Unique (bootleg of The King of Fighters 2002)",
         sets = listOf("kf2k5uni", "kof10th", "kf10thep"),
-        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2005", team = 3, block = true,
+        layout = Layout.FIGHTER, power = Move("MAX", "BC"), system = KOF_SYSTEM, roster = "kof2005", team = 3, block = true, matchWins = KOF2002_WINS,
     ),
 ) + listOf(
     Triple("mslug", "Metal Slug", "Metal Slug - Super Vehicle-001"),

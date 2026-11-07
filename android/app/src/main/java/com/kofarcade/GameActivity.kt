@@ -1222,6 +1222,13 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     // How long the room's game has run, in ms of game time (frames at 60 a second).
     private fun gameMs(): Long = LibretroDroid.getNetFrame().toLong() * 1000 / 60
 
+    /** A match ended in the game (its own count of wins went up): who won, in the log and on screen. */
+    private fun matchWon(room: Room, side: Int) {
+        val name = room.seats[side]?.name ?: "Player ${side + 1}"
+        log.event("Match won by $name (player ${side + 1}), read from the game")
+        Toast.makeText(this, "$name won the match", Toast.LENGTH_LONG).show()
+    }
+
     private fun startNetplay(room: Room) {
         // Voice (internet rooms): the mic button, the room's volumes, who's speaking.
         canVoice = room.internet != null
@@ -1246,6 +1253,18 @@ class GameActivity : ComponentActivity(), HudView.Listener {
                 // The game's own time (its frames), not the clock's: a pause or a wait doesn't count down a seat.
                 val now = gameMs()
                 for (seat in seats.offsets.indices) seats.isOut(seat, ::readByte)?.let { seatWatch?.sample(seat, it, now) }
+            }
+        }
+        // Who won each match, from the game itself (Game.matchWins, tournaments
+        // T2): every phone reads the same bytes, so every phone agrees.
+        game.matchWins?.let { wins ->
+            val watch = com.kofarcade.core.tournament.WinWatch(wins)
+            lifecycleScope.launch(Dispatchers.Default) {
+                while (isActive && this@GameActivity.room === room) {
+                    delay(SEAT_SAMPLE_MS)
+                    val side = watch.sample(::readByte) ?: continue
+                    withContext(Dispatchers.Main) { matchWon(room, side) }
+                }
             }
         }
         lifecycleScope.launch {

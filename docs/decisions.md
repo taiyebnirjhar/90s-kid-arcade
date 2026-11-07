@@ -1001,13 +1001,27 @@ decision was made in the conversation. Get the time now with
   spot Altair at the marker every try); its fights want a later save from
   the owner.
 
+### 2026-11-07 20:40 Dhaka · Tournaments T2: who won, from the game (KOF)
+- Owner: "Start tournament step 2".
+- Each KOF keeps a match-win count per side (Fightcade's detectors' "P1
+  Win"/"P2 Win"); checked here with two players in each game: the winner's
+  byte goes up by one when the match ends, and a double knockout moves
+  neither. The rounds-lost bytes agree (P2's in '97, only guessed before,
+  is right). Rounds lost alone would need to tell a draw by timing; the win
+  counts don't.
+- `Game.matchWins` for KOF '97, '97 Plus, 2002, 2002 Magic Plus and 2005;
+  `WinWatch` and `MatchScore` (best of 1 or 3) in core, tested. In a room,
+  every phone reads the bytes and shows "<name> won the match" (and logs
+  it): T4 moves the seats on from it.
+- The other fighters follow one by one; KOF '98 isn't in the app.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
 As of 2026-11-07 17:38 Dhaka:
 
-- **Open:** Tournaments T1 (the bracket). Next: T2 (who won, from the game), then T3-T6; the World Cup look and the trophy in T5.
+- **Open:** Tournaments T2 (who won, from the game: KOF done). Next: T2 for the other fighters, then T3-T6; the World Cup look and the trophy in T5.
 - **Merged lately:** #87-#91 (God of War first party, game logs to the server, D-PAD manual, Assassin's Creed, the Drive PSP library, the analog stick, PspGuard).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own

@@ -79,6 +79,13 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
 ## Where it stands
 
 - **T1 done** (2026-11-07): `core/tournament/Bracket.kt` and its tests.
+- **T2, KOF done** (2026-11-07): each side's match-win count, checked in
+  KOF '97, '97 Plus, 2002, 2002 Magic Plus and 2005 (docs/kof-ram.md);
+  `Game.matchWins`, `WinWatch` (a byte going up is a win, a draw moves
+  none) and `MatchScore` (best of 1 or 3). In a room every phone logs the
+  winner and says "<name> won the match". KOF '98 isn't in the app. The
+  other fighters (Garou, Last Blade 1 and 2, Samurai Shodown II, SF III 3rd
+  Strike, Marvel vs Capcom) are next, one by one; until then, T3.
 - **Defaults used** (the owner said "go" without picking; he can change
   them): single elimination, best of 1, online and nearby both, KOF 2002
   Magic Plus first.
