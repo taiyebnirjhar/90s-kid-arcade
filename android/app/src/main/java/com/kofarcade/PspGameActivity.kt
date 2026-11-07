@@ -249,6 +249,14 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 }
             }
         }
+        // The log kept every 30 s of play too: if the app is ever closed under it
+        // (a crash in the emulator), the next start sends the session as it was.
+        lifecycleScope.launch {
+            while (true) {
+                delay(30_000)
+                if (!paused) saveLog()
+            }
+        }
         lifecycleScope.launch {
             while (true) {
                 delay(500)

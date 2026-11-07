@@ -1138,6 +1138,20 @@ decision was made in the conversation. Get the time now with
   keeps full speed there, and skipping hurt its sound, 2026-11-07); the
   Frame skip choice shows when Auto isn't skipping.
 
+### 2026-11-08 03:48 Dhaka · How the app last closed, sent to us
+- Owner: "Make sure it never crush again".
+- No one can promise that (the emulators are native code we don't run on
+  his phone); what makes each crash fixable is knowing it. The Java crash
+  handler (CrashLog) never sees a crash inside an emulator core, a freeze or
+  Android closing the app for memory. Now, on Android 11 and later, the next
+  start reads Android's own record of why the app last closed
+  (`ExitReport`, ApplicationExitInfo) and, if it was one of those, sends it
+  to us with the newest game log (problem reports on; read with
+  read_problem_reports, kind 'game', "app closed: …"). A PSP game's log is
+  kept every 30 s of play too, so the session it closed in is there.
+- Already in place: a start that doesn't get going falls back to safe
+  settings, and saves and the last spot are never deleted.
+
 ---
 
 ## Where things stand (update whenever it changes)
