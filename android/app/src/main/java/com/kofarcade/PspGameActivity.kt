@@ -367,7 +367,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
     private fun sysHint(cmd: String): String = when {
-        cmd == PspProfile.MASH_LR -> "L ○ R ○ ⟳"
+        cmd == PspProfile.MASH_LR -> "L ○ R ○"
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
         else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
@@ -609,7 +609,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 dpadCode(key)?.let { retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, it) }
                 return
             }
-            if (spinLeft == 0) sendStick()
+            sendStick()
         }
     }
 
@@ -634,7 +634,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         val k = if (far < STICK_DEAD) 0f else ((far - STICK_DEAD) / (1 - STICK_DEAD)).coerceAtMost(1f) / far
         stickX = x * k
         stickY = y * k
-        if (!stickIsDpad && spinLeft == 0) sendStick()
+        if (!stickIsDpad) sendStick()
     }
 
     /** R held by its pill between taps ([PspProfile.LATCH_R]): Thera's Bane's fire for every combo. */
@@ -648,21 +648,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         runOnUiThread { updateHud() }
     }
 
-    /** Frames the stick still turns round (Mash); then it's let go to what the thumb holds. */
-    @Volatile private var spinLeft = 0
-    private var spinAt = 0
-
     private fun stepFrame() {
-        if (spinLeft > 0) {
-            spinLeft--
-            if (spinLeft == 0) {
-                sendStick()
-            } else {
-                // A turn every 16 frames: about four a second.
-                val a = 2 * Math.PI * (spinAt++ % 16) / 16
-                retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, Math.cos(a).toFloat(), Math.sin(a).toFloat())
-            }
-        }
         val queue = steps
         val now = queue.firstOrNull() ?: emptySet()
         if (queue.isNotEmpty()) steps = queue.drop(1)
@@ -680,13 +666,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             setRLatched(!rLatched)
             return 1
         }
-        // Mash goes frame by frame too (its timing is the one checked in the game), with the stick turning.
+        // Mash goes frame by frame too (its timing is the one checked in the game).
         if (!PspSteps.isSteps(cmd) && cmd != PspProfile.MASH_LR) return pad.play(cmd)
         val frames = PspSteps.frames(cmd)
         steps = frames
-        // Mash also turns the stick round and round, for "rotate the stick"
-        // prompts (checked in the game: the grab escape still works with it).
-        if (cmd == PspProfile.MASH_LR) spinLeft = frames.size
         return frames.size
     }
     override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)

@@ -966,6 +966,10 @@ decision was made in the conversation. Get the time now with
   game's own list (the weapon upgrade screen, per level) is the one to go
   by: the owner sends screenshots of it and the rest go in.
 
+### 2026-11-07 19:05 Dhaka · Mash no longer turns the stick
+- Owner: "On Mash rotate not needed. We can remove that. L + R is okey".
+- Mash is L ○ R ○ again, without the stick spin.
+
 ---
 
 ## Where things stand (update whenever it changes)
