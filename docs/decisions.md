@@ -1118,6 +1118,19 @@ decision was made in the conversation. Get the time now with
   this layout. Checked in a picture at his phone's screen (2408 x 1080, 420
   dpi) and the controls-overlap test.
 
+### 2026-11-08 02:54 Dhaka · God of War: the Blades' level 3 moves on a second page
+- Owner (a screenshot of the game's Blades of Athena level 3 list): "Make
+  sure have these": Spirit of Hercules △ △ △, Valor of Hercules △ △ □,
+  Hyperion Rush (run) □, Hyperion Rise (run) △, Hyperion Rush (evade)
+  hold □, Hyperion Rise (evade) hold △.
+- His layout's six ring spots are full, so a second page of moves takes the
+  same spots (`PspProfile.moves2`), swapped by a Moves pill (1/2, 2/2) put in
+  a free spot above Mash LR; nothing else moves. Spirit and Valor spaced like
+  Plume (the game drops quick presses); the "run" moves are □ / △ during a
+  Hyperion Charge; the evade ones a roll (L+R, the stick gives its way) then
+  the button held. This also explains Hyperion Rush doing nothing in our
+  test: it's a level 3 move, our saves are level 1. Not checked in the game.
+
 ---
 
 ## Where things stand (update whenever it changes)

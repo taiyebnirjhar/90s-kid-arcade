@@ -411,7 +411,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             layout = Layout.FIGHTER,
             faceButtons = listOf('A', 'B', 'C', 'D'),
             labels = profile.labels,
-            moves = profile.moves,
+            moves = if (movePage == 1 && profile.moves2.isNotEmpty()) profile.moves2 else profile.moves,
             system = profile.system.map { m ->
                 when (m.cmd) {
                     PspProfile.HOLD_L -> HudView.SysButton(m.name, profile.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
@@ -449,6 +449,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun sysHint(cmd: String): String = when {
         cmd == PspProfile.MASH_LR -> "L R L R"
         cmd == PspProfile.MASH_O -> "○ ○ ○"
+        cmd == PspProfile.PAGE -> "${movePage + 1}/2"
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
         else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
@@ -722,6 +723,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (!stickIsDpad) sendStick()
     }
 
+    /** Which page of moves the ring shows (0 or 1: [PspProfile.moves2]). */
+    @Volatile private var movePage = 0
+
     /** R held by its pill between taps ([PspProfile.LATCH_R]): Thera's Bane's fire for every combo. */
     @Volatile private var rLatched = false
 
@@ -747,6 +751,12 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     override fun onDir(dir: Int) = pad.setDir(dir)
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
     override fun onPlay(cmd: String, move: Move?): Int {
+        if (cmd == PspProfile.PAGE) {
+            movePage = 1 - movePage
+            log.event("Moves page ${movePage + 1}")
+            runOnUiThread { updateHud() }
+            return 1
+        }
         if (cmd == PspProfile.LATCH_R) {
             setRLatched(!rLatched)
             return 1

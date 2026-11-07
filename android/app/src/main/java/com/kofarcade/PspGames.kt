@@ -254,6 +254,8 @@ data class PspProfile(
     val blockHoldsL: Boolean = false,
     /** One-tap moves on the ring, like a fighter's specials. */
     val moves: List<Move> = emptyList(),
+    /** A second page of moves in the ring's same spots, swapped in by a [PAGE] pill; empty: one page. */
+    val moves2: List<Move> = emptyList(),
     /**
      * Where the game says whether it's in a menu (a byte of its RAM, from the
      * start of the PSP's main memory) and the value meaning a menu: the stick
@@ -296,7 +298,7 @@ data class PspProfile(
             // R stays held from one tap to the next (the owner, 2026-11-07: "Need
             // combo attack including press R for fire"): with Thera's Bane on,
             // every combo below comes out on fire; with the spear, it aims (□ throws).
-            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O)),
+            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O), Move("Moves", PAGE)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             fasterEffectsOk = false,
@@ -323,6 +325,8 @@ data class PspProfile(
                 "sys:3" to HudView.Anchor(0.745f, 0.7167f),
                 "sys:4" to HudView.Anchor(0.5075f, 0.902f),
                 "sys:5" to HudView.Anchor(0.431f, 0.902f),
+                // The page switch for the level 3 moves: above Mash LR, a free spot in his layout.
+                "sys:6" to HudView.Anchor(0.5075f, 0.70f),
             ),
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
             // boat (tools/pspemu.py), but on the owner's phone it dropped to 0
@@ -353,6 +357,20 @@ data class PspProfile(
                 Move("Erinys Void", "pad:4,E>B", "dm"),
                 Move("Boreas Freeze", "pad:8,E>B", "dm"),
             ),
+            // Page 2: the Blades' level 3 moves, from the game's own list (the
+            // owner's screenshot, 2026-11-08): Spirit of Hercules △ △ △, Valor of
+            // Hercules △ △ □ (spaced like Plume of Prometheus); during a
+            // Hyperion Charge (the "run") □ Hyperion Rush, △ Hyperion Rise; after
+            // a roll, hold □ / △ for the evade versions (the stick gives the
+            // roll its way). Not checked in the game: our saves are level 1.
+            moves2 = listOf(
+                Move("Spirit of Hercules", "C,wait:10,C,wait:10,C"),
+                Move("Valor of Hercules", "C,wait:10,C,wait:10,A"),
+                Move("Hyperion Rush", "E>D,wait:20,A"),
+                Move("Hyperion Rise", "E>D,wait:20,C"),
+                Move("Rush (evade)", "EF,wait:6,hold:A"),
+                Move("Rise (evade)", "EF,wait:6,hold:C"),
+            ),
         )
 
         /** The PSP's names for the arcade keys: symbols on the face buttons, L and R for E and F. */
@@ -377,6 +395,9 @@ data class PspProfile(
 
         /** Mash ○: "press ○ quickly" (a chain to pull, a door to lift), ○ ○ ○… about 4.2 s. */
         val MASH_O: String get() = List(36) { "D" }.joinToString(",")
+
+        /** The pill that swaps the ring between its two pages of moves ([moves2]). */
+        const val PAGE = "page:moves"
 
         /** Every mash pill: played frame by frame (their timing is the one checked in the game). */
         val MASHES: Set<String> get() = setOf(MASH_LR, MASH_O)

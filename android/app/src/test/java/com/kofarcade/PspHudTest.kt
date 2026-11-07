@@ -80,6 +80,9 @@ class PspHudTest {
     }
 
     @Test
+    fun godOfWarPageTwo() = shot("psp_hud_god_of_war_page2", PspProfile.GOD_OF_WAR.copy(moves = PspProfile.GOD_OF_WAR.moves2))
+
+    @Test
     fun assassinsCreed() = shot("psp_hud_assassins_creed", PspProfile.ASSASSINS_CREED)
 
     @Test
