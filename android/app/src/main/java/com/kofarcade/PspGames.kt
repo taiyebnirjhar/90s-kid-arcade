@@ -130,6 +130,29 @@ data class PspSettings(
     enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
 }
 
+/**
+ * Never a game at half speed for a sharper picture: when the last 10 seconds
+ * of play mostly ran slow, the picture steps down (2x to 1x first, then
+ * Enhanced edges to Smooth). The owner's phone (Adreno 610) ran God of War at
+ * 28-37 fps at 2x and 19-22 with Enhanced edges, 58-60 at 1x Sharp.
+ */
+object PspGuard {
+    const val WINDOW = 10
+    const val SLOW = 50
+
+    /** The settings to step down to, and what to tell the player; null if it's fast enough or nothing's left to drop. */
+    fun stepDown(s: PspSettings, perSecond: List<Int>): Pair<PspSettings, String>? {
+        if (perSecond.size < WINDOW) return null
+        val last = perSecond.takeLast(WINDOW)
+        if (last.count { it < SLOW } < 7 || last.average() >= 45) return null
+        return when {
+            s.resolution >= 2 -> s.copy(resolution = 1) to "Sharpness back to 1x: this phone can't keep full speed at 2x"
+            s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Picture to Smooth: Enhanced edges was too slow on this phone"
+            else -> null
+        }
+    }
+}
+
 /** The PPSSPP options for [settings]. */
 object PspSpeed {
     enum class FrameSkip(val label: String, val value: String, val auto: Boolean) {
@@ -246,11 +269,13 @@ data class PspProfile(
         const val HOLD_R = "held:F"
 
         /**
-         * The game's "alternate L and R quickly" prompts (a grab to escape, a
-         * door to push): L, R, L, R… twelve times, about two seconds. Checked
-         * in Ghost of Sparta: it escapes the first grab on the boat.
+         * The game's mashing prompts: "alternate L and R quickly" (a grab to
+         * escape) and "press ○ quickly" (a chain to pull, a door to lift):
+         * L, ○, R, ○… about three seconds, so one pill does both (the owner's
+         * chain pull failed with L and R alone). Checked in Ghost of Sparta:
+         * L ○ R ○ still escapes the boat's first grab.
          */
-        val MASH_LR: String get() = List(12) { "E,F" }.joinToString(",")
+        val MASH_LR: String get() = List(12) { "E,D,F,D" }.joinToString(",")
 
         /** The profile for a game, from its title. */
         /**

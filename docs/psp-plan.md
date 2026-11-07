@@ -127,6 +127,8 @@ owner's library (downloaded with its key, never committed).
 
 ## Where things stand
 
+- 2026-11-07: G6 by Google Drive: the PSP library lists the owner's public
+  Drive folder and downloads a game in the background, resuming.
 - 2026-11-07: Assassin's Creed: Bloodlines set up (profile from its own
   tutorial and button panel, a Sprint pill, the Home card); checked here.
 - 2026-11-07: the D-PAD switch is manual again for God of War: its "menu"

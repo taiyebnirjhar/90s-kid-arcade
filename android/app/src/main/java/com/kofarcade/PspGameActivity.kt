@@ -88,6 +88,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val RESUME_AT_FRAME = 60L
         /** RETRO_MEMORY_SYSTEM_RAM: the PSP's main memory, from 0x08000000. */
         private const val SYSTEM_RAM = 2
+        /** The stick's dead zone (of its reach): a resting thumb doesn't walk. */
+        private const val STICK_DEAD = 0.12f
     }
 
     /** What's open over the game. */
@@ -205,6 +207,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         applyLook(prefs.look())
         log.event("Started ${gameFile.name} (${gameFile.length() / 1_000_000} MB), ${settingsLine(graphics)}")
         GameLogs.watchPlayback(this, log, meter)
+        guardSpeed()
         followTheGame()
 
         lifecycleScope.launch {
@@ -250,6 +253,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     /** Graphics & speed changed: saved for this game, applied at once. */
+    /** Every 5 seconds of play: a picture setting the phone can't keep at full speed steps down ([PspGuard]). */
+    private fun guardSpeed() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(5_000)
+                    if (paused) continue
+                    val (down, why) = PspGuard.stepDown(graphics, meter.perSecond) ?: continue
+                    log.event("Too slow: $why")
+                    applyGraphics(down)
+                    Toast.makeText(this@PspGameActivity, why, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     fun applyGraphics(s: PspSettings) {
         val old = graphics
         graphics = s
@@ -346,7 +365,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A pill's keys as the PSP calls them ("L+R", "✚↓"). */
     private fun sysHint(cmd: String): String = when {
-        cmd == PspProfile.MASH_LR -> "L R L R"
+        cmd == PspProfile.MASH_LR -> "L ○ R ○ ⟳"
         cmd.startsWith("pad:") -> "✚" + com.kofarcade.core.toArrows(cmd.removePrefix("pad:"))
         else -> cmd.map { c -> PspProfile.FACE_NAMES[c] ?: c.toString() }.joinToString("+")
     }
@@ -383,6 +402,27 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 if (!tmp.renameTo(placeFile)) tmp.delete()
             }.onFailure { log.event("Couldn't keep the place: ${it.message}") }
         }
+    }
+
+    /**
+     * Leaving the app: the game kept right here, not queued for the
+     * emulator's thread (Android stops that thread as the app goes, and may
+     * close the app in the background before it would run), as the arcade
+     * games do. The core takes its own lock; checked in the game: a state
+     * taken this way loads back.
+     */
+    private fun keepPlaceNow() {
+        if (frame < KEEP_AFTER_FRAMES) return
+        val bytes = runCatching { retroView.serializeState(useEmulationThread = false) }.getOrNull()
+        if (bytes == null || bytes.isEmpty()) return
+        Thread {
+            runCatching {
+                val tmp = File(placeFile.path + ".part")
+                tmp.writeBytes(bytes)
+                if (!tmp.renameTo(placeFile)) tmp.delete()
+            }
+        }.start()
+        log.event("Kept the place (${bytes.size / 1_000_000} MB)")
     }
 
     /**
@@ -565,14 +605,49 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                 dpadCode(key)?.let { retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, it) }
                 return
             }
-            val x = (if (Key.RIGHT in dirs) 1f else 0f) - (if (Key.LEFT in dirs) 1f else 0f)
-            val y = (if (Key.DOWN in dirs) 1f else 0f) - (if (Key.UP in dirs) 1f else 0f)
-            retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y)
+            if (spinLeft == 0) sendStick()
         }
     }
 
     /** One frame of a PSP step sequence, on the emulator's thread: press what's new, let go what's done. */
+    /** Where the thumb holds the on-screen stick, -1..1 (its real angle and push, not 8 ways). */
+    @Volatile private var stickX = 0f
+    @Volatile private var stickY = 0f
+
+    /** The analog stick where the thumb holds it. */
+    private fun sendStick() {
+        val (x, y) = if (stickIsDpad) 0f to 0f else stickX to stickY
+        retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, x, y)
+    }
+
+    /**
+     * The on-screen stick as a real analog stick: its angle and how far it's
+     * pushed (the owner's "rotate the stick" prompt failed with 8 directions
+     * at full push; and Kratos walks any way, at any speed). A small dead zone.
+     */
+    override fun onStick(x: Float, y: Float) {
+        val far = kotlin.math.hypot(x, y)
+        val k = if (far < STICK_DEAD) 0f else ((far - STICK_DEAD) / (1 - STICK_DEAD)).coerceAtMost(1f) / far
+        stickX = x * k
+        stickY = y * k
+        if (!stickIsDpad && spinLeft == 0) sendStick()
+    }
+
+    /** Frames the stick still turns round (Mash); then it's let go to what the thumb holds. */
+    @Volatile private var spinLeft = 0
+    private var spinAt = 0
+
     private fun stepFrame() {
+        if (spinLeft > 0) {
+            spinLeft--
+            if (spinLeft == 0) {
+                sendStick()
+            } else {
+                // A turn every 16 frames: about four a second.
+                val a = 2 * Math.PI * (spinAt++ % 16) / 16
+                retroView.sendMotionEvent(GLRetroView.MOTION_SOURCE_ANALOG_LEFT, Math.cos(a).toFloat(), Math.sin(a).toFloat())
+            }
+        }
         val queue = steps
         val now = queue.firstOrNull() ?: emptySet()
         if (queue.isNotEmpty()) steps = queue.drop(1)
@@ -586,9 +661,13 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     override fun onDir(dir: Int) = pad.setDir(dir)
     override fun onKey(key: Key, down: Boolean) = pad.press(key, down)
     override fun onPlay(cmd: String, move: Move?): Int {
-        if (!PspSteps.isSteps(cmd)) return pad.play(cmd)
+        // Mash goes frame by frame too (its timing is the one checked in the game), with the stick turning.
+        if (!PspSteps.isSteps(cmd) && cmd != PspProfile.MASH_LR) return pad.play(cmd)
         val frames = PspSteps.frames(cmd)
         steps = frames
+        // Mash also turns the stick round and round, for "rotate the stick"
+        // prompts (checked in the game: the grab escape still works with it).
+        if (cmd == PspProfile.MASH_LR) spinLeft = frames.size
         return frames.size
     }
     override fun onMenu() = if (editing) finishEditing(save = true) else open(Sheet.PAUSE)
@@ -691,6 +770,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (::pad.isInitialized) {
             log.event("Left the app")
             if (sheet == null && !editing) open(Sheet.PAUSE)
+            keepPlaceNow()
             saveLog()
         }
         super.onPause()
@@ -829,7 +909,7 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             ) { game.applyGraphics(s.copy(frameSkip = it)) }
             PickRow(
                 "Sharpness", listOf(1, 2), s.resolution, { if (it >= 2) "2x" else "1x (PSP's own)" },
-                sub = "2x is sharper; watch the speed counter",
+                sub = "2x is sharper but heavy: if the phone falls behind, it goes back to 1x by itself",
             ) { game.applyGraphics(s.copy(resolution = it)) }
             PickRow("Picture", PspSettings.Picture.entries, s.picture, { it.label }, sub = "How the picture is stretched to the screen") {
                 game.applyGraphics(s.copy(picture = it))

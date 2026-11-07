@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import java.io.File
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.kofarcade.core.RomCheck
@@ -42,10 +43,17 @@ object LibraryDownloads {
         val q = DownloadQueue(
             scope,
             fetch = { entry, to, cancelled, progress ->
-                Library(prefs.libraryUrl, prefs.libraryKey.orEmpty()).download(entry.name, to, entry.size, cancelled, progress)
+                // A PSP game from the owner's Google Drive folder, or an arcade one from the library.
+                val drive = DriveFolder.parseEntry(entry.name)
+                if (drive != null) {
+                    DriveFolder.download(drive.first, to, cancelled, progress)
+                } else {
+                    Library(prefs.libraryUrl, prefs.libraryKey.orEmpty()).download(entry.name, to, entry.size, cancelled, progress)
+                }
             },
             scratch = { roms.partFile("library") },
             install = { entry, file ->
+                DriveFolder.parseEntry(entry.name)?.let { (_, name) -> return@DownloadQueue installPsp(app, name, file) }
                 val check = roms.add(file)
                 val set = when (check) {
                     RomCheck.Bios -> "neogeo"
@@ -61,8 +69,19 @@ object LibraryDownloads {
         return q
     }
 
+    /** A PSP game from Drive into the PSP games (a .7z or .zip unpacked on the way). */
+    private fun installPsp(app: Context, name: String, file: File): Pair<String, Boolean> = runCatching {
+        val game = PspGames.import(
+            name, File(app.filesDir, "psp/games"),
+            open = { file.inputStream() },
+            channel = { java.nio.channels.FileChannel.open(file.toPath(), java.nio.file.StandardOpenOption.READ) },
+        )
+        "Added ${PspGames.title(game)}" to true
+    }.getOrElse { e -> (e.message ?: "Couldn't add $name") to false }
+
     /** A library file's name as people know it: the game's title, else the file. */
     fun title(name: String): String {
+        DriveFolder.parseEntry(name)?.let { (_, file) -> return file.substringBeforeLast('.').replace('_', ' ').removeSuffix(".zip") }
         val set = setName(name).replace(Regex(""" \(\d+\)$"""), "")
         return if (set.startsWith("neogeo")) "Neo Geo BIOS" else gameForSet(set)?.fullTitle ?: name.removeSuffix(".zip")
     }

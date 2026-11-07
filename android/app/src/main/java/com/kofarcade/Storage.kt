@@ -318,6 +318,11 @@ class Prefs(context: Context) {
         get() = sp.getString("libraryKey", null)
         set(v) = sp.edit().putString("libraryKey", v).apply()
 
+    /** The PSP library: a public Google Drive folder's link (the owner's), kept on the phone. */
+    var pspDriveLink: String?
+        get() = sp.getString("pspDriveLink", null)?.takeIf { it.isNotBlank() }
+        set(v) = sp.edit().putString("pspDriveLink", v?.trim()).apply()
+
     /** The set a library file was saved as, once downloaded ("neogeo (1).zip" -> neogeo). */
     fun librarySet(file: String): String? = sp.getString("lib.$file", null)
 

@@ -219,14 +219,19 @@ class PspGamesTest {
 
     @Test
     fun mashAlternatesLAndRAsTheGameAsks() {
-        // Checked in Ghost of Sparta: L and R, 4 frames held and 3 apart, twelve times, escapes the boat's first grab.
+        // Checked in Ghost of Sparta: L ○ R ○, 4 frames held and 3 apart, escapes the boat's first grab.
         val frames = PspSteps.frames(PspProfile.MASH_LR)
         val l = PspProfile.keyCode(com.kofarcade.core.Key.E)!!
         val r = PspProfile.keyCode(com.kofarcade.core.Key.F)!!
+        val circle = PspProfile.keyCode(com.kofarcade.core.Key.D)!!
         val pressed = frames.filter { it.isNotEmpty() }.map { it.single() }
         val presses = pressed.zipWithNext().count { (a, b) -> a != b } + 1
-        assertTrue("$presses presses", presses >= 24)
-        assertEquals(setOf(l, r), pressed.toSet())
+        assertTrue("$presses presses", presses >= 48)
+        // L and R alternate (with ○ between, still an escape in the game), and ○ comes every other press.
+        assertEquals(setOf(l, r, circle), pressed.toSet())
+        val runs = pressed.filterIndexed { i, k -> i == 0 || pressed[i - 1] != k }
+        val lr = runs.filter { it != circle }
+        assertTrue(lr.zipWithNext().all { (a, b) -> a != b })
     }
 
     @Test
@@ -252,5 +257,19 @@ class PspGamesTest {
         // On Home, found by its file name.
         val ac = PspTitle.ALL.first { it.id == "acb" }
         assertEquals(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"), ac.copyIn(listOf(java.io.File("x/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).iso"))))
+    }
+
+    @Test
+    fun aPictureThePhoneCantKeepUpWithStepsDown() {
+        val sharp2x = PspSettings(resolution = 2)
+        // The owner's phone: 2x ran 28-37 fps; Enhanced edges 19-22.
+        val slow = listOf(60, 60, 30, 32, 28, 35, 37, 30, 29, 31, 33, 30)
+        assertEquals(PspSettings(resolution = 1), PspGuard.stepDown(sharp2x, slow)!!.first)
+        val enhanced = PspSettings(picture = PspSettings.Picture.ENHANCED)
+        assertEquals(PspSettings.Picture.SMOOTH, PspGuard.stepDown(enhanced, slow)!!.first.picture)
+        // Nothing left to drop, or fast enough, or a short loading dip: nothing.
+        assertEquals(null, PspGuard.stepDown(PspSettings(), slow))
+        assertEquals(null, PspGuard.stepDown(sharp2x, List(12) { 59 }))
+        assertEquals(null, PspGuard.stepDown(sharp2x, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
     }
 }
