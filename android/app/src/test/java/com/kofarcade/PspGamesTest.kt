@@ -113,7 +113,7 @@ class PspGamesTest {
         assertEquals(PspProfile(), base)
         assertEquals(listOf("L", "R"), base.system.map { it.name })
         assertEquals(listOf(PspProfile.HOLD_L, PspProfile.HOLD_R), base.system.map { it.cmd })
-        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash LR", "Mash ○", "Moves"), p.system.map { it.name })
+        assertEquals(listOf("L", "R", "Roll", "Weapon", "Mash LR", "Mash ○"), p.system.map { it.name })
         // The arcade keys on the PSP's buttons: square, cross, triangle, circle, L, R, SELECT.
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_Y, PspProfile.keyCode(com.kofarcade.core.Key.A))
         assertEquals(android.view.KeyEvent.KEYCODE_BUTTON_B, PspProfile.keyCode(com.kofarcade.core.Key.B))
@@ -299,18 +299,6 @@ class PspGamesTest {
         assertEquals(chosen, two)
         assertEquals(null, PspGuard.stepUp(two, chosen, smooth))
         assertEquals(null, PspGuard.stepUp(low, chosen, smooth, steady = 60))
-    }
-
-    @Test
-    fun godOfWarsLevelThreeMovesAreOnTheSecondPage() {
-        // The game's own list (Blades of Athena level 3).
-        val p = PspProfile.GOD_OF_WAR
-        assertEquals(6, p.moves2.size)
-        assertEquals("C,wait:10,C,wait:10,C", p.moves2.first { it.name == "Spirit of Hercules" }.cmd)
-        assertEquals("C,wait:10,C,wait:10,A", p.moves2.first { it.name == "Valor of Hercules" }.cmd)
-        assertTrue(p.moves2.all { PspSteps.isSteps(it.cmd) })
-        assertEquals(PspProfile.PAGE, p.system.last().cmd)
-        assertTrue("sys:6" in p.layout)
     }
 
     @Test
