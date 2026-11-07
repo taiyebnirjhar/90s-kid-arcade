@@ -970,6 +970,13 @@ decision was made in the conversation. Get the time now with
 - Owner: "On Mash rotate not needed. We can remove that. L + R is okey".
 - Mash is L ○ R ○ again, without the stick spin.
 
+### 2026-11-07 19:30 Dhaka · No automatic step-down for PSP graphics
+- Owner: "Make sure it doesnt auto down grade. We dont want auto here".
+- PspGuard is gone: the picture stays as set (2x, Enhanced edges) however
+  the game runs; the player changes it in Graphics & speed. Suggested on
+  his phone: 2x, Sharp, faster effects on, frame skip off (his log: 2x
+  Sharp full speed 93% of the time, Enhanced edges 20-38 fps).
+
 ---
 
 ## Where things stand (update whenever it changes)
