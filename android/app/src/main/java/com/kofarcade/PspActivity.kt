@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,16 +14,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
 
 /**
  * PSP games (docs/psp-plan.md, P1): the games on this phone, and "Add a game"
@@ -53,8 +46,6 @@ import java.io.FileInputStream
 class PspActivity : ComponentActivity() {
     private val dir by lazy { File(filesDir, "psp/games") }
     private var games by mutableStateOf<List<File>>(emptyList())
-    private var adding by mutableStateOf<String?>(null)
-    private var added by mutableStateOf(0L)
     private var error by mutableStateOf<String?>(null)
 
     // The PSP library (a public Google Drive folder): its link, its games, and how listing it went.
@@ -73,6 +64,16 @@ class PspActivity : ComponentActivity() {
         if (link.isNotEmpty()) loadDrive()
         // A game landing from the library shows in the list at once.
         lifecycleScope.launch { LibraryDownloads.get(this@PspActivity).installed.collect { games = PspGames.list(dir) } }
+        // And one added from the phone's files, with how it went.
+        lifecycleScope.launch {
+            PspImports.state.collect { s ->
+                if (s != null && !s.running) {
+                    games = PspGames.list(dir)
+                    if (!s.ok) error = s.result
+                    PspImports.clear()
+                }
+            }
+        }
         setContent { KofTheme { Screen() } }
     }
 
@@ -81,31 +82,12 @@ class PspActivity : ComponentActivity() {
         games = PspGames.list(dir)
     }
 
+    /** Adds the picked game in the background ([PspImports]): it goes on after this page is left. */
     private fun add(uri: Uri) {
-        val name = displayName(uri) ?: "game"
-        adding = name
-        added = 0
         error = null
-        // Unpacking a GB or two takes a minute: keep the screen on meanwhile.
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                runCatching {
-                    contentResolver.openFileDescriptor(uri, "r")!!.use { pfd ->
-                        PspGames.import(
-                            name, dir,
-                            open = { contentResolver.openInputStream(uri)!! },
-                            channel = { FileInputStream(pfd.fileDescriptor).channel },
-                            progress = { added = it },
-                        )
-                    }
-                }
-            }
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            adding = null
-            result.onFailure { e -> error = e.message ?: "Couldn't add $name" }
-            games = PspGames.list(dir)
-        }
+        // Read it again later, from the service, after this page is gone.
+        runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        if (!PspImports.start(this, uri, displayName(uri) ?: "game")) error = "A game is being added already: wait for it to finish"
     }
 
     /** Lists the Drive folder's games (off the main thread). */
@@ -159,20 +141,17 @@ class PspActivity : ComponentActivity() {
 
     @Composable
     private fun Screen() {
-        Column(
-            Modifier.fillMaxSize().background(Palette.bg).windowInsetsPadding(WindowInsets.safeDrawing)
-                .verticalScroll(rememberScrollState()).padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text("PSP games", color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Black)
+        ArcadeScreen(title = "PSP games", onBack = ::finish) { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 "Test version: pick your game file from the phone (.7z, .zip, .iso, .cso or .chd). " +
                     "A speed counter shows while you play.",
                 color = Palette.muted, fontSize = 13.sp,
             )
-            val busy = adding
+            val adding by PspImports.state.collectAsState()
+            val busy = adding?.takeIf { it.running }
             if (busy != null) {
-                Text("Adding $busy… ${added / 1_000_000} MB", color = Palette.text, fontSize = 14.sp)
+                Text("Adding ${busy.name}… ${busy.bytes / 1_000_000} MB", color = Palette.text, fontSize = 14.sp)
+                Text("You can leave this page: it carries on in the background.", color = Palette.muted, fontSize = 12.sp)
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             } else {
                 GoldButton("Add a game", { pick.launch(arrayOf("*/*")) })
@@ -184,7 +163,7 @@ class PspActivity : ComponentActivity() {
                 Text("No PSP games yet.", color = Palette.muted, fontSize = 14.sp)
             }
             for (g in games) GameRow(g)
-        }
+        } }
     }
 
     /** The PSP library: the Drive folder's games, each with Get (or its download's progress). */

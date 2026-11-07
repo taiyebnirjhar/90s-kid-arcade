@@ -940,6 +940,16 @@ decision was made in the conversation. Get the time now with
   with confetti for the champion, kept on the profile. Our design, not a copy
   of FIFA's: no FIFA names, marks or trophy.
 
+### 2026-11-07 17:55 Dhaka · Adding a PSP game goes on in the background; a back button
+- Owner (with a screenshot of "Adding Assassin's Creed… 125 MB"): "Make
+  sure adding game can run on bg. I moved out of here. Than its gone. Also
+  add a back button on top like other ui".
+- The unpacking ran in the page's own scope, so leaving the page stopped
+  it. Now `PspImports` runs it for the whole app, held up by
+  `PspImportService` (a foreground service like the downloads, with a
+  notification and a "ready to play" note at the end). The PSP page has
+  the app's usual header with a back button.
+
 ---
 
 ## Where things stand (update whenever it changes)

@@ -197,7 +197,7 @@ class DownloadService : Service() {
         PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
 
     companion object {
-        private const val CHANNEL = "downloads"
+        const val CHANNEL = "downloads"
         private const val ONGOING = 41
         private const val DONE = 42
         private const val ACTION_CANCEL = "com.kofarcade.CANCEL_DOWNLOADS"

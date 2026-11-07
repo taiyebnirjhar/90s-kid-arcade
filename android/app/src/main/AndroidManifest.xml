@@ -88,6 +88,11 @@
             android:name=".DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- Adding a PSP game from the phone's files goes on the same way. -->
+        <service
+            android:name=".PspImportService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <!-- The app's own update downloads the same way: on with the app in the background. -->
         <service
             android:name=".UpdateService"
