@@ -219,14 +219,19 @@ class PspGamesTest {
 
     @Test
     fun mashAlternatesLAndRAsTheGameAsks() {
-        // Checked in Ghost of Sparta: L and R, 4 frames held and 3 apart, twelve times, escapes the boat's first grab.
+        // Checked in Ghost of Sparta: L ○ R ○, 4 frames held and 3 apart, escapes the boat's first grab.
         val frames = PspSteps.frames(PspProfile.MASH_LR)
         val l = PspProfile.keyCode(com.kofarcade.core.Key.E)!!
         val r = PspProfile.keyCode(com.kofarcade.core.Key.F)!!
+        val circle = PspProfile.keyCode(com.kofarcade.core.Key.D)!!
         val pressed = frames.filter { it.isNotEmpty() }.map { it.single() }
         val presses = pressed.zipWithNext().count { (a, b) -> a != b } + 1
-        assertTrue("$presses presses", presses >= 24)
-        assertEquals(setOf(l, r), pressed.toSet())
+        assertTrue("$presses presses", presses >= 48)
+        // L and R alternate (with ○ between, still an escape in the game), and ○ comes every other press.
+        assertEquals(setOf(l, r, circle), pressed.toSet())
+        val runs = pressed.filterIndexed { i, k -> i == 0 || pressed[i - 1] != k }
+        val lr = runs.filter { it != circle }
+        assertTrue(lr.zipWithNext().all { (a, b) -> a != b })
     }
 
     @Test

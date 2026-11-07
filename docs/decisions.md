@@ -855,6 +855,21 @@ decision was made in the conversation. Get the time now with
 - Decided: deploy-pages waits 30 minutes. Merging this change runs the
   website step again (pages.yml changed), which publishes 1.0.298.
 
+### 2026-11-07 16:41 Dhaka · Mash turns the stick too; God of War saves on leaving at once
+- Owner (1.0.298, a chain pull failing, a screenshot): "It saying ti move
+  controller stick round round. Also make sure gow auto saves on left like
+  other game".
+- Decided: the Mash pill presses L, ○, R, ○ (about three seconds) and turns
+  the analog stick round (a turn every 16 frames) at the same time, so one
+  pill answers "alternate L and R", "press ○" and "rotate the stick"
+  prompts. Checked in the game: the boat's grab still escapes with ○ and
+  the turning stick added. Mash plays frame by frame (PspSteps), the
+  timing checked.
+- Leaving the app keeps the game at once (`keepPlaceNow`, off the
+  emulator's thread, as the arcade games do), not queued for a thread
+  Android stops as the app goes. Checked in the game: a state taken off
+  that thread loads back.
+
 ---
 
 ## Where things stand (update whenever it changes)

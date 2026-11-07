@@ -246,11 +246,13 @@ data class PspProfile(
         const val HOLD_R = "held:F"
 
         /**
-         * The game's "alternate L and R quickly" prompts (a grab to escape, a
-         * door to push): L, R, L, R… twelve times, about two seconds. Checked
-         * in Ghost of Sparta: it escapes the first grab on the boat.
+         * The game's mashing prompts: "alternate L and R quickly" (a grab to
+         * escape) and "press ○ quickly" (a chain to pull, a door to lift):
+         * L, ○, R, ○… about three seconds, so one pill does both (the owner's
+         * chain pull failed with L and R alone). Checked in Ghost of Sparta:
+         * L ○ R ○ still escapes the boat's first grab.
          */
-        val MASH_LR: String get() = List(12) { "E,F" }.joinToString(",")
+        val MASH_LR: String get() = List(12) { "E,D,F,D" }.joinToString(",")
 
         /** The profile for a game, from its title. */
         /**
