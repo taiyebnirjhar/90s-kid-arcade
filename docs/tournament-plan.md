@@ -45,6 +45,16 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
   whom, who's playing now, who's next), "Start tournament" for the host
   (3 to 8 in), the champion at the end, shared in chat. A small bar over
   the game: "Quarter-final 2 of 4 · Rafi vs Tanu".
+  **The look** (the owner, 2026-11-07: "animation for tournament like fifa
+  world cup time ... an virtual trophy", with a World Cup bracket picture):
+  a dark, two-sided bracket, the halves meeting at the final in the middle,
+  each player a card with their avatar; after a match the winner's card
+  slides along the line into the next round; before a match a "versus"
+  screen (both cards rush in, the round's name, a count to the fight); the
+  draw itself animated (cards dealt into their places). The champion gets
+  our own trophy, drawn by us (gold, the app's style; not FIFA's), lifted
+  with confetti and a fanfare, shared in chat and kept on the profile
+  (T6). Smooth at 60 fps on the owner's phone, and short (skippable).
 - **T6. Kept on the server.** The bracket and results in Supabase (tiny
   rows, far inside the free plan, with a stop like the others), so a host
   who drops doesn't lose the tournament; tournament wins on the profile.
@@ -65,6 +75,13 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
   feeds; the room's limits stay as they are (D8 and the relay's stops).
 - **Fairness**: a dropped player, a sore loser closing the app: the rules
   above (60 s, opponent goes through; host decides disputes).
+
+## Where it stands
+
+- **T1 done** (2026-11-07): `core/tournament/Bracket.kt` and its tests.
+- **Defaults used** (the owner said "go" without picking; he can change
+  them): single elimination, best of 1, online and nearby both, KOF 2002
+  Magic Plus first.
 
 ## To settle with the owner
 

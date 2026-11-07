@@ -922,13 +922,32 @@ decision was made in the conversation. Get the time now with
   server). Waiting on the owner's choices (format, match length, online or
   nearby, first game) and his go.
 
+### 2026-11-07 17:38 Dhaka · Tournaments: going, T1 the bracket; a World Cup look
+- Owner: "Go" (no choices picked), then: "Also i want animation for
+  tournament like fifa world cup time. Also an virtual trophy. It should
+  feel nice and well design and developed" (with a World Cup bracket
+  picture: two halves meeting in the middle, the trophy below the final).
+- The suggested defaults, which he can change: single elimination, best of
+  1 (the game's own rounds), online and nearby both, KOF 2002 Magic Plus
+  first.
+- T1 built: `core/tournament/Bracket.kt`, plain data (serializable): 2-8
+  players in seed order, a 4 or 8 bracket with byes for the top seeds, the
+  top two seeds only able to meet in the final, results by match number,
+  a player who leaves losing their next match. Tested (BracketTest).
+- The look goes into T5 (tournament-plan.md): a two-sided bracket like the
+  picture, the winner's line drawn forward after each match, a "versus"
+  intro before each match, and our own trophy (drawn by us, not FIFA's) lifted
+  with confetti for the champion, kept on the profile. Our design, not a copy
+  of FIFA's: no FIFA names, marks or trophy.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 16:13 Dhaka:
+As of 2026-11-07 17:38 Dhaka:
 
-- **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
+- **Open:** Tournaments T1 (the bracket). Next: T2 (who won, from the game), then T3-T6; the World Cup look and the trophy in T5.
+- **Merged lately:** #87-#91 (God of War first party, game logs to the server, D-PAD manual, Assassin's Creed, the Drive PSP library, the analog stick, PspGuard).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).
