@@ -97,9 +97,12 @@ class PspGamesTest {
         assertTrue("Block holds L", p.blockHoldsL)
         assertTrue("SELECT opens its pause menu", p.select)
         assertEquals(6, p.moves.size)
+        // R stays held between taps: every combo on fire (Thera's Bane).
+        assertEquals(PspProfile.LATCH_R, p.system.first { it.name == "R" }.cmd)
+        assertEquals("A,A,A,A,A,A", p.moves.first { it.name == "Olympic Fury" }.cmd)
         assertEquals("pad:6,E>B", p.moves.first { it.name == "Atlas Spark" }.cmd)
         // Checked in the game: L first, then ○ with it (both at once is just ○).
-        assertEquals("E>D", p.moves.first { it.name == "Hyperion Charge" }.cmd)
+        assertEquals("E>D,A", p.moves.first { it.name == "Hyperion Rush" }.cmd)
         assertEquals("○", PspProfile.FACE_NAMES['D'])
         assertEquals("EF", p.system.first { it.name == "Roll" }.cmd)
         val base = PspProfile.forTitle("Need for Speed Most Wanted 5-1-0")
@@ -260,16 +263,39 @@ class PspGamesTest {
     }
 
     @Test
-    fun aPictureThePhoneCantKeepUpWithStepsDown() {
-        val sharp2x = PspSettings(resolution = 2)
-        // The owner's phone: 2x ran 28-37 fps; Enhanced edges 19-22.
+    fun autoStepsDownInHeavyScenesCheapestFirst() {
+        // The owner's phone: 2x ran 28-37 fps in fights; Enhanced edges 19-22.
         val slow = listOf(60, 60, 30, 32, 28, 35, 37, 30, 29, 31, 33, 30)
-        assertEquals(PspSettings(resolution = 1), PspGuard.stepDown(sharp2x, slow)!!.first)
-        val enhanced = PspSettings(picture = PspSettings.Picture.ENHANCED)
-        assertEquals(PspSettings.Picture.SMOOTH, PspGuard.stepDown(enhanced, slow)!!.first.picture)
+        val chosen = PspSettings(resolution = 2, picture = PspSettings.Picture.ENHANCED)
+        val one = PspGuard.stepDown(chosen, slow)!!.first
+        assertEquals(PspSettings.Picture.SMOOTH, one.picture)
+        val two = PspGuard.stepDown(one, slow)!!.first
+        assertTrue(two.fasterEffects)
+        val three = PspGuard.stepDown(two, slow)!!.first
+        assertEquals(1, three.resolution)
         // Nothing left to drop, or fast enough, or a short loading dip: nothing.
-        assertEquals(null, PspGuard.stepDown(PspSettings(), slow))
-        assertEquals(null, PspGuard.stepDown(sharp2x, List(12) { 59 }))
-        assertEquals(null, PspGuard.stepDown(sharp2x, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
+        assertEquals(null, PspGuard.stepDown(three, slow))
+        assertEquals(null, PspGuard.stepDown(chosen, List(12) { 59 }))
+        assertEquals(null, PspGuard.stepDown(chosen, listOf(60, 60, 60, 60, 60, 60, 20, 10, 30, 60, 60, 60)))
+    }
+
+    @Test
+    fun autoStepsBackUpWhenSmoothNeverPastTheChoice() {
+        val chosen = PspSettings(resolution = 2, picture = PspSettings.Picture.ENHANCED)
+        val low = PspSettings(resolution = 1, fasterEffects = true, picture = PspSettings.Picture.SMOOTH)
+        val smooth = List(PspGuard.STEADY) { 60 }
+        // Not steady long enough, or a dip in it: stays down.
+        assertEquals(null, PspGuard.stepUp(low, chosen, List(PspGuard.STEADY - 1) { 60 }))
+        assertEquals(null, PspGuard.stepUp(low, chosen, smooth.dropLast(1) + 48))
+        // Sharpness first, then effects, then the picture; then it's back where chosen.
+        val one = PspGuard.stepUp(low, chosen, smooth)!!.first
+        assertEquals(2, one.resolution)
+        val two = PspGuard.stepUp(one, chosen, smooth)!!.first
+        assertEquals(false, two.fasterEffects)
+        val three = PspGuard.stepUp(two, chosen, smooth)!!.first
+        assertEquals(chosen, three)
+        assertEquals(null, PspGuard.stepUp(three, chosen, smooth))
+        // A longer wait after a step up was taken back.
+        assertEquals(null, PspGuard.stepUp(low, chosen, smooth, steady = 60))
     }
 }

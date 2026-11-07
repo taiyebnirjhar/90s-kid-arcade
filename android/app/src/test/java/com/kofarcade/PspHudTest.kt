@@ -38,6 +38,7 @@ class PspHudTest {
                 when (it.cmd) {
                     PspProfile.HOLD_L -> HudView.SysButton(it.name, p.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
                     PspProfile.HOLD_R -> HudView.SysButton(it.name, p.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
+                    PspProfile.LATCH_R -> HudView.SysButton(it.name, p.shoulderHints.second, it.cmd)
                     else -> HudView.SysButton(it.name, it.cmd.replace("pad:2", "✚↓").replace("EF", "L+R"), it.cmd)
                 }
             }, block = p.blockHoldsL,

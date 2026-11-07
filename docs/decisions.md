@@ -912,13 +912,84 @@ decision was made in the conversation. Get the time now with
   then Enhanced edges to Smooth, with a note on screen and in the log.
   Suggested: 1x with Enhanced edges, to see whether that holds.
 
+### 2026-11-07 17:31 Dhaka · Tournaments: planned
+- Owner: "For arcade challenger game like kof, we need tournament. Upto 8
+  player. We want that feature. Lets plan".
+- Planned in docs/tournament-plan.md: a Tournament room (up to 8, single
+  elimination, byes), built on rooms, the watchers' line, host migration;
+  phases T1-T6 (bracket, who won from the game's RAM, the players say as
+  the fallback, seats from the bracket, the tournament screen, kept on the
+  server). Waiting on the owner's choices (format, match length, online or
+  nearby, first game) and his go.
+
+### 2026-11-07 17:38 Dhaka · Tournaments: going, T1 the bracket; a World Cup look
+- Owner: "Go" (no choices picked), then: "Also i want animation for
+  tournament like fifa world cup time. Also an virtual trophy. It should
+  feel nice and well design and developed" (with a World Cup bracket
+  picture: two halves meeting in the middle, the trophy below the final).
+- The suggested defaults, which he can change: single elimination, best of
+  1 (the game's own rounds), online and nearby both, KOF 2002 Magic Plus
+  first.
+- T1 built: `core/tournament/Bracket.kt`, plain data (serializable): 2-8
+  players in seed order, a 4 or 8 bracket with byes for the top seeds, the
+  top two seeds only able to meet in the final, results by match number,
+  a player who leaves losing their next match. Tested (BracketTest).
+- The look goes into T5 (tournament-plan.md): a two-sided bracket like the
+  picture, the winner's line drawn forward after each match, a "versus"
+  intro before each match, and our own trophy (drawn by us, not FIFA's) lifted
+  with confetti for the champion, kept on the profile. Our design, not a copy
+  of FIFA's: no FIFA names, marks or trophy.
+
+### 2026-11-07 17:55 Dhaka · Adding a PSP game goes on in the background; a back button
+- Owner (with a screenshot of "Adding Assassin's Creed… 125 MB"): "Make
+  sure adding game can run on bg. I moved out of here. Than its gone. Also
+  add a back button on top like other ui".
+- The unpacking ran in the page's own scope, so leaving the page stopped
+  it. Now `PspImports` runs it for the whole app, held up by
+  `PspImportService` (a foreground service like the downloads, with a
+  notification and a "ready to play" note at the end). The PSP page has
+  the app's usual header with a back button.
+
+### 2026-11-07 18:52 Dhaka · God of War: R stays on for fire combos; Olympic Fury and Hyperion Rush
+- Owner (1.0.303, a screenshot in play): "Need combo attack including
+  press R for fire. Check what can we do. We actually need all combo
+  attacks can u please google and grab all of them".
+- R is now tap on, tap off (lit while held), so Thera's Bane's fire stays
+  on and every combo, tapped or from a pill, comes out on fire; with the
+  spear it aims and □ throws. It lets go when the game pauses.
+- On the ring (six fit; seven overlapped): Hyperion Rush (L, ○ with it, then
+  □), Olympic Fury (□ ×6), Spirit of Hercules (□□△), and the three magics.
+  The charge alone is Block + ○; Cyclone of Chaos is □ held.
+- The full move lists (psnprofiles.com, godofwar.fandom.com, GameFAQs)
+  can't be read from here (the network blocks them); only search snippets
+  came through, and they disagree on names and on PS3/Vita buttons. The
+  game's own list (the weapon upgrade screen, per level) is the one to go
+  by: the owner sends screenshots of it and the rest go in.
+
+### 2026-11-07 19:05 Dhaka · Mash no longer turns the stick
+- Owner: "On Mash rotate not needed. We can remove that. L + R is okey".
+- Mash is L ○ R ○ again, without the stick spin.
+
+### 2026-11-07 19:45 Dhaka · PSP graphics: Auto goes both ways
+- Owner, after the step-down was taken out: "Keep the auto. Can we auto
+  adjust settings? I meant graphic settings".
+- Auto is back and on by default, a switch at the top of Graphics &
+  speed. In a heavy scene (7 of the last 10 seconds slow) it steps down
+  the cheapest look first: Enhanced edges to Smooth, then faster effects
+  on, then 2x to 1x. After 30 seconds at full speed it steps back up one
+  step at a time, sharpness first, never past what the player picked
+  (kept apart from what's in use now, which isn't saved). A step up taken
+  back within a minute doubles the next wait (up to 5 minutes), so a scene
+  on the edge doesn't flicker. Off: the picture stays as picked.
+
 ---
 
 ## Where things stand (update whenever it changes)
 
-As of 2026-11-06 16:13 Dhaka:
+As of 2026-11-07 17:38 Dhaka:
 
-- **Open:** PSP P2 (speed, picture and controls for Ghost of Sparta).
+- **Open:** Tournaments T1 (the bracket). Next: T2 (who won, from the game), then T3-T6; the World Cup look and the trophy in T5.
+- **Merged lately:** #87-#91 (God of War first party, game logs to the server, D-PAD manual, Assassin's Creed, the Drive PSP library, the analog stick, PspGuard).
 - **Merged:** #83 (PSP plan and P1), #82 (more consoles looked at, dropped), #81 (button layouts and their rules), #80 (Spin Master, In the Hunt, Stone Ball, Vampire Savior: 31
   games), #71-#79 (recording matches R1-R3, match videos with their own
   sound, updates downloading in the background).

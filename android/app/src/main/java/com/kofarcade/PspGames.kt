@@ -125,20 +125,29 @@ data class PspSettings(
     /** Skips some full-screen effects (glows, blur) for speed. */
     val fasterEffects: Boolean = false,
     val picture: Picture = Picture.SHARP,
+    /** The picture follows what the phone can do ([PspGuard]): down in heavy scenes, back up when smooth. */
+    val auto: Boolean = true,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
     enum class Picture(val label: String) { SHARP("Sharp"), SMOOTH("Smooth"), ENHANCED("Enhanced edges") }
 }
 
 /**
- * Never a game at half speed for a sharper picture: when the last 10 seconds
- * of play mostly ran slow, the picture steps down (2x to 1x first, then
- * Enhanced edges to Smooth). The owner's phone (Adreno 610) ran God of War at
- * 28-37 fps at 2x and 19-22 with Enhanced edges, 58-60 at 1x Sharp.
+ * Auto (on unless the player turns it off): the picture follows what the
+ * phone can do. When the last 10 seconds mostly ran slow it steps down, the
+ * cheapest look first (Enhanced edges to Smooth, then faster effects on, then
+ * 2x to 1x); after a steady stretch at full speed it steps back up, one step
+ * at a time, never past what the player chose. The owner's phone (Adreno 610)
+ * ran God of War's calm places at 2x Sharp at full speed and its big fights
+ * at 30-40 fps; Enhanced edges at 20-38 fps (1.0.303's log).
  */
 object PspGuard {
     const val WINDOW = 10
     const val SLOW = 50
+    /** Full speed, for stepping back up. */
+    const val FULL = 57
+    /** Seconds at full speed before a step back up. */
+    const val STEADY = 30
 
     /** The settings to step down to, and what to tell the player; null if it's fast enough or nothing's left to drop. */
     fun stepDown(s: PspSettings, perSecond: List<Int>): Pair<PspSettings, String>? {
@@ -146,8 +155,24 @@ object PspGuard {
         val last = perSecond.takeLast(WINDOW)
         if (last.count { it < SLOW } < 7 || last.average() >= 45) return null
         return when {
-            s.resolution >= 2 -> s.copy(resolution = 1) to "Sharpness back to 1x: this phone can't keep full speed at 2x"
-            s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Picture to Smooth: Enhanced edges was too slow on this phone"
+            s.picture == PspSettings.Picture.ENHANCED -> s.copy(picture = PspSettings.Picture.SMOOTH) to "Heavy scene: picture to Smooth for now"
+            !s.fasterEffects -> s.copy(fasterEffects = true) to "Heavy scene: faster effects on for now"
+            s.resolution >= 2 -> s.copy(resolution = 1) to "Heavy scene: sharpness 1x for now"
+            else -> null
+        }
+    }
+
+    /**
+     * One step back toward [chosen] once the last [steady] seconds all ran at
+     * full speed (the reverse order: sharpness first, the look the player
+     * notices most); null if it's already there or not steady yet.
+     */
+    fun stepUp(s: PspSettings, chosen: PspSettings, perSecond: List<Int>, steady: Int = STEADY): Pair<PspSettings, String>? {
+        if (perSecond.size < steady || perSecond.takeLast(steady).any { it < FULL }) return null
+        return when {
+            s.resolution < chosen.resolution -> s.copy(resolution = chosen.resolution) to "Running smooth: sharpness back to ${chosen.resolution}x"
+            s.fasterEffects && !chosen.fasterEffects -> s.copy(fasterEffects = false) to "Running smooth: full effects back"
+            s.picture != chosen.picture -> s.copy(picture = chosen.picture) to "Running smooth: picture back to ${chosen.picture.label}"
             else -> null
         }
     }
@@ -243,7 +268,10 @@ data class PspProfile(
          */
         val GOD_OF_WAR = PspProfile(
             labels = mapOf('A' to "Light", 'B' to "Jump", 'C' to "Heavy", 'D' to "Grab"),
-            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
+            // R stays held from one tap to the next (the owner, 2026-11-07: "Need
+            // combo attack including press R for fire"): with Thera's Bane on,
+            // every combo below comes out on fire; with the spear, it aims (□ throws).
+            system = listOf(Move("L", HOLD_L), Move("R", LATCH_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash", MASH_LR)),
             blockHoldsL = true,
             shoulderHints = "Block" to "Fire / Aim",
             // No inPlay: 0x08C5D8D1 read 0 in every menu and 4 in play on the
@@ -252,9 +280,14 @@ data class PspProfile(
             // the D-pad. The owner: "If this cant be solved. Make dpad manual
             // like before". The D-PAD switch is the only way again.
             moves = listOf(
-                Move("Hyperion Charge", "E>D"),
+                // Hyperion Charge (L, then ○ while L is held: checked in the
+                // game), then □ while it runs: the charge goes on into a strike.
+                // Six pills fit on the ring: the charge alone is L (Block) + ○,
+                // and Cyclone of Chaos is □ held.
+                Move("Hyperion Rush", "E>D,A"),
+                // Six □: the Blades' long combo (Olympic Fury, in PSNProfiles' list).
+                Move("Olympic Fury", "A,A,A,A,A,A"),
                 Move("Spirit of Hercules", "A,A,C"),
-                Move("Cyclone of Chaos", "hold:A", "dm"),
                 Move("Atlas Spark", "pad:6,E>B", "dm"),
                 Move("Erinys Void", "pad:4,E>B", "dm"),
                 Move("Boreas Freeze", "pad:8,E>B", "dm"),
@@ -267,6 +300,9 @@ data class PspProfile(
         /** Pills' commands for "held while pressed": L or R stays down for as long as the finger does. */
         const val HOLD_L = "held:E"
         const val HOLD_R = "held:F"
+
+        /** A pill that keeps R held from one tap to the next (God of War's Thera's Bane, or the spear's aim). */
+        const val LATCH_R = "latch:F"
 
         /**
          * The game's mashing prompts: "alternate L and R quickly" (a grab to

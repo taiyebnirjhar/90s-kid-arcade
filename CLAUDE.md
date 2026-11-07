@@ -42,6 +42,12 @@ offline, and a game ships only if it never lags or hangs on his phone
 (the rule in the plan). Phases P1-P4, one PR each; start a phase only when
 the owner says so. The arcade games stay as they are.
 
+## Tournaments: planned
+
+Follow [docs/tournament-plan.md](docs/tournament-plan.md): up to 8 players
+in a Tournament room, single elimination, phases T1-T6, one PR each; start
+a phase only when the owner says so.
+
 ## Seats in rooms follow the game's own countdown
 
 A watcher's COIN or START takes a free seat, or the seat of a player the game
