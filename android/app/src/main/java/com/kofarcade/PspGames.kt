@@ -331,6 +331,30 @@ data class PspProfile(
             ),
         )
 
+        /**
+         * God of War: Chains of Olympus: Ghost of Sparta's buttons, layout and
+         * settings (the owner, 2026-11-09: "same settings ... if that matches"),
+         * with what's its own, read in the game (tools/pspemu.py: its Controls
+         * screen, tutorials and its own text): magic is R held with a face
+         * button (R + △ Efreet, R + □ Light of Dawn, R + ○ Charon's Wrath), so
+         * R is held while pressed (for aiming and charging), not locked on;
+         * L + □ Cyclone of Chaos and L + ○ Rampage of the Furies; △ △ △ Spirit
+         * and △ △ □ Valor of Hercules. L + R with the stick rolls (checked).
+         * No Moves screen in this game; magic is locked at the start.
+         */
+        val CHAINS_OF_OLYMPUS = GOD_OF_WAR.copy(
+            system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O)),
+            shoulderHints = "Block" to "Magic",
+            moves = listOf(
+                Move("Cyclone of Chaos", "E>A"),
+                Move("Rampage of the Furies", "E>D"),
+                Move("Valor of Hercules", "C,wait:10,C,wait:10,A"),
+                Move("Efreet", "F>C", "dm"),
+                Move("Light of Dawn", "F>A", "dm"),
+                Move("Charon's Wrath", "F>D", "dm"),
+            ),
+        )
+
         /** The PSP's names for the arcade keys: symbols on the face buttons, L and R for E and F. */
         val FACE_NAMES = mapOf('A' to "□", 'B' to "✕", 'C' to "△", 'D' to "○", 'E' to "L", 'F' to "R")
 
@@ -384,6 +408,7 @@ data class PspProfile(
         )
 
         fun forTitle(title: String): PspProfile = when {
+            title.contains("chains of olympus", ignoreCase = true) -> CHAINS_OF_OLYMPUS
             title.contains("god of war", ignoreCase = true) -> GOD_OF_WAR
             title.contains("assassin", ignoreCase = true) -> ASSASSINS_CREED
             else -> PspProfile()

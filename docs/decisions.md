@@ -1204,6 +1204,22 @@ decision was made in the conversation. Get the time now with
   while R is on lets go of R for 4 frames, plays with R as its own, and
   puts R back on when it's done. Moves without R and L alone are as before.
 
+### 2026-11-09 03:10 Dhaka · Chains of Olympus: its own controls on Ghost of Sparta's layout
+- Owner (after finishing Ghost of Sparta): "We can setup chains of olympus
+  with same settings desicion of this if that matches". Asked which other
+  God of War games play: only the two PSP ones; the rest are PS2-PS5.
+- Read in the game (tools/pspemu.py: its Controls screen, tutorials and
+  the game's own text): the same face buttons, L blocks, L+R with the stick
+  rolls (checked), but magic is R held with a face button (R+△ Efreet,
+  R+□ Light of Dawn, R+○ Charon's Wrath), with nothing like Thera's Bane.
+  So R is held while pressed (aiming and charging), not locked on. Its
+  own moves: L+□ Cyclone of Chaos, L+○ Rampage of the Furies, △△□ Valor
+  of Hercules, and the three magics. No Moves screen in this game.
+- The rest is Ghost of Sparta's: the owner's layout, no faster effects,
+  the same graphics defaults, a card on Home with its picture.
+- Also found: in Ghost of Sparta, L+R with the stick rolls with R already
+  held (the emulator); #103's letting go of R first does no harm.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -1218,7 +1234,8 @@ As of 2026-11-07 21:06 Dhaka:
     (past the boat; the magic group is locked in our saves).
   - Assassin's Creed: Attack, Tackle, Block checked in a real fight (needs
     the owner's save past the tutorial; labels already from the game's panel).
-  - PSP: Chains of Olympus and NFS Most Wanted profiles; P5 weaker phones.
+  - PSP: NFS Most Wanted profile; P5 weaker phones (Chains of Olympus done
+    2026-11-09).
   - Recording: R4 voices in the video, R5 trim and polish.
   - Online Step 3 ideas: everyone-rotates seats, a lobby, bots.
   - Moving the ROM library to the owner's new Cloudflare account (needs
