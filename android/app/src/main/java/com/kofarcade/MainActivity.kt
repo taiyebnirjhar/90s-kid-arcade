@@ -141,7 +141,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private enum class Page { HOME, LIBRARY, MULTIPLAYER, PROFILE, REPLAYS }
+    private enum class Page { HOME, LIBRARY, MULTIPLAYER, PROFILE, REPLAYS, STORAGE }
 
     /** What the "add" dialog is for: the BIOS, or a game's ROM. */
     private sealed interface Pick {
@@ -158,6 +158,7 @@ class MainActivity : ComponentActivity() {
         var twoPlayer by rememberSaveable { mutableStateOf(false) }
         var profilePage by rememberSaveable { mutableStateOf(false) }
         var replays by rememberSaveable { mutableStateOf(false) }
+        var storage by rememberSaveable { mutableStateOf(false) }
         // A room link: straight to Multiplayer, joining it.
         androidx.compose.runtime.LaunchedEffect(linkCode) {
             if (linkCode != null) {
@@ -290,12 +291,14 @@ class MainActivity : ComponentActivity() {
             twoPlayer -> Page.MULTIPLAYER
             profilePage -> Page.PROFILE
             replays -> Page.REPLAYS
+            storage -> Page.STORAGE
             else -> Page.HOME
         }
         Crossfade(page, animationSpec = tween(220), label = "page") { shown ->
             when (shown) {
                 Page.PROFILE -> ProfileDialog(onClose = { profilePage = false })
                 Page.REPLAYS -> ReplaysDialog(prefs, roms, onWatch = ::watch, onClose = { replays = false })
+                Page.STORAGE -> StorageDialog(roms, onChanged = { refresh++ }, onClose = { storage = false })
                 Page.LIBRARY -> LibraryDialog(
                     prefs, roms, onChanged = { refresh++ }, onClose = { library = false },
                     // Play from the library: the game starts (the library's still there on the way back).
@@ -329,6 +332,7 @@ class MainActivity : ComponentActivity() {
                         onProfile = { profilePage = true },
                         onUpdate = { showUpdate = true },
                         onReplays = { replays = true },
+                        onStorage = { storage = true },
                         onPsp = { startActivity(android.content.Intent(this@MainActivity, PspActivity::class.java)) },
                         onPspGame = { _, path ->
                             startActivity(

@@ -120,6 +120,8 @@ fun HomeScreen(
     onPsp: () -> Unit = {},
     /** A PSP game's card: plays it, or (not added yet) opens the PSP games to add it. */
     onPspGame: (PspTitle, String?) -> Unit = { _, _ -> },
+    /** The Storage page: the games on the phone, their sizes, Remove. */
+    onStorage: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         val landscape = maxWidth > maxHeight
@@ -134,6 +136,7 @@ fun HomeScreen(
             HeaderChip("Library", onClick = onLibrary)
             if (ui.replays) HeaderChip("Replays", onClick = onReplays)
             HeaderChip("PSP", onClick = onPsp)
+            HeaderChip("Storage", onClick = onStorage)
             // Without the BIOS, the banner and the setup card already ask for it.
             if (ui.hasBios) HeaderChip("BIOS ready", dot = Palette.green, onClick = onBios)
         }
