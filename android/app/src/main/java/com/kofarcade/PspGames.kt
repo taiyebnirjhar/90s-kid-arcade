@@ -29,6 +29,10 @@ data class PspTitle(val id: String, val title: String, val subtitle: String, val
                 "Named_Titles/God of War - Ghost of Sparta (USA) (En,Fr,Es).png",
             ),
             PspTitle(
+                "coo", "God of War", "Chains of Olympus", "chains of olympus",
+                "Named_Titles/God of War - Chains of Olympus (USA).png",
+            ),
+            PspTitle(
                 "acb", "Assassin's Creed", "Bloodlines", "bloodlines",
                 "Named_Titles/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).png",
             ),
