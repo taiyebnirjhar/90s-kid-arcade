@@ -1196,6 +1196,14 @@ decision was made in the conversation. Get the time now with
   refilling. Not checked in the game here (our saves are before Thera's
   Bane); his exported save would let us check it and tune the timing.
 
+### 2026-11-09 00:23 Dhaka · God of War: Roll and Mash LR work with R on
+- Owner (1.0.338's log): "when r on. L+r dont trigger. We need to make it
+  seemles".
+- With R already held, the game never sees R pressed with L, so no roll
+  (the same for Mash LR's R presses). Now a pill that presses R itself
+  while R is on lets go of R for 4 frames, plays with R as its own, and
+  puts R back on when it's done. Moves without R and L alone are as before.
+
 ---
 
 ## Where things stand (update whenever it changes)
