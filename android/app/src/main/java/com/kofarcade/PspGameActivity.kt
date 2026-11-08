@@ -93,6 +93,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         /** R on: let go for [RELIGHT_GAP] frames every [RELIGHT_EVERY], so the fire lights again ([relightR]). */
         private const val RELIGHT_EVERY = 120
         private const val RELIGHT_GAP = 4
+        /** About how long a pad command like Roll plays, for the pill's light. */
+        private const val LEND_PAD_FRAMES = 12
     }
 
     /** What's open over the game. */
@@ -659,7 +661,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
     private fun sendKey(key: Key, down: Boolean) {
         // R locked on: a roll (L+R) or a mash presses R too, but never lets go of it.
-        if (key == Key.F && !down && rLatched) return
+        if (key == Key.F && !down && rLatched && !rLent) return
         val code = PspProfile.keyCode(key)
         if (code != null) {
             retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)
@@ -714,6 +716,16 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private var rTick = 0
 
     /**
+     * A pill that presses R itself while R is on (Roll is L+R, Mash LR): the
+     * game wants R pressed fresh with it, so R is let go first, the pill plays
+     * with R as its own, then R goes back on (the owner: "when r on. L+r dont
+     * trigger. We need to make it seemles").
+     */
+    @Volatile private var lendCmd: String? = null
+    private var lendWait = 0
+    @Volatile private var rLent = false
+
+    /**
      * God of War's fire lights only on a fresh press of R: once the meter runs
      * dry it stays out, R held or not (the owner's log, 2026-11-08). While R
      * is on, it's let go for a few frames every couple of seconds and pressed
@@ -721,6 +733,23 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
      * while a move or roll is pressing buttons, or paused.
      */
     private fun relightR() {
+        lendCmd?.let { cmd ->
+            if (lendWait == 0) rawKey(Key.F, false)
+            if (++lendWait >= RELIGHT_GAP) {
+                lendCmd = null
+                lendWait = 0
+                rLent = true
+                playNow(cmd)
+            }
+            return
+        }
+        if (rLent) {
+            if (pad.playing || steps.isNotEmpty() || stepsHeld.isNotEmpty()) return
+            rLent = false
+            rTick = 0
+            if (rLatched && !paused) rawKey(Key.F, true)
+            return
+        }
         if (!rLatched || paused || pad.playing || steps.isNotEmpty() || stepsHeld.isNotEmpty()) {
             if (rTick >= RELIGHT_EVERY - RELIGHT_GAP && rLatched && !paused) rawKey(Key.F, true)
             rTick = 0
@@ -745,7 +774,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (queue.isNotEmpty()) steps = queue.drop(1)
         if (now == stepsHeld) return
         val r = PspProfile.keyCode(Key.F)
-        for (k in stepsHeld - now) if (!(rLatched && k == r)) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        for (k in stepsHeld - now) if (!(rLatched && !rLent && k == r)) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
         for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
         stepsHeld = now
     }
@@ -758,8 +787,22 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             setRLatched(!rLatched)
             return 1
         }
+        if (rLatched && usesR(cmd)) {
+            lendCmd = cmd
+            return RELIGHT_GAP + if (isSteps(cmd)) PspSteps.frames(cmd).size else LEND_PAD_FRAMES
+        }
+        return playNow(cmd)
+    }
+
+    private fun isSteps(cmd: String) = PspSteps.isSteps(cmd) || cmd in PspProfile.MASHES
+
+    /** Presses R itself: a button part with F (R), not a pad: or latch: command. */
+    private fun usesR(cmd: String) = !cmd.startsWith("pad:") && !cmd.startsWith("latch:") && !cmd.startsWith("held:") &&
+        cmd.split(',', '>', '+').any { part -> !part.startsWith("wait:") && 'F' in part }
+
+    private fun playNow(cmd: String): Int {
         // Mash goes frame by frame too (its timing is the one checked in the game).
-        if (!PspSteps.isSteps(cmd) && cmd !in PspProfile.MASHES) return pad.play(cmd)
+        if (!isSteps(cmd)) return pad.play(cmd)
         val frames = PspSteps.frames(cmd)
         steps = frames
         return frames.size
