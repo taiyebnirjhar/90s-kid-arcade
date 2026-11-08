@@ -425,8 +425,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     fun open(s: Sheet) {
         if (sheet == null && !paused) {
-            // The game's menus don't want R held.
-            setRLatched(false)
+            // The game's menus don't want R held: let go of it while paused, and
+            // press it again on resume (it stays on: the owner, "If i turn on r,
+            // it should always be turn on").
+            if (rLatched) rawKey(Key.F, false)
             log.event("Paused (${s.name.lowercase()})")
             keepPlace()
         }
@@ -528,6 +530,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         meter.hold(false)
         LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
+        if (rLatched) rawKey(Key.F, true)
     }
 
     private val stateFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.state")
@@ -651,6 +654,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
     private fun sendKey(key: Key, down: Boolean) {
+        // R locked on: a roll (L+R) or a mash presses R too, but never lets go of it.
+        if (key == Key.F && !down && rLatched) return
         val code = PspProfile.keyCode(key)
         if (code != null) {
             retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)
@@ -696,9 +701,14 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun setRLatched(on: Boolean) {
         if (on == rLatched) return
         rLatched = on
-        sendKey(Key.F, on)
+        rawKey(Key.F, on)
         log.event(if (on) "R held (fire / aim)" else "R let go")
         runOnUiThread { updateHud() }
+    }
+
+    /** A button straight to the PSP, past the R lock (the lock's own on and off). */
+    private fun rawKey(key: Key, down: Boolean) {
+        PspProfile.keyCode(key)?.let { retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, it) }
     }
 
     private fun stepFrame() {
@@ -706,7 +716,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         val now = queue.firstOrNull() ?: emptySet()
         if (queue.isNotEmpty()) steps = queue.drop(1)
         if (now == stepsHeld) return
-        for (k in stepsHeld - now) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        val r = PspProfile.keyCode(Key.F)
+        for (k in stepsHeld - now) if (!(rLatched && k == r)) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
         for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
         stepsHeld = now
     }

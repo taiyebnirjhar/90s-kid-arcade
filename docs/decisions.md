@@ -1173,6 +1173,19 @@ decision was made in the conversation. Get the time now with
   frees and what stops with it: the BIOS for every Neo Geo game, a game whose
   files a hack borrows). A PSP game's saves and where it was left stay.
 
+### 2026-11-08 22:38 Dhaka · God of War: R stays on until tapped off
+- Owner (1.0.332's log): "After upgrading my sword, the red flame disabling
+  auto. If i turn on r, it should always be turn on".
+- Two of the app's own things let go of the locked R: every pause (the
+  lock was dropped on purpose, for the game's menus), and any pill pressing
+  R itself (Roll is L+R, Mash LR presses R): its letting go released the
+  lock's R too. Now R stays locked until the R pill is tapped again: a
+  pause lets go of R only while paused and presses it again on resume, and
+  nothing else lets go of R while it's locked.
+- If the flame still stops with R held (the game's own Thera's Bane meter
+  running out may want R pressed again), that's the game; to be seen in his
+  next log.
+
 ---
 
 ## Where things stand (update whenever it changes)
