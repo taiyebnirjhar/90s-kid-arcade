@@ -284,6 +284,17 @@ class PspGamesTest {
     }
 
     @Test
+    fun compatibilityIsPpssppsSafeDrawing() {
+        // A friend's phone (Galaxy A71) stayed black: the switch to try.
+        val fast = PspSpeed.options(PspSettings())
+        assertEquals("enabled", fast["ppsspp_skip_gpu_readbacks"])
+        assertEquals("Up to 1", fast["ppsspp_inflight_frames"])
+        val safe = PspSpeed.options(PspSettings(compatible = true))
+        assertEquals("disabled", safe["ppsspp_skip_gpu_readbacks"])
+        assertEquals("Up to 2", safe["ppsspp_inflight_frames"])
+    }
+
+    @Test
     fun godOfWarNeverSkipsBufferEffects() {
         assertEquals(false, PspProfile.GOD_OF_WAR.fasterEffectsOk)
         assertEquals("Up to 1", PspSpeed.options(PspSettings())["ppsspp_inflight_frames"])

@@ -103,6 +103,22 @@ class UiSnapshots {
     fun tournamentChampion() = shot("tournament_champion") { ChampionScreen("Rafi", you = true, game = "KOF 2002 Magic Plus", onDone = {}) }
 
     @Test
+    fun storage() = shot("storage") {
+        StorageScreen(
+            StorageUi(
+                listOf(
+                    StoredGame("God of War - Ghost of Sparta (USA).iso", "God of War - Ghost of Sparta (USA)", 1_747_000_000, psp = true),
+                    StoredGame("kf2k2mp2", "KOF 2002 Magic Plus", 64_000_000),
+                    StoredGame("garou", "Garou: Mark of the Wolves", 48_000_000),
+                    StoredGame("neogeo", "Neo Geo BIOS", 900_000, warning = "Every Neo Geo game needs it."),
+                ),
+                2_828_000_000,
+            ),
+            onBack = {}, onRemove = {},
+        )
+    }
+
+    @Test
     fun home() = shot("home") { HomeScreen(homeUi, {}, {}, {}, {}, {}, {}) }
 
     @Test

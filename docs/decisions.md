@@ -1152,6 +1152,27 @@ decision was made in the conversation. Get the time now with
 - Already in place: a start that doesn't get going falls back to safe
   settings, and saves and the last spot are never deleted.
 
+### 2026-11-08 14:24 Dhaka · PSP: a Compatibility switch for a black screen
+- Owner: a friend's Galaxy A71 (Snapdragon 730G, Adreno 618, Android 13) shows
+  God of War black, even after Restart; the game runs underneath (its log:
+  61 fps). The owner's phone (Adreno 610) draws it fine with the same settings.
+- Our fast settings that differ from PPSSPP's own: GPU readbacks skipped, and
+  one frame queued for the graphics chip (two before 1.0.321). A
+  Compatibility switch in Graphics & speed puts both back to PPSSPP's
+  (readbacks on, two frames); off by default, kept through a safe start. To
+  be tried on his phone; his log will say which way it goes.
+
+### 2026-11-08 14:42 Dhaka · Storage: every game on the phone, its size, Remove
+- Owner: "once game is added there is no way to delete them. Few games they
+  dont play. But added. now they want to free space. So add remove game
+  option".
+- Removing was there, but only as a long press on a game's card, which
+  nobody finds. Now a Storage chip on Home opens a page (`StoragePage.kt`):
+  every arcade and PSP game on the phone, biggest first, with its size, the
+  total and the phone's free space, and Remove (asked first, saying what it
+  frees and what stops with it: the BIOS for every Neo Geo game, a game whose
+  files a hack borrows). A PSP game's saves and where it was left stay.
+
 ---
 
 ## Where things stand (update whenever it changes)
