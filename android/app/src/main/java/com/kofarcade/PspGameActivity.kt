@@ -90,6 +90,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val SYSTEM_RAM = 2
         /** The stick's dead zone (of its reach): a resting thumb doesn't walk. */
         private const val STICK_DEAD = 0.12f
+        /** R on: let go for [RELIGHT_GAP] frames every [RELIGHT_EVERY], so the fire lights again ([relightR]). */
+        private const val RELIGHT_EVERY = 120
+        private const val RELIGHT_GAP = 4
     }
 
     /** What's open over the game. */
@@ -208,6 +211,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             padFrame++
             pad.onFrame()
             stepFrame()
+            relightR()
         }
 
         pad = Pad(send = ::sendKey, clock = { padFrame })
@@ -425,8 +429,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     fun open(s: Sheet) {
         if (sheet == null && !paused) {
-            // The game's menus don't want R held.
-            setRLatched(false)
+            // The game's menus don't want R held: let go of it while paused, and
+            // press it again on resume (it stays on: the owner, "If i turn on r,
+            // it should always be turn on").
+            if (rLatched) rawKey(Key.F, false)
             log.event("Paused (${s.name.lowercase()})")
             keepPlace()
         }
@@ -528,6 +534,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         meter.hold(false)
         LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
+        if (rLatched) rawKey(Key.F, true)
     }
 
     private val stateFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.state")
@@ -651,6 +658,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
 
     /** A key from the controls (or a move playing) to the PSP: buttons as keys, directions to the analog stick. */
     private fun sendKey(key: Key, down: Boolean) {
+        // R locked on: a roll (L+R) or a mash presses R too, but never lets go of it.
+        if (key == Key.F && !down && rLatched) return
         val code = PspProfile.keyCode(key)
         if (code != null) {
             retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)
@@ -696,9 +705,38 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun setRLatched(on: Boolean) {
         if (on == rLatched) return
         rLatched = on
-        sendKey(Key.F, on)
+        rTick = 0
+        rawKey(Key.F, on)
         log.event(if (on) "R held (fire / aim)" else "R let go")
         runOnUiThread { updateHud() }
+    }
+
+    private var rTick = 0
+
+    /**
+     * God of War's fire lights only on a fresh press of R: once the meter runs
+     * dry it stays out, R held or not (the owner's log, 2026-11-08). While R
+     * is on, it's let go for a few frames every couple of seconds and pressed
+     * again, so the fire comes back by itself once the meter refills. Not
+     * while a move or roll is pressing buttons, or paused.
+     */
+    private fun relightR() {
+        if (!rLatched || paused || pad.playing || steps.isNotEmpty() || stepsHeld.isNotEmpty()) {
+            if (rTick >= RELIGHT_EVERY - RELIGHT_GAP && rLatched && !paused) rawKey(Key.F, true)
+            rTick = 0
+            return
+        }
+        rTick++
+        if (rTick == RELIGHT_EVERY - RELIGHT_GAP) rawKey(Key.F, false)
+        if (rTick >= RELIGHT_EVERY) {
+            rawKey(Key.F, true)
+            rTick = 0
+        }
+    }
+
+    /** A button straight to the PSP, past the R lock (the lock's own on and off). */
+    private fun rawKey(key: Key, down: Boolean) {
+        PspProfile.keyCode(key)?.let { retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, it) }
     }
 
     private fun stepFrame() {
@@ -706,7 +744,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         val now = queue.firstOrNull() ?: emptySet()
         if (queue.isNotEmpty()) steps = queue.drop(1)
         if (now == stepsHeld) return
-        for (k in stepsHeld - now) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        val r = PspProfile.keyCode(Key.F)
+        for (k in stepsHeld - now) if (!(rLatched && k == r)) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
         for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
         stepsHeld = now
     }
