@@ -90,6 +90,9 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         private const val SYSTEM_RAM = 2
         /** The stick's dead zone (of its reach): a resting thumb doesn't walk. */
         private const val STICK_DEAD = 0.12f
+        /** R on: let go for [RELIGHT_GAP] frames every [RELIGHT_EVERY], so the fire lights again ([relightR]). */
+        private const val RELIGHT_EVERY = 120
+        private const val RELIGHT_GAP = 4
     }
 
     /** What's open over the game. */
@@ -208,6 +211,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             padFrame++
             pad.onFrame()
             stepFrame()
+            relightR()
         }
 
         pad = Pad(send = ::sendKey, clock = { padFrame })
@@ -701,9 +705,33 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun setRLatched(on: Boolean) {
         if (on == rLatched) return
         rLatched = on
+        rTick = 0
         rawKey(Key.F, on)
         log.event(if (on) "R held (fire / aim)" else "R let go")
         runOnUiThread { updateHud() }
+    }
+
+    private var rTick = 0
+
+    /**
+     * God of War's fire lights only on a fresh press of R: once the meter runs
+     * dry it stays out, R held or not (the owner's log, 2026-11-08). While R
+     * is on, it's let go for a few frames every couple of seconds and pressed
+     * again, so the fire comes back by itself once the meter refills. Not
+     * while a move or roll is pressing buttons, or paused.
+     */
+    private fun relightR() {
+        if (!rLatched || paused || pad.playing || steps.isNotEmpty() || stepsHeld.isNotEmpty()) {
+            if (rTick >= RELIGHT_EVERY - RELIGHT_GAP && rLatched && !paused) rawKey(Key.F, true)
+            rTick = 0
+            return
+        }
+        rTick++
+        if (rTick == RELIGHT_EVERY - RELIGHT_GAP) rawKey(Key.F, false)
+        if (rTick >= RELIGHT_EVERY) {
+            rawKey(Key.F, true)
+            rTick = 0
+        }
     }
 
     /** A button straight to the PSP, past the R lock (the lock's own on and off). */
