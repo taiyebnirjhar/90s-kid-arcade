@@ -161,7 +161,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         // (where it was left is kept aside, not deleted).
         val failed = store.failedStarts()
         if (failed >= 1) {
-            start = PspSettings(auto = start.auto).also(store::save)
+            start = PspSettings(auto = start.auto, compatible = start.compatible).also(store::save)
             safeStart = true
         }
         if (failed >= 2 && placeFile.isFile) {
@@ -584,7 +584,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     }
 
     private fun settingsLine(s: PspSettings) =
-        "frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, faster effects ${if (s.fasterEffects) "on" else "off"}, auto ${if (s.auto) "on" else "off"}"
+        "frame skip ${s.frameSkip.label}, sharpness ${s.resolution}x, picture ${s.picture.label}, faster effects ${if (s.fasterEffects) "on" else "off"}, auto ${if (s.auto) "on" else "off"}, compatibility ${if (s.compatible) "on" else "off"}"
 
     fun restartCount() {
         log.event("Speed count restarted")
@@ -980,6 +980,10 @@ private fun PspGraphicsPanel(game: PspGameActivity) {
             if (game.fasterEffectsOk) {
                 ToggleRow("Faster effects", s.fasterEffects, { game.applyGraphics(s.copy(fasterEffects = it)) }, sub = "Skips some glows and blur, for speed")
             }
+            ToggleRow(
+                "Compatibility", s.compatible, { game.applyGraphics(s.copy(compatible = it)) },
+                sub = "Black screen? Turn this on: safer drawing, a little slower",
+            )
             ToggleRow("Speed counter on screen", game.showSpeed, { game.toggleSpeed() }, sub = "Off keeps the game clear; the game log has it all")
             Spacer(Modifier.height(14.dp))
             Row {
@@ -1037,6 +1041,7 @@ class PspStore(context: Context, private val game: String) {
             fasterEffects = prefs.getBoolean("$game.fx", d.fasterEffects),
             picture = PspSettings.Picture.entries.firstOrNull { it.name == prefs.getString("$game.picture", null) } ?: d.picture,
             auto = prefs.getBoolean("$game.auto", d.auto),
+            compatible = prefs.getBoolean("$game.compat", d.compatible),
         )
     }
 
@@ -1055,6 +1060,7 @@ class PspStore(context: Context, private val game: String) {
             .putBoolean("$game.fx", s.fasterEffects)
             .putString("$game.picture", s.picture.name)
             .putBoolean("$game.auto", s.auto)
+            .putBoolean("$game.compat", s.compatible)
             .apply()
     }
 }

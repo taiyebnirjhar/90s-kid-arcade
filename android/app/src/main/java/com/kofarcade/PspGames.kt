@@ -127,6 +127,12 @@ data class PspSettings(
     val picture: Picture = Picture.SHARP,
     /** Keeps full speed in heavy scenes by drawing fewer pictures (PPSSPP's own skipping); nothing else changes. */
     val auto: Boolean = true,
+    /**
+     * Compatibility: PPSSPP's own safe drawing (GPU readbacks not skipped, two
+     * frames queued) for a phone whose screen stays black with the fast
+     * settings (a friend's Galaxy A71, Adreno 618, 2026-11-08). A little slower.
+     */
+    val compatible: Boolean = false,
 ) {
     /** How the PSP's picture is stretched to the screen (a shader after the game, nearly free). */
     enum class Picture(val label: String) {
@@ -171,10 +177,10 @@ object PspSpeed {
         "ppsspp_texture_filtering" to "Auto",
         "ppsspp_lower_resolution_for_effects" to "disabled",
         "ppsspp_skip_buffer_effects" to if (settings.fasterEffects) "enabled" else "disabled",
-        "ppsspp_skip_gpu_readbacks" to "enabled",
+        "ppsspp_skip_gpu_readbacks" to if (settings.compatible) "disabled" else "enabled",
         // One frame queued for the graphics chip, not two: a press shows a frame
         // sooner (the owner, 1.0.316: "few frame behind" at 2x).
-        "ppsspp_inflight_frames" to "Up to 1",
+        "ppsspp_inflight_frames" to if (settings.compatible) "Up to 2" else "Up to 1",
         // The whole disc in memory would take 1-2 GB: read it as needed.
         "ppsspp_cache_iso" to "disabled",
         "ppsspp_button_preference" to "Cross",
