@@ -2,3 +2,5 @@ Sony_-_PlayStation_Portable::Named_Titles/God of War - Ghost of Sparta (USA) (En
 Sony_-_PlayStation_Portable::Named_Snaps/God of War - Ghost of Sparta (USA) (En,Fr,Es).png
 Sony_-_PlayStation_Portable::Named_Titles/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).png
 Sony_-_PlayStation_Portable::Named_Snaps/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).png
+Sony_-_PlayStation_Portable::Named_Titles/God of War - Chains of Olympus (USA).png
+Sony_-_PlayStation_Portable::Named_Snaps/God of War - Chains of Olympus (USA).png

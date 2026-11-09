@@ -90,6 +90,20 @@ class PspGamesTest {
     }
 
     @Test
+    fun chainsOfOlympusCastsMagicWithRHeld() {
+        val p = PspProfile.forTitle("God of War - Chains of Olympus (USA)")
+        assertEquals(PspProfile.CHAINS_OF_OLYMPUS, p)
+        // Magic is R held with a face button: R is held while pressed, not locked on.
+        assertTrue(p.system.any { it.cmd == PspProfile.HOLD_R })
+        assertTrue(p.system.none { it.cmd == PspProfile.LATCH_R })
+        assertEquals("F>C", p.moves.first { it.name == "Efreet" }.cmd)
+        // Ghost of Sparta's layout and settings.
+        assertEquals(PspProfile.GOD_OF_WAR.layout, p.layout)
+        assertEquals(false, p.fasterEffectsOk)
+        assertEquals(PspProfile.GOD_OF_WAR, PspProfile.forTitle("God of War - Ghost of Sparta (USA)"))
+    }
+
+    @Test
     fun godOfWarGetsItsOwnButtonsOnTheArcadeLayout() {
         val p = PspProfile.forTitle("God of War - Ghost of Sparta (USA)")
         assertEquals("Light", p.labels['A'])
