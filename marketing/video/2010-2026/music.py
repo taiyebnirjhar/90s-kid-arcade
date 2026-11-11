@@ -1,8 +1,12 @@
 import numpy as np, wave
-SR=44100; BPM=120; B=60/BPM; DUR=35.0
+SR=44100; BPM=120; B=60/BPM; DUR=36.3
 n=int(SR*DUR); out=np.zeros(n)
 def add(sig,t):
     i=int(t*SR); j=min(n,i+len(sig)); out[i:j]+=sig[:j-i]
+def lp(x,a): # one-pole low pass
+    y=np.zeros_like(x); s=0
+    for i in range(len(x)): s+=a*(x[i]-s); y[i]=s
+    return y
 def env(l,a=0.002,d=0.2):
     t=np.arange(int(l*SR))/SR; return np.minimum(1,t/a)*np.exp(-t/d)
 def kick(g=1):
@@ -18,10 +22,6 @@ def tone(f,l,shape='saw',g=.2,d=.3):
     elif shape=='sq': w=np.sign(np.sin(2*np.pi*f*t))
     else: w=np.sin(2*np.pi*f*t)
     return g*w*env(l,0.005,d)
-def lp(x,a): # one-pole low pass
-    y=np.zeros_like(x); s=0
-    for i in range(len(x)): s+=a*(x[i]-s); y[i]=s
-    return y
 nt=lambda m:440*2**((m-69)/12)
 chords=[(57,[69,72,76]),(53,[65,69,72]),(48,[67,72,76]),(55,[67,71,74])]  # Am F C G
 # --- 1999: chiptune, muffled (0-4.0) ---
@@ -38,16 +38,22 @@ out+=chip
 add(np.r_[tone(nt(83),.07,'sq',.18,1),tone(nt(88),.25,'sq',.18,.15)],0.6)
 # power off 4.0-4.45: falling tone
 t=np.arange(int(.45*SR))/SR; f=900*np.exp(-t*7); add(.22*np.sin(2*np.pi*np.cumsum(f)/SR)*(1-t/.45),9.3)
-# ABBU!: a hit, then the belt's crack
+# ABBU!: a hit
 add(kick(1.2),9.75)
-t=np.arange(int(.12*SR))/SR; add(.5*np.random.randn(len(t))*np.exp(-t*60),9.95)
-# riser into the drop 10.4-11.0, impact at 11.0
-t=np.arange(int(.6*SR))/SR; add(.15*np.random.randn(len(t))*(t/.6)**2,10.4)
-imp=kick(1.4); add(imp,11.0); t=np.arange(int(1.2*SR))/SR; add(.35*np.sin(2*np.pi*45*t)*np.exp(-t*2.5),11.0)
+# the belt: three hits, each a whoosh, a crack and a thud
+for h in [10.25,10.7,11.15]:
+    t=np.arange(int(.18*SR))/SR; w=np.random.randn(len(t)); w=lp(w,0.25)*np.sin(np.pi*t/.18)**2*.9; add(w,h-0.18)
+    t=np.arange(int(.1*SR))/SR; add(.75*np.random.randn(len(t))*np.exp(-t*70),h)
+    add(kick(1.1),h)
+# riser into the drop 11.2-11.8, impact at 11.8
+t=np.arange(int(.6*SR))/SR; add(.15*np.random.randn(len(t))*(t/.6)**2,11.2)
+imp=kick(1.4); add(imp,11.8); t=np.arange(int(1.2*SR))/SR; add(.35*np.sin(2*np.pi*45*t)*np.exp(-t*2.5),11.8)
+# the phone turning sideways
+t=np.arange(int(.35*SR))/SR; w=lp(np.random.randn(len(t)),0.15)*np.sin(np.pi*t/.35)**2*.6; add(w,13.9)
 # --- 2026: full beat from 5.0 to 18.2 ---
-start=12.2
+start=13.0
 k=0
-while start+k*B/2<31.4:
+while start+k*B/2<32.7:
     t=start+k*B/2; beat=k//2
     root,ch=chords[(beat//4)%4]
     if k%2==0: add(kick(),t)
@@ -58,10 +64,10 @@ while start+k*B/2<31.4:
     add(tone(nt(ch[(k+1)%3]+12),.2,'saw',.05,.08),t+B/4)
     k+=1
 # impacts on scene changes
-for t in [17.8,22.0,25.2,27.8]: add(kick(1.2),t); add(np.random.randn(int(.3*SR))*np.exp(-np.arange(int(.3*SR))/SR*12)*.12,t)
+for t in [19.1,23.3,26.5,29.1]: add(kick(1.2),t); add(np.random.randn(int(.3*SR))*np.exp(-np.arange(int(.3*SR))/SR*12)*.12,t)
 # end: big hit at 18.2, pad chord ringing out
-add(kick(1.4),31.4)
-for m in [57,64,69,72,76]: add(tone(nt(m),3.4,'saw',.05,1.5),31.4)
+add(kick(1.4),32.7)
+for m in [57,64,69,72,76]: add(tone(nt(m),3.4,'saw',.05,1.5),32.7)
 out=lp(out,0.55)
 out/=np.max(np.abs(out))*1.05
 out=np.tanh(out*1.4)/np.tanh(1.4)

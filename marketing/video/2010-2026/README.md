@@ -1,7 +1,8 @@
-# "2010 → 2026" (35 s, vertical 1080x1920, 30 fps)
+# "2010 → 2026" (36 s, vertical 1080x1920, 30 fps)
 
 The owner's story: 2010, 1 taka a coin; after school; the whole day on
-holidays; kokhono school paliye; ABBU! (with a belt). Then "2026." and the
+holidays; kokhono school paliye; ABBU! and the belt (three hits: shake, red flash,
+THASH! DHISH!, whoosh-crack-thud each; "abbu dhora khowar por mair dito"). Then "2026." and the
 app: every classic on a phone (Magic Plus, Mostofa, Sengoku 3, KOF '97,
 Metal Slug, MvC), play online (chat + voice), a tournament and the trophy
 (won by Nirjhor), God of War, the end card.
@@ -24,5 +25,5 @@ Nothing here holds game footage or app pictures; they're made where it's rendere
   controls with the grey background made clear).
 - `music.wav`: `python3 music.py` (our own synth track, 120 bpm).
 
-Render: `node render.js 0 1050 frames` (three in parallel), then
+Render: `node render.js 0 1089 frames` (three in parallel), then
 `ffmpeg -framerate 30 -i frames/%05d.jpg -i music.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -c:a aac -b:a 192k -shortest -movflags +faststart out.mp4`.
