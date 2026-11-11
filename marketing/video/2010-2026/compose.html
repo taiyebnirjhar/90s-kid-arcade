@@ -25,7 +25,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
 #crtLine{left:0;right:0;top:50%;height:6px;margin-top:-3px;background:#fff;box-shadow:0 0 40px 10px #fff}
 #coin{width:170px;height:170px;border-radius:50%;left:455px;
   background:radial-gradient(circle at 35% 30%,#FFF3B0,#FFC21A 45%,#A87600);box-shadow:0 0 0 8px #7a5400,0 10px 30px rgba(0,0,0,.6);
-  font:900 86px/170px Roboto,sans-serif;color:#7a5400;text-align:center}
+  font:900 72px/170px Roboto,sans-serif;color:#7a5400;text-align:center}
 .phone{border-radius:70px;background:#000;box-shadow:0 0 0 14px #15151c,0 0 0 17px #3a3946,0 50px 140px rgba(0,0,0,.85);overflow:hidden}
 .phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #phone{left:250px;top:560px;width:580px;height:1180px}
@@ -53,7 +53,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
 </style></head><body>
 <div id="bg" class="abs"></div><div id="grid" class="abs"></div>
 <div id="crt" class="abs"><img id="crtImg"><div id="crtScan" class="abs"></div><div id="crtVig" class="abs"></div><div id="crtOff" class="abs"></div><div id="crtLine" class="abs"></div></div>
-<div id="coin" class="abs">৳</div>
+<div id="coin" class="abs">1৳</div>
 <div id="phone" class="phone abs"><img id="phoneImg"></div>
 <div id="pl1" class="phone abs"><img class="game" id="pl1g"><img class="hud" id="pl1h"></div>
 <div id="pl2" class="phone abs"><img class="game" id="pl2g"></div>
@@ -70,6 +70,13 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
   <div id="free" class="abs">Free on Android</div>
   <div id="url" class="abs">arcade.taiyebnirjhor.com</div>
 </div>
+<svg id="belt" class="abs" style="left:190px;top:1010px;width:700px;height:150px" viewBox="0 0 700 150">
+  <rect x="0" y="45" width="700" height="60" rx="10" fill="#6B3A1E" stroke="#3a1d0c" stroke-width="6"/>
+  <g fill="#3a1d0c"><circle cx="470" cy="75" r="7"/><circle cx="510" cy="75" r="7"/><circle cx="550" cy="75" r="7"/><circle cx="590" cy="75" r="7"/><circle cx="630" cy="75" r="7"/><circle cx="670" cy="75" r="7"/></g>
+  <rect x="60" y="20" width="150" height="110" rx="16" fill="none" stroke="#FFC21A" stroke-width="18"/>
+  <rect x="128" y="20" width="16" height="110" fill="#FFC21A"/>
+  <rect x="70" y="45" width="0" height="0"/>
+</svg>
 <div id="flash" class="abs"></div>
 <div id="scanAll" class="abs"></div>
 <script>
@@ -96,94 +103,104 @@ function sub(text,t,tIn,tOut,top){const e=$('subA');if(t<tIn||t>=tOut)return;
 function punch(t,beats){// small zoom kick on each beat time listed
   let k=0;for(const b of beats){const d=t-b;if(d>=0&&d<0.25)k=Math.max(k,(1-d/0.25)*0.06)}return 1+k}
 
+// Timing (2026 short-form guidance): every caption held at least 2 s
+// (0.3 s a word + 0.5 s), game cuts no faster than 0.8 s, scenes 2.5-4 s.
+const S={open:0, school:2.6, holiday:4.6, hide:6.8, off:9.3, y2026:11.0, phone:12.2, online:17.8, tour:22.0, trophy:25.2, gow:27.8, end:31.4, total:35.0};
 function render(f){
   const t=f/FPS;
-  const ids=['crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
-  ids.forEach(i=>show(i,false));$('pl1g').style.transform='';['capA','capB','subA','games'].forEach(i=>show(i,false));
-  show('grid',t>=4.5);
+  const ids=['belt','crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
+  ids.forEach(i=>show(i,false));$('pl1g').style.transform='';$('pl1h').style.display='none';['capA','capB','subA','games'].forEach(i=>show(i,false));
+  show('grid',t>=S.y2026);
   $('grid').style.transform=`perspective(900px) rotateX(55deg) translateY(${(t*120)%120}px)`;
-  // ---- 1999: the arcade ----
-  if(t<4.5){
+  // ---- 2010: the arcade ----
+  if(t<S.y2026){
     show('crt',true);
     let src;
-    if(t<2.0) src=clip('kof97',300,t,0); else if(t<3.1) src=clip('sf3',100,t,2.0); else src=clip('mslug',210,t,3.1);
+    if(t<S.school) src=clip('k2mp',100,t,0); else if(t<S.holiday) src=clip('dino',20,t,S.school); else if(t<S.hide) src=clip('sg3',120,t,S.holiday); else src=clip('mslug',210,t,S.hide);
     setSrc('crtImg',src);
-    $('crtImg').style.filter=`saturate(.75) sepia(.35) contrast(1.05) blur(${t<4?0.6:0}px)`;
-    const z=1+0.03*Math.sin(t*3);$('crt').style.transform=`scale(${z*punch(t,[0,2.0,3.1])})`;
-    // power off 4.0-4.5
-    const off=lin(t,4.0,4.35);
-    $('crtImg').style.transform=`scaleY(${1-off*0.995}) scaleX(${1-lin(t,4.25,4.45)*0.9})`;
-    show('crtOff',false);$('crtOff').style.display=t>=4.45?'block':'none';
-    $('crtLine').style.display=(t>=4.3&&t<4.5)?'block':'none';
-    $('crtLine').style.transform=`scaleX(${1-lin(t,4.3,4.5)})`;
-    cap('capA','*1999.',t,0.05,2.0,250,190);
-    cap('capB','10 taka. one coin.',t,0.7,2.0,1360,96);
-    if(t>=0.7&&t<2.0){show('coin',true);const p=lin(t,0.7,1.05);$('coin').style.top=(1520-260*(1-easeOut(p)))+'px';
-      $('coin').style.transform=`rotateY(${(1-p)*720}deg) scale(${0.9+0.1*back(p)})`;$('coin').style.opacity=1-lin(t,1.8,2.0);$('coin').style.top=(1500+(1-easeOut(p))*-300)+'px'}
-    cap('capA','the queue behind *6 kids',t,2.0,3.1,250,120);
-    cap('capA','then *ammu calls you home',t,3.1,4.0,250,120);
-    cap('capB','arcade closed.',t,4.0,4.5,1400,90);
+    $('crtImg').style.filter=`saturate(.75) sepia(.35) contrast(1.05) blur(0.6px)`;
+    const z=1+0.02*Math.sin(t*2);$('crt').style.transform=`scale(${z*punch(t,[0,S.school,S.holiday,S.hide])})`;
+    const o=S.off;
+    $('crtImg').style.transform=`scaleY(${1-lin(t,o,o+0.35)*0.995}) scaleX(${1-lin(t,o+0.25,o+0.45)*0.9})`;
+    $('crtOff').style.display=t>=o+0.45?'block':'none';
+    $('crtLine').style.display=(t>=o+0.3&&t<o+0.5)?'block':'none';
+    $('crtLine').style.transform=`scaleX(${1-lin(t,o+0.3,o+0.5)})`;
+    // Every line in the same place, so the eye stays put.
+    cap('capA','*2010.',t,0.05,S.school,250,200);
+    cap('capB','1 taka. 1 coin.',t,0.6,S.school,1360,110);
+    if(t>=0.6&&t<S.school){show('coin',true);const p=lin(t,0.6,0.95);$('coin').style.transform=`rotateY(${(1-p)*720}deg) scale(${0.9+0.1*back(p)})`;$('coin').style.opacity=1-lin(t,S.school-0.2,S.school);$('coin').style.top=(1520+(1-easeOut(p))*-300)+'px'}
+    cap('capA','after *school',t,S.school,S.holiday,250,170);
+    cap('capA','the *whole day on holidays',t,S.holiday,S.hide,230,140);
+    cap('capA','kokhono... *school paliye',t,S.hide,S.off,220,140);
+    cap('capA','*ABBU!',t,o+0.45,S.y2026,700,260);
+    if(t>=o+0.65){show('belt',true);const q=lin(t,o+0.65,o+0.9);$('belt').style.transform=`translateX(${(1-easeOut(q))*-900}px) rotate(${-8+6*Math.sin(t*30)*(1-lin(t,o+0.9,o+1.4))}deg)`;}
   }
-  // ---- 2026: slam ----
-  if(t>=4.5&&t<5.2){
-    cap('capA','*2026.',t,4.55,5.2,760,260);
-    show('flash',true);$('flash').style.opacity=t<4.62?1:0.9*(1-lin(t,4.62,4.9));
+  // ---- 2026 ----
+  if(t>=S.y2026&&t<S.phone){
+    cap('capA','*2026.',t,S.y2026+0.05,S.phone,760,260);
+    show('flash',true);$('flash').style.opacity=t<S.y2026+0.08?1:0.9*(1-lin(t,S.y2026+0.08,S.y2026+0.4));
   }
   // ---- every classic, on your phone ----
-  if(t>=5.2&&t<8.5){
+  if(t>=S.phone&&t<S.online){
+    const P=S.phone;
     show('phone',true);
-    const p=lin(t,5.2,5.55);
-    $('phone').style.transform=`translateY(${(1-easeOut(p))*900}px) rotate(${(1-p)*-8}deg) scale(${punch(t,[6,6.5,7,7.5,8])})`;
-    // home first, then game cuts on the beat
+    const p=lin(t,P,P+0.35);
+    const cuts=[[P+0.9,'k2mp',290],[P+1.7,'dino',150],[P+2.5,'sg3',690],[P+3.3,'kof97',400],[P+4.1,'mslug',420],[P+4.9,'mvsc2',0]];
+    $('phone').style.transform=`translateY(${(1-easeOut(p))*900}px) rotate(${(1-p)*-8}deg) scale(${punch(t,cuts.map(c=>c[0]))})`;
     let src='assets/home.png';
-    const cuts=[[6.0,'kof97',330],[6.5,'mvsc2',0],[7.0,'mslug',420],[7.5,'sf3',190],[8.0,'kof97',400]];
-    for(const [c,n,s] of cuts) if(t>=c) src=clip(n,s,t,c);
+    for(const [c,n,s0] of cuts) if(t>=c) src=clip(n,s0,t,c);
     setSrc('phoneImg',src);
-    $('phoneImg').style.objectFit=src.includes('assets')?'cover':'cover';
     $('phoneImg').style.imageRendering=src.includes('clips')?'pixelated':'auto';
-    cap('capA','every arcade *classic',t,5.3,8.5,190,118);
-    cap('capB','on your *phone',t,5.6,7.4,1780,100);
-    if(t>=6.0){show('counter',true);const n=Math.round(31*easeOut(lin(t,6.0,7.6)));$('counter').textContent=n;
-      $('counter').style.top='1380px';$('counter').style.opacity=1-lin(t,8.2,8.5);
-      $('counter').style.transform=`scale(${punch(t,[7.6])*1})`;const gl=$('games');gl.style.display='block';gl.style.top='1650px';gl.style.opacity=lin(t,7.5,7.7)*(1-lin(t,8.2,8.5))}
+    cap('capA','every arcade *classic',t,P+0.1,S.online,190,118);
+    cap('capB','on your *phone',t,P+0.4,P+2.7,1780,100);
+    if(t>=P+2.7){show('counter',true);const n=Math.round(31*easeOut(lin(t,P+2.7,P+4.2)));$('counter').textContent=n;
+      $('counter').style.top='1380px';$('counter').style.opacity=1-lin(t,S.online-0.3,S.online);
+      $('counter').style.transform=`scale(${punch(t,[P+4.2])})`;const gl=$('games');gl.style.display='block';gl.style.top='1650px';gl.style.opacity=lin(t,P+4.1,P+4.3)*(1-lin(t,S.online-0.3,S.online))}
   }
   // ---- online ----
-  if(t>=8.5&&t<11.5){
+  if(t>=S.online&&t<S.tour){
+    const O=S.online;
     show('pl1',true);show('pl2',true);
-    const p=easeOut(lin(t,8.5,8.85));
-    const src=clip('kof97',360,t,8.5);setSrc('pl1g',src);setSrc('pl2g',src);setSrc('pl1h','');$('pl1h').style.display='none';
+    const p=easeOut(lin(t,O,O+0.35));
+    const src=clip('k2mp',120,t,O);setSrc('pl1g',src);setSrc('pl2g',src);$('pl1g').style.imageRendering='pixelated';
     $('pl1').style.left=(90-(1-p)*1100)+'px';$('pl1').style.top='520px';$('pl1').style.transform='rotate(-4deg)';
     $('pl2').style.left=(90+(1-p)*1100)+'px';$('pl2').style.top='1080px';$('pl2').style.transform='rotate(4deg)';
-    show('pill',true);$('pill').style.top='980px';$('pill').style.transform=`scale(${back(lin(t,8.9,9.15))})`;
-    if(t>=9.4){show('chat',true);$('chat').style.left='560px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,9.4,9.6))})`}
-    if(t>=10.1){show('voice',true);$('voice').style.left='110px';$('voice').style.top='1470px';$('voice').style.transform=`scale(${back(lin(t,10.1,10.3))})`}
-    cap('capA','play *online',t,8.6,11.5,200,150);
-    sub('With your cousin across town. Chat + voice built in.',t,8.9,11.5,370);
+    show('pill',true);$('pill').style.top='980px';$('pill').style.transform=`scale(${back(lin(t,O+0.4,O+0.65))})`;
+    if(t>=O+1.0){show('chat',true);$('chat').style.left='560px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,O+1.0,O+1.2))})`}
+    if(t>=O+2.1){show('voice',true);$('voice').style.left='110px';$('voice').style.top='1470px';$('voice').style.transform=`scale(${back(lin(t,O+2.1,O+2.3))})`}
+    cap('capA','play *online',t,O+0.1,S.tour,200,150);
+    sub('With your cousin across town. Chat + voice built in.',t,O+0.4,S.tour,370);
   }
   // ---- tournament ----
-  if(t>=11.5&&t<15.0){
-    if(t<13.8){show('pl1',true);setSrc('pl1g','assets/bracket.png');$('pl1g').style.imageRendering='auto';$('pl1g').style.transform=`scale(${1.7+0.25*lin(t,11.85,13.8)})`;$('pl1g').style.transformOrigin='52% 42%';$('pl1h').style.display='none';
-      $('pl1').style.left='90px';$('pl1').style.top='760px';const p=easeOut(lin(t,11.5,11.85));$('pl1').style.transform=`rotate(${(1-p)*90}deg) scale(${(1.15+0.12*lin(t,11.85,13.8))*punch(t,[12.5,13.0,13.5])})`}
-    else {show('phone',true);setSrc('phoneImg','assets/champ.png');$('phone').style.transform=`scale(${1+0.08*lin(t,13.8,15)})`}
-    cap('capA','run a *tournament',t,11.6,13.8,200,130);
-    sub('Up to 8 players. World Cup style.',t,11.9,13.8,480);
-    cap('capA','lift the *trophy',t,13.8,15.0,200,150);
+  if(t>=S.tour&&t<S.trophy){
+    const R=S.tour;
+    show('pl1',true);setSrc('pl1g','assets/bracket.png');$('pl1g').style.imageRendering='auto';$('pl1g').style.transform=`scale(${1.7+0.25*lin(t,R+0.35,S.trophy)})`;$('pl1g').style.transformOrigin='52% 42%';
+    $('pl1').style.left='90px';$('pl1').style.top='760px';const p=easeOut(lin(t,R,R+0.35));$('pl1').style.transform=`rotate(${(1-p)*90}deg) scale(${1.15+0.12*lin(t,R+0.35,S.trophy)})`;
+    cap('capA','run a *tournament',t,R+0.1,S.trophy,200,130);
+    sub('Up to 8 players. World Cup style.',t,R+0.4,S.trophy,480);
+  }
+  if(t>=S.trophy&&t<S.gow){
+    show('phone',true);setSrc('phoneImg','assets/champ.png');$('phoneImg').style.imageRendering='auto';
+    const p=easeOut(lin(t,S.trophy,S.trophy+0.35));$('phone').style.transform=`translateY(${(1-p)*900}px) scale(${1+0.06*lin(t,S.trophy,S.gow)})`;
+    cap('capA','lift the *trophy',t,S.trophy+0.1,S.gow,200,150);
   }
   // ---- God of War ----
-  if(t>=15.0&&t<18.2){
+  if(t>=S.gow&&t<S.end){
+    const G=S.gow;
     show('pl1',true);$('pl1g').style.imageRendering='auto';
-    setSrc('pl1g',clip('gow',20,t,15.0));$('pl1h').style.display='block';setSrc('pl1h','assets/gowhud_t.png');
+    setSrc('pl1g',clip('gow',20,t,G));$('pl1h').style.display='block';setSrc('pl1h','assets/gowhud_t.png');
     $('pl1').style.left='90px';$('pl1').style.top='760px';
-    const p=easeOut(lin(t,15.0,15.3));$('pl1').style.transform=`translateX(${(1-p)*-1000}px) scale(${1.15*punch(t,[16,17])})`;
-    cap('capA','even *god of war',t,15.1,18.2,230,140);
-    cap('capB','on a *phone',t,15.5,18.2,1380,120);
+    const p=easeOut(lin(t,G,G+0.3));$('pl1').style.transform=`translateX(${(1-p)*-1000}px) scale(1.15)`;
+    cap('capA','even *god of war',t,G+0.1,S.end,230,140);
+    cap('capB','on a *phone',t,G+0.6,S.end,1380,120);
   }
   // ---- end card ----
-  if(t>=18.2){
+  if(t>=S.end){
+    const E=S.end;
     show('end',true);
-    const p=back(lin(t,18.2,18.55));$('logo').style.transform=`scale(${p})`;
-    ['feats','free','url'].forEach((id,i)=>{const q=lin(t,18.5+i*0.15,18.75+i*0.15);$(id).style.opacity=q;$(id).style.transform=`translateY(${(1-q)*40}px)`});
-    show('flash',t<18.35);$('flash').style.opacity=1-lin(t,18.2,18.35);
+    const p=back(lin(t,E,E+0.35));$('logo').style.transform=`scale(${p})`;
+    ['feats','free','url'].forEach((id,i)=>{const q=lin(t,E+0.3+i*0.2,E+0.55+i*0.2);$(id).style.opacity=q;$(id).style.transform=`translateY(${(1-q)*40}px)`});
+    show('flash',t<E+0.15);$('flash').style.opacity=1-lin(t,E,E+0.15);
   }
   const imgs=[...document.images].filter(i=>i.offsetParent!==null&&i.getAttribute('src'));
   return Promise.all(imgs.map(i=>i.decode().catch(()=>0)));
