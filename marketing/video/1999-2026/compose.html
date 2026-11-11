@@ -1,0 +1,192 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12}
+*{box-sizing:border-box}
+.abs{position:absolute}
+#bg{inset:0;background:radial-gradient(60% 40% at 50% 45%,rgba(232,178,26,.16),transparent 70%),#0B0B12}
+#grid{inset:-200px;opacity:.18;background:
+  linear-gradient(rgba(232,178,26,.5) 2px,transparent 2px) 0 0/120px 120px,
+  linear-gradient(90deg,rgba(232,178,26,.5) 2px,transparent 2px) 0 0/120px 120px;
+  transform-origin:50% 50%}
+.cap{left:60px;right:60px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:900;
+  text-transform:uppercase;color:#F1F0F7;line-height:.95;letter-spacing:1px;
+  text-shadow:0 6px 0 #000,0 0 30px rgba(0,0,0,.8);-webkit-text-stroke:3px #000;paint-order:stroke fill}
+.cap .w{display:inline-block;margin:0 10px;transform-origin:50% 70%}
+.cap .g{color:#FFC21A}
+.sub{left:80px;right:80px;text-align:center;font:700 44px Roboto,sans-serif;color:#C9C7DA;text-shadow:0 3px 10px #000}
+#crt{left:40px;top:560px;width:1000px;height:740px;border-radius:46px;background:#000;overflow:hidden;
+  box-shadow:0 0 0 18px #1b1b22,0 0 0 22px #33323d,0 40px 120px rgba(0,0,0,.8)}
+#crtImg{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;filter:saturate(1.25) contrast(1.1)}
+#crtScan{inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 3px,transparent 3px 6px)}
+#crtVig{inset:0;background:radial-gradient(75% 75% at 50% 50%,transparent 55%,rgba(0,0,0,.75));border-radius:46px}
+#crtOff{inset:0;background:#000}
+#crtLine{left:0;right:0;top:50%;height:6px;margin-top:-3px;background:#fff;box-shadow:0 0 40px 10px #fff}
+#coin{width:170px;height:170px;border-radius:50%;left:455px;
+  background:radial-gradient(circle at 35% 30%,#FFF3B0,#FFC21A 45%,#A87600);box-shadow:0 0 0 8px #7a5400,0 10px 30px rgba(0,0,0,.6);
+  font:900 86px/170px Roboto,sans-serif;color:#7a5400;text-align:center}
+.phone{border-radius:70px;background:#000;box-shadow:0 0 0 14px #15151c,0 0 0 17px #3a3946,0 50px 140px rgba(0,0,0,.85);overflow:hidden}
+.phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#phone{left:250px;top:560px;width:580px;height:1180px}
+#pl1,#pl2{width:900px;height:420px;border-radius:52px}
+#pl1 img.game,#pl2 img.game{image-rendering:pixelated}
+.hud{opacity:.9}
+#chat{font:700 40px Roboto,sans-serif;color:#111;background:#FFC21A;padding:22px 34px;border-radius:36px 36px 36px 8px;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+#voice{font:700 36px Roboto,sans-serif;color:#F1F0F7;background:#2a2938;padding:20px 30px;border-radius:36px 36px 8px 36px;border:3px solid #FFC21A}
+#pill{left:390px;width:300px;height:84px;border-radius:42px;background:#FFC21A;color:#111;text-align:center;
+  font:italic 900 50px/84px 'Barlow Condensed',sans-serif;letter-spacing:4px;box-shadow:0 0 50px rgba(255,194,26,.7)}
+#flash{inset:0;background:#fff}
+#counter{left:0;right:0;text-align:center;font:italic 900 300px/1 'Barlow Condensed',sans-serif;color:#FFC21A;
+  -webkit-text-stroke:6px #000;paint-order:stroke fill;text-shadow:0 14px 0 #5a4206}
+#end{inset:0}
+#logo{left:240px;top:420px;width:600px;height:600px;border-radius:50%;border:12px solid rgba(232,178,26,.6);
+  background:radial-gradient(circle,rgba(232,178,26,.25),transparent 70%)}
+#logo .n{position:absolute;left:0;right:0;top:95px;text-align:center;font:italic 900 300px/.86 'Barlow Condensed',sans-serif;letter-spacing:-4px;
+  background:linear-gradient(#FFE07A,#E8B21A 55%,#B8860B);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 10px 0 #5a4206)}
+#logo .t{position:absolute;left:0;right:0;top:380px;text-align:center;font:italic 900 70px 'Barlow Condensed',sans-serif;color:#F1F0F7;text-transform:uppercase;letter-spacing:2px}
+#feats{left:40px;right:40px;top:1110px;text-align:center;font:italic 900 66px 'Barlow Condensed',sans-serif;color:#F1F0F7;text-transform:uppercase}
+#feats span{color:#FFC21A;padding:0 14px}
+#free{left:0;right:0;top:1250px;text-align:center;font:500 36px Roboto,sans-serif;color:#9A98B0;letter-spacing:8px;text-transform:uppercase}
+#url{left:0;right:0;top:1305px;text-align:center;font:700 62px Roboto,sans-serif;color:#FFC21A}
+#scanAll{inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 2px,transparent 2px 5px);pointer-events:none}
+</style></head><body>
+<div id="bg" class="abs"></div><div id="grid" class="abs"></div>
+<div id="crt" class="abs"><img id="crtImg"><div id="crtScan" class="abs"></div><div id="crtVig" class="abs"></div><div id="crtOff" class="abs"></div><div id="crtLine" class="abs"></div></div>
+<div id="coin" class="abs">৳</div>
+<div id="phone" class="phone abs"><img id="phoneImg"></div>
+<div id="pl1" class="phone abs"><img class="game" id="pl1g"><img class="hud" id="pl1h"></div>
+<div id="pl2" class="phone abs"><img class="game" id="pl2g"></div>
+<div id="pill" class="abs">ONLINE</div>
+<div id="chat" class="abs">easy win 😂</div>
+<div id="voice" class="abs">🎙 rematch. now.</div>
+<div id="counter" class="abs">0</div><div id="games" class="cap abs" style="font-size:90px">games</div>
+<div id="capA" class="cap abs"></div>
+<div id="capB" class="cap abs"></div>
+<div id="subA" class="sub abs"></div>
+<div id="end" class="abs">
+  <div id="logo" class="abs"><div class="n">90s</div><div class="t">Kid Arcade</div></div>
+  <div id="feats" class="abs">Play online<span>·</span>Tournaments<span>·</span>31 games</div>
+  <div id="free" class="abs">Free on Android</div>
+  <div id="url" class="abs">arcade.taiyebnirjhor.com</div>
+</div>
+<div id="flash" class="abs"></div>
+<div id="scanAll" class="abs"></div>
+<script>
+const FPS=30, $=id=>document.getElementById(id);
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lin=(t,a,b)=>cl((t-a)/(b-a));
+const easeOut=x=>1-Math.pow(1-x,3);
+const back=x=>{const c=1.9;x=cl(x);return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const clip=(name,start,t,t0)=>`clips/${name}/${String(start+Math.floor((t-t0)*FPS)).padStart(5,'0')}.jpg`;
+function show(id,on){$(id).style.display=on?'block':'none'}
+function setSrc(id,src){const e=$(id);if(e.getAttribute('src')!==src)e.setAttribute('src',src)}
+// caption: words pop in one after another; *word* is gold.
+function cap(id,text,t,tIn,tOut,top,size){
+  const e=$(id);
+  if(t<tIn||t>=tOut)return;
+  e.style.display='block';e.style.top=top+'px';e.style.fontSize=size+'px';
+  if(e.dataset.text!==text){e.dataset.text=text;
+    e.innerHTML=text.split(' ').map(w=>w.startsWith('*')?`<span class="w g">${w.replace(/\*/g,'')}</span>`:`<span class="w">${w}</span>`).join(' ')}
+  [...e.children].forEach((w,i)=>{const p=lin(t,tIn+i*0.07,tIn+i*0.07+0.18);const out=lin(t,tOut-0.12,tOut);
+    w.style.opacity=p*(1-out);w.style.transform=`scale(${0.4+0.6*back(p)}) translateY(${(1-p)*40}px)`});
+}
+function sub(text,t,tIn,tOut,top){const e=$('subA');if(t<tIn||t>=tOut)return;
+  e.style.display='block';e.style.top=top+'px';e.textContent=text;e.style.opacity=lin(t,tIn,tIn+.2)*(1-lin(t,tOut-.15,tOut))}
+function punch(t,beats){// small zoom kick on each beat time listed
+  let k=0;for(const b of beats){const d=t-b;if(d>=0&&d<0.25)k=Math.max(k,(1-d/0.25)*0.06)}return 1+k}
+
+function render(f){
+  const t=f/FPS;
+  const ids=['crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
+  ids.forEach(i=>show(i,false));$('pl1g').style.transform='';['capA','capB','subA','games'].forEach(i=>show(i,false));
+  show('grid',t>=4.5);
+  $('grid').style.transform=`perspective(900px) rotateX(55deg) translateY(${(t*120)%120}px)`;
+  // ---- 1999: the arcade ----
+  if(t<4.5){
+    show('crt',true);
+    let src;
+    if(t<2.0) src=clip('kof97',300,t,0); else if(t<3.1) src=clip('sf3',100,t,2.0); else src=clip('mslug',210,t,3.1);
+    setSrc('crtImg',src);
+    $('crtImg').style.filter=`saturate(.75) sepia(.35) contrast(1.05) blur(${t<4?0.6:0}px)`;
+    const z=1+0.03*Math.sin(t*3);$('crt').style.transform=`scale(${z*punch(t,[0,2.0,3.1])})`;
+    // power off 4.0-4.5
+    const off=lin(t,4.0,4.35);
+    $('crtImg').style.transform=`scaleY(${1-off*0.995}) scaleX(${1-lin(t,4.25,4.45)*0.9})`;
+    show('crtOff',false);$('crtOff').style.display=t>=4.45?'block':'none';
+    $('crtLine').style.display=(t>=4.3&&t<4.5)?'block':'none';
+    $('crtLine').style.transform=`scaleX(${1-lin(t,4.3,4.5)})`;
+    cap('capA','*1999.',t,0.05,2.0,250,190);
+    cap('capB','10 taka. one coin.',t,0.7,2.0,1360,96);
+    if(t>=0.7&&t<2.0){show('coin',true);const p=lin(t,0.7,1.05);$('coin').style.top=(1520-260*(1-easeOut(p)))+'px';
+      $('coin').style.transform=`rotateY(${(1-p)*720}deg) scale(${0.9+0.1*back(p)})`;$('coin').style.opacity=1-lin(t,1.8,2.0);$('coin').style.top=(1500+(1-easeOut(p))*-300)+'px'}
+    cap('capA','the queue behind *6 kids',t,2.0,3.1,250,120);
+    cap('capA','then *ammu calls you home',t,3.1,4.0,250,120);
+    cap('capB','arcade closed.',t,4.0,4.5,1400,90);
+  }
+  // ---- 2026: slam ----
+  if(t>=4.5&&t<5.2){
+    cap('capA','*2026.',t,4.55,5.2,760,260);
+    show('flash',true);$('flash').style.opacity=t<4.62?1:0.9*(1-lin(t,4.62,4.9));
+  }
+  // ---- every classic, on your phone ----
+  if(t>=5.2&&t<8.5){
+    show('phone',true);
+    const p=lin(t,5.2,5.55);
+    $('phone').style.transform=`translateY(${(1-easeOut(p))*900}px) rotate(${(1-p)*-8}deg) scale(${punch(t,[6,6.5,7,7.5,8])})`;
+    // home first, then game cuts on the beat
+    let src='assets/home.png';
+    const cuts=[[6.0,'kof97',330],[6.5,'mvsc2',0],[7.0,'mslug',420],[7.5,'sf3',190],[8.0,'kof97',400]];
+    for(const [c,n,s] of cuts) if(t>=c) src=clip(n,s,t,c);
+    setSrc('phoneImg',src);
+    $('phoneImg').style.objectFit=src.includes('assets')?'cover':'cover';
+    $('phoneImg').style.imageRendering=src.includes('clips')?'pixelated':'auto';
+    cap('capA','every arcade *classic',t,5.3,8.5,190,118);
+    cap('capB','on your *phone',t,5.6,7.4,1780,100);
+    if(t>=6.0){show('counter',true);const n=Math.round(31*easeOut(lin(t,6.0,7.6)));$('counter').textContent=n;
+      $('counter').style.top='1380px';$('counter').style.opacity=1-lin(t,8.2,8.5);
+      $('counter').style.transform=`scale(${punch(t,[7.6])*1})`;const gl=$('games');gl.style.display='block';gl.style.top='1650px';gl.style.opacity=lin(t,7.5,7.7)*(1-lin(t,8.2,8.5))}
+  }
+  // ---- online ----
+  if(t>=8.5&&t<11.5){
+    show('pl1',true);show('pl2',true);
+    const p=easeOut(lin(t,8.5,8.85));
+    const src=clip('kof97',360,t,8.5);setSrc('pl1g',src);setSrc('pl2g',src);setSrc('pl1h','');$('pl1h').style.display='none';
+    $('pl1').style.left=(90-(1-p)*1100)+'px';$('pl1').style.top='520px';$('pl1').style.transform='rotate(-4deg)';
+    $('pl2').style.left=(90+(1-p)*1100)+'px';$('pl2').style.top='1080px';$('pl2').style.transform='rotate(4deg)';
+    show('pill',true);$('pill').style.top='980px';$('pill').style.transform=`scale(${back(lin(t,8.9,9.15))})`;
+    if(t>=9.4){show('chat',true);$('chat').style.left='560px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,9.4,9.6))})`}
+    if(t>=10.1){show('voice',true);$('voice').style.left='110px';$('voice').style.top='1470px';$('voice').style.transform=`scale(${back(lin(t,10.1,10.3))})`}
+    cap('capA','play *online',t,8.6,11.5,200,150);
+    sub('With your cousin across town. Chat + voice built in.',t,8.9,11.5,370);
+  }
+  // ---- tournament ----
+  if(t>=11.5&&t<15.0){
+    if(t<13.8){show('pl1',true);setSrc('pl1g','assets/bracket.png');$('pl1g').style.imageRendering='auto';$('pl1g').style.transform=`scale(${1.7+0.25*lin(t,11.85,13.8)})`;$('pl1g').style.transformOrigin='52% 42%';$('pl1h').style.display='none';
+      $('pl1').style.left='90px';$('pl1').style.top='760px';const p=easeOut(lin(t,11.5,11.85));$('pl1').style.transform=`rotate(${(1-p)*90}deg) scale(${(1.15+0.12*lin(t,11.85,13.8))*punch(t,[12.5,13.0,13.5])})`}
+    else {show('phone',true);setSrc('phoneImg','assets/champ.png');$('phone').style.transform=`scale(${1+0.08*lin(t,13.8,15)})`}
+    cap('capA','run a *tournament',t,11.6,13.8,200,130);
+    sub('Up to 8 players. World Cup style.',t,11.9,13.8,480);
+    cap('capA','lift the *trophy',t,13.8,15.0,200,150);
+  }
+  // ---- God of War ----
+  if(t>=15.0&&t<18.2){
+    show('pl1',true);$('pl1g').style.imageRendering='auto';
+    setSrc('pl1g',clip('gow',20,t,15.0));$('pl1h').style.display='block';setSrc('pl1h','assets/gowhud_t.png');
+    $('pl1').style.left='90px';$('pl1').style.top='760px';
+    const p=easeOut(lin(t,15.0,15.3));$('pl1').style.transform=`translateX(${(1-p)*-1000}px) scale(${1.15*punch(t,[16,17])})`;
+    cap('capA','even *god of war',t,15.1,18.2,230,140);
+    cap('capB','on a *phone',t,15.5,18.2,1380,120);
+  }
+  // ---- end card ----
+  if(t>=18.2){
+    show('end',true);
+    const p=back(lin(t,18.2,18.55));$('logo').style.transform=`scale(${p})`;
+    ['feats','free','url'].forEach((id,i)=>{const q=lin(t,18.5+i*0.15,18.75+i*0.15);$(id).style.opacity=q;$(id).style.transform=`translateY(${(1-q)*40}px)`});
+    show('flash',t<18.35);$('flash').style.opacity=1-lin(t,18.2,18.35);
+  }
+  const imgs=[...document.images].filter(i=>i.offsetParent!==null&&i.getAttribute('src'));
+  return Promise.all(imgs.map(i=>i.decode().catch(()=>0)));
+}
+window.render=render;
+</script></body></html>
