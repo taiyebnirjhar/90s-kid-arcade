@@ -1228,8 +1228,9 @@ decision was made in the conversation. Get the time now with
   move of several buttons on the ground. Left out: single buttons and holds
   (his own thumbs), air versions, and the ones after a roll. L+□ and L+○
   are also the Gauntlet's Olympic Strike and Lightning Run.
-- The six keep their spots on his layout; the three new ones sit on an
-  outer arc in the free space left of them (picture: PspHudTest).
+- The six keep their spots on his layout; the three new ones sit above
+  them, top right (the owner: "Place these on top of existing one";
+  picture: PspHudTest).
 
 ---
 

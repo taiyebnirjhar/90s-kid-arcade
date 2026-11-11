@@ -349,7 +349,8 @@ data class PspProfile(
             // arnt there"): every move of several buttons, the air ones and
             // the ones after a roll aside. L + □ / ○ / △ are also the Gauntlet
             // of Zeus's Olympic Strike, Lightning Run and Olympic Thunder.
-            // The first six keep their spots; three more on an outer arc.
+            // The first six keep their spots; three more above them (the owner:
+            // "Place these on top of existing one").
             moves = listOf(
                 Move("Cyclone of Chaos", "E>A"),
                 Move("Rampage of the Furies", "E>D"),
@@ -362,9 +363,9 @@ data class PspProfile(
                 Move("Spirit of Hercules", "C,wait:10,C,wait:10,C"),
             ),
             layout = GOD_OF_WAR.layout + mapOf(
-                "move:6" to HudView.Anchor(0.69f, 0.30f),
-                "move:7" to HudView.Anchor(0.625f, 0.44f),
-                "move:8" to HudView.Anchor(0.585f, 0.62f),
+                "move:6" to HudView.Anchor(0.93f, 0.17f),
+                "move:7" to HudView.Anchor(0.85f, 0.17f),
+                "move:8" to HudView.Anchor(0.77f, 0.22f),
             ),
         )
 
