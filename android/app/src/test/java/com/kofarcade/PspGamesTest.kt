@@ -97,8 +97,10 @@ class PspGamesTest {
         assertTrue(p.system.any { it.cmd == PspProfile.HOLD_R })
         assertTrue(p.system.none { it.cmd == PspProfile.LATCH_R })
         assertEquals("F>C", p.moves.first { it.name == "Efreet" }.cmd)
-        // Ghost of Sparta's layout and settings.
-        assertEquals(PspProfile.GOD_OF_WAR.layout, p.layout)
+        // Ghost of Sparta's layout and settings, with spots for the three extra moves.
+        assertEquals(9, p.moves.size)
+        assertEquals(PspProfile.GOD_OF_WAR.layout, p.layout - setOf("move:6", "move:7", "move:8"))
+        assertTrue((0 until 9).all { "move:$it" in p.layout })
         assertEquals(false, p.fasterEffectsOk)
         assertEquals(PspProfile.GOD_OF_WAR, PspProfile.forTitle("God of War - Ghost of Sparta (USA)"))
     }

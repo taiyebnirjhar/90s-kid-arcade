@@ -1220,6 +1220,18 @@ decision was made in the conversation. Get the time now with
 - Also found: in Ghost of Sparta, L+R with the stick rolls with R already
   held (the emulator); #103's letting go of R first does no harm.
 
+### 2026-11-11 20:01 Dhaka · Chains of Olympus: every combo of several buttons
+- Owner (playing it, with the strategy guide's lists): "feeling all best
+  combos arnt there. U can ignore few like on air, or some i may do myself".
+- Added Tartarus Rage (L+△, also the Gauntlet of Zeus's Olympic Thunder),
+  Plume of Prometheus (□□△) and Spirit of Hercules (△△△): nine pills, every
+  move of several buttons on the ground. Left out: single buttons and holds
+  (his own thumbs), air versions, and the ones after a roll. L+□ and L+○
+  are also the Gauntlet's Olympic Strike and Lightning Run.
+- The six keep their spots on his layout; the three new ones sit above
+  them, top right (the owner: "Place these on top of existing one";
+  picture: PspHudTest).
+
 ---
 
 ## Where things stand (update whenever it changes)
