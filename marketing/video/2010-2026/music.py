@@ -1,5 +1,5 @@
 import numpy as np, wave
-SR=44100; BPM=120; B=60/BPM; DUR=36.3
+SR=44100; BPM=120; B=60/BPM; DUR=41.7
 n=int(SR*DUR); out=np.zeros(n)
 def add(sig,t):
     i=int(t*SR); j=min(n,i+len(sig)); out[i:j]+=sig[:j-i]
@@ -53,7 +53,7 @@ t=np.arange(int(.35*SR))/SR; w=lp(np.random.randn(len(t)),0.15)*np.sin(np.pi*t/.
 # --- 2026: full beat from 5.0 to 18.2 ---
 start=13.0
 k=0
-while start+k*B/2<32.7:
+while start+k*B/2<38.1:
     t=start+k*B/2; beat=k//2
     root,ch=chords[(beat//4)%4]
     if k%2==0: add(kick(),t)
@@ -64,10 +64,10 @@ while start+k*B/2<32.7:
     add(tone(nt(ch[(k+1)%3]+12),.2,'saw',.05,.08),t+B/4)
     k+=1
 # impacts on scene changes
-for t in [19.1,23.3,26.5,29.1]: add(kick(1.2),t); add(np.random.randn(int(.3*SR))*np.exp(-np.arange(int(.3*SR))/SR*12)*.12,t)
+for t in [14.25,17.25,19.65,22.05,24.5,28.7,31.9,34.5]: add(kick(1.2),t); add(np.random.randn(int(.3*SR))*np.exp(-np.arange(int(.3*SR))/SR*12)*.12,t)
 # end: big hit at 18.2, pad chord ringing out
-add(kick(1.4),32.7)
-for m in [57,64,69,72,76]: add(tone(nt(m),3.4,'saw',.05,1.5),32.7)
+add(kick(1.4),38.1)
+for m in [57,64,69,72,76]: add(tone(nt(m),3.4,'saw',.05,1.5),38.1)
 out=lp(out,0.55)
 out/=np.max(np.abs(out))*1.05
 out=np.tanh(out*1.4)/np.tanh(1.4)

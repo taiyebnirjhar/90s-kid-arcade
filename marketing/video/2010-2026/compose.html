@@ -31,6 +31,14 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
 #phone{left:250px;top:560px;width:580px;height:1180px}
 #pl1,#pl2{width:900px;height:420px;border-radius:52px}
 #pl1 img.game,#pl2 img.game{image-rendering:pixelated}
+.play{width:1000px;height:448px;border-radius:56px;background:#000;overflow:hidden}
+.play .g{position:absolute;top:0;height:100%;left:140px;width:720px;object-fit:fill;image-rendering:pixelated}
+.play .h{position:absolute;inset:0;width:100%;height:100%}
+.touch{position:absolute;border-radius:50%;pointer-events:none}
+.touch.ring{border:5px solid #FFC21A;box-shadow:0 0 24px 6px rgba(255,194,26,.75),inset 0 0 18px rgba(255,194,26,.6)}
+.touch.dot{background:rgba(255,255,255,.55);box-shadow:0 0 10px rgba(255,255,255,.8)}
+.knob{position:absolute;border-radius:50%;background:rgba(255,255,255,.22);border:4px solid rgba(255,255,255,.75)}
+.gname{left:0;right:0;text-align:center;font:italic 800 54px 'Barlow Condensed',sans-serif;color:#C9C7DA;letter-spacing:2px;text-transform:uppercase}
 #land{left:40px;top:700px;width:1000px;height:480px;border-radius:60px;background:#000}
 #land img{object-fit:contain;image-rendering:pixelated}
 .thash{font:italic 900 150px 'Barlow Condensed',sans-serif;color:#FF3B3B;-webkit-text-stroke:6px #000;paint-order:stroke fill;text-shadow:0 10px 0 #000}
@@ -59,6 +67,9 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
 <div id="crt" class="abs"><img id="crtImg"><div id="crtScan" class="abs"></div><div id="crtVig" class="abs"></div><div id="crtOff" class="abs"></div><div id="crtLine" class="abs"></div></div>
 <div id="coin" class="abs">1৳</div>
 <div id="phone" class="phone abs"><img id="phoneImg"></div>
+<div id="pA" class="phone play abs"><img class="g"><img class="h"><div class="tl"></div></div>
+<div id="pB" class="phone play abs"><img class="g"><img class="h"><div class="tl"></div></div>
+<div id="gname" class="gname abs"></div>
 <div id="land" class="phone abs"><img id="landImg"></div>
 <div id="pl1" class="phone abs"><img class="game" id="pl1g"><img class="hud" id="pl1h"></div>
 <div id="pl2" class="phone abs"><img class="game" id="pl2g"></div>
@@ -87,6 +98,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12
 <div id="redflash" class="abs"></div>
 <div id="flash" class="abs"></div>
 <div id="scanAll" class="abs"></div>
+<script src="logs.js"></script>
 <script>
 const FPS=30, $=id=>document.getElementById(id);
 const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
@@ -108,16 +120,46 @@ function cap(id,text,t,tIn,tOut,top,size){
 }
 function sub(text,t,tIn,tOut,top){const e=$('subA');if(t<tIn||t>=tOut)return;
   e.style.display='block';e.style.top=top+'px';e.textContent=text;e.style.opacity=lin(t,tIn,tIn+.2)*(1-lin(t,tOut-.15,tOut))}
+// A game on a sideways phone with the app's controls, each press lit as it happens.
+const HUDS={kofplay:'kof2002mp',dinoplay:'dino',mslugplay:'mslugx',sg3play:'sengoku3'};
+const DIRV={1:[-1,1],2:[0,1],3:[1,1],4:[-1,0],5:[0,0],6:[1,0],7:[-1,-1],8:[0,-1],9:[1,-1]};
+function drawReal(id,scene,t,t0,n){
+  const el=$(id);show(id,true);
+  const i=Math.min(n-1,Math.floor((t-t0)*FPS));
+  const g=el.querySelector('.g');g.style.left='0';g.style.width='100%';g.style.imageRendering='auto';
+  el.querySelector('.h').style.display='none';el.querySelector('.tl').innerHTML='';
+  const src=`clips/rp_${scene}/${String(i).padStart(5,'0')}.png`;if(g.getAttribute('src')!==src)g.setAttribute('src',src);
+}
+function drawPlay(id,clipName,start,t,t0){
+  const el=$(id);show(id,true);
+  const i=start+Math.floor((t-t0)*FPS);
+  const g=el.querySelector('.g'),h=el.querySelector('.h'),tl=el.querySelector('.tl');
+  const src=`clips/${clipName}/${String(i).padStart(5,'0')}.jpg`;if(g.getAttribute('src')!==src)g.setAttribute('src',src);
+  const hs=`assets/hud_${HUDS[clipName]}_t.png`;if(h.getAttribute('src')!==hs)h.setAttribute('src',hs);
+  const sp=SPOTS[HUDS[clipName]], k=1000/2400, L=LOGS[clipName][i]||{dir:5,btns:[],move:null};
+  let html='';
+  const touch=(key,dot)=>{const s=sp[key];if(!s)return;const x=s[0]*k,y=s[1]*k,r=s[2]*k;
+    html+=`<div class="touch ring" style="left:${x-r}px;top:${y-r}px;width:${2*r}px;height:${2*r}px"></div>`;
+    if(dot)html+=`<div class="touch dot" style="left:${x-22}px;top:${y-22}px;width:44px;height:44px"></div>`};
+  if(L.move!==null&&L.move!==undefined){ if(L.move==='sys0')touch('sys:0',true); else touch('move:'+L.move,true); }
+  else L.btns.filter(b=>'ABCD'.includes(b)).forEach(b=>touch('face:'+b,true));
+  // the stick: the knob follows the thumb
+  const st=sp.stick,[dx,dy]=DIRV[L.move!==null&&L.move!==undefined?5:L.dir];const n=Math.hypot(dx,dy)||1;
+  const kr=st[2]*k*0.42,cx=st[0]*k+dx/n*st[2]*k*0.55,cy=st[1]*k+dy/n*st[2]*k*0.55;
+  html+=`<div class="knob" style="left:${cx-kr}px;top:${cy-kr}px;width:${2*kr}px;height:${2*kr}px"></div>`;
+  if(dx||dy)html+=`<div class="touch dot" style="left:${cx-22}px;top:${cy-22}px;width:44px;height:44px"></div>`;
+  tl.innerHTML=html;
+}
 function punch(t,beats){// small zoom kick on each beat time listed
   let k=0;for(const b of beats){const d=t-b;if(d>=0&&d<0.25)k=Math.max(k,(1-d/0.25)*0.06)}return 1+k}
 
 // Timing (2026 short-form guidance): every caption held at least 2 s
 // (0.3 s a word + 0.5 s), game cuts no faster than 0.8 s, scenes 2.5-4 s.
-const S={open:0, school:2.6, holiday:4.6, hide:6.8, off:9.3, y2026:11.8, phone:13.0, online:19.1, tour:23.3, trophy:26.5, gow:29.1, end:32.7, total:36.3};
+const S={open:0, school:2.6, holiday:4.6, hide:6.8, off:9.3, y2026:11.8, phone:13.0, online:24.5, tour:28.7, trophy:31.9, gow:34.5, end:38.1, total:41.7};
 const HITS=[10.25,10.7,11.15];
 function render(f){
   const t=f/FPS;
-  const ids=['land','t1','t2','t3','ouch','redflash','belt','crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
+  const ids=['pA','pB','gname','land','t1','t2','t3','ouch','redflash','belt','crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
   ids.forEach(i=>show(i,false));document.body.style.transform='';$('pl1g').style.transform='';$('pl1h').style.display='none';['capA','capB','subA','games'].forEach(i=>show(i,false));
   show('grid',t>=S.y2026);
   $('grid').style.transform=`perspective(900px) rotateX(55deg) translateY(${(t*120)%120}px)`;
@@ -162,38 +204,38 @@ function render(f){
     cap('capA','*2026.',t,S.y2026+0.05,S.phone,760,260);
     show('flash',true);$('flash').style.opacity=t<S.y2026+0.08?1:0.9*(1-lin(t,S.y2026+0.08,S.y2026+0.4));
   }
-  // ---- every classic, on your phone: the phone turns sideways for the games ----
+  // ---- every classic, on your phone: it turns sideways, and I play ----
   if(t>=S.phone&&t<S.online){
     const P=S.phone, R0=P+0.9, R1=P+1.25;
-    const cuts=[[R1,'k2mp',290],[R1+0.8,'dino',150],[R1+1.6,'sg3',690],[R1+2.4,'kof97',400],[R1+3.2,'mslug',420],[R1+4.0,'mvsc2',0]];
+    const segs=[[R1,3.0,'kof',90,'KOF 2002 Magic Plus'],[R1+3.0,2.4,'dino',72,'Mostofa'],[R1+5.4,2.4,'mslug',72,'Metal Slug X'],[R1+7.8,2.4,'sg3',72,'Sengoku 3']];
     if(t<R1){
       show('phone',true);setSrc('phoneImg','assets/home.png');$('phoneImg').style.imageRendering='auto';
       const p=lin(t,P,P+0.35), r=easeOut(lin(t,R0,R1));
       $('phone').style.transform=`translateY(${(1-easeOut(p))*900}px) rotate(${(1-p)*-8 - 90*r}deg) scale(${1-0.12*r})`;
     } else {
-      show('land',true);
-      let src=clip(...cuts[0].slice(1),t,cuts[0][0]);
-      for(const [c,n,s0] of cuts) if(t>=c) src=clip(n,s0,t,c);
-      setSrc('landImg',src);
-      $('land').style.transform=`scale(${punch(t,cuts.map(c=>c[0]))})`;
+      let cur=segs[0];for(const sg of segs) if(t>=sg[0]) cur=sg;
+      const el=$('pA');el.style.left='40px';el.style.top='700px';el.style.transform=`scale(${punch(t,segs.map(x=>x[0]))})`;
+      drawReal('pA',cur[2],t,cur[0],cur[3]);
+      const last=cur===segs[3];
+      if(!last){show('gname',true);$('gname').style.top='1190px';$('gname').textContent=cur[4];$('gname').style.opacity=lin(t,cur[0],cur[0]+0.2)}
     }
     cap('capA','every arcade *classic',t,P+0.1,S.online,190,118);
-    cap('capB','on your *phone',t,P+1.3,P+3.0,1300,110);
-    if(t>=P+3.0){show('counter',true);const n=Math.round(31*easeOut(lin(t,P+3.0,P+4.6)));$('counter').textContent=n;
-      $('counter').style.top='1260px';$('counter').style.opacity=1-lin(t,S.online-0.3,S.online);
-      $('counter').style.transform=`scale(${punch(t,[P+4.6])})`;const gl=$('games');gl.style.display='block';gl.style.top='1540px';gl.style.opacity=lin(t,P+4.5,P+4.7)*(1-lin(t,S.online-0.3,S.online))}
+    cap('capB','on your *phone',t,R1+0.2,R1+3.0,1290,110);
+    const C=R1+7.8;
+    if(t>=C){show('counter',true);const n=Math.round(31*easeOut(lin(t,C,C+1.4)));$('counter').textContent=n;
+      $('counter').style.top='1200px';$('counter').style.opacity=1-lin(t,S.online-0.3,S.online);
+      $('counter').style.transform=`scale(${punch(t,[C+1.4])})`;const gl=$('games');gl.style.display='block';gl.style.top='1480px';gl.style.opacity=lin(t,C+1.3,C+1.5)*(1-lin(t,S.online-0.3,S.online))}
   }
-  // ---- online ----
+  // ---- online: the same match on two phones ----
   if(t>=S.online&&t<S.tour){
     const O=S.online;
-    show('pl1',true);show('pl2',true);
     const p=easeOut(lin(t,O,O+0.35));
-    const src=clip('k2mp',120,t,O);setSrc('pl1g',src);setSrc('pl2g',src);$('pl1g').style.imageRendering='pixelated';
-    $('pl1').style.left=(90-(1-p)*1100)+'px';$('pl1').style.top='520px';$('pl1').style.transform='rotate(-4deg)';
-    $('pl2').style.left=(90+(1-p)*1100)+'px';$('pl2').style.top='1080px';$('pl2').style.transform='rotate(4deg)';
-    show('pill',true);$('pill').style.top='980px';$('pill').style.transform=`scale(${back(lin(t,O+0.4,O+0.65))})`;
-    if(t>=O+1.0){show('chat',true);$('chat').style.left='560px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,O+1.0,O+1.2))})`}
-    if(t>=O+2.1){show('voice',true);$('voice').style.left='110px';$('voice').style.top='1470px';$('voice').style.transform=`scale(${back(lin(t,O+2.1,O+2.3))})`}
+    drawReal('pA','online',t,O,126);drawReal('pB','online',t,O,126);
+    $('pA').style.left=(40-(1-p)*1100)+'px';$('pA').style.top='520px';$('pA').style.transform='rotate(-4deg) scale(.92)';
+    $('pB').style.left=(40+(1-p)*1100)+'px';$('pB').style.top='1060px';$('pB').style.transform='rotate(4deg) scale(.92)';
+    show('pill',true);$('pill').style.top='990px';$('pill').style.transform=`scale(${back(lin(t,O+0.4,O+0.65))})`;
+    if(t>=O+1.0){show('chat',true);$('chat').style.left='600px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,O+1.0,O+1.2))})`}
+    if(t>=O+2.1){show('voice',true);$('voice').style.left='90px';$('voice').style.top='1500px';$('voice').style.transform=`scale(${back(lin(t,O+2.1,O+2.3))})`}
     cap('capA','play *online',t,O+0.1,S.tour,200,150);
     sub('With your cousin across town. Chat + voice built in.',t,O+0.4,S.tour,370);
   }
