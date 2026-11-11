@@ -63,6 +63,9 @@ class PspHudTest {
     @Test
     fun godOfWar() = shot("psp_hud_god_of_war", PspProfile.GOD_OF_WAR)
 
+    @Test
+    fun chainsOfOlympus() = shot("psp_hud_chains_of_olympus", PspProfile.CHAINS_OF_OLYMPUS)
+
     /** Prints where each control sits on the owner's phone (2408 x 1080, 420 dpi, size 85%), for the default layout. */
     @Test
     fun printSpotsOwnersPhone() {
