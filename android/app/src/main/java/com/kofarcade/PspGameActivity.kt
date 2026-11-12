@@ -392,6 +392,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
                     PspProfile.HOLD_R -> HudView.SysButton(m.name, profile.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
                     // Tap on, tap off: lit while R is held.
                     PspProfile.LATCH_R -> HudView.SysButton(m.name, if (rLatched) "on · tap off" else profile.shoulderHints.second.ifEmpty { "tap" }, m.cmd, on = rLatched)
+                    // Any other button locked the same way (Need for Speed's Auto gas: ✕).
+                    in PspProfile.LATCHES -> latchKey(m.cmd).let { k -> HudView.SysButton(m.name, if (k in latched) "on · tap off" else "tap on", m.cmd, on = k in latched) }
                     // "held:FB": both held while pressed (Assassin's Creed's Sprint: R and ✕).
                     else -> if (m.cmd.startsWith("held:") && m.cmd.length == 7) {
                         val (a, b) = m.cmd.removePrefix("held:").map { c -> Key.valueOf(c.toString()) }
@@ -435,6 +437,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
             // press it again on resume (it stays on: the owner, "If i turn on r,
             // it should always be turn on").
             if (rLatched) rawKey(Key.F, false)
+            for (k in latched) rawKey(k, false)
             log.event("Paused (${s.name.lowercase()})")
             keepPlace()
         }
@@ -537,6 +540,7 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         LibretroDroid.setFrozen(false)
         LibretroDroid.resume()
         if (rLatched) rawKey(Key.F, true)
+        for (k in latched) rawKey(k, true)
     }
 
     private val stateFile get() = File(File(filesDir, "psp/states").apply { mkdirs() }, "${gameFile.name}.state")
@@ -662,6 +666,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     private fun sendKey(key: Key, down: Boolean) {
         // R locked on: a roll (L+R) or a mash presses R too, but never lets go of it.
         if (key == Key.F && !down && rLatched && !rLent) return
+        // A locked button (Auto gas) stays down whatever else lets go of it.
+        if (!down && key in latched) return
         val code = PspProfile.keyCode(key)
         if (code != null) {
             retroView.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)
@@ -699,6 +705,23 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         stickX = x * k
         stickY = y * k
         if (!stickIsDpad) sendStick()
+    }
+
+    /**
+     * Buttons other than R held by their pill between taps ([PspProfile.LATCHES]):
+     * Need for Speed's Auto gas keeps ✕ (accelerate) down, so the thumb is free
+     * for brake, nitro and the e-brake. Let go while paused, pressed again on resume.
+     */
+    @Volatile private var latched: Set<Key> = emptySet()
+
+    private fun latchKey(cmd: String): Key = Key.valueOf(cmd.removePrefix("latch:"))
+
+    private fun setLatched(key: Key, on: Boolean) {
+        if (on == key in latched) return
+        latched = if (on) latched + key else latched - key
+        rawKey(key, on)
+        log.event("${PspProfile.FACE_NAMES[key.name[0]] ?: key.name} ${if (on) "held (locked on)" else "let go"}")
+        runOnUiThread { updateHud() }
     }
 
     /** R held by its pill between taps ([PspProfile.LATCH_R]): Thera's Bane's fire for every combo. */
@@ -774,7 +797,8 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
         if (queue.isNotEmpty()) steps = queue.drop(1)
         if (now == stepsHeld) return
         val r = PspProfile.keyCode(Key.F)
-        for (k in stepsHeld - now) if (!(rLatched && !rLent && k == r)) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
+        val locked = latched.mapNotNull { PspProfile.keyCode(it) }
+        for (k in stepsHeld - now) if (!(rLatched && !rLent && k == r) && k !in locked) retroView.sendKeyEvent(KeyEvent.ACTION_UP, k)
         for (k in now - stepsHeld) retroView.sendKeyEvent(KeyEvent.ACTION_DOWN, k)
         stepsHeld = now
     }
@@ -785,6 +809,10 @@ class PspGameActivity : ComponentActivity(), HudView.Listener {
     override fun onPlay(cmd: String, move: Move?): Int {
         if (cmd == PspProfile.LATCH_R) {
             setRLatched(!rLatched)
+            return 1
+        }
+        if (cmd in PspProfile.LATCHES) {
+            setLatched(latchKey(cmd), latchKey(cmd) !in latched)
             return 1
         }
         if (rLatched && usesR(cmd)) {

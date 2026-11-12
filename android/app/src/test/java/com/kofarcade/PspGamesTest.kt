@@ -3,6 +3,7 @@ package com.kofarcade
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -87,6 +88,18 @@ class PspGamesTest {
         assertEquals("disabled", o["ppsspp_frameskip"])
         assertEquals("disabled", o["ppsspp_cache_iso"])
         assertEquals("enabled", PspSpeed.options(PspSpeed.FrameSkip.AUTO)["ppsspp_auto_frameskip"])
+    }
+
+    @Test
+    fun needForSpeedLocksTheGasOn() {
+        val p = PspProfile.forTitle("Need for Speed - Most Wanted - 5-1-0 (USA)")
+        assertEquals(PspProfile.NEED_FOR_SPEED, p)
+        assertEquals("Gas", p.labels['B'])
+        // ✕ (accelerate) is held the whole race: Auto gas locks it on.
+        assertTrue(p.system.any { it.cmd == PspProfile.LATCH_CROSS })
+        assertTrue(PspProfile.LATCH_CROSS in PspProfile.LATCHES)
+        assertTrue(p.system.any { it.cmd == PspProfile.HOLD_R && it.name == "E-brake" })
+        assertNotNull(PspTitle.ALL.first { it.id == "nfs" })
     }
 
     @Test

@@ -39,6 +39,7 @@ class PspHudTest {
                     PspProfile.HOLD_L -> HudView.SysButton(it.name, p.shoulderHints.first.ifEmpty { "hold" }, null, holdKey = Key.E)
                     PspProfile.HOLD_R -> HudView.SysButton(it.name, p.shoulderHints.second.ifEmpty { "hold" }, null, holdKey = Key.F)
                     PspProfile.LATCH_R -> HudView.SysButton(it.name, p.shoulderHints.second, it.cmd)
+                    in PspProfile.LATCHES -> HudView.SysButton(it.name, "tap on", it.cmd)
                     else -> HudView.SysButton(it.name, it.cmd.replace("pad:2", "✚↓").replace("EF", "L+R"), it.cmd)
                 }
             }, block = p.blockHoldsL,
@@ -65,6 +66,9 @@ class PspHudTest {
 
     @Test
     fun chainsOfOlympus() = shot("psp_hud_chains_of_olympus", PspProfile.CHAINS_OF_OLYMPUS)
+
+    @Test
+    fun needForSpeed() = shot("psp_hud_need_for_speed", PspProfile.NEED_FOR_SPEED)
 
     /** Prints where each control sits on the owner's phone (2408 x 1080, 420 dpi, size 85%), for the default layout. */
     @Test
