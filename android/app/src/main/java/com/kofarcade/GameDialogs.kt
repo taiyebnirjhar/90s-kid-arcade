@@ -183,7 +183,10 @@ fun GameDialogs(game: GameActivity) {
                     onWatchersListen = { game.watchersListen(it) },
                     onInvite = { game.inviteFriend(it) },
                 )
-                if (!game.tournamentRoom) tournamentPanel()
+                // A normal room shows no tournament (the owner, 2026-11-12: "I am on
+                // WiFi normal. Not tournament. Still showing tournament"); one already
+                // running still shows, so its bracket is never lost.
+                if (!game.tournamentRoom && game.tournament != null) tournamentPanel()
             }
         }
     }

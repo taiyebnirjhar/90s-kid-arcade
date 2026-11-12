@@ -1274,6 +1274,13 @@ decision was made in the conversation. Get the time now with
   has a snap, no title screen). The same graphics defaults as the others.
 - Not yet seen on the owner's phone: its speed there.
 
+### 2026-11-12 22:12 Dhaka · Normal rooms: no tournament part
+- Owner (a same-Wi-Fi normal room): "Not tournament. Still showing
+  tournament. Why". The tournament part had stayed in every room's sheet.
+  Now only a room made from a Tournament card shows it (first); a normal
+  room shows it only while a tournament is already running there, so its
+  bracket is never lost.
+
 ---
 
 ## Where things stand (update whenever it changes)

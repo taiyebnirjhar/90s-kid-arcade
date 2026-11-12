@@ -26,7 +26,8 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
 
 Play together has a **Tournament** card (2026-11-12): pick a fighting
 game, the room opens with the tournament panel first; Start tournament
-once 3 to 8 are in. Any room's sheet still has the panel too.
+once 3 to 8 are in. A normal room's sheet has no tournament part
+(2026-11-12), except while one is running.
 
 ## The phases (one PR each; the rooms keep working as they do)
 
