@@ -1232,6 +1232,18 @@ decision was made in the conversation. Get the time now with
   them, top right (the owner: "Place these on top of existing one";
   picture: PspHudTest).
 
+### 2026-11-12 17:46 Dhaka · Tournament: its own card on Play together
+- Owner: "can we play online without tournament? ... Is needed add
+  tournament separatly" then "Yes, seperate the tournament".
+- Online play never needed a tournament (Quick match, rooms, codes, same
+  Wi-Fi); the tournament was only found inside a room's sheet. Play
+  together now has a **Tournament** card ("Up to 8 friends, one champion")
+  under Make a room: it picks from the fighting games only (those whose
+  match wins the app reads), says what happens next, makes the room (online
+  or same Wi-Fi), and its room sheet opens with the tournament first (who's
+  in, best of 1 or 3, Start tournament at 3 to 8). Everything else about
+  rooms and tournaments is as before.
+
 ---
 
 ## Where things stand (update whenever it changes)

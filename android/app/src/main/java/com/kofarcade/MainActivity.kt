@@ -118,13 +118,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun play(game: Game, netplay: Boolean = false, set: String? = roms.setFor(game)) {
+    private fun play(game: Game, netplay: Boolean = false, set: String? = roms.setFor(game), tournament: Boolean = false) {
         set ?: return
         startActivity(
             Intent(this, GameActivity::class.java)
                 .putExtra(GameActivity.EXTRA_GAME, game.id)
                 .putExtra(GameActivity.EXTRA_SET, set)
-                .putExtra(GameActivity.EXTRA_NETPLAY, netplay),
+                .putExtra(GameActivity.EXTRA_NETPLAY, netplay)
+                .putExtra(GameActivity.EXTRA_TOURNAMENT, tournament),
         )
     }
 
@@ -310,9 +311,9 @@ class MainActivity : ComponentActivity() {
                     onCodeTaken = { linkCode = null },
                     chatWith = chatWith,
                     onChatTaken = { chatWith = null },
-                    onStart = { game, set ->
+                    onStart = { game, set, tournament ->
                         twoPlayer = false
-                        play(game, netplay = true, set = set)
+                        play(game, netplay = true, set = set, tournament = tournament)
                     },
                     onLibrary = {
                         twoPlayer = false

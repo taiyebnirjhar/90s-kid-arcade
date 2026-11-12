@@ -22,6 +22,12 @@ there's a champion. No money and no prizes (FBNeo's licence; see CLAUDE.md).
 - **Seats follow the game** (`Game.seats`): who's in and who's out, read in
   each game's RAM.
 
+## How players find it
+
+Play together has a **Tournament** card (2026-11-12): pick a fighting
+game, the room opens with the tournament panel first; Start tournament
+once 3 to 8 are in. Any room's sheet still has the panel too.
+
 ## The phases (one PR each; the rooms keep working as they do)
 
 - **T1. The bracket.** Single elimination: 3 to 8 entrants, seeded at

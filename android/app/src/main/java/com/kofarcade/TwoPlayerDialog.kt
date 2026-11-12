@@ -88,10 +88,18 @@ const val APP_DOWNLOAD = "https://github.com/taiyebnirjhar/90s-kid-arcade/releas
 private sealed interface TwoPlayer {
     data object Hub : TwoPlayer
     /** Picking the game to host: on this Wi-Fi, or [online] over the internet. */
-    data class PickGame(val online: Boolean = false, val challenge: com.kofarcade.core.online.Friend? = null) : TwoPlayer
+    data class PickGame(
+        val online: Boolean = false,
+        val challenge: com.kofarcade.core.online.Friend? = null,
+        /** A tournament room: a fighting game, the tournament panel first. */
+        val tournament: Boolean = false,
+    ) : TwoPlayer
     /** The chat with a friend. */
     data class Chat(val friend: com.kofarcade.core.online.Friend) : TwoPlayer
 }
+
+/** A game a tournament runs on: a fighter whose match wins the app reads (docs/tournament-plan.md). */
+private val Game.forTournament: Boolean get() = matchWins != null
 
 /** What a found host looks like in the list. */
 private data class FoundHost(val beacon: Beacon, val address: InetAddress)
@@ -137,7 +145,7 @@ fun emulatorBuild(context: Context): String = runCatching {
 @Composable
 fun TwoPlayerDialog(
     roms: RomStore,
-    onStart: (Game, String) -> Unit,
+    onStart: (Game, String, Boolean) -> Unit,
     onLibrary: () -> Unit,
     onClose: () -> Unit,
     /** An internet room's code from a link: joined at once. */
@@ -180,11 +188,12 @@ fun TwoPlayerDialog(
 
     // Opens a room for the game and starts playing; the game screen shows its key
     // (or, [online], its code: the room is made on the server, friends anywhere join).
-    fun host(game: Game, set: String, online: Boolean, challenge: com.kofarcade.core.online.Friend? = null) {
+    fun host(game: Game, set: String, online: Boolean, challenge: com.kofarcade.core.online.Friend? = null, tournament: Boolean = false) {
         if (opening) return
         opening = true
         making = when {
             challenge != null -> "Making a room for you and ${challenge.name}…"
+            tournament -> "Making your tournament room…"
             online -> "Making your room…"
             else -> "Opening your room on this Wi-Fi…"
         }
@@ -229,7 +238,7 @@ fun TwoPlayerDialog(
                         android.widget.Toast.LENGTH_LONG,
                     ).show()
                 }
-                onStart(game, set)
+                onStart(game, set, tournament)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Cancelled (the GAME ON screen's Cancel) as it was made: the result's thrown
                 // away, so what was made is closed here (off the main thread: it says goodbye).
@@ -251,6 +260,7 @@ fun TwoPlayerDialog(
                 roms,
                 onHost = { screen = TwoPlayer.PickGame() },
                 onHostOnline = { screen = TwoPlayer.PickGame(online = true) },
+                onTournament = { online -> screen = TwoPlayer.PickGame(online = online, tournament = true) },
                 // Quick match with no open room to join: an open room of your own, listed for anyone.
                 onHostOpen = {
                     openRoom = true
@@ -259,7 +269,7 @@ fun TwoPlayerDialog(
                 },
                 onLibrary = onLibrary,
                 onBack = back,
-                onJoined = onStart,
+                onJoined = { g, s -> onStart(g, s, false) },
                 joinCode = joinCode ?: friendRoom,
                 onCodeTaken = {
                     onCodeTaken()
@@ -279,10 +289,13 @@ fun TwoPlayerDialog(
             )
             is TwoPlayer.PickGame -> {
                 val hasBios = remember { roms.has(BIOS) }
-                val ready = remember { GAMES.filter { !it.neoGeo || hasBios }.mapNotNull { g -> roms.setFor(g)?.let { g to it } } }
+                val ready = remember(shown.tournament) {
+                    GAMES.filter { (!it.neoGeo || hasBios) && (!shown.tournament || it.forTournament) }.mapNotNull { g -> roms.setFor(g)?.let { g to it } }
+                }
                 PickGameScreen(
                     ready,
-                    onPick = { (g, set) -> host(g, set, shown.online, shown.challenge) },
+                    onPick = { (g, set) -> host(g, set, shown.online, shown.challenge, shown.tournament) },
+                    tournament = shown.tournament,
                     challenge = shown.challenge?.name,
                     onLibrary = onLibrary,
                     onBack = back,
@@ -312,6 +325,7 @@ private fun Hub(
     roms: RomStore,
     onHost: () -> Unit,
     onHostOnline: () -> Unit,
+    onTournament: (online: Boolean) -> Unit,
     onHostOpen: () -> Unit,
     onLibrary: () -> Unit,
     onBack: () -> Unit,
@@ -755,6 +769,7 @@ private fun Hub(
         onBack = onBack,
         internet = internet,
         onHostOnline = onHostOnline,
+        onTournament = { onTournament(internet) },
         onQuickMatch = ::quickMatch,
         friends = if (internet) friends else null,
         friendCode = friendCode,
@@ -833,6 +848,8 @@ fun MultiplayerHub(
     /** This phone has internet: rooms are made online (friends anywhere); without, nearby only. */
     internet: Boolean = true,
     onHostOnline: () -> Unit = {},
+    /** A tournament: a room for a fighting game with its tournament panel first. */
+    onTournament: () -> Unit = {},
     /** Rooms online (the server's list): open ones join with a tap, locked ones with the code. */
     online: List<OnlineChoice> = emptyList(),
     onJoinOnline: (Int) -> Unit = {},
@@ -880,6 +897,12 @@ fun MultiplayerHub(
                 enabled = !busy,
                 onClick = if (internet) onHostOnline else onHost,
             ) { Text("+", color = Palette.gold, fontSize = 30.sp, fontWeight = FontWeight.Black) }
+            BigChoice(
+                "Tournament",
+                "Up to 8 friends, one champion",
+                enabled = !busy,
+                onClick = onTournament,
+            ) { Canvas(Modifier.size(26.dp)) { drawTrophy(size.width / 2, size.height, size.height) } }
             JoinCodeCard(key, onKey, busy, onJoinKey, internet, onScan)
         }
 
@@ -1047,16 +1070,26 @@ fun PickGameScreen(
     onOpen: (Boolean) -> Unit = {},
     /** Challenging this friend: the room's made for the two of you (locked), and they're invited. */
     challenge: String? = null,
+    /** A tournament room: only the fighting games, and what happens next said first. */
+    tournament: Boolean = false,
 ) {
     ArcadeScreen(
         title = when {
             challenge != null -> "Challenge $challenge"
+            tournament -> "Host a tournament"
             online -> "Create a room"
             else -> "Create nearby room"
         },
-        kicker = "Pick the game",
+        kicker = if (tournament) "Pick the fighting game" else "Pick the game",
         onBack = onBack,
     ) {
+        if (tournament) {
+            Text(
+                "Your room opens with its code. Send it to your friends: when 3 to 8 are in, tap Start tournament. " +
+                    "The app draws the bracket, seats each pair and moves on until there's a champion.",
+                color = Palette.muted, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(bottom = 10.dp),
+            )
+        }
         if (challenge != null) {
             Text("$challenge gets your challenge at once, and joins with a tap.", color = Palette.muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
         } else if (online) {
@@ -1074,8 +1107,9 @@ fun PickGameScreen(
         }
         if (ready.isEmpty()) {
             EmptyState(
-                "No games to host yet",
-                "Add a game to this phone first (Neo Geo games also need the BIOS). Friends need the same game to join.",
+                if (tournament) "No fighting games yet" else "No games to host yet",
+                if (tournament) "Add a fighting game first (KOF, Garou, Last Blade, Samurai Shodown, SF III, Marvel vs Capcom…). Friends need the same game to join."
+                else "Add a game to this phone first (Neo Geo games also need the BIOS). Friends need the same game to join.",
                 action = "Open the library" to onLibrary,
             )
         } else {
