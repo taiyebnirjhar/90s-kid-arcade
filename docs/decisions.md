@@ -1261,6 +1261,19 @@ decision was made in the conversation. Get the time now with
   Hercules are gone; the six (Cyclone, Rampage, Valor, the three magics)
   stay in the owner's layout's spots.
 
+### 2026-11-12 18:28 Dhaka · Need for Speed: Most Wanted 5-1-0, with Auto gas
+- Owner: "Can we add need for speed. We hv the file on psp drive".
+- Read in the game (tools/pspemu.py: its Controls screen, preset
+  Automatic A, an Instant Race): ✕ accelerate, held the whole race; □
+  brake/reverse; ○ nitrous; △ camera; R e-brake; L look back; D-pad ↓
+  speedbreaker; the analog stick steers; menus answer only the D-pad.
+- Its own profile: the buttons named (Brake, Gas, Camera, Nitro), pills
+  for Auto gas (a tap locks ✕ on, a tap lets go; let go while paused,
+  pressed again on resume, like God of War's R), E-brake (hold R), Look
+  back (hold L) and Speedbreaker. A Home card with its picture (libretro
+  has a snap, no title screen). The same graphics defaults as the others.
+- Not yet seen on the owner's phone: its speed there.
+
 ---
 
 ## Where things stand (update whenever it changes)
@@ -1275,8 +1288,8 @@ As of 2026-11-07 21:06 Dhaka:
     (past the boat; the magic group is locked in our saves).
   - Assassin's Creed: Attack, Tackle, Block checked in a real fight (needs
     the owner's save past the tutorial; labels already from the game's panel).
-  - PSP: NFS Most Wanted profile; P5 weaker phones (Chains of Olympus done
-    2026-11-09).
+  - PSP: P5 weaker phones (Chains of Olympus done 2026-11-09, Need for
+    Speed 2026-11-12).
   - Recording: R4 voices in the video, R5 trim and polish.
   - Online Step 3 ideas: everyone-rotates seats, a lobby, bots.
   - Moving the ROM library to the owner's new Cloudflare account (needs

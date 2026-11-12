@@ -33,6 +33,10 @@ data class PspTitle(val id: String, val title: String, val subtitle: String, val
                 "Named_Titles/God of War - Chains of Olympus (USA).png",
             ),
             PspTitle(
+                "nfs", "Need for Speed", "Most Wanted 5-1-0", "most wanted",
+                "Named_Snaps/Need for Speed - Most Wanted - 5-1-0 (USA).png",
+            ),
+            PspTitle(
                 "acb", "Assassin's Creed", "Bloodlines", "bloodlines",
                 "Named_Titles/Assassin's Creed - Bloodlines (USA) (En,Fr,De,Es,It).png",
             ),
@@ -368,6 +372,12 @@ data class PspProfile(
         /** A pill that keeps R held from one tap to the next (God of War's Thera's Bane, or the spear's aim). */
         const val LATCH_R = "latch:F"
 
+        /** ✕ held from one tap to the next (Need for Speed's Auto gas). */
+        const val LATCH_CROSS = "latch:B"
+
+        /** Locks other than R's (which has its own extras for God of War). */
+        val LATCHES: Set<String> get() = setOf(LATCH_CROSS)
+
         /**
          * The game's mashing prompts, one pill each (the owner, 2026-11-07:
          * "Press l+r continuously should be one mash. If needed u can create
@@ -410,7 +420,29 @@ data class PspProfile(
             ),
         )
 
+        /**
+         * Need for Speed: Most Wanted 5-1-0, read in the game (tools/pspemu.py:
+         * its Controls screen, preset Automatic A, and an Instant Race):
+         * ✕ accelerate (held the whole race: let go and the car stops), □
+         * brake / reverse, ○ nitrous (held), △ change camera, R e-brake
+         * (held), L look back (held), D-pad ↓ speedbreaker, ↑ pursuit camera,
+         * the analog stick or D-pad steers, START pauses, SELECT resets the
+         * car. Menus answer only the D-pad (the D-PAD switch), ✕ picks, △ backs.
+         * Auto gas locks ✕ on, so the right thumb is free for the rest.
+         */
+        val NEED_FOR_SPEED = PspProfile(
+            labels = mapOf('A' to "Brake", 'B' to "Gas", 'C' to "Camera", 'D' to "Nitro"),
+            system = listOf(
+                Move("Auto gas", LATCH_CROSS),
+                Move("E-brake", HOLD_R),
+                Move("Look back", HOLD_L),
+                Move("Speedbreaker", "pad:2"),
+            ),
+            shoulderHints = "hold L" to "hold R",
+        )
+
         fun forTitle(title: String): PspProfile = when {
+            title.contains("need for speed", ignoreCase = true) -> NEED_FOR_SPEED
             title.contains("chains of olympus", ignoreCase = true) -> CHAINS_OF_OLYMPUS
             title.contains("god of war", ignoreCase = true) -> GOD_OF_WAR
             title.contains("assassin", ignoreCase = true) -> ASSASSINS_CREED
