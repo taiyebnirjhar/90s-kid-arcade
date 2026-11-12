@@ -345,12 +345,9 @@ data class PspProfile(
         val CHAINS_OF_OLYMPUS = GOD_OF_WAR.copy(
             system = listOf(Move("L", HOLD_L), Move("R", HOLD_R), Move("Roll", "EF"), Move("Weapon", "pad:2"), Move("Mash LR", MASH_LR), Move("Mash ○", MASH_O)),
             shoulderHints = "Block" to "Magic",
-            // The owner (2026-11-11, the strategy guide's lists: "all best combos
-            // arnt there"): every move of several buttons, the air ones and
-            // the ones after a roll aside. L + □ / ○ / △ are also the Gauntlet
-            // of Zeus's Olympic Strike, Lightning Run and Olympic Thunder.
-            // The first six keep their spots; three more above them (the owner:
-            // "Place these on top of existing one").
+            // Six, in the owner's layout's spots. Tartarus Rage, Plume of
+            // Prometheus and Spirit of Hercules were added on top (2026-11-11)
+            // and taken off again (2026-11-12: "Those are use less").
             moves = listOf(
                 Move("Cyclone of Chaos", "E>A"),
                 Move("Rampage of the Furies", "E>D"),
@@ -358,14 +355,6 @@ data class PspProfile(
                 Move("Efreet", "F>C", "dm"),
                 Move("Light of Dawn", "F>A", "dm"),
                 Move("Charon's Wrath", "F>D", "dm"),
-                Move("Tartarus Rage", "E>C"),
-                Move("Plume of Prometheus", "A,wait:10,A,wait:10,C"),
-                Move("Spirit of Hercules", "C,wait:10,C,wait:10,C"),
-            ),
-            layout = GOD_OF_WAR.layout + mapOf(
-                "move:6" to HudView.Anchor(0.93f, 0.17f),
-                "move:7" to HudView.Anchor(0.85f, 0.17f),
-                "move:8" to HudView.Anchor(0.77f, 0.22f),
             ),
         )
 

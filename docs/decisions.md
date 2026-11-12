@@ -1255,6 +1255,12 @@ decision was made in the conversation. Get the time now with
   join (they open Play together on the same Wi-Fi; the room shows under
   Rooms you can join). The Wi-Fi tournament's picker says so too.
 
+### 2026-11-12 18:02 Dhaka · Chains of Olympus: the three extra buttons off again
+- Owner: "Remove the last three gow chains of olympus button we added.
+  Those are use less". Tartarus Rage, Plume of Prometheus and Spirit of
+  Hercules are gone; the six (Cyclone, Rampage, Valor, the three magics)
+  stay in the owner's layout's spots.
+
 ---
 
 ## Where things stand (update whenever it changes)
