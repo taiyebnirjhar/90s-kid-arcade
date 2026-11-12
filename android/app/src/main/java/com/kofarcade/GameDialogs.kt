@@ -152,6 +152,20 @@ fun GameDialogs(game: GameActivity) {
         ) {
             val ui = game.roomUi
             if (ui != null) {
+                val tournamentPanel = @Composable {
+                    TournamentSection(
+                        game.tournament,
+                        isHost = game.isRoomHost,
+                        inRoom = game.roomCount,
+                        localId = game.roomLocalId,
+                        onStart = { game.startTournament(it) },
+                        onReport = { game.reportTournamentWinner(it) },
+                        onDecide = { game.hostDecidesTournament(it) },
+                        onEnd = { game.endTournament() },
+                    )
+                }
+                // A tournament room: the tournament first (who's in, Start), the room after.
+                if (game.tournamentRoom) tournamentPanel()
                 RoomSheetContent(
                     ui,
                     first = d.first,
@@ -169,16 +183,7 @@ fun GameDialogs(game: GameActivity) {
                     onWatchersListen = { game.watchersListen(it) },
                     onInvite = { game.inviteFriend(it) },
                 )
-                TournamentSection(
-                    game.tournament,
-                    isHost = game.isRoomHost,
-                    inRoom = game.roomCount,
-                    localId = game.roomLocalId,
-                    onStart = { game.startTournament(it) },
-                    onReport = { game.reportTournamentWinner(it) },
-                    onDecide = { game.hostDecidesTournament(it) },
-                    onEnd = { game.endTournament() },
-                )
+                if (!game.tournamentRoom) tournamentPanel()
             }
         }
     }

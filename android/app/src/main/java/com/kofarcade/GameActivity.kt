@@ -142,6 +142,8 @@ class GameActivity : ComponentActivity(), HudView.Listener {
         const val EXTRA_SET = "set"
         /** Multiplayer: play in [Netplay.room] instead of alone. */
         const val EXTRA_NETPLAY = "netplay"
+        /** With [EXTRA_NETPLAY]: a room made for a tournament (its panel comes first in the room sheet). */
+        const val EXTRA_TOURNAMENT = "tournament"
         /** A saved match to play again (its file in [MatchStore]), instead of playing. */
         const val EXTRA_REPLAY = "replay"
         /** With [EXTRA_REPLAY]: make a video of it as it plays. */
@@ -786,6 +788,9 @@ class GameActivity : ComponentActivity(), HudView.Listener {
     fun endVsIntro() { vsIntro = null }
     fun endResultFlash() { resultFlash = null }
     fun closeChampion() { championShown = null }
+
+    /** This room was made for a tournament (Play together's Tournament card). */
+    val tournamentRoom: Boolean get() = intent.getBooleanExtra(EXTRA_TOURNAMENT, false)
 
     /** Members in the room now (for "Start tournament": 3 to 8). */
     val roomCount: Int get() = room?.members?.values?.count { !it.away } ?: 0

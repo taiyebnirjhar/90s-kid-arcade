@@ -1232,6 +1232,35 @@ decision was made in the conversation. Get the time now with
   them, top right (the owner: "Place these on top of existing one";
   picture: PspHudTest).
 
+### 2026-11-12 17:46 Dhaka · Tournament: its own card on Play together
+- Owner: "can we play online without tournament? ... Is needed add
+  tournament separatly" then "Yes, seperate the tournament".
+- Online play never needed a tournament (Quick match, rooms, codes, same
+  Wi-Fi); the tournament was only found inside a room's sheet. Play
+  together now has a **Tournament** card ("Up to 8 friends, one champion")
+  under Make a room: it picks from the fighting games only (those whose
+  match wins the app reads), says what happens next, makes the room (online
+  or same Wi-Fi), and its room sheet opens with the tournament first (who's
+  in, best of 1 or 3, Start tournament at 3 to 8). Everything else about
+  rooms and tournaments is as before.
+
+### 2026-11-12 17:54 Dhaka · Same Wi-Fi: a room and a tournament, spelled out
+- Owner: "How no wifi tournament works? Make the same wifi more elaborate.
+  Like for same wifi two card, normal and tournament. Make it obvious. User
+  never supposed to guess or learn".
+- With internet, the one "Same Wi-Fi" button became a section, Friends next
+  to you ("same Wi-Fi or your phone's hotspot, no internet needed"), with
+  two cards: Room on this Wi-Fi and Tournament on this Wi-Fi. Without
+  internet the hub's two cards say the same names. Under them: how friends
+  join (they open Play together on the same Wi-Fi; the room shows under
+  Rooms you can join). The Wi-Fi tournament's picker says so too.
+
+### 2026-11-12 18:02 Dhaka · Chains of Olympus: the three extra buttons off again
+- Owner: "Remove the last three gow chains of olympus button we added.
+  Those are use less". Tartarus Rage, Plume of Prometheus and Spirit of
+  Hercules are gone; the six (Cyclone, Rampage, Valor, the three magics)
+  stay in the owner's layout's spots.
+
 ---
 
 ## Where things stand (update whenever it changes)

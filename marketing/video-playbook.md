@@ -92,3 +92,18 @@ hook, beats with timings, captions, sounds, payoff, why it works.
   and clean." The end card is `marketing/video/endcard16x9.html`: the
   round logo, one line of features, "Free on Android" and the address,
   centred on the dark background, nothing else.
+
+- **2010 → 2026** (first cut "1999 → 2026", 2026-11-11 19:15 Dhaka; the owner: "product marketing
+  videos ... trending, modern and eye catching"). 21 s vertical: the
+  nostalgia hook (format 4, then vs now) over a CRT, the beat drop at
+  "2026.", then the app in fast beat cuts (kinetic captions, real screens,
+  game footage on phones), end card. Made in code (`video/1999-2026/`):
+  footage from the attract modes, our own synth track. The owner chose to
+  show the games in full (told: takedown risk, SNK/Capcom/Sony footage).
+  Owner's notes, then: his own story (2010, 1 taka a coin, after school,
+  holidays, "kokhono school paliye", "ABBU!" with a belt); all the popular
+  games, not only KOF '97 (Magic Plus, Mostofa, Sengoku 3; Snow Bros wasn't
+  here); his name on the trophy; and slower: "frames goes to early. I
+  couldnt read". Now 35 s, every caption held 2 s or more, frames shown
+  first and the video made only on his "go". Real matches (his recordings)
+  to replace the attract-mode footage when he sends them.

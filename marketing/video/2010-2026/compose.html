@@ -1,0 +1,277 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0B0B12}
+*{box-sizing:border-box}
+.abs{position:absolute}
+#bg{inset:0;background:radial-gradient(60% 40% at 50% 45%,rgba(232,178,26,.16),transparent 70%),#0B0B12}
+#grid{inset:-200px;opacity:.18;background:
+  linear-gradient(rgba(232,178,26,.5) 2px,transparent 2px) 0 0/120px 120px,
+  linear-gradient(90deg,rgba(232,178,26,.5) 2px,transparent 2px) 0 0/120px 120px;
+  transform-origin:50% 50%}
+.cap{left:60px;right:60px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:900;
+  text-transform:uppercase;color:#F1F0F7;line-height:.95;letter-spacing:1px;
+  text-shadow:0 6px 0 #000,0 0 30px rgba(0,0,0,.8);-webkit-text-stroke:3px #000;paint-order:stroke fill}
+.cap .w{display:inline-block;margin:0 10px;transform-origin:50% 70%}
+.cap .g{color:#FFC21A}
+.sub{left:80px;right:80px;text-align:center;font:700 44px Roboto,sans-serif;color:#C9C7DA;text-shadow:0 3px 10px #000}
+#crt{left:40px;top:560px;width:1000px;height:740px;border-radius:46px;background:#000;overflow:hidden;
+  box-shadow:0 0 0 18px #1b1b22,0 0 0 22px #33323d,0 40px 120px rgba(0,0,0,.8)}
+#crtImg{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;filter:saturate(1.25) contrast(1.1)}
+#crtScan{inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 3px,transparent 3px 6px)}
+#crtVig{inset:0;background:radial-gradient(75% 75% at 50% 50%,transparent 55%,rgba(0,0,0,.75));border-radius:46px}
+#crtOff{inset:0;background:#000}
+#crtLine{left:0;right:0;top:50%;height:6px;margin-top:-3px;background:#fff;box-shadow:0 0 40px 10px #fff}
+#coin{width:170px;height:170px;border-radius:50%;left:455px;
+  background:radial-gradient(circle at 35% 30%,#FFF3B0,#FFC21A 45%,#A87600);box-shadow:0 0 0 8px #7a5400,0 10px 30px rgba(0,0,0,.6);
+  font:900 72px/170px Roboto,sans-serif;color:#7a5400;text-align:center}
+.phone{border-radius:70px;background:#000;box-shadow:0 0 0 14px #15151c,0 0 0 17px #3a3946,0 50px 140px rgba(0,0,0,.85);overflow:hidden}
+.phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#phone{left:250px;top:560px;width:580px;height:1180px}
+#pl1,#pl2{width:900px;height:420px;border-radius:52px}
+#pl1 img.game,#pl2 img.game{image-rendering:pixelated}
+.play{width:1000px;height:448px;border-radius:56px;background:#000;overflow:hidden}
+.play .g{position:absolute;top:0;height:100%;left:140px;width:720px;object-fit:fill;image-rendering:pixelated}
+.play .h{position:absolute;inset:0;width:100%;height:100%}
+.touch{position:absolute;border-radius:50%;pointer-events:none}
+.touch.ring{border:5px solid #FFC21A;box-shadow:0 0 24px 6px rgba(255,194,26,.75),inset 0 0 18px rgba(255,194,26,.6)}
+.touch.dot{background:rgba(255,255,255,.55);box-shadow:0 0 10px rgba(255,255,255,.8)}
+.knob{position:absolute;border-radius:50%;background:rgba(255,255,255,.22);border:4px solid rgba(255,255,255,.75)}
+.gname{left:0;right:0;text-align:center;font:italic 800 54px 'Barlow Condensed',sans-serif;color:#C9C7DA;letter-spacing:2px;text-transform:uppercase}
+#land{left:40px;top:700px;width:1000px;height:480px;border-radius:60px;background:#000}
+#land img{object-fit:contain;image-rendering:pixelated}
+.thash{font:italic 900 150px 'Barlow Condensed',sans-serif;color:#FF3B3B;-webkit-text-stroke:6px #000;paint-order:stroke fill;text-shadow:0 10px 0 #000}
+#redflash{inset:0;background:#c00000;mix-blend-mode:screen}
+.hud{opacity:.9}
+#chat{font:700 40px Roboto,sans-serif;color:#111;background:#FFC21A;padding:22px 34px;border-radius:36px 36px 36px 8px;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+#voice{font:700 36px Roboto,sans-serif;color:#F1F0F7;background:#2a2938;padding:20px 30px;border-radius:36px 36px 8px 36px;border:3px solid #FFC21A}
+#pill{left:390px;width:300px;height:84px;border-radius:42px;background:#FFC21A;color:#111;text-align:center;
+  font:italic 900 50px/84px 'Barlow Condensed',sans-serif;letter-spacing:4px;box-shadow:0 0 50px rgba(255,194,26,.7)}
+#flash{inset:0;background:#fff}
+#counter{left:0;right:0;text-align:center;font:italic 900 300px/1 'Barlow Condensed',sans-serif;color:#FFC21A;
+  -webkit-text-stroke:6px #000;paint-order:stroke fill;text-shadow:0 14px 0 #5a4206}
+#end{inset:0}
+#logo{left:240px;top:420px;width:600px;height:600px;border-radius:50%;border:12px solid rgba(232,178,26,.6);
+  background:radial-gradient(circle,rgba(232,178,26,.25),transparent 70%)}
+#logo .n{position:absolute;left:0;right:0;top:95px;text-align:center;font:italic 900 300px/.86 'Barlow Condensed',sans-serif;letter-spacing:-4px;
+  background:linear-gradient(#FFE07A,#E8B21A 55%,#B8860B);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 10px 0 #5a4206)}
+#logo .t{position:absolute;left:0;right:0;top:380px;text-align:center;font:italic 900 70px 'Barlow Condensed',sans-serif;color:#F1F0F7;text-transform:uppercase;letter-spacing:2px}
+#feats{left:40px;right:40px;top:1110px;text-align:center;font:italic 900 66px 'Barlow Condensed',sans-serif;color:#F1F0F7;text-transform:uppercase}
+#feats span{color:#FFC21A;padding:0 14px}
+#free{left:0;right:0;top:1250px;text-align:center;font:500 36px Roboto,sans-serif;color:#9A98B0;letter-spacing:8px;text-transform:uppercase}
+#url{left:0;right:0;top:1305px;text-align:center;font:700 62px Roboto,sans-serif;color:#FFC21A}
+#scanAll{inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 2px,transparent 2px 5px);pointer-events:none}
+</style></head><body>
+<div id="bg" class="abs"></div><div id="grid" class="abs"></div>
+<div id="crt" class="abs"><img id="crtImg"><div id="crtScan" class="abs"></div><div id="crtVig" class="abs"></div><div id="crtOff" class="abs"></div><div id="crtLine" class="abs"></div></div>
+<div id="coin" class="abs">1৳</div>
+<div id="phone" class="phone abs"><img id="phoneImg"></div>
+<div id="pA" class="phone play abs"><img class="g"><img class="h"><div class="tl"></div></div>
+<div id="pB" class="phone play abs"><img class="g"><img class="h"><div class="tl"></div></div>
+<div id="gname" class="gname abs"></div>
+<div id="land" class="phone abs"><img id="landImg"></div>
+<div id="pl1" class="phone abs"><img class="game" id="pl1g"><img class="hud" id="pl1h"></div>
+<div id="pl2" class="phone abs"><img class="game" id="pl2g"></div>
+<div id="pill" class="abs">ONLINE</div>
+<div id="chat" class="abs">easy win 😂</div>
+<div id="voice" class="abs">🎙 rematch. now.</div>
+<div id="counter" class="abs">0</div><div id="games" class="cap abs" style="font-size:90px">games</div>
+<div id="capA" class="cap abs"></div>
+<div id="capB" class="cap abs"></div>
+<div id="subA" class="sub abs"></div>
+<div id="end" class="abs">
+  <div id="logo" class="abs"><div class="n">90s</div><div class="t">Kid Arcade</div></div>
+  <div id="feats" class="abs">Play online<span>·</span>Tournaments<span>·</span>31 games</div>
+  <div id="free" class="abs">Free on Android</div>
+  <div id="url" class="abs">arcade.taiyebnirjhor.com</div>
+</div>
+<svg id="belt" class="abs" style="left:190px;top:1010px;width:700px;height:150px" viewBox="0 0 700 150">
+  <rect x="0" y="45" width="700" height="60" rx="10" fill="#6B3A1E" stroke="#3a1d0c" stroke-width="6"/>
+  <g fill="#3a1d0c"><circle cx="470" cy="75" r="7"/><circle cx="510" cy="75" r="7"/><circle cx="550" cy="75" r="7"/><circle cx="590" cy="75" r="7"/><circle cx="630" cy="75" r="7"/><circle cx="670" cy="75" r="7"/></g>
+  <rect x="60" y="20" width="150" height="110" rx="16" fill="none" stroke="#FFC21A" stroke-width="18"/>
+  <rect x="128" y="20" width="16" height="110" fill="#FFC21A"/>
+  <rect x="70" y="45" width="0" height="0"/>
+</svg>
+<div id="t1" class="thash abs">THASH!</div><div id="t2" class="thash abs">DHISH!</div><div id="t3" class="thash abs">THASH!!</div>
+<div id="ouch" class="abs" style="font:120px 'Noto Color Emoji';left:470px;top:1250px">😭</div>
+<div id="redflash" class="abs"></div>
+<div id="flash" class="abs"></div>
+<div id="scanAll" class="abs"></div>
+<script src="logs.js"></script>
+<script>
+const FPS=30, $=id=>document.getElementById(id);
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lin=(t,a,b)=>cl((t-a)/(b-a));
+const easeOut=x=>1-Math.pow(1-x,3);
+const back=x=>{const c=1.9;x=cl(x);return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const clip=(name,start,t,t0)=>`clips/${name}/${String(start+Math.floor((t-t0)*FPS)).padStart(5,'0')}.jpg`;
+function show(id,on){$(id).style.display=on?'block':'none'}
+function setSrc(id,src){const e=$(id);if(e.getAttribute('src')!==src)e.setAttribute('src',src)}
+// caption: words pop in one after another; *word* is gold.
+function cap(id,text,t,tIn,tOut,top,size){
+  const e=$(id);
+  if(t<tIn||t>=tOut)return;
+  e.style.display='block';e.style.top=top+'px';e.style.fontSize=size+'px';
+  if(e.dataset.text!==text){e.dataset.text=text;
+    e.innerHTML=text.split(' ').map(w=>w.startsWith('*')?`<span class="w g">${w.replace(/\*/g,'')}</span>`:`<span class="w">${w}</span>`).join(' ')}
+  [...e.children].forEach((w,i)=>{const p=lin(t,tIn+i*0.07,tIn+i*0.07+0.18);const out=lin(t,tOut-0.12,tOut);
+    w.style.opacity=p*(1-out);w.style.transform=`scale(${0.4+0.6*back(p)}) translateY(${(1-p)*40}px)`});
+}
+function sub(text,t,tIn,tOut,top){const e=$('subA');if(t<tIn||t>=tOut)return;
+  e.style.display='block';e.style.top=top+'px';e.textContent=text;e.style.opacity=lin(t,tIn,tIn+.2)*(1-lin(t,tOut-.15,tOut))}
+// A game on a sideways phone with the app's controls, each press lit as it happens.
+const HUDS={kofplay:'kof2002mp',dinoplay:'dino',mslugplay:'mslugx',sg3play:'sengoku3'};
+const DIRV={1:[-1,1],2:[0,1],3:[1,1],4:[-1,0],5:[0,0],6:[1,0],7:[-1,-1],8:[0,-1],9:[1,-1]};
+function drawReal(id,scene,t,t0,n){
+  const el=$(id);show(id,true);
+  const i=Math.min(n-1,Math.floor((t-t0)*FPS));
+  const g=el.querySelector('.g');g.style.left='0';g.style.width='100%';g.style.imageRendering='auto';
+  el.querySelector('.h').style.display='none';el.querySelector('.tl').innerHTML='';
+  const src=`clips/rp_${scene}/${String(i).padStart(5,'0')}.png`;if(g.getAttribute('src')!==src)g.setAttribute('src',src);
+}
+function drawPlay(id,clipName,start,t,t0){
+  const el=$(id);show(id,true);
+  const i=start+Math.floor((t-t0)*FPS);
+  const g=el.querySelector('.g'),h=el.querySelector('.h'),tl=el.querySelector('.tl');
+  const src=`clips/${clipName}/${String(i).padStart(5,'0')}.jpg`;if(g.getAttribute('src')!==src)g.setAttribute('src',src);
+  const hs=`assets/hud_${HUDS[clipName]}_t.png`;if(h.getAttribute('src')!==hs)h.setAttribute('src',hs);
+  const sp=SPOTS[HUDS[clipName]], k=1000/2400, L=LOGS[clipName][i]||{dir:5,btns:[],move:null};
+  let html='';
+  const touch=(key,dot)=>{const s=sp[key];if(!s)return;const x=s[0]*k,y=s[1]*k,r=s[2]*k;
+    html+=`<div class="touch ring" style="left:${x-r}px;top:${y-r}px;width:${2*r}px;height:${2*r}px"></div>`;
+    if(dot)html+=`<div class="touch dot" style="left:${x-22}px;top:${y-22}px;width:44px;height:44px"></div>`};
+  if(L.move!==null&&L.move!==undefined){ if(L.move==='sys0')touch('sys:0',true); else touch('move:'+L.move,true); }
+  else L.btns.filter(b=>'ABCD'.includes(b)).forEach(b=>touch('face:'+b,true));
+  // the stick: the knob follows the thumb
+  const st=sp.stick,[dx,dy]=DIRV[L.move!==null&&L.move!==undefined?5:L.dir];const n=Math.hypot(dx,dy)||1;
+  const kr=st[2]*k*0.42,cx=st[0]*k+dx/n*st[2]*k*0.55,cy=st[1]*k+dy/n*st[2]*k*0.55;
+  html+=`<div class="knob" style="left:${cx-kr}px;top:${cy-kr}px;width:${2*kr}px;height:${2*kr}px"></div>`;
+  if(dx||dy)html+=`<div class="touch dot" style="left:${cx-22}px;top:${cy-22}px;width:44px;height:44px"></div>`;
+  tl.innerHTML=html;
+}
+function punch(t,beats){// small zoom kick on each beat time listed
+  let k=0;for(const b of beats){const d=t-b;if(d>=0&&d<0.25)k=Math.max(k,(1-d/0.25)*0.06)}return 1+k}
+
+// Timing (2026 short-form guidance): every caption held at least 2 s
+// (0.3 s a word + 0.5 s), game cuts no faster than 0.8 s, scenes 2.5-4 s.
+const S={open:0, school:2.6, holiday:4.6, hide:6.8, off:9.3, y2026:11.8, phone:13.0, online:24.5, tour:28.7, trophy:31.9, gow:34.5, end:38.1, total:41.7};
+const HITS=[10.25,10.7,11.15];
+function render(f){
+  const t=f/FPS;
+  const ids=['pA','pB','gname','land','t1','t2','t3','ouch','redflash','belt','crt','coin','phone','pl1','pl2','pill','chat','voice','counter','end','flash','grid'];
+  ids.forEach(i=>show(i,false));document.body.style.transform='';$('pl1g').style.transform='';$('pl1h').style.display='none';['capA','capB','subA','games'].forEach(i=>show(i,false));
+  show('grid',t>=S.y2026);
+  $('grid').style.transform=`perspective(900px) rotateX(55deg) translateY(${(t*120)%120}px)`;
+  // ---- 2010: the arcade ----
+  if(t<S.y2026){
+    show('crt',true);
+    let src;
+    if(t<S.school) src=clip('k2mp',100,t,0); else if(t<S.holiday) src=clip('dino',20,t,S.school); else if(t<S.hide) src=clip('sg3',120,t,S.holiday); else src=clip('mslug',210,t,S.hide);
+    setSrc('crtImg',src);
+    $('crtImg').style.filter=`saturate(.75) sepia(.35) contrast(1.05) blur(0.6px)`;
+    const z=1+0.02*Math.sin(t*2);$('crt').style.transform=`scale(${z*punch(t,[0,S.school,S.holiday,S.hide])})`;
+    const o=S.off;
+    $('crtImg').style.transform=`scaleY(${1-lin(t,o,o+0.35)*0.995}) scaleX(${1-lin(t,o+0.25,o+0.45)*0.9})`;
+    $('crtOff').style.display=t>=o+0.45?'block':'none';
+    $('crtLine').style.display=(t>=o+0.3&&t<o+0.5)?'block':'none';
+    $('crtLine').style.transform=`scaleX(${1-lin(t,o+0.3,o+0.5)})`;
+    // Every line in the same place, so the eye stays put.
+    cap('capA','*2010.',t,0.05,S.school,250,200);
+    cap('capB','1 taka. 1 coin.',t,0.6,S.school,1360,110);
+    if(t>=0.6&&t<S.school){show('coin',true);const p=lin(t,0.6,0.95);$('coin').style.transform=`rotateY(${(1-p)*720}deg) scale(${0.9+0.1*back(p)})`;$('coin').style.opacity=1-lin(t,S.school-0.2,S.school);$('coin').style.top=(1520+(1-easeOut(p))*-300)+'px'}
+    cap('capA','after *school',t,S.school,S.holiday,250,170);
+    cap('capA','the *whole day on holidays',t,S.holiday,S.hide,230,140);
+    cap('capA','kokhono... *school paliye',t,S.hide,S.off,220,140);
+    cap('capA','*ABBU!',t,o+0.45,S.y2026,700,260);
+    if(t>=o+0.6){show('belt',true);
+      // The belt comes in raised, then swings down on each hit.
+      const q=easeOut(lin(t,o+0.6,o+0.8));
+      let ang=t>HITS[2]+0.12?20:-55;for(const h of HITS){const d=t-h;if(d>-0.18&&d<0)ang=-55+75*(1+d/0.18);else if(d>=0&&d<0.12)ang=20-75*(d/0.12)}
+      $('belt').style.transformOrigin='0% 50%';
+      $('belt').style.transform=`translateX(${(1-q)*-900}px) rotate(${ang}deg)`;}
+    // each hit: shake, red flash, a word
+    let shake=0,red=0;
+    HITS.forEach((h,i)=>{const d=t-h;if(d>=0&&d<0.22){shake=Math.max(shake,(1-d/0.22)*28);red=Math.max(red,(1-d/0.22)*0.55)}
+      const id='t'+(i+1);if(t>=h){show(id,true);const e=$(id);const k=back(lin(t,h,h+0.12));
+        e.style.left=[120,560,250][i]+'px';e.style.top=[1330,1420,1560][i]+'px';e.style.transform=`rotate(${[-12,10,-6][i]}deg) scale(${k})`}});
+    if(red>0){show('redflash',true);$('redflash').style.opacity=red}
+    document.body.style.transform=shake?`translate(${(Math.random()-.5)*shake}px,${(Math.random()-.5)*shake}px)`:'';
+    if(t>=11.35){show('ouch',true);$('ouch').style.transform=`scale(${back(lin(t,11.35,11.55))})`}
+  }
+  // ---- 2026 ----
+  if(t>=S.y2026&&t<S.phone){
+    cap('capA','*2026.',t,S.y2026+0.05,S.phone,760,260);
+    show('flash',true);$('flash').style.opacity=t<S.y2026+0.08?1:0.9*(1-lin(t,S.y2026+0.08,S.y2026+0.4));
+  }
+  // ---- every classic, on your phone: it turns sideways, and I play ----
+  if(t>=S.phone&&t<S.online){
+    const P=S.phone, R0=P+0.9, R1=P+1.25;
+    const segs=[[R1,3.0,'kof',90,'KOF 2002 Magic Plus'],[R1+3.0,2.4,'dino',72,'Mostofa'],[R1+5.4,2.4,'mslug',72,'Metal Slug X'],[R1+7.8,2.4,'sg3',72,'Sengoku 3']];
+    if(t<R1){
+      show('phone',true);setSrc('phoneImg','assets/home.png');$('phoneImg').style.imageRendering='auto';
+      const p=lin(t,P,P+0.35), r=easeOut(lin(t,R0,R1));
+      $('phone').style.transform=`translateY(${(1-easeOut(p))*900}px) rotate(${(1-p)*-8 - 90*r}deg) scale(${1-0.12*r})`;
+    } else {
+      let cur=segs[0];for(const sg of segs) if(t>=sg[0]) cur=sg;
+      const el=$('pA');el.style.left='40px';el.style.top='700px';el.style.transform=`scale(${punch(t,segs.map(x=>x[0]))})`;
+      drawReal('pA',cur[2],t,cur[0],cur[3]);
+      const last=cur===segs[3];
+      if(!last){show('gname',true);$('gname').style.top='1190px';$('gname').textContent=cur[4];$('gname').style.opacity=lin(t,cur[0],cur[0]+0.2)}
+    }
+    cap('capA','every arcade *classic',t,P+0.1,S.online,190,118);
+    cap('capB','on your *phone',t,R1+0.2,R1+3.0,1290,110);
+    const C=R1+7.8;
+    if(t>=C){show('counter',true);const n=Math.round(31*easeOut(lin(t,C,C+1.4)));$('counter').textContent=n;
+      $('counter').style.top='1200px';$('counter').style.opacity=1-lin(t,S.online-0.3,S.online);
+      $('counter').style.transform=`scale(${punch(t,[C+1.4])})`;const gl=$('games');gl.style.display='block';gl.style.top='1480px';gl.style.opacity=lin(t,C+1.3,C+1.5)*(1-lin(t,S.online-0.3,S.online))}
+  }
+  // ---- online: the same match on two phones ----
+  if(t>=S.online&&t<S.tour){
+    const O=S.online;
+    const p=easeOut(lin(t,O,O+0.35));
+    drawReal('pA','online',t,O,126);drawReal('pB','online',t,O,126);
+    $('pA').style.left=(40-(1-p)*1100)+'px';$('pA').style.top='520px';$('pA').style.transform='rotate(-4deg) scale(.92)';
+    $('pB').style.left=(40+(1-p)*1100)+'px';$('pB').style.top='1060px';$('pB').style.transform='rotate(4deg) scale(.92)';
+    show('pill',true);$('pill').style.top='990px';$('pill').style.transform=`scale(${back(lin(t,O+0.4,O+0.65))})`;
+    if(t>=O+1.0){show('chat',true);$('chat').style.left='600px';$('chat').style.top='880px';$('chat').style.transform=`scale(${back(lin(t,O+1.0,O+1.2))})`}
+    if(t>=O+2.1){show('voice',true);$('voice').style.left='90px';$('voice').style.top='1500px';$('voice').style.transform=`scale(${back(lin(t,O+2.1,O+2.3))})`}
+    cap('capA','play *online',t,O+0.1,S.tour,200,150);
+    sub('With your cousin across town. Chat + voice built in.',t,O+0.4,S.tour,370);
+  }
+  // ---- tournament ----
+  if(t>=S.tour&&t<S.trophy){
+    const R=S.tour;
+    show('pl1',true);setSrc('pl1g','assets/bracket.png');$('pl1g').style.imageRendering='auto';$('pl1g').style.transform=`scale(${1.7+0.25*lin(t,R+0.35,S.trophy)})`;$('pl1g').style.transformOrigin='52% 42%';
+    $('pl1').style.left='90px';$('pl1').style.top='760px';const p=easeOut(lin(t,R,R+0.35));$('pl1').style.transform=`rotate(${(1-p)*90}deg) scale(${1.15+0.12*lin(t,R+0.35,S.trophy)})`;
+    cap('capA','run a *tournament',t,R+0.1,S.trophy,200,130);
+    sub('Up to 8 players. World Cup style.',t,R+0.4,S.trophy,480);
+  }
+  if(t>=S.trophy&&t<S.gow){
+    show('phone',true);setSrc('phoneImg','assets/champ.png');$('phoneImg').style.imageRendering='auto';
+    const p=easeOut(lin(t,S.trophy,S.trophy+0.35));$('phone').style.transform=`translateY(${(1-p)*900}px) scale(${1+0.06*lin(t,S.trophy,S.gow)})`;
+    cap('capA','lift the *trophy',t,S.trophy+0.1,S.gow,200,150);
+  }
+  // ---- God of War ----
+  if(t>=S.gow&&t<S.end){
+    const G=S.gow;
+    show('pl1',true);$('pl1g').style.imageRendering='auto';
+    setSrc('pl1g',clip('gow',20,t,G));$('pl1h').style.display='block';setSrc('pl1h','assets/gowhud_t.png');
+    $('pl1').style.left='90px';$('pl1').style.top='760px';
+    const p=easeOut(lin(t,G,G+0.3));$('pl1').style.transform=`translateX(${(1-p)*-1000}px) scale(1.15)`;
+    cap('capA','even *god of war',t,G+0.1,S.end,230,140);
+    cap('capB','on a *phone',t,G+0.6,S.end,1380,120);
+  }
+  // ---- end card ----
+  if(t>=S.end){
+    const E=S.end;
+    show('end',true);
+    const p=back(lin(t,E,E+0.35));$('logo').style.transform=`scale(${p})`;
+    ['feats','free','url'].forEach((id,i)=>{const q=lin(t,E+0.3+i*0.2,E+0.55+i*0.2);$(id).style.opacity=q;$(id).style.transform=`translateY(${(1-q)*40}px)`});
+    show('flash',t<E+0.15);$('flash').style.opacity=1-lin(t,E,E+0.15);
+  }
+  const imgs=[...document.images].filter(i=>i.offsetParent!==null&&i.getAttribute('src'));
+  return Promise.all(imgs.map(i=>i.decode().catch(()=>0)));
+}
+window.render=render;
+</script></body></html>
