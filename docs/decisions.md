@@ -1244,6 +1244,17 @@ decision was made in the conversation. Get the time now with
   in, best of 1 or 3, Start tournament at 3 to 8). Everything else about
   rooms and tournaments is as before.
 
+### 2026-11-12 17:54 Dhaka · Same Wi-Fi: a room and a tournament, spelled out
+- Owner: "How no wifi tournament works? Make the same wifi more elaborate.
+  Like for same wifi two card, normal and tournament. Make it obvious. User
+  never supposed to guess or learn".
+- With internet, the one "Same Wi-Fi" button became a section, Friends next
+  to you ("same Wi-Fi or your phone's hotspot, no internet needed"), with
+  two cards: Room on this Wi-Fi and Tournament on this Wi-Fi. Without
+  internet the hub's two cards say the same names. Under them: how friends
+  join (they open Play together on the same Wi-Fi; the room shows under
+  Rooms you can join). The Wi-Fi tournament's picker says so too.
+
 ---
 
 ## Where things stand (update whenever it changes)

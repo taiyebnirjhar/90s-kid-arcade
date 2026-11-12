@@ -863,6 +863,9 @@ class UiSnapshots {
     fun pickGameTournament() = shot("twoplayer_pick_tournament") { PickGameScreen(picks.filter { it.first.matchWins != null }, {}, {}, {}, online = true, tournament = true) }
 
     @Test
+    fun pickGameTournamentWifi() = shot("twoplayer_pick_tournament_wifi") { PickGameScreen(picks.filter { it.first.matchWins != null }, {}, {}, {}, online = false, tournament = true) }
+
+    @Test
     fun roomSheetOpen() {
         landscape()
         shot("room_sheet_open") {
